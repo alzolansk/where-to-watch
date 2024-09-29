@@ -1,0 +1,362 @@
+ @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@500&display=swap');
+
+ @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@500&display=swap');
+
+ @import url('https://fonts.googleapis.com/css2?family=Lato:wght@700&display=swap');
+
+ @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@900&display=swap');
+
+
+
+*{
+    margin: 0;
+    padding: 0;
+    border:none;
+    font-size: 100%;
+    text-decoration: none;
+    list-style: none;
+    background-color: black;
+    
+}
+
+body{
+    background-color: rgb(0, 0, 0);
+    color: white;
+    overflow-x: hidden;
+    
+}
+
+/* Main Menu */
+
+.faixa {
+    display: flex;
+    flex-direction: row;
+    padding: 10px 5px 5px 100px;
+    height: 65px;
+    border: solid 1px black;
+    background-color: rgb(12, 12, 12);
+}
+
+.faixa ul{
+    display: flex;
+    text-decoration: none;
+    list-style: none;
+    height: 45px;
+}
+
+.faixa ul li{
+    padding: 10px;
+    text-decoration: none;
+}
+
+#menu a{
+    color: rgb(247, 247, 247);
+    padding: 10px;
+}
+
+#menu ul li :hover{
+    transition:60s;
+}
+
+#menu ul :hover{
+    transition: 0.4s;
+    background-color: rgba(77, 77, 77, 0.329);
+    border-radius: 5px;
+    text-decoration: none;
+}
+
+#search-bar {
+    margin: auto;
+    border: 1px solid grey;
+    border-radius: 10px;
+    width: 300px;
+    height: 35px;
+    margin-left: 30px;
+}
+
+input::placeholder{
+    padding: 10px;
+}
+
+.logo{
+    position: relative;
+    top: 5px;
+}
+
+/* Main Trailer John Wick*/
+
+
+.trailer-link {
+    background-color: rgb(0, 0, 0);
+    position: absolute;
+    top: 560px;
+    left: 18%;
+    width: 2cm;
+    height: 2cm;
+    border-radius: 1cm;
+    list-style: none;
+}
+
+/*:hover .trailer-link{
+    border: solid 3px #000;
+    transition: 1s;
+}*/
+
+.title-trailer{
+    color: white;
+    position:absolute;
+    background: transparent;
+    top: 565px;
+    right: 48%;
+    font-size: 1.9em;
+    font-family: Roboto;
+}
+
+.gallery p{
+    color: grey;
+    position: absolute;
+    display: block;
+    background: transparent;
+    top: 605px;
+    right: 57%;
+    font-family: Roboto;
+    font-size: 1.2em;
+}
+
+.gallery-wrapper{
+    position: relative;
+    display: flex;
+    flex-flow: row nowrap;
+}
+
+.gallery{
+    display: flex;
+    position: relative;
+    flex-flow:row nowrap;
+    padding: 20px;
+    padding-bottom: 50px;
+    margin: auto;
+}
+
+.poster{
+    width: 130px;
+    position: absolute;
+    display: block;
+    right:75%;
+    top: 230px;
+    border-radius: 5px;
+}
+
+#poster-wick{
+    list-style-type: none;
+}
+
+#poster-wick :hover{
+    width: 132px;
+    border-radius: 10px;
+    transition: 300ms all ease-in-out;
+}
+
+#poster-wick :not(:hover){
+    transition: 400ms;
+}
+
+.item {
+    padding-bottom: 10px;
+    width: 1100px;
+    display: flex;  
+    border-radius: 10px; 
+}
+
+/* Dialog Window */
+
+#dialog{
+    margin: auto;
+    height: 465px;
+    overflow-x: hidden;
+    overflow-y: hidden;
+    box-shadow:  2px 2px 5000px 1000px rgba(0, 0, 0, 0.507);
+}
+
+#dialog button{
+    font-family: Nunito;
+    background: #0000006b;
+    border: 0.5px solid black;
+    font-size: 1.5em;
+    width: 40px;
+    height: 40px;
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    color: rgb(255, 255, 255);
+}
+
+
+/* User's navigation area*/
+
+.container h2{
+    text-align: left;
+    background-color: rgb(2, 2, 2);
+    color: rgb(255, 255, 255);
+    padding-top: 20px;
+   padding-bottom: 20px;
+}
+
+.container{
+    width: 100%;
+}
+
+.row{
+    position: relative;
+    height: 550px;
+    width: 1150px;
+    display: flexbox;
+    flex-direction: row;
+    padding-bottom: 1px;
+    flex-flow:row nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -ms-overflow-style: none;
+    scrollbar-width: none;  
+}
+
+.row:hover{
+    padding-bottom: 0px;
+    border-radius: 20px;
+    transition: 400ms ease-in-out;
+    background-color: rgb(3, 3, 3);
+}
+
+.row::-webkit-scrollbar {
+    display: none;
+}
+
+.row li{
+    text-decoration: none;
+    list-style: none; 
+    max-width: 1120px;
+}
+
+.row a{
+    color: rgb(255, 255, 255);
+}
+
+.col-md-3{
+    display: flex;
+    flex-flow: row;
+}
+
+.description{
+    width: 500px;
+    background-color: rgb(17, 17, 17);
+    text-align: left;
+    border-radius: 5px;
+    font-size: 20px;
+}
+
+.description:hover{
+    background-color: rgb(15, 15, 15);
+}
+
+.description a{
+    padding-right: 10px;
+}
+
+.rating, .rating-value{
+    position: relative;
+    display: inline;
+    padding-left: 8px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    
+}
+
+.rating-value{
+    position: relative;
+    top: 2px;
+    font-size: 15px;
+    font-family: Lato;
+}
+
+.watch-trailer{
+    font-family: Lato;
+    text-align: center;
+    position: relative;
+    top: 40px;
+}
+
+.watch-trailer img {
+    width: 10px;
+    position: relative;
+    right: 5px;
+    bottom: 1.5px;
+}
+
+.watch-trailer :hover{
+    text-decoration: none;
+    list-style: none;
+    background: rgba(75, 75, 75, 0.459);
+    border-radius: 7px;
+    padding: 10px 20px 10px 10px;
+    transform: 50ms;
+}
+
+.watch-trailer img{
+    transition: 120s;
+}
+
+.movie-name{
+    position: relative;
+    padding-left: 10px;
+}
+
+.rating-value, .rating{
+    position: relative;
+    top: 3px;
+}
+
+
+.watch-movie{
+    font-family: Lato;
+    text-align: center;
+    position: relative;
+    top: 8px;
+}
+
+.watch-movie img {
+    width: 10px;
+    position: relative;
+    right: 5px;
+    bottom: 1.5px;
+}
+
+.watch-movie :hover{
+    text-decoration: none;
+    list-style: none;
+    background: rgba(75, 75, 75, 0.459);
+    border-radius: 7px;
+    padding: 10px 20px 10px 10px;
+    transition: 50ms;
+}
+
+.watch-movie img{
+    transition: 120s;
+}
+
+.img-fluid{
+    width: 100%;
+}
+
+.avatar-trailer{
+    position: relative;
+    top: 15px;
+}
+
+.quantumania-trailer{
+    position: relative;
+    top: 50px;
+}
+
+/*Tela Adicionar filme*/
+
+

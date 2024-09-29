@@ -1,0 +1,95 @@
+
+  @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@500&display=swap');
+
+body{
+    color: rgb(0, 0, 0);
+    list-style: none;
+}
+
+ul{
+    list-style: none;
+}
+
+h3{
+    padding-bottom: 5px;
+}
+
+form{
+    width: 350px;
+    height: 390px;
+    border: solid 0.5px rgb(197, 197, 197);
+    border-radius: 5px;
+    padding: 25px 25px 350px 25px;
+    margin: 0 auto;
+}
+
+label{
+    font-size: 0.9em;
+    padding-left: 7px;
+    height: 10px;
+    color: rgb(0, 0, 0);
+}
+
+input {
+    margin: 4px;
+    padding-top: 0px;
+    padding-bottom: 3px;
+    width: 100%;
+}
+
+.logo {
+    padding-bottom: 28px;
+    position: relative;
+    top: 10px;
+    width: 105px;
+    display: flex;
+    margin: 0 auto;
+}
+
+#submit{
+    background: linear-gradient(to bottom, #f7da90, #e2b33b);
+    padding: 5.8px;
+    border: 1px solid grey;
+    position: relative;
+    top: 17px;
+    text-align: center;
+    font-size: 0.9em;
+}
+
+.new-account{
+    position: relative;
+    top: 30px;
+}
+
+.new-account p{
+    color: rgb(177, 177, 177);
+    font-size: 0.8em;
+    font-family: Roboto;
+    text-align: center;
+}
+
+.create-account {
+    border: solid 1px rgb(124, 124, 124);
+    text-align: center;
+    padding: 2.5px;
+    font-size: 0.9em;
+    margin: 0 auto;
+    position: relative;
+    width: 298px;
+    height: 30px;
+    background: linear-gradient(to bottom, white, rgb(219, 219, 219));
+    cursor: pointer;
+}
+
+.create-account a{
+    color: black;
+}
+
+input[type="submit"]#submit:hover {
+    background:linear-gradient(to bottom, #ffd365, #e2b33b) ;
+}
+
+ul :hover{
+    background: rgb(223, 223, 223);
+    text-decoration: none;
+}
