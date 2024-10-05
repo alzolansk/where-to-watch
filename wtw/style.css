@@ -7,15 +7,25 @@
  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@900&display=swap');
 
 
+ @media (max-width: 1200px) {
+    body {
+        font-size: 90%;
+    }
+}
+
+@media (max-width: 768px) {
+    body {
+        font-size: 85%;
+    }
+}
 
 *{
     margin: 0;
     padding: 0;
     border:none;
-    font-size: 100%;
     text-decoration: none;
     list-style: none;
-    background-color: black;
+    box-sizing: border-box;
     
 }
 
@@ -23,35 +33,42 @@ body{
     background-color: rgb(0, 0, 0);
     color: white;
     overflow-x: hidden;
-    
 }
 
 /* Main Menu */
 
 .faixa {
     display: flex;
+    height: 60px;
     flex-direction: row;
-    padding: 10px 5px 5px 100px;
-    height: 65px;
+    align-items: center; /* Centraliza verticalmente */
+    height: auto;
     border: solid 1px black;
     background-color: rgb(12, 12, 12);
+    padding: 10px 10px 0px 10px;
 }
 
 .faixa ul{
     display: flex;
     text-decoration: none;
     list-style: none;
-    height: 45px;
 }
 
 .faixa ul li{
-    padding: 10px;
+    padding: 8px;
     text-decoration: none;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.user-menu {
+    display: column;
+    white-space: nowrap;
+    align-items: center; /* Alinha verticalmente os elementos */
 }
 
 #menu a{
     color: rgb(247, 247, 247);
-    padding: 10px;
 }
 
 #menu ul li :hover{
@@ -65,25 +82,69 @@ body{
     text-decoration: none;
 }
 
-#search-bar {
+.menu-trigger{
+    display: none;
+    padding: 5px;
+}
+
+.menu-trigger:hover {
+    background-color: rgba(77, 77, 77, 0.329);
+    border-radius: 5px;
+    transition: 0.4s;
+}
+
+@media (max-width: 440px){
+
+    .menu-trigger{
+        display: flex;
+        cursor: pointer;
+    }
+
+    .hidden-menu {
+        opacity: 0;
+        max-height: 0;
+        overflow: hidden;
+        transition: opacity 0.4s ease, max-height 0.4s ease;
+    }
+
+    .active-menu {
+        opacity: 1;
+        max-height: 500px; 
+        transition: opacity 0.4s ease, max-height 0.4s ease;
+    }
+}
+
+
+/* Search Bar*/
+
+.search-bar {
     margin: auto;
     border: 1px solid grey;
     border-radius: 10px;
-    width: 300px;
+    width: 40%;
     height: 35px;
-    margin-left: 30px;
+}
+
+@media (max-width: 1000px) { 
+    .search-bar {
+        width: 30%; /* Oculta a barra de pesquisa */
+    }  
+
+}
+
+@media (max-width: 800px) { 
+    .search-bar {
+        display: none; /* Oculta a barra de pesquisa */
+    }  
+
 }
 
 input::placeholder{
     padding: 10px;
 }
 
-.logo{
-    position: relative;
-    top: 5px;
-}
 
-/* Main Trailer John Wick*/
+/* Main Trailer John Wick
 
 
 .trailer-link {
@@ -100,15 +161,14 @@ input::placeholder{
 /*:hover .trailer-link{
     border: solid 3px #000;
     transition: 1s;
-}*/
+}
 
 .title-trailer{
     color: white;
     position:absolute;
     background: transparent;
-    top: 565px;
-    right: 48%;
-    font-size: 1.9em;
+    right: 20%;
+    font-size: 1.5em;
     font-family: Roboto;
 }
 
@@ -117,7 +177,6 @@ input::placeholder{
     position: absolute;
     display: block;
     background: transparent;
-    top: 605px;
     right: 57%;
     font-family: Roboto;
     font-size: 1.2em;
@@ -168,11 +227,16 @@ input::placeholder{
     border-radius: 10px; 
 }
 
+*/
+
 /* Dialog Window */
 
 #dialog{
     margin: auto;
-    height: 465px;
+    height: 100%;
+    max-height: 465px;
+    max-width: 809px;
+    width: 100%;
     overflow-x: hidden;
     overflow-y: hidden;
     box-shadow:  2px 2px 5000px 1000px rgba(0, 0, 0, 0.507);
@@ -191,25 +255,104 @@ input::placeholder{
     color: rgb(255, 255, 255);
 }
 
+#dialog iframe{
+    max-width: 809px;
+    width: 100%;
+    max-height: 465px;
+    height: 100%;
+}
+
+@media (max-width: 800px) {
+    #dialog{
+        width: 80%;
+        height: 400px;
+    }
+
+}
+
+@media (max-width: 500px) {
+    #dialog{
+        width: 80%;
+        height: 200px;
+    }
+}
+
+
 
 /* User's navigation area*/
+
+
+.carousel-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+button.prev, button.next {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: rgba(0, 0, 0, 0.5);
+    border: none;
+    color: white;
+    font-size: 2rem;
+    padding: 10px;
+    cursor: pointer;
+    z-index: 1;
+    border-radius: 30%;
+}
+
+button.prev {
+    left: 0;
+}
+
+button.next {
+    right: 0;
+}
+
+button.prev:hover, button.next:hover {
+    transition: 0.5s;
+    background-color: rgba(141, 141, 141, 0.8);
+    color: rgb(0, 0, 0);
+}
+
+
+/* Filmes e Séries */
+
+.container{
+    width: 100%;
+    max-width: 1200px;
+    min-width: 1000px;
+    margin: 0 auto; 
+    padding: 20px;
+}
 
 .container h2{
     text-align: left;
     background-color: rgb(2, 2, 2);
     color: rgb(255, 255, 255);
     padding-top: 20px;
-   padding-bottom: 20px;
+    padding-bottom: 20px;
 }
 
-.container{
-    width: 100%;
+@media (max-width: 600px) {
+    .container {
+        width: 95%;
+        padding: 15px;
+    }
+    
+}
+
+@media (max-width: 480px) {
+    .container {
+        width: 100%;
+        padding: 10px;
+    }
 }
 
 .row{
     position: relative;
-    height: 550px;
-    width: 1150px;
+    height: auto;
     display: flexbox;
     flex-direction: row;
     padding-bottom: 1px;
@@ -234,7 +377,6 @@ input::placeholder{
 .row li{
     text-decoration: none;
     list-style: none; 
-    max-width: 1120px;
 }
 
 .row a{
@@ -247,7 +389,6 @@ input::placeholder{
 }
 
 .description{
-    width: 500px;
     background-color: rgb(17, 17, 17);
     text-align: left;
     border-radius: 5px;
@@ -278,11 +419,14 @@ input::placeholder{
     font-family: Lato;
 }
 
+/*Trailer row*/
+
 .watch-trailer{
     font-family: Lato;
     text-align: center;
     position: relative;
-    top: 40px;
+    padding: 30px;
+    width: 100%;
 }
 
 .watch-trailer img {
@@ -308,6 +452,22 @@ input::placeholder{
 .movie-name{
     position: relative;
     padding-left: 10px;
+}
+
+@media (max-width: 1000px){
+
+    .movie-name{
+        font-size: 18px;
+    }
+
+    .watch-trailer{
+        font-size: 15px;
+    }
+
+    .watch-trailer img{
+        width: 8px;
+    }
+
 }
 
 .rating-value, .rating{
@@ -345,18 +505,56 @@ input::placeholder{
 
 .img-fluid{
     width: 100%;
+    display: block;
+    position: relative;
+    height: auto;
+    min-width: 200px; /* Define um tamanho mínimo para a imagem */
 }
 
-.avatar-trailer{
-    position: relative;
-    top: 15px;
-}
-
-.quantumania-trailer{
-    position: relative;
-    top: 50px;
+@media (max-width: 480px) {
+    .img-fluid {
+        width: 100%;
+    }
 }
 
 /*Tela Adicionar filme*/
 
+#results {
+    width: 30%;
+    max-height: 125px; 
+    overflow-y: auto; /* Habilita rolagem vertical */
+    border: 1px solid #363636;
+    padding: 10px; 
+    background-color: #202020; 
+    border-radius: 5px;
+    box-shadow: 0px 4px 8px rgba(32, 32, 32, 0.1);
+}
+
+#results div {
+    display: flex; 
+    align-items: start; /* Alinha verticalmente no centro */
+    border-bottom: 1px solid #ddd;
+    padding: 5px;
+}
+
+#results div:last-child {
+    border-bottom: none; /* Remove a linha de separação do último item */
+}
+
+#results img {
+    width: 70px; 
+    border-radius: 5px;
+    margin-right: 10px;
+}
+
+#results h3 {
+    font-size: 100%;
+    margin: 0; /* Remove a margem padrão do título */
+
+}
+
+.info {
+    display: flex; 
+    flex-direction: column; 
+}
 

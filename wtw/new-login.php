@@ -2,6 +2,9 @@
 
 include_once('config.php');
 
+$error_message = "";
+$title_error = "";
+
 if (isset($_POST['submit'])){
 
   $nome = $_POST['nome'];
@@ -9,31 +12,39 @@ if (isset($_POST['submit'])){
   $senha = $_POST['senha'];
   $confirm_senha = $_POST['confirmasenha'];
 
+  $stmt = $conexao->prepare("SELECT idUser FROM users WHERE emailUser = ?");
+  $stmt->bind_param("s", $email);
+  $stmt->execute();
+  $stmt->store_result();
+
+  if ($stmt->num_rows > 0) {
+    $title_error = "Usuário existente";
+    $error_message = "Este e-mail já está cadastrado no Where to Watch. Gostaria de realizar login? <a href=\"login.php\">Clique aqui</a>";
+  } else if(empty($nome) || empty($senha) || empty($email)){
+    $title_error = "Campos vazios";
+    $error_message = "Preencha todos os campos";
+  } else if($senha !== $confirm_senha){
+    $title_error = "Senhas diferentes";
+    $error_message = "Senhas diferentes, insira a confimação de senha exatamente como a que você inseriu no campo \"Senha\"";
+  } else{
+
   $hashed_password = password_hash($senha, PASSWORD_DEFAULT);
 
-  $stmt = $conexao->prepare("INSERT INTO users (nameuser, emailuser, pswdUser) VALUES (?, ?, ?)");
-  $stmt->bind_param("sss", $nome, $email, $hashed_password);
+  $insert_stmt = $conexao->prepare("INSERT INTO users (nameuser, emailuser, pswdUser) VALUES (?, ?, ?)");
+  $insert_stmt->bind_param("sss", $nome, $email, $hashed_password);
   
-  if ($stmt->execute()) {
+  if ($insert_stmt->execute()) {
     echo "Usuário cadastrado com sucesso!";
     header("Location: login.php");
     exit();
 } else {
-    echo "Erro ao cadastrar: " . $stmt->error;
+    $error_message = "Erro ao cadastrar: " . $stmt->error;
 }
-
-/*  if($senha !== $confirm_senha){
-    echo "Senhas diferentes";
-  } else{
-    $res = mysqli_query($conexao, "INSERT INTO users(nameUser, emailUser, pswdUser) VALUES ('$nome', '$email', '$senha')");
-
-    header("Location: login.php");
-    
-*/
 
 $stmt->close();
 $conexao->close();
-  
+
+}  
 }
 
 ?>
@@ -51,7 +62,14 @@ $conexao->close();
 <body>
 
     
-    <li><a href="index.php"> <img src="imagens/imdb_logo.png" class="logo"> </a></li>
+    <li><a href="index.php"> <img src="imagens/Where-toWatch.png" class="logo"> </a></li>
+
+    <dialog id="loginInvalid">
+      <p class="titleError"><?php echo $title_error; ?></p>
+      <div class="divider"></div>
+      <p id="errorMessage"><?php echo $error_message; ?></p>
+      <button id="closeDialog">Fechar</button>
+    </dialog>
 
    <div class="form">
       <form action="new-login.php" method="POST">
@@ -70,7 +88,9 @@ $conexao->close();
         <input type="password" name="senha" id="senha">
 
         <label for="password"><b> Confirme a senha </b></label>
-        <input type="password" name="confirmasenha" id="confirmasenha">
+        <input type="password" name="confirmasenha" id="confirma_senha">
+
+        <li class="accountExist">Ja tem uma conta?<a href="login.php"> Clique aqui</a></li></ul>
 
         <input type="submit" value="Sign in" name="submit" id="submit">
         
@@ -78,4 +98,7 @@ $conexao->close();
   </div>
 
 </body>
+
+<script src="script.js"></script>
+
 </html>

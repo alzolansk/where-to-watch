@@ -31,7 +31,7 @@
 </body>
 
 <script>
-
+//Consultando API
     const apiKey = 'dc3b4144ae24ddabacaeda024ff0585c'; 
 
     document.getElementById('searchmovie').addEventListener('input', function() {
@@ -52,14 +52,17 @@
                             const title = item.title || item.name; // Para pegar o título do filme ou da série
                             const imageUrl = `https://image.tmdb.org/t/p/w500${item.poster_path}`;
                             const idTmdb = item.id;
+                            const overview = item.overview; //Sinopse
 
                             resultsContainer.innerHTML += `
                                 <div>
-                                    <img src="${imageUrl}" alt="${title}">
-                                    <h3>${title}</h3>
-                                    <p>ID TMDb: ${idTmdb}</p>
-                                </div>
-                            `;
+                                        <img src="${imageUrl}" alt="${title}">
+                                        <div class="info">
+                                            <h3>${title}</h3>
+                                            <p>ID TMDb: ${idTmdb}</p>
+                                        </div>
+                                    </div>
+                                `;
                         }
                     });
                 } else {

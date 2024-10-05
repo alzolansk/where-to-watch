@@ -5,11 +5,14 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
     <link rel="stylesheet" href="style.css">
     <link rel="icon" href="imagens/favicon-wtw.png">
 
     <title>Where To Watch?</title>
+
 </head>
+
 <body>    
 
     <?php
@@ -30,13 +33,17 @@
 
             <!-- Modal para o trailer -->
             <dialog id="dialog">
-                <iframe id="trailerFrame" width="809" height="465" src="" title="Trailer" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                <iframe id="trailerFrame" src="" title="Trailer" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
                 <button id="closeTrailer" onclick="closeTrailer()">X</button>
             </dialog>
 
         <div class="container">
 
         <h2><b>|</b> Filmes em destaque hoje</h2>
+
+        <div class="carousel-container">
+
+        <!--    <button class="prev" onclick="scrollLeftCustom()">&#10094;</button>  Seta anterior -->
 
             <div class="row">
                     <?php if ($result_filmes->num_rows > 0): ?>
@@ -61,6 +68,10 @@
                     <p>Nenhum filme encontrado.</p>
                 <?php endif; ?>
             </div>
+
+        <!--  <button class="next" onclick="scrollRight()">&#10095;</button> Seta próximo -->
+
+        </div>
 
             <h2><b>|</b>Séries do Momento</h2>
              
@@ -94,16 +105,5 @@
 </body>
 
     <script src="script.js"></script>
-    <script> 
-    function showTrailer(trailerUrl) {
-        document.getElementById('trailerFrame').src = trailerUrl.replace("watch?v=", "embed/");
-        document.getElementById('dialog').showModal();
-    }
-
-    function closeTrailer() {
-        document.getElementById('dialog').close();
-        document.getElementById('trailerFrame').src = ""; 
-    }
-    </script>
 
 </html>

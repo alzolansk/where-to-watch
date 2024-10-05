@@ -2,6 +2,10 @@
 session_start();
 include_once('config.php');
 
+$error_message = "";
+$user_not_found = false; // Usuário não encontrado
+$title_error = "";
+
 if(isset($_POST['submit'])) {
 
   $email = $_POST['email'];
@@ -25,10 +29,12 @@ if(isset($_POST['submit'])) {
       header("Location: index.php"); 
       exit();
     } else {
-      echo "Senha incorreta.";
+      $error_message = "Senha incorreta.";
     }
   } else {
-    echo "Usuário não encontrado.";
+    $title_error = "Usúario Inexistente";
+    $error_message = "Usuário não existe no Where To Watch. <br> Crie uma conta <a href='new-login.php'>aqui.</a>";
+    $user_not_found = true; // Usuário não encontrado
   }
 
   $stmt->close();
@@ -49,7 +55,14 @@ if(isset($_POST['submit'])) {
 </head>
 <body>
 
-    <li><a href="index.php"> <img src="imagens/imdb_logo.png" class="logo"> </a></li>
+    <li><a href="index.php"> <img src="imagens/Where-toWatch.png" class="logo"> </a></li>
+
+    <dialog id="loginInvalid">
+      <p class="titleError"><?php echo $title_error; ?></p>
+      <div class="divider"></div>
+      <p id="errorMessage"><?php echo $error_message; ?></p>
+      <button id="closeDialog">Fechar</button>
+    </dialog>
 
    <div class="form">
       <form action="login.php" method="POST">
@@ -64,7 +77,7 @@ if(isset($_POST['submit'])) {
         <label for="password"><b> Password </b></label>
         <input type="password" name="senha" id="senha">
 
-        <input type="submit" value="Sign in" name="submit" id="submit">
+        <input type="submit" value="Log in" name="submit" id="submit">
 
    <div class="new-account">
         <p>Novo no Where To Watch?</p>
@@ -76,4 +89,6 @@ if(isset($_POST['submit'])) {
   </div>
 
 </body>
+
+<script src="script.js"></script>
 </html>
