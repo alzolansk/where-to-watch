@@ -39,71 +39,83 @@
 
         <div class="container">
 
-        <h2><b>|</b> Filmes em destaque hoje</h2>
+        <h2><b>|</b> Filmes e séries populares hoje</h2>
 
-        <div class="carousel-container">
-
-        <!--    <button class="prev" onclick="scrollLeftCustom()">&#10094;</button>  Seta anterior -->
-
-            <div class="row">
-                    <?php if ($result_filmes->num_rows > 0): ?>
-                    <?php while($row = $result_filmes->fetch_assoc()): ?>
-                        <div class="col-md-3 movies">
-                            <div class="description">
-                                <li id="movie-li-link">
-                                    <img src="<?= $row['img_url'] ?>" alt="" class="img-fluid">
-                                </li>
-                                <img src="imagens/star-emoji.png" alt="" class="rating">
-                                <p class="rating-value"><?= $row['rate_item'] ?></p>
-                                <li class="movie-name"><a href="#"><?= $row['title_item'] ?></a></li>
-                                <li class="watch-trailer">
-                                    <a href="#" onclick="showTrailer('<?= $row['trailer_url'] ?>')">
-                                        <img src="imagens/video-start.png" alt=""> Trailer
-                                    </a>
-                                </li>
-                            </div>
-                        </div>
-                    <?php endwhile; ?>
-                <?php else: ?>
-                    <p>Nenhum filme encontrado.</p>
-                <?php endif; ?>
-            </div>
-
-        <!--  <button class="next" onclick="scrollRight()">&#10095;</button> Seta próximo -->
-
-        </div>
-
-            <h2><b>|</b>Séries do Momento</h2>
-             
-            <div class="row">
-                    <?php if ($result_serie->num_rows > 0): ?>
-                    <?php while($row = $result_serie->fetch_assoc()): ?>
-                        <div class="col-md-3 movies">
-                            <div class="description">
-                                <li id="movie-li-link">
-                                     <a href="<?= $row['trailer_url'] ?>" id="movie-link">
-                                        <img src="<?= $row['img_url'] ?>" alt="" class="img-fluid">
-                                </li>
-                                <img src="imagens/star-emoji.png" alt="" class="rating">
-                                <p class="rating-value"><?= $row['rate_item'] ?></p>
-                                <li class="movie-name"><a href="#"><?= $row['title_item'] ?></a></li>
-                                <li class="watch-trailer">
-                                    <a href="#" onclick="event.preventDefault(); showTrailer('<?= $row['trailer_url'] ?>')">
-                                        <img src="imagens/video-start.png" alt=""> Trailer
-                                    </a>
-                                </li>
-                            </div>
-                        </div>
-                    <?php endwhile; ?>
-                <?php else: ?>
-                    <p>Nenhum filme encontrado.</p>
-                <?php endif; ?>
+            <div class="carousel-container">
+                <div class="row" id="popular-movies-container">
+                    <!-- Os filmes populares serão ecibidos aqui -->
+                </div>
             </div>
             
+            <h2><b>|</b> Filmes em destaque hoje</h2>
+
+            <div class="carousel-container">
+
+                <!--    <button class="prev" onclick="scrollLeftCustom()">&#10094;</button>  Seta anterior -->
+
+                <div class="row" id="popular-movies-container">
+                        <?php if ($result_filmes->num_rows > 0): ?>
+                        <?php while($row = $result_filmes->fetch_assoc()): ?>
+                            <div class="col-md-3 movies">
+                                <div class="description">
+                                    <li id="movie-li-link">
+                                        <img src="<?= $row['img_url'] ?>" alt="" class="img-fluid">
+                                    </li>
+                                    <img src="imagens/star-emoji.png" alt="" class="rating">
+                                    <p class="rating-value"><?= $row['rate_item'] ?></p>
+                                    <li class="movie-name"><a href="#"><?= $row['title_item'] ?></a></li>
+                                    <li class="watch-trailer">
+                                        <a href="#" onclick="showTrailer('<?= $row['trailer_url'] ?>')">
+                                            <img src="imagens/video-start.png" alt=""> Trailer
+                                        </a>
+                                    </li>
+                                </div>
+                            </div>
+                        <?php endwhile; ?>
+                    <?php else: ?>
+                        <p>Nenhum filme encontrado.</p>
+                    <?php endif; ?>
+                </div>
+
+                <!--  <button class="next" onclick="scrollRight()">&#10095;</button> Seta próximo -->
+
+            </div>
+
+                <h2><b>|</b>Séries do Momento</h2>
+
+                <div class="carousel-container">
+                
+                    <div class="row">
+                            <?php if ($result_serie->num_rows > 0): ?>
+                            <?php while($row = $result_serie->fetch_assoc()): ?>
+                                <div class="col-md-3 movies">
+                                    <div class="description">
+                                        <li id="movie-li-link">
+                                            <a href="<?= $row['trailer_url'] ?>" id="movie-link">
+                                                <img src="<?= $row['img_url'] ?>" alt="" class="img-fluid">
+                                        </li>
+                                        <img src="imagens/star-emoji.png" alt="" class="rating">
+                                        <p class="rating-value"><?= $row['rate_item'] ?></p>
+                                        <li class="movie-name"><a href="#"><?= $row['title_item'] ?></a></li>
+                                        <li class="watch-trailer">
+                                            <a href="#" onclick="event.preventDefault(); showTrailer('<?= $row['trailer_url'] ?>')">
+                                                <img src="imagens/video-start.png" alt=""> Trailer
+                                            </a>
+                                        </li>
+                                    </div>
+                                </div>
+                            <?php endwhile; ?>
+                        <?php else: ?>
+                            <p>Nenhum filme encontrado.</p>
+                        <?php endif; ?>
+                    </div>
+            </div>
+        </div>        
     </section>
 
 </body>
-
-    <script src="script.js"></script>
+    
+<script src="api.js"></script>
+<script src="script.js"></script>
 
 </html>

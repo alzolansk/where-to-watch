@@ -4,7 +4,7 @@
 body{
     color: rgb(0, 0, 0);
     list-style: none;
-    background-color: rgb(230, 230, 230);
+    background-color: rgb(255, 255, 255);
 }
 
 ul{
@@ -21,6 +21,7 @@ form{
     width: 350px;
     height: 450px;
     border: solid 0.5px rgb(197, 197, 197);
+    background-color: #f8f8f8;
     border-radius: 5px;
     padding: 25px 25px 350px 25px;
     margin: 0 auto;
@@ -116,7 +117,6 @@ dialog{
     border: 0.5px solid gray;
     color: rgb(46, 46, 46);
     border-radius: 5px;
-
 }
 
 #loginInvalid button{
@@ -135,4 +135,6 @@ dialog{
     border: 1px solid gray;
     margin-bottom: 10px;
 
+
+    
 }

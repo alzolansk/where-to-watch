@@ -18,62 +18,41 @@
 
     <div id = "search-div">
 
-        <input type="text" id="searchmovie" placeholder="Pesquisar filme ou série" autocomplete="off">
-        <button id="botaoPesquisar">Pesquisar</button>
+        <button id="addMovie">Adicionar filme/série</button>
 
-        <div id="results"></div>
+        <div>
+            <input type="text" id="searchmovie" placeholder="Pesquisar filme ou série" autocomplete="off" style="display:none;">
+            <!-- <button id="botaoPesquisar">Pesquisar</button> -->
+
+            <div id="results" style="display: none;"></div>
+        </div>
 
     </div>
 
-    
+    <dialog id="addMovieScreen">
+        <div id="moviecontent" class="modal-flex">
+            <div class="poster-title-id">
+            <img src="" alt="Poster Filme" id="moviePoster" class="img-fluid">
+            <div>
+            <h2 id="movieTitle"></h2>
+            <p id="idTMDB"></p>
+            <p id="movieGenre"></p>
+            <div>
+            <p id="providerItem"></p>
+            <p id="logoProvider"></p>
+            <p id="mediaTypeP"></p>
+            </div>
+            <button id="addMovieButton" class="btn btn-danger">Adicionar filme/série</button>
+            </div>
+            </div>
+            <p id="movieSinopse" class="sinopse"></p>
+            <button id="closeModal" class="btn btn-secondary">Fechar</button>
+        </div>
+    </dialog>
+
 </section>
     
 </body>
 
-<script>
-//Consultando API
-    const apiKey = 'dc3b4144ae24ddabacaeda024ff0585c'; 
-
-    document.getElementById('searchmovie').addEventListener('input', function() {
-        const query = this.value.trim();
-        if (query.length > 0) {
-            const url = `https://api.themoviedb.org/3/search/multi?api_key=${apiKey}&query=${encodeURIComponent(query)}`;
-
-            fetch(url)
-            .then(response => response.json())
-            .then(data => {
-                const resultsContainer = document.getElementById('results');
-                resultsContainer.innerHTML = '';
-
-                // Verifica se existem resultados
-                if (data.results.length > 0) {
-                    data.results.forEach(item => {
-                        if (item.media_type === 'movie' || item.media_type === 'tv') {
-                            const title = item.title || item.name; // Para pegar o título do filme ou da série
-                            const imageUrl = `https://image.tmdb.org/t/p/w500${item.poster_path}`;
-                            const idTmdb = item.id;
-                            const overview = item.overview; //Sinopse
-
-                            resultsContainer.innerHTML += `
-                                <div>
-                                        <img src="${imageUrl}" alt="${title}">
-                                        <div class="info">
-                                            <h3>${title}</h3>
-                                            <p>ID TMDb: ${idTmdb}</p>
-                                        </div>
-                                    </div>
-                                `;
-                        }
-                    });
-                } else {
-                    resultsContainer.innerHTML = '<p>Nenhum resultado encontrado.</p>'; // Mensagem se não houver resultados
-                }
-            })
-            .catch(error => console.error('Erro:', error));
-        } else {
-            // Limpa os resultados se o campo de pesquisa estiver vazio
-            document.getElementById('results').innerHTML = '';
-        }
-    });
-</script>
+<script src="consultmovies.js"></script>
 </html>

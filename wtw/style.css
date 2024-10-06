@@ -519,20 +519,25 @@ button.prev:hover, button.next:hover {
 
 /*Tela Adicionar filme*/
 
+#search-div{
+    display: flex;
+    padding: 20px;
+}
+
 #results {
-    width: 30%;
-    max-height: 125px; 
+    max-height: 200px; 
+    width: 400px;
     overflow-y: auto; /* Habilita rolagem vertical */
-    border: 1px solid #363636;
-    padding: 10px; 
-    background-color: #202020; 
-    border-radius: 5px;
+    border: 0.5px solid #363636;
+    padding: 5px 0px 0px 0px; 
+    background-color: #20202098; 
+    border-radius: 0px 0px 15px 15px;
     box-shadow: 0px 4px 8px rgba(32, 32, 32, 0.1);
+    margin-left: 11px;
 }
 
 #results div {
     display: flex; 
-    align-items: start; /* Alinha verticalmente no centro */
     border-bottom: 1px solid #ddd;
     padding: 5px;
 }
@@ -541,8 +546,25 @@ button.prev:hover, button.next:hover {
     border-bottom: none; /* Remove a linha de separação do último item */
 }
 
+#results::-webkit-scrollbar {
+    border: none;
+}
+
+#results::-webkit-scrollbar-track {
+    background-color: rgb(48, 48, 48);
+    border-radius: 8px;
+}
+
+#results::-webkit-scrollbar-thumb{
+    background-color: #161616;
+    border-radius: 5px; 
+    height: 25px;
+    box-shadow: 2px 2px 2px 1px rgba(0, 0, 0, 0.2);
+} 
+
 #results img {
-    width: 70px; 
+    width: 40px; 
+    height: 65px;
     border-radius: 5px;
     margin-right: 10px;
 }
@@ -553,8 +575,70 @@ button.prev:hover, button.next:hover {
 
 }
 
-.info {
+#results div:hover{
+    background-color: #242424;
+    transition: 0.1s ease-in-out;
+    cursor: pointer;
+}
+
+.movie-info {
     display: flex; 
     flex-direction: column; 
+}
+
+#addMovie{
+    background-color: #161616;
+    color: #ddd;
+    height: 46px;
+    width: 180px;
+    border-radius: 10px;
+    padding: 10px;
+    
+}
+
+#searchmovie{
+    width: 400px;
+    border-radius: 10px;
+    background-color: #363636;
+    height: 46px;
+    color: aliceblue;
+    padding: 10px;
+    border: none;
+    margin-left: 10px;
+}
+
+#btnAddMovie{
+    background-color: rgb(41, 41, 41);
+}
+
+/*Dialog adicionar filme*/
+
+#addMovieScreen{
+    width: 1200px;
+    height: 800px;
+    padding: 25px;
+    margin: auto;
+    border-radius: 15px;
+    color: rgb(0, 0, 0);
+    background: rgb(255,255,255);
+    background: radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(233,233,233,1) 100%);
+
+
+    box-shadow:  2px 2px 5000px 1000px rgba(0, 0, 0, 0.507);
+
+}
+
+#addMovieScreen img{
+    width: 100px;
+    border-radius: 10px;
+}
+
+.poster-title-id{
+    display: flex;
+    gap: 10px; /* Espaçamento entre o pôster e o título */
+}
+
+.sinopse{
+    margin-top: 20px;
 }
 

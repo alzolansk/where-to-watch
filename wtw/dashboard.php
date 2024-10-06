@@ -2,7 +2,7 @@
     
     <div class="faixa">
 
-       <li><a href="index.php" class="logo"> <img src="imagens/Where-toWatch.png" alt="logo" style="width: 80px"></li></a>
+       <li><a href="index.php" class="logo"> <img src="imagens/Where-toWatch.png" alt="logo" style="width: 80px; margin-bottom: 10px;"></li></a>
 
         <nav id="menu-buttons" class="hidden-menu">
             <ul id="ulBotoes">
@@ -19,8 +19,13 @@
             session_start();
 
             if(!isset($_SESSION['nome']) || !isset($_SESSION['id'])) {
-                
+            
+            echo '<div class="user-menu">';
             echo "<ul><li><a href=login.php> Fazer login </a></li></ul>";
+            echo '</div>';
+            echo '<div class="menu-trigger">';
+            echo '<img onclick="toggleMenu()" src="imagens/menu-icon.png" alt="Menu Icon" id="menuIcon" width="30px">';
+            echo '</div>';
 
             } else if (isset($_SESSION['nome'])) {
                 echo '<div class="user-menu">';

@@ -99,6 +99,27 @@ $conexao->close();
 
 </body>
 
-<script src="script.js"></script>
+<script>
+  
+//Erro de login
+
+const loginInvalidDialog = document.getElementById("loginInvalid");
+const titleErrorElement = document.getElementsByClassName("titleError");
+const createAccountElement = document.getElementById("createAccount");
+const errorMessageElement = document.getElementById("errorMessage");
+const closeDialogButton = document.getElementById("closeDialog");
+
+// Verifica se há mensagem de erro no elemento do modal
+if (errorMessageElement.innerText.trim() !== "") {
+   console.log("Erro de login");
+   loginInvalidDialog.showModal();
+}
+
+closeDialogButton.addEventListener("click", function() {
+   loginInvalidDialog.removeAttribute('open'); // Remove a classe para resetar o estado
+   loginInvalidDialog.close(); 
+});
+
+</script>
 
 </html>
