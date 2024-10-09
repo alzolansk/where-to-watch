@@ -23,6 +23,7 @@ document.getElementById('searchmovie').addEventListener('input', function() {
                     if (item.media_type === 'movie' || item.media_type === 'tv') {
                         const title = item.title || item.name; // Para pegar o título do filme ou da série
                         const imageUrl = `https://image.tmdb.org/t/p/w500${item.poster_path}&language=pt-BR&page=1`;
+                        const backdropUrl = `https://image.tmdb.org/t/p/w1280/${item.backdrop_path}}`;
                         const idTmdb = item.id;
                         const overview = item.overview; // Sinopse
 
@@ -110,6 +111,11 @@ document.getElementById('searchmovie').addEventListener('input', function() {
                                         document.getElementById('addMovieButton').innerText = `Adicionar ${title} ao Where to Watch`; //Adicionar "serie" ou "filme" no Where To Watch
                                         
                                         const modal = document.getElementById('addMovieScreen');
+                                        modal.style.backgroundImage = `url(${backdropUrl})`;
+
+                                        const overlay = document.querySelector('.overlay');
+                                        overlay.style.display = 'block'; // Torna a overlay visível 
+                                        
                                         modal.showModal();
                                     });
                             })
@@ -133,4 +139,13 @@ document.getElementById('searchmovie').addEventListener('input', function() {
         resultsContainer.innerHTML = '';
         resultsContainer.style.display = 'none';
     }
+});
+
+document.getElementById('closeModal').addEventListener('click', function() {
+    const modal = document.getElementById('addMovieScreen');
+    modal.close();
+    
+    // Ocultar a overlay
+    const overlay = document.querySelector('.overlay');
+    overlay.style.display = 'none';
 });

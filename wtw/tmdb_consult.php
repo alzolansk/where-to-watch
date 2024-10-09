@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
     <link rel="icon" href="imagens/favicon-wtw.png">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="consultmovie.css">
     <title>Adicionar novo filme</title>
 </head>
 <body>
@@ -46,8 +46,10 @@
             </div>
             </div>
             <p id="movieSinopse" class="sinopse"></p>
+            <img id="backdrop" src="" style="display: none;" alt="Backdrop Image">
             <button id="closeModal" class="btn btn-secondary">Fechar</button>
         </div>
+        <div class="overlay"></div> <!-- Camada de fundo preto -->
     </dialog>
 
 </section>

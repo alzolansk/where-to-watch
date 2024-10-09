@@ -6,6 +6,10 @@
 
  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@900&display=swap');
 
+ @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap');
+
+ @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@100..900&display=swap');
+
 
  @media (max-width: 1200px) {
     body {
@@ -39,7 +43,6 @@ body{
 
 .faixa {
     display: flex;
-    height: 60px;
     flex-direction: row;
     align-items: center; /* Centraliza verticalmente */
     height: auto;
@@ -229,6 +232,200 @@ input::placeholder{
 
 */
 
+/*Destaques*/
+
+.container-wrap{
+    padding: 20px;
+    margin: auto;
+    position: relative;
+    height: 100%;
+    max-height: 650px;
+    max-width: 1200px;
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    overflow-y: hidden;
+    overflow-x: auto; /* Evita barra de rolagem vertical, mas mantém horizontal */
+    gap: 400px;
+}
+
+.container-wrap::-webkit-scrollbar {
+    display: none;
+    z-index: 1;
+}
+
+@media (max-width: 950px) {
+    .container-wrap{
+        padding: 20px;
+    }
+}
+
+.backdropContainer{
+    padding: 20px;
+    flex: none;
+    width: 100%;
+    height: 100%;
+    position: relative; /* Certifica que .itemInfo seja posicionado dentro desse container */
+
+}
+
+.upcomingItem{
+    width: 100%;
+    max-width: 500px;
+}
+
+.backdropImg{
+    cursor: pointer;
+    width: 900px;
+    height: 100%;
+    z-index: 1;
+    border-radius: 35px;
+    filter: brightness(0.5); /* Torna o backdrop um pouco mais escuro */
+    object-fit: cover; /* Mantém a proporção da imagem */
+    transition: 0.4s ease-in-out;
+}
+
+.backdropContainer:hover .backdropImg{
+    filter: brightness(0.4);
+    transform: scale(1.05); /* Aumenta um pouco mais ao passar o mouse */
+
+}
+
+.itemInfo{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: absolute;
+    width: 100%;
+    top: 65%;
+    left: 200px; /* Posiciona ao lado da frontImage */
+    box-sizing: border-box; /* Garante que padding não afete o tamanho do container */
+    z-index: 3; /* Garante que o título e o botão estejam acima da frontImage e do backdrop */
+}
+
+.itemInfo h2{
+    font-size: 36px;
+    font-family: Outfit;
+}
+
+
+@media (max-width: 950px) {
+    .itemInfo{
+        left: 180px;
+    }
+}
+
+@media (max-width: 500px) {
+    .itemInfo{
+        left: 120px;
+        top: 60%;
+    }
+}
+
+
+@media (max-width: 580px) {
+    .itemInfo h2{
+        font-size: 30px;
+    }
+}
+
+.frontImage{
+    max-width: 130px;
+    width: 100%;
+    position: absolute;
+    border-radius: 15px;
+    left: 40px; 
+    transition: translateX(-40%) scale(1.2); /* Centraliza e amplia um pouco a imagem */
+    z-index: 2;
+    box-shadow: 0px 15px 30px rgba(0, 0, 0, 0.5); /* Sombra para efeito 3D */
+    position: absolute;
+    transition: transform 0.3s ease-in-out;
+    flex: 1;
+    cursor: pointer;
+    bottom: 5px;
+}
+
+.backdropContainer:hover .frontImage {
+    transform: translateX(-10%) scale(1.2); /* Aumenta um pouco mais ao passar o mouse */
+    box-shadow: 0px 20px 40px rgba(0, 0, 0, 0.7); /* Sombra mais forte no hover */
+}
+
+@media (max-width: 500px) {
+    .frontImage{
+        transform: none;
+        width: 100px;
+        border-radius: 5px;
+        left: 10px;
+    }
+
+    .backdropImg{
+        border-radius: 15px;
+    }
+
+}
+
+@media (max-width: 344px) {
+    .frontImage{
+        transform: none;
+        width: 80px;
+    }
+
+}
+
+@media (max-width: 950px) {
+    .frontImage{
+        transform: none;
+    }
+
+    .frontImage:hover{
+        transform: none;
+        box-shadow: none;
+    }
+}
+
+.trailer-link{
+    z-index: 2;
+    background-color: rgb(0, 0, 0, 0.8);
+    position: relative;
+    width: 75px;
+    height: 75px;
+    margin-left: 10px;
+    border-radius: 45%;
+    list-style: none;
+}
+
+.trailer-link:focus{
+    outline: none;
+}
+
+.trailer-link:hover{
+    transition: 400ms ease-in-out;
+    border-radius: 50%;
+    background-color: black;
+}
+
+@media (max-width: 800px) {
+    .trailer-link{
+        width: 50px;
+        height: 50px;
+    }
+
+    .trailer-link img{
+        width: 15px;
+    }
+}
+
+.logo-font{
+    font-family: 'HBO Max', 'Arial';
+    font-size: 40px;
+}
+
+.logo-font2{
+    font-family: Bebas Neue;
+    font-size: 50px;
+    color: #D7171E;
+}
+
 /* Dialog Window */
 
 #dialog{
@@ -237,23 +434,26 @@ input::placeholder{
     max-height: 465px;
     max-width: 809px;
     width: 100%;
+    border-radius: 25px;
     overflow-x: hidden;
     overflow-y: hidden;
     box-shadow:  2px 2px 5000px 1000px rgba(0, 0, 0, 0.507);
 }
 
-#dialog button{
-    font-family: Nunito;
-    background: #0000006b;
-    border: 0.5px solid black;
-    font-size: 1.5em;
-    width: 40px;
-    height: 40px;
-    position: absolute;
-    top: 5px;
-    right: 5px;
-    color: rgb(255, 255, 255);
+.dialog[open]{
+    animation: fadein 0.3s ease-in forwards;
 }
+
+@keyframes fadein{
+    0%{
+      bottom: 200px;
+      opacity:0;
+    }
+    100%{
+      opacity:1;
+      background-color: rgb(0, 0, 0, 0.1);
+    }
+  }
 
 #dialog iframe{
     max-width: 809px;
@@ -261,6 +461,7 @@ input::placeholder{
     max-height: 465px;
     height: 100%;
 }
+
 
 @media (max-width: 800px) {
     #dialog{
@@ -277,16 +478,23 @@ input::placeholder{
     }
 }
 
-
-
-/* User's navigation area*/
-
-
-.carousel-container {
-    position: relative;
-    display: flex;
+#close-trailer{
+    border-radius: 50%;
+    outline: none;
     align-items: center;
-}
+    border: none;
+    font-family: Nunito;
+    background: #0000006b;
+    font-size: 1.5em;
+    width: 40px;
+    height: 40px;
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    color:#D7171E;
+}   
+
+/*Arrows*/
 
 button.prev, button.next {
     position: absolute;
@@ -318,6 +526,14 @@ button.prev:hover, button.next:hover {
 
 
 /* Filmes e Séries */
+
+/* User's navigation area*/
+
+.carousel-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
 
 .container{
     width: 100%;
@@ -352,22 +568,20 @@ button.prev:hover, button.next:hover {
 
 .row{
     position: relative;
-    height: auto;
-    display: flexbox;
+    display: flex;
     flex-direction: row;
     padding-bottom: 1px;
     flex-flow:row nowrap;
     overflow-x: auto;
     overflow-y: hidden;
     -ms-overflow-style: none;
-    scrollbar-width: none;  
+    scrollbar-width: none; 
+    transition: transform 0.3s ease-in-out; /* Transição suave */
 }
 
 .row:hover{
-    padding-bottom: 0px;
     border-radius: 20px;
     transition: 400ms ease-in-out;
-    background-color: rgb(3, 3, 3);
 }
 
 .row::-webkit-scrollbar {
@@ -383,9 +597,8 @@ button.prev:hover, button.next:hover {
     color: rgb(255, 255, 255);
 }
 
-.col-md-3{
-    display: flex;
-    flex-flow: row;
+.info{
+    padding: 5px;
 }
 
 .description{
@@ -393,10 +606,30 @@ button.prev:hover, button.next:hover {
     text-align: left;
     border-radius: 5px;
     font-size: 20px;
+    justify-content: space-between;
+    flex-direction: row;
+    height: 100%;
+    cursor: pointer;
+    transition: transform 0.3s ease-in-out; 
 }
 
+
+
 .description:hover{
-    background-color: rgb(15, 15, 15);
+    transform: scale(1.05); /* Move a descrição para cima */
+    background: rgb(13,13,13);
+    background: linear-gradient(0deg, rgba(17,17,17,1) 0%, rgba(17,17,17,0) 100%);
+
+    bottom: -100px;
+}
+
+.description:hover .img-fluid{
+    border-radius: 20px;
+    transform: scale(0.95);
+}
+
+.description .img-fluid{
+    transition: transform 0.3s ease, border-radius 0.3s ease; /* Adiciona transição suave para transform e border-radius */
 }
 
 .description a{
@@ -406,17 +639,13 @@ button.prev:hover, button.next:hover {
 .rating, .rating-value{
     position: relative;
     display: inline;
-    padding-left: 8px;
-    padding-top: 10px;
-    padding-bottom: 10px;
-    
+    padding-left: 8px;   
 }
 
 .rating-value{
-    position: relative;
-    top: 2px;
-    font-size: 15px;
     font-family: Lato;
+    font-size: 15px;
+    padding-bottom: 10px;
 }
 
 /*Trailer row*/
@@ -425,8 +654,11 @@ button.prev:hover, button.next:hover {
     font-family: Lato;
     text-align: center;
     position: relative;
-    padding: 30px;
+    padding-top: 30px;
     width: 100%;
+    margin-bottom: 15px;
+    margin-top: 15px;
+    margin-bottom: 50px;
 }
 
 .watch-trailer img {
@@ -450,8 +682,24 @@ button.prev:hover, button.next:hover {
 }
 
 .movie-name{
-    position: relative;
-    padding-left: 10px;
+    white-space: nowrap;     /* Impede que o texto quebre para a próxima linha */
+    overflow: hidden;        /* Esconde o texto que ultrapassar os limites */
+    text-overflow: ellipsis; /* Adiciona '...' no lugar do texto cortado */
+    width: 100%;             /* Define o tamanho máximo da largura */
+    display: block;
+
+}
+
+.genre-name{
+    background-color: rgb(155, 0, 0);
+    padding: 5px 5px 5px 50px;
+    color: aliceblue;
+}
+
+@media (max-width: 768px) {
+    .movie-name{
+        width: 90%;             /* Define o tamanho máximo da largura */
+    }
 }
 
 @media (max-width: 1000px){
@@ -470,12 +718,6 @@ button.prev:hover, button.next:hover {
 
 }
 
-.rating-value, .rating{
-    position: relative;
-    top: 3px;
-}
-
-
 .watch-movie{
     font-family: Lato;
     text-align: center;
@@ -488,6 +730,7 @@ button.prev:hover, button.next:hover {
     position: relative;
     right: 5px;
     bottom: 1.5px;
+    transition: transform 0.3s ease-in-out; 
 }
 
 .watch-movie :hover{
@@ -507,138 +750,13 @@ button.prev:hover, button.next:hover {
     width: 100%;
     display: block;
     position: relative;
-    height: auto;
-    min-width: 200px; /* Define um tamanho mínimo para a imagem */
+    height: 400px;
+    min-width: 220px; /* Define um tamanho mínimo para a imagem */
 }
 
-@media (max-width: 480px) {
-    .img-fluid {
-        width: 100%;
+@media (max-width: 800px) {
+    .img-fluid{
+        width: 220px;
+        height: 90%;
     }
 }
-
-/*Tela Adicionar filme*/
-
-#search-div{
-    display: flex;
-    padding: 20px;
-}
-
-#results {
-    max-height: 200px; 
-    width: 400px;
-    overflow-y: auto; /* Habilita rolagem vertical */
-    border: 0.5px solid #363636;
-    padding: 5px 0px 0px 0px; 
-    background-color: #20202098; 
-    border-radius: 0px 0px 15px 15px;
-    box-shadow: 0px 4px 8px rgba(32, 32, 32, 0.1);
-    margin-left: 11px;
-}
-
-#results div {
-    display: flex; 
-    border-bottom: 1px solid #ddd;
-    padding: 5px;
-}
-
-#results div:last-child {
-    border-bottom: none; /* Remove a linha de separação do último item */
-}
-
-#results::-webkit-scrollbar {
-    border: none;
-}
-
-#results::-webkit-scrollbar-track {
-    background-color: rgb(48, 48, 48);
-    border-radius: 8px;
-}
-
-#results::-webkit-scrollbar-thumb{
-    background-color: #161616;
-    border-radius: 5px; 
-    height: 25px;
-    box-shadow: 2px 2px 2px 1px rgba(0, 0, 0, 0.2);
-} 
-
-#results img {
-    width: 40px; 
-    height: 65px;
-    border-radius: 5px;
-    margin-right: 10px;
-}
-
-#results h3 {
-    font-size: 100%;
-    margin: 0; /* Remove a margem padrão do título */
-
-}
-
-#results div:hover{
-    background-color: #242424;
-    transition: 0.1s ease-in-out;
-    cursor: pointer;
-}
-
-.movie-info {
-    display: flex; 
-    flex-direction: column; 
-}
-
-#addMovie{
-    background-color: #161616;
-    color: #ddd;
-    height: 46px;
-    width: 180px;
-    border-radius: 10px;
-    padding: 10px;
-    
-}
-
-#searchmovie{
-    width: 400px;
-    border-radius: 10px;
-    background-color: #363636;
-    height: 46px;
-    color: aliceblue;
-    padding: 10px;
-    border: none;
-    margin-left: 10px;
-}
-
-#btnAddMovie{
-    background-color: rgb(41, 41, 41);
-}
-
-/*Dialog adicionar filme*/
-
-#addMovieScreen{
-    width: 1200px;
-    height: 800px;
-    padding: 25px;
-    margin: auto;
-    border-radius: 15px;
-    color: rgb(0, 0, 0);
-    background: rgb(255,255,255);
-    background: radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(233,233,233,1) 100%);
-
-
-    box-shadow:  2px 2px 5000px 1000px rgba(0, 0, 0, 0.507);
-
-}
-
-#addMovieScreen img{
-    width: 100px;
-    border-radius: 10px;
-}
-
-.poster-title-id{
-    display: flex;
-    gap: 10px; /* Espaçamento entre o pôster e o título */
-}
-
-.sinopse{
-    margin-top: 20px;
-}
-

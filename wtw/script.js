@@ -1,9 +1,7 @@
-//Trailers
-const buttonClose = document.getElementById("closeTrailer")
+const buttonClose = document.getElementById("close-trailer");
 
 function mudaFoto (foto){
    document.getElementById('trailer').src = foto
-
 }
 
 function senhaError (senha){
@@ -22,11 +20,15 @@ function senhaError (senha){
 function showTrailer(trailerUrl) {
     document.getElementById('trailerFrame').src = trailerUrl.replace("watch?v=", "embed/");
     document.getElementById('dialog').showModal();
+    dialog.classList.add('show');
+
 }
 
 function closeTrailer() {
     document.getElementById('dialog').close();
-    document.getElementById('trailerFrame').src = ""; 
+    document.getElementById('trailerFrame').src = "";
+    dialog.classList.remove('show');
+ 
 }
 
 //Função setinhas de navegação

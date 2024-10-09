@@ -32,22 +32,56 @@
     <section id="interface">
 
             <!-- Modal para o trailer -->
-            <dialog id="dialog">
+            <dialog id="dialog" class="dialog">
                 <iframe id="trailerFrame" src="" title="Trailer" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-                <button id="closeTrailer" onclick="closeTrailer()">X</button>
+                <button id="close-trailer" onclick="closeTrailer()">X</button>
             </dialog>
+
+            <div id="container-wrap" class="container-wrap">
+                <!--Primeiro container com trailer e backdrop-->
+            </div>
+
 
         <div class="container">
 
-        <h2><b>|</b> Filmes e séries populares hoje</h2>
+            <h2><b>|</b>
+                <span>
+                    Mais populares no
+                </span>
+                
+                <span class="logo-font">
+                    Where To
+                </span>
+                <span class="logo-font2">
+                    WATCH
+                </span>
+            </h2>
 
             <div class="carousel-container">
                 <div class="row" id="popular-movies-container">
                     <!-- Os filmes populares serão ecibidos aqui -->
                 </div>
             </div>
+
+            <h2><b>|</b>
+                <span class="logo-font">
+                    Where to
+                </span>
+                <span class="logo-font2">
+                    WATCH
+                </span>
+                <span>
+                    indica
+                </span>
+            </h2>
+
+            <div class="carousel-container">
+                <div class="row" id="top-movies-container">
+                    <!-- Os filmes com maiores notas serão ecibidos aqui -->
+                </div>
+            </div>
             
-            <h2><b>|</b> Filmes em destaque hoje</h2>
+            <h2><b>|</b> <?php echo "Filmes perfeitos para " . $_SESSION['nome'] . " "?> </h2>
 
             <div class="carousel-container">
 
@@ -91,8 +125,7 @@
                                 <div class="col-md-3 movies">
                                     <div class="description">
                                         <li id="movie-li-link">
-                                            <a href="<?= $row['trailer_url'] ?>" id="movie-link">
-                                                <img src="<?= $row['img_url'] ?>" alt="" class="img-fluid">
+                                            <img src="<?= $row['img_url'] ?>" alt="" class="img-fluid">
                                         </li>
                                         <img src="imagens/star-emoji.png" alt="" class="rating">
                                         <p class="rating-value"><?= $row['rate_item'] ?></p>
@@ -112,10 +145,9 @@
             </div>
         </div>        
     </section>
-
 </body>
-    
-<script src="api.js"></script>
+
+<script src="container.js"></script>
 <script src="script.js"></script>
 
 </html>
