@@ -37,10 +37,28 @@
                 <button id="close-trailer" onclick="closeTrailer()">X</button>
             </dialog>
 
+            <div class="wrap">
+
+                <div class="cinema-container">
+                    <h2 class="cinema-font">
+                        <span class="title-wrap">
+                            Chegando nos cinemas
+                        </span>
+                        
+                        <span class="title-wrap2">
+                            em breve!
+                        </span>
+                    </h2>
+                </div>
+
+            <button class="prev" onclick="scrollLeftCustom()">&#10094;</button>
+
             <div id="container-wrap" class="container-wrap">
                 <!--Primeiro container com trailer e backdrop-->
             </div>
 
+            <button class="next" onclick="scrollRight()">&#10095;</button>
+            </div>
 
         <div class="container">
 

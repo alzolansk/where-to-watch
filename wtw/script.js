@@ -33,17 +33,20 @@ function closeTrailer() {
 
 //Função setinhas de navegação
 function scrollLeftCustom(){
-   const row = document.querySelector('.row');
-   row.scrollBy({
-      left: -300, // Valor que vai para a esquerda.
+   const wrap = document.querySelector('.container-wrap');
+   const scrollAmount = wrap.clientWidth * 0.50; // Mova 25% da largura do contêiner
+
+   wrap.scrollBy({
+      left: -scrollAmount, // Valor que vai para a esquerda.
       behavior: 'smooth'
    });
 }
 
 function scrollRight(){
-   const row = document.querySelector('.row');
-   row.scrollBy({
-      left: 300, //Valor que vai para a direita.
+   const wrap = document.querySelector('.container-wrap');
+   const scrollAmount = wrap.clientWidth * 0.50; // Mova 25% da largura do contêiner
+   wrap.scrollBy({
+      left: scrollAmount, //Valor que vai para a direita.
       behavior: 'smooth'
    });
 }

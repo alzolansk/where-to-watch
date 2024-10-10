@@ -234,19 +234,49 @@ input::placeholder{
 
 /*Destaques*/
 
-.container-wrap{
-    padding: 20px;
+.wrap{
+    height: 100%;
     margin: auto;
+    max-height: 650px;
+    max-width: 1400px;
+    width: 100%;
+    position: relative;
+}
+
+.container-wrap{
+    padding: 37px 20px 20px 20px;
     position: relative;
     height: 100%;
     max-height: 650px;
-    max-width: 1200px;
+    max-width: 1400px;
     width: 100%;
     display: flex;
     flex-direction: row;
     overflow-y: hidden;
     overflow-x: auto; /* Evita barra de rolagem vertical, mas mantém horizontal */
     gap: 400px;
+}
+
+.cinema-container{
+    position:absolute;
+    z-index: 10;
+    left: 25%;
+}
+
+.cinema-font{
+    text-align: center;
+}
+
+.title-wrap{
+    font-family: 'HBO Max', 'Arial';
+    font-size: 45px;
+    color: aliceblue;
+}
+
+.title-wrap2{
+    font-family: 'HBO Max', 'Arial';
+    font-size: 45px;
+    color: #D7171E;
 }
 
 .container-wrap::-webkit-scrollbar {
@@ -266,6 +296,7 @@ input::placeholder{
     width: 100%;
     height: 100%;
     position: relative; /* Certifica que .itemInfo seja posicionado dentro desse container */
+    transition: transform 0.3s ease; /* Transição suave para o efeito de centralização */
 
 }
 
@@ -306,6 +337,8 @@ input::placeholder{
 .itemInfo h2{
     font-size: 36px;
     font-family: Outfit;
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
 
 
@@ -328,6 +361,19 @@ input::placeholder{
         font-size: 30px;
     }
 }
+
+.movie-name{
+    white-space: nowrap;     /* Impede que o texto quebre para a próxima linha */
+    overflow: hidden;        /* Esconde o texto que ultrapassar os limites */
+    text-overflow: ellipsis; /* Adiciona '...' no lugar do texto cortado */
+    width: 100%;             /* Define o tamanho máximo da largura */
+    display: block;
+}
+
+.movie-pt-title{
+    padding-left: 10px;
+}
+
 
 .frontImage{
     max-width: 130px;
@@ -426,6 +472,7 @@ input::placeholder{
     color: #D7171E;
 }
 
+
 /* Dialog Window */
 
 #dialog{
@@ -441,12 +488,12 @@ input::placeholder{
 }
 
 .dialog[open]{
-    animation: fadein 0.3s ease-in forwards;
+    animation: fadein 0.2s ease-in forwards;
 }
 
 @keyframes fadein{
     0%{
-      bottom: 200px;
+      bottom: 400px;
       opacity:0;
     }
     100%{
@@ -498,16 +545,19 @@ input::placeholder{
 
 button.prev, button.next {
     position: absolute;
+    width: 50px;
+    height: 50px;
     top: 50%;
+    border-radius: 40%;
     transform: translateY(-50%);
     background-color: rgba(0, 0, 0, 0.5);
     border: none;
     color: white;
     font-size: 2rem;
-    padding: 10px;
     cursor: pointer;
+    outline: none;
     z-index: 1;
-    border-radius: 30%;
+    align-items: center;
 }
 
 button.prev {
@@ -519,6 +569,7 @@ button.next {
 }
 
 button.prev:hover, button.next:hover {
+    transform: translateY(-50%) scale(1.2);
     transition: 0.5s;
     background-color: rgba(141, 141, 141, 0.8);
     color: rgb(0, 0, 0);
@@ -601,6 +652,13 @@ button.prev:hover, button.next:hover {
     padding: 5px;
 }
 
+.info p{
+    font-size: 15px;
+    color: rgb(143, 143, 143);
+    padding-top: 5px;
+    padding-left: 5px;
+}
+
 .description{
     background-color: rgb(17, 17, 17);
     text-align: left;
@@ -681,18 +739,9 @@ button.prev:hover, button.next:hover {
     transition: 120s;
 }
 
-.movie-name{
-    white-space: nowrap;     /* Impede que o texto quebre para a próxima linha */
-    overflow: hidden;        /* Esconde o texto que ultrapassar os limites */
-    text-overflow: ellipsis; /* Adiciona '...' no lugar do texto cortado */
-    width: 100%;             /* Define o tamanho máximo da largura */
-    display: block;
-
-}
-
 .genre-name{
     background-color: rgb(155, 0, 0);
-    padding: 5px 5px 5px 50px;
+    padding: 5px 0px 5px 10px;
     color: aliceblue;
 }
 
