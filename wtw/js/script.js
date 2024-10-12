@@ -34,7 +34,7 @@ function closeTrailer() {
 //Função setinhas de navegação
 function scrollLeftCustom(){
    const wrap = document.querySelector('.container-wrap');
-   const scrollAmount = wrap.clientWidth * 0.50; // Mova 25% da largura do contêiner
+   const scrollAmount = wrap.clientWidth * 0.60; // Mova 25% da largura do contêiner
 
    wrap.scrollBy({
       left: -scrollAmount, // Valor que vai para a esquerda.
@@ -44,7 +44,7 @@ function scrollLeftCustom(){
 
 function scrollRight(){
    const wrap = document.querySelector('.container-wrap');
-   const scrollAmount = wrap.clientWidth * 0.50; // Mova 25% da largura do contêiner
+   const scrollAmount = wrap.clientWidth * 0.60; // Mova 25% da largura do contêiner
    wrap.scrollBy({
       left: scrollAmount, //Valor que vai para a direita.
       behavior: 'smooth'

@@ -1,10 +1,10 @@
 // Consultando API
 const apiKey = 'dc3b4144ae24ddabacaeda024ff0585c'; 
 
-document.getElementById('addMovie').addEventListener('click', function() {
+/*document.getElementById('addMovie').addEventListener('click', function() {
     const searchDiv = document.getElementById('searchmovie');
     searchDiv.style.display = 'block';
-})
+})*/
 
 document.getElementById('searchmovie').addEventListener('input', function() {
     const query = this.value.trim();

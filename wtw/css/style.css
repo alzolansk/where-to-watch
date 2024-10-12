@@ -10,6 +10,9 @@
 
  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@100..900&display=swap');
 
+ @import url('https://fonts.googleapis.com/css2?family=Mukta:wght@200;300;400;500;600;700;800&display=swap');
+
+
 
  @media (max-width: 1200px) {
     body {
@@ -253,29 +256,43 @@ input::placeholder{
     display: flex;
     flex-direction: row;
     overflow-y: hidden;
-    overflow-x: auto; /* Evita barra de rolagem vertical, mas mantém horizontal */
+    overflow-x: scroll; /* Evita barra de rolagem vertical, mas mantém horizontal */
     gap: 400px;
 }
 
 .cinema-container{
     position:absolute;
     z-index: 10;
-    left: 25%;
+    left: 20%; 
+    opacity: 0;
+    animation: cinemaFadein 0.5s ease-in forwards;
+
+}
+
+@keyframes cinemaFadein {
+    0%{
+        opacity: 0;
+    }
+
+    100%{
+        opacity: 1;
+    }
 }
 
 .cinema-font{
     text-align: center;
 }
 
-.title-wrap{
+.title-wrap, .title-wrap2{
     font-family: 'HBO Max', 'Arial';
-    font-size: 45px;
+    font-size: 60px;
+}
+
+.title-wrap{
     color: aliceblue;
 }
 
 .title-wrap2{
-    font-family: 'HBO Max', 'Arial';
-    font-size: 45px;
     color: #D7171E;
 }
 
@@ -296,8 +313,15 @@ input::placeholder{
     width: 100%;
     height: 100%;
     position: relative; /* Certifica que .itemInfo seja posicionado dentro desse container */
-    transition: transform 0.3s ease; /* Transição suave para o efeito de centralização */
+    /* transition: opacity 1s ease; Transição suave para o efeito de centralização */
+    transition: opacity 0.5s ease-in-out;
+    opacity: 0.5;
+    top: 0;
+    left: 0;
+}
 
+.backdropContainer.active {
+    opacity: 1;
 }
 
 .upcomingItem{
@@ -311,13 +335,13 @@ input::placeholder{
     height: 100%;
     z-index: 1;
     border-radius: 35px;
-    filter: brightness(0.5); /* Torna o backdrop um pouco mais escuro */
+    filter: brightness(0.7); /* Torna o backdrop um pouco mais escuro */
     object-fit: cover; /* Mantém a proporção da imagem */
     transition: 0.4s ease-in-out;
 }
 
 .backdropContainer:hover .backdropImg{
-    filter: brightness(0.4);
+    filter: brightness(0.9);
     transform: scale(1.05); /* Aumenta um pouco mais ao passar o mouse */
 
 }
@@ -339,6 +363,7 @@ input::placeholder{
     font-family: Outfit;
     white-space: nowrap;
     text-overflow: ellipsis;
+    transition: 0.2s ease-in-out;
 }
 
 
@@ -394,6 +419,10 @@ input::placeholder{
 .backdropContainer:hover .frontImage {
     transform: translateX(-10%) scale(1.2); /* Aumenta um pouco mais ao passar o mouse */
     box-shadow: 0px 20px 40px rgba(0, 0, 0, 0.7); /* Sombra mais forte no hover */
+}
+
+.backdropContainer:hover .movie-title {
+    font-weight:600;
 }
 
 @media (max-width: 500px) {
@@ -462,7 +491,7 @@ input::placeholder{
 }
 
 .logo-font{
-    font-family: 'HBO Max', 'Arial';
+    font-family: 'HBO Max', Mukta;
     font-size: 40px;
 }
 
@@ -747,7 +776,7 @@ button.prev:hover, button.next:hover {
 
 @media (max-width: 768px) {
     .movie-name{
-        width: 90%;             /* Define o tamanho máximo da largura */
+        white-space:unset;
     }
 }
 
@@ -803,9 +832,18 @@ button.prev:hover, button.next:hover {
     min-width: 220px; /* Define um tamanho mínimo para a imagem */
 }
 
+@media (max-width: 1000px) {
+    .img-fluid{
+        width: 220px;
+        height: 90%;
+    }
+}
+
 @media (max-width: 800px) {
     .img-fluid{
         width: 220px;
         height: 90%;
     }
 }
+
+

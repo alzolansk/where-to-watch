@@ -13,7 +13,33 @@
             </ul>
         </nav>
 
-    <input type="text" class="search-bar" placeholder="Pesquisar na Where to Watch">
+        <input type="text" class="search-bar" id="searchmovie" placeholder="Pesquisar filme ou série" autocomplete="off">
+            <!-- <button id="botaoPesquisar">Pesquisar</button> -->
+
+            <div id="results" style="display: none;"></div>
+
+        <dialog id="addMovieScreen">
+            <div id="moviecontent" class="modal-flex">
+            <div class="poster-title-id">
+                <img src="" alt="Poster Filme" id="moviePoster" class="img-fluid2">
+            <div>
+                <h2 id="movieTitle"></h2>
+                <p id="idTMDB"></p>
+                <p id="movieGenre"></p>
+            <div>
+                <p id="providerItem"></p>
+                <p id="logoProvider"></p>
+                <p id="mediaTypeP"></p>
+            </div>
+            <button id="addMovieButton" class="btn btn-danger">Adicionar filme/série</button>
+            </div>
+            </div>
+            <p id="movieSinopse" class="sinopse"></p>
+            <img id="backdrop" src="" style="display: none;" alt="Backdrop Image">
+            <button id="closeModal" class="btn btn-secondary">Fechar</button>
+            </div>
+         <div class="overlay"></div> <!-- Camada de fundo preto -->
+        </dialog>
 
         <?php
             session_start();
@@ -39,4 +65,5 @@
             ?>  
     </div>
 </nav>
-<script src="script.js"></script>
+<script src="js/script.js"></script>
+<script src="js/consultmovies.js"></script>

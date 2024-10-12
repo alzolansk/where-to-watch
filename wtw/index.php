@@ -6,7 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
     <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/searchmovie.css">
     <link rel="icon" href="imagens/favicon-wtw.png">
 
     <title>Where To Watch?</title>
@@ -18,7 +19,7 @@
     <?php
 
     include_once('dashboard.php');
-    include_once('config.php');
+    include_once('config/config.php');
 
     $sql_consult_filmes = "SELECT * FROM items WHERE type_item = 'Filme'";
     $result_filmes = $conexao->query($sql_consult_filmes);
@@ -35,6 +36,28 @@
             <dialog id="dialog" class="dialog">
                 <iframe id="trailerFrame" src="" title="Trailer" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
                 <button id="close-trailer" onclick="closeTrailer()">X</button>
+            </dialog>
+
+            <dialog id="addMovieScreen">
+                <div id="moviecontent" class="modal-flex">
+                    <div class="poster-title-id">
+                    <img src="" alt="Poster Filme" id="moviePoster" class="posterImg">
+                    <div>
+                    <h2 id="movieTitle"></h2>
+                    <p id="idTMDB"></p>
+                    <p id="movieGenre"></p>
+                    <div>
+                    <p id="providerItem"></p>
+                    <p id="logoProvider"></p>
+                    <p id="mediaTypeP"></p>
+                    </div>
+                    </div>
+                    </div>
+                    <p id="movieSinopse" class="sinopse"></p>
+                    <img id="backdrop" src="" style="display: none;" alt="Backdrop Image">
+                    <button id="closeModal" class="btn btn-secondary">Fechar</button>
+                </div>
+                <div class="overlay"></div> <!-- Camada de fundo preto -->
             </dialog>
 
             <div class="wrap">
@@ -99,7 +122,15 @@
                 </div>
             </div>
             
-            <h2><b>|</b> <?php echo "Filmes perfeitos para " . $_SESSION['nome'] . " "?> </h2>
+                <?php 
+
+                if(isset($_SESSION['nome'])){
+
+                echo ("<h2><b>|</b> Filmes perfeitos para " .($_SESSION['nome']) ."</h2>");
+                } else{
+                    echo "Filmes perfeitos para você";
+                }
+                ?>
 
             <div class="carousel-container">
 
@@ -165,7 +196,7 @@
     </section>
 </body>
 
-<script src="container.js"></script>
-<script src="script.js"></script>
+<script src="js/container.js"></script>
+<script src="js/script.js"></script>
 
 </html>
