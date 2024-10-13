@@ -6,7 +6,6 @@ input::placeholder{
 /*results*/
 
 #search-div{
-    display: flex;
     padding: 20px;
 }
 
@@ -86,6 +85,11 @@ input::placeholder{
     animation: fadein 0.2s ease-in forwards;
 }
 
+#addMovieScreen img{
+    width: 200px;
+    border-radius: 20px;
+}
+
 @keyframes fadein {
     0%{
         opacity: 0;
@@ -110,8 +114,7 @@ input::placeholder{
 }
 
 .posterImg{
-    width: 250px;
-    border-radius: 50px;
+    width: 20px;
 }
 
 .overlay {
@@ -120,7 +123,7 @@ input::placeholder{
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(0, 0, 0, 0.7); /* Preto com opacidade */
+    background-color: rgba(0, 0, 0, 0.9); /* Preto com opacidade */
     z-index: 1; /* Camada abaixo do conteúdo, mas acima da imagem de fundo */
     display: none; /* Inicialmente escondida */
 }
@@ -139,4 +142,20 @@ input::placeholder{
 
 .sinopse{
     margin-top: 20px;
+}
+
+.posterImg{
+    width: 100%;
+    display: block;
+    position: relative;
+    height: 400px;
+    min-width: 220px; /* Define um tamanho mínimo para a imagem */
+}
+
+.moviePoster{
+    width: 100%;
+    display: block;
+    position: relative;
+    height: auto;
+    min-width: 200px; /* Define um tamanho mínimo para a imagem */
 }

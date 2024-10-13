@@ -8,15 +8,44 @@
             <ul id="ulBotoes">
                 
                 <li><a href="index.php">Pagina Inicial </a></li>
-                <li><a href="tmdb_consult.php">Adicionar filme</a></li>
+                <?php 
+                session_start();
 
+                if(isset($_SESSION['nome'])){
+                    echo "<li> <a href='tmdb_consult.php'> Adicionar Filme </a></li>";
+                } 
+                ?>
             </ul>
         </nav>
 
-        <input type="text" class="search-bar" id="searchmovie" placeholder="Pesquisar filme ou série" autocomplete="off">
-            <!-- <button id="botaoPesquisar">Pesquisar</button> -->
+            <input type="text" class="search-bar" id="searchmovie" placeholder="Pesquisar filme ou série" autocomplete="off">
+                <!-- <button id="botaoPesquisar">Pesquisar</button> -->
 
-            <div id="results" style="display: none;"></div>
+            <div id="searchResults" style="display: none;"></div>
+
+            <?php
+
+            if(!isset($_SESSION['nome']) || !isset($_SESSION['id'])) {
+
+            echo '<div class="user-menu">';
+            echo "<ul><li><a href=login.php> Fazer login </a></li></ul>";
+            echo '</div>';
+            echo '<div class="menu-trigger">';
+            echo '<img onclick="toggleMenu()" src="imagens/menu-icon.png" alt="Menu Icon" id="menuIcon" width="30px">';
+            echo '</div>';
+
+            } else if (isset($_SESSION['nome'])) {
+                echo '<div class="user-menu">';
+                echo "<label>Olá, " . $_SESSION['nome'] . " ";
+                echo '<a href= logout.php class=btn-danger> Sair </a>';
+                echo '</div>';
+                echo '<div class="menu-trigger">';
+                echo '<img onclick="toggleMenu()" src="imagens/menu-icon.png" alt="Menu Icon" id="menuIcon" width="30px">';
+                echo '</div>';
+            }
+            ?>  
+
+
 
         <dialog id="addMovieScreen">
             <div id="moviecontent" class="modal-flex">
@@ -40,30 +69,5 @@
             </div>
          <div class="overlay"></div> <!-- Camada de fundo preto -->
         </dialog>
-
-        <?php
-            session_start();
-
-            if(!isset($_SESSION['nome']) || !isset($_SESSION['id'])) {
-            
-            echo '<div class="user-menu">';
-            echo "<ul><li><a href=login.php> Fazer login </a></li></ul>";
-            echo '</div>';
-            echo '<div class="menu-trigger">';
-            echo '<img onclick="toggleMenu()" src="imagens/menu-icon.png" alt="Menu Icon" id="menuIcon" width="30px">';
-            echo '</div>';
-
-            } else if (isset($_SESSION['nome'])) {
-                echo '<div class="user-menu">';
-                echo "<label>Olá, " . $_SESSION['nome'] . " ";
-                echo '<a href= logout.php class=btn-danger> Sair </a>';
-                echo '</div>';
-                echo '<div class="menu-trigger">';
-                echo '<img onclick="toggleMenu()" src="imagens/menu-icon.png" alt="Menu Icon" id="menuIcon" width="30px">';
-                echo '</div>';
-            }
-            ?>  
     </div>
 </nav>
-<script src="js/script.js"></script>
-<script src="js/consultmovies.js"></script>

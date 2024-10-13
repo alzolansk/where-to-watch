@@ -1,12 +1,7 @@
 // Consultando API
 const apiKey = 'dc3b4144ae24ddabacaeda024ff0585c'; 
 
-document.getElementById('addMovie').addEventListener('click', function() {
-    const searchDiv = document.getElementById('searchmovieInput');
-    searchDiv.style.display = 'block';
-})
-
-document.getElementById('searchmovieInput').addEventListener('input', function() {
+document.getElementById('searchmovie').addEventListener('input', function() {
     const query = this.value.trim();
     if (query.length > 0) {
         const url = `https://api.themoviedb.org/3/search/multi?api_key=${apiKey}&query=${encodeURIComponent(query)}&language=pt-BR&page=1`;
@@ -101,11 +96,11 @@ document.getElementById('searchmovieInput').addEventListener('input', function()
                                     
                                         // Informações do modal com os dados do filme
                                         document.getElementById('movieTitle').innerText = title; // Define o título no modal
-                                        document.getElementById('movieImg').src = imageUrl; // Define a imagem no modal
+                                        document.getElementById('moviePoster').src = imageUrl; // Define a imagem no modal
                                         document.getElementById('movieSinopse').innerText = overview; // Define a sinopse
-                                        document.getElementById('IDAPI').innerText = `ID TMDb: ${idTmdb}`; // Define ID TMDb
+                                        document.getElementById('idTMDB').innerText = `ID TMDb: ${idTmdb}`; // Define ID TMDb
                                         document.getElementById('movieGenre').innerText = `Gêneros: ${genresNames}`; // Exibe os gêneros
-                                        document.getElementById('providerMovie').innerText = `Provedores: ${providerNames}`; // Exibe provedores
+                                        document.getElementById('providerItem').innerText = `Provedores: ${providerNames}`; // Exibe provedores
                                         document.getElementById('mediaTypeP').innerText = `Tipo: ${mediaTypeText}`;
                                         
                                         document.getElementById('addMovieButton').innerText = `Adicionar ${title} ao Where to Watch`; //Adicionar "serie" ou "filme" no Where To Watch

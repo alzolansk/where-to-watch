@@ -6,8 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
     <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
     <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/searchmovie.css">
+    <!--<link rel="stylesheet" href="css/searchmovie.css">-->
     <link rel="icon" href="imagens/favicon-wtw.png">
 
     <title>Where To Watch?</title>
@@ -30,7 +31,7 @@
     ?>
 
 
-    <section id="interface">
+    <section id="interface" class="interface-session">
 
             <!-- Modal para o trailer -->
             <dialog id="dialog" class="dialog">
@@ -38,26 +39,35 @@
                 <button id="close-trailer" onclick="closeTrailer()">X</button>
             </dialog>
 
-            <dialog id="addMovieScreen">
-                <div id="moviecontent" class="modal-flex">
-                    <div class="poster-title-id">
-                    <img src="" alt="Poster Filme" id="moviePoster" class="posterImg">
-                    <div>
-                    <h2 id="movieTitle"></h2>
-                    <p id="idTMDB"></p>
-                    <p id="movieGenre"></p>
-                    <div>
-                    <p id="providerItem"></p>
-                    <p id="logoProvider"></p>
-                    <p id="mediaTypeP"></p>
-                    </div>
-                    </div>
-                    </div>
-                    <p id="movieSinopse" class="sinopse"></p>
-                    <img id="backdrop" src="" style="display: none;" alt="Backdrop Image">
-                    <button id="closeModal" class="btn btn-secondary">Fechar</button>
+            <dialog id="movieDialog" class="movie-dialog">
+                <div id="moviecontent" class="modal-class">
+                <div class="poster-title-id">
+                <img src="" alt="Poster Filme" id="itemPoster" class="posterItem">
+                <div class="type-title-genre">
+                <p id="mediaTypeParagraph" class="mediaTypeParagraph"></p>
+                <h2 id="itemName" class="animate__animated animate__backInLeft"></h2>
+                <p id="itemGenre"></p>
+                <h3 class="wtw-font">
+                        <span class="wtw-white">
+                            Onde
+                        </span>
+                        
+                        <span class="wtw-red">
+                           assistir?
+                        </span>
+                    </h2>
+                <p id="providerInfo"></p>
+                <div>
+                <p id="release-date"></p>
+                <p id="logoProvider"></p>
                 </div>
-                <div class="overlay"></div> <!-- Camada de fundo preto -->
+                </div>
+                </div>
+                <p id="itemOverview" class="sinopse"></p>
+                <img id="backdrop" src="" style="display: none;" alt="Backdrop Image">
+                <button id="closeItem" class="btn btn-danger">Fechar</button>
+            </div>
+            <div class="overlay-modal"></div> <!-- Camada de fundo preto -->
             </dialog>
 
             <div class="wrap">
@@ -73,14 +83,21 @@
                         </span>
                     </h2>
                 </div>
+                
 
             <button class="prev" onclick="scrollLeftCustom()">&#10094;</button>
 
             <div id="container-wrap" class="container-wrap">
                 <!--Primeiro container com trailer e backdrop-->
             </div>
-
             <button class="next" onclick="scrollRight()">&#10095;</button>
+            </div>
+            
+            <div class="category-buttons">
+                <div class="style-buttons">
+                    <button id="showMovies" class="btn-category active">Filmes</button>
+                    <button id="showSeries" class="btn-category">Séries</button>
+                </div>
             </div>
 
         <div class="container">
@@ -198,5 +215,6 @@
 
 <script src="js/container.js"></script>
 <script src="js/script.js"></script>
+<script src="js/searchingmovies.js"></script>
 
 </html>

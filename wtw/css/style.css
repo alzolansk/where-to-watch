@@ -123,23 +123,26 @@ body{
 
 /* Search Bar*/
 
+
 .search-bar {
     margin: auto;
-    border: 1px solid grey;
     border-radius: 10px;
-    width: 40%;
     height: 35px;
+    width: 30%;
+    background: #d7d7d7;
+    background: -webkit-linear-gradient(0deg, #d7d7d7 0%, #eeeeee 100%);
+    background: linear-gradient(0deg, #d7d7d7 0%, #eeeeee 100%);
 }
 
 @media (max-width: 1000px) { 
-    .search-bar {
+    #search-div {
         width: 30%; /* Oculta a barra de pesquisa */
     }  
 
 }
 
 @media (max-width: 800px) { 
-    .search-bar {
+    #search-div {
         display: none; /* Oculta a barra de pesquisa */
     }  
 
@@ -148,6 +151,8 @@ body{
 input::placeholder{
     padding: 10px;
 }
+
+/*Resultados */
 
 
 /* Main Trailer John Wick
@@ -235,7 +240,98 @@ input::placeholder{
 
 */
 
-/*Destaques*/
+/*Dialog Filme*/
+
+.movie-dialog{
+    max-width: 1200px;
+    margin: auto;
+    max-height: 600px;
+    width: 100%;
+    height: 100%;
+    border-radius: 30px;
+    border: none;
+    background-image: url(''); /* Para ser definido dinamicamente via JS */
+    background-size: cover; /* Para cobrir todo o dialog */
+    background-position: center; /* Centralizar a imagem */
+    color: rgb(0, 0, 0);
+    box-shadow:  2px 2px 5000px 1000px rgba(0, 0, 0, 0.507);
+    position: fixed; /* Para posicionar o conteúdo do modal */
+    animation: modalFadein 0.2s ease-in forwards;
+}
+
+@keyframes modalFadein {
+    0%{
+        opacity: 0;
+    }
+
+    100%{
+        opacity: 1;
+    }
+}
+
+.modal-class{
+    z-index: 2;
+    position: relative; /* Para posicionar o conteúdo */
+    padding: 25px; /* Espaçamento interno */
+    color: white; /* Texto branco para melhor contraste */
+    margin: none;
+}
+
+.modal-class h2{
+    font-family: Bebas Neue;
+    font-size: 75px;
+    animation-duration: 0.5s; /* don't forget to set a duration! */
+    z-index: 1;
+}
+
+.wtw-font{
+    font-family: Bebas Neue;
+    font-size: 30px;
+}
+
+.wtw-white{
+    color: white;
+}
+
+.wtw-red{
+    color: #D7171E;
+}
+
+.posterItem{
+    z-index: 4;
+    width: 200px;
+    border-radius: 40px;
+}
+
+.overlay-modal {
+    position: absolute; /* Posiciona a sobreposição */
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgb(0, 0, 0, 0.7); /* Preto com opacidade */
+    display: none;
+    z-index: 1;
+}
+
+.poster-title-id{
+    display: flex;
+    gap: 10px; /* Espaçamento entre o pôster e o título */
+}
+
+.type-title-genre{
+    padding-top: 10px;
+}
+
+.mediaTypeParagraph, #itemGenre{
+    background-color: rgb(215, 23, 30, 0.7);
+    color: #eeeeee;
+    border-radius: 10px;
+    padding: 3px 10px 3px;
+    font-weight: 200;
+}
+
+/*Galeria de Destques*/
 
 .wrap{
     height: 100%;
@@ -313,11 +409,12 @@ input::placeholder{
     width: 100%;
     height: 100%;
     position: relative; /* Certifica que .itemInfo seja posicionado dentro desse container */
-    /* transition: opacity 1s ease; Transição suave para o efeito de centralização */
-    transition: opacity 0.5s ease-in-out;
+    /* transition: opacity 1s ease; Transição suave para o efeito de centralização 
+    transition: opacity 0.5s ease-in-out;*/
     opacity: 0.5;
     top: 0;
     left: 0;
+    animation: fadein 0.5s ease-in forwards;
 }
 
 .backdropContainer.active {
@@ -345,6 +442,7 @@ input::placeholder{
     transform: scale(1.05); /* Aumenta um pouco mais ao passar o mouse */
 
 }
+
 
 .itemInfo{
     display: flex;
@@ -422,6 +520,7 @@ input::placeholder{
 }
 
 .backdropContainer:hover .movie-title {
+    transform: translateX(-1%) scale(1.03); /* Aumenta um pouco mais ao passar o mouse */
     font-weight:600;
 }
 
@@ -464,7 +563,6 @@ input::placeholder{
     position: relative;
     width: 75px;
     height: 75px;
-    margin-left: 10px;
     border-radius: 45%;
     list-style: none;
 }
@@ -502,7 +600,7 @@ input::placeholder{
 }
 
 
-/* Dialog Window */
+/* Trailer Dialog Window */
 
 #dialog{
     margin: auto;
@@ -609,6 +707,44 @@ button.prev:hover, button.next:hover {
 
 /* User's navigation area*/
 
+.category-buttons{
+    display: flex;
+    border-radius: 30px;
+    justify-content: center; 
+    align-items: center;     /* Centraliza os botões verticalmente */
+    margin-top: 20px;
+}
+
+.style-buttons{
+    background-color: #0e0e0e;
+    border-radius: 30px;
+}
+
+.btn-category {
+    padding: 10px 20px;
+    background-color: #0e0e0e;
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    border-radius: 30px;
+    transition: background-color 0.3s ease, color 0.3s ease; /* Altere para as propriedades desejadas */
+}
+
+.btn-category.active {
+    box-shadow:  2px 2px 8px 1px rgba(0, 0, 0, 0.507);
+    background-color: #1a1a1a;
+    color: white;
+}
+
+.btn-category:focus{
+    outline: none;
+}
+
+.hidden {
+    display: none;
+}
+
 .carousel-container {
     position: relative;
     display: flex;
@@ -689,7 +825,7 @@ button.prev:hover, button.next:hover {
 }
 
 .description{
-    background-color: rgb(17, 17, 17);
+    background-color: rgb(8, 8, 8);
     text-align: left;
     border-radius: 5px;
     font-size: 20px;
@@ -697,10 +833,19 @@ button.prev:hover, button.next:hover {
     flex-direction: row;
     height: 100%;
     cursor: pointer;
-    transition: transform 0.3s ease-in-out; 
+    /*transition: transform 0.3s ease-in-out;*/
+    animation: rowFadein 0.5s ease-in forwards; 
 }
 
-
+@keyframes rowFadein{
+    0%{
+      bottom: 400px;
+      opacity:0;
+    }
+    100%{
+      opacity:1;
+    }
+  }
 
 .description:hover{
     transform: scale(1.05); /* Move a descrição para cima */
@@ -743,8 +888,6 @@ button.prev:hover, button.next:hover {
     position: relative;
     padding-top: 30px;
     width: 100%;
-    margin-bottom: 15px;
-    margin-top: 15px;
     margin-bottom: 50px;
 }
 
