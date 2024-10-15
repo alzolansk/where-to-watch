@@ -41,13 +41,16 @@
 
             <dialog id="movieDialog" class="movie-dialog">
                 <div id="moviecontent" class="modal-class">
-                <div class="poster-title-id">
-                <img src="" alt="Poster Filme" id="itemPoster" class="posterItem">
-                <div class="type-title-genre">
-                <p id="mediaTypeParagraph" class="mediaTypeParagraph"></p>
-                <h2 id="itemName" class="animate__animated animate__backInLeft"></h2>
-                <p id="itemGenre"></p>
-                <h3 class="wtw-font">
+                    <div class="poster-title-id">
+                        <img src="" alt="Poster Filme" id="itemPoster" class="posterItem">
+                    <div class="type-title-genre">
+                    <p id="mediaTypeParagraph" class="mediaTypeParagraph"></p>
+                    <div class="title-rating">
+                        <h2 id="itemName" class="animate__animated animate__backInLeft"></h2>
+                        <p id="ratingValue"></p>
+                    </div>
+                    <p id="itemGenre"></p>
+                    <h3 class="wtw-font" id="wtwContainer">
                         <span class="wtw-white">
                             Onde
                         </span>
@@ -56,15 +59,16 @@
                            assistir?
                         </span>
                     </h2>
-                <p id="providerInfo"></p>
-                <div>
-                <p id="release-date"></p>
-                <p id="logoProvider"></p>
-                </div>
+                    <p id="providerInfo"></p>
+                    <div>
+                        <p id="release-date"></p>
+                        <p id="logoProvider"></p>
+                    </div>
                 </div>
                 </div>
                 <p id="itemOverview" class="sinopse"></p>
                 <img id="backdrop" src="" style="display: none;" alt="Backdrop Image">
+                <div id="cast-container" class="cast-div"> <!-- informações de elenco --></div>
                 <button id="closeItem" class="btn btn-danger">Fechar</button>
             </div>
             <div class="overlay-modal"></div> <!-- Camada de fundo preto -->
@@ -75,7 +79,7 @@
                 <div class="cinema-container">
                     <h2 class="cinema-font">
                         <span class="title-wrap">
-                            Chegando nos cinemas
+                            chegando nos cinemas
                         </span>
                         
                         <span class="title-wrap2">
@@ -97,6 +101,7 @@
                 <div class="style-buttons">
                     <button id="showMovies" class="btn-category active">Filmes</button>
                     <button id="showSeries" class="btn-category">Séries</button>
+                    <!--<button id="showAnime" class="btn-category">Animações</button>-->
                 </div>
             </div>
 
@@ -104,7 +109,7 @@
 
             <h2><b>|</b>
                 <span>
-                    Mais populares no
+                    Destaques da semana no
                 </span>
                 
                 <span class="logo-font">
@@ -138,6 +143,7 @@
                     <!-- Os filmes com maiores notas serão ecibidos aqui -->
                 </div>
             </div>
+            <!--
             
                 <?php 
 
@@ -151,7 +157,7 @@
 
             <div class="carousel-container">
 
-                <!--    <button class="prev" onclick="scrollLeftCustom()">&#10094;</button>  Seta anterior -->
+                    <button class="prev" onclick="scrollLeftCustom()">&#10094;</button>  Seta anterior
 
                 <div class="row" id="popular-movies-container">
                         <?php if ($result_filmes->num_rows > 0): ?>
@@ -177,7 +183,7 @@
                     <?php endif; ?>
                 </div>
 
-                <!--  <button class="next" onclick="scrollRight()">&#10095;</button> Seta próximo -->
+                  <button class="next" onclick="scrollRight()">&#10095;</button> Seta próximo
 
             </div>
 
@@ -209,7 +215,8 @@
                         <?php endif; ?>
                     </div>
             </div>
-        </div>        
+        </div>  
+                        -->      
     </section>
 </body>
 
