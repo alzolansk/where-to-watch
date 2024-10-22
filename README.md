@@ -1,6 +1,6 @@
 Olá! Sejam bem vindos ao meu primeiro projeto solo, o Where to Watch.
 <h2>Principal Objetivo</h2>
-O principal objetivo do Where To Watch é informar ao usuário de forma prática onde ele pode encontrar os streamings e servuiços de aluguel para um filme ou série especifico que ele está procurando.
+O principal objetivo do Where To Watch é informar ao usuário de forma prática onde ele pode encontrar os streamings e servuiços de aluguel para um filme ou série especifico que ele está procurando. Além disso, também é possivel ver o trailer dos filmes.
 
 O Where to Watch também disponibiliza o elenco principal do filme e futuramente irá exibir os projetos em que esses atores já estiveram presentes.
 
