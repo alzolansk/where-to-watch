@@ -91,32 +91,27 @@ document.addEventListener('DOMContentLoaded', function() {
                                             </div>
                                         
                                             <img src="${imgUrl}" class="frontImage">
+                                            
                                         </div>
                                     </div>
                                 `
+                                console.log(imgUrl);
 
                                  // Evento de clique para abrir o modal
-                                carouselDiv.addEventListener('click', () => {
-                                    document.getElementById('itemName').innerText = movie.title; // Define o título no modal
-                                    document.getElementById('itemPoster').src = imgUrl;
-                                    document.getElementById('itemGenre').innerText = `Gênero: ${genresNames}`;
-
-                                    const dataApi = movie.release_date;
-                                    const dataFormatada = formatarData(dataApi);
-                                    console.log(dataFormatada);
-
-                                    document.getElementById('release-date').innerText = `Data de lançamento: ${dataFormatada}`;
-
-
-                                    const itemModal = document.getElementById('movieDialog');
-                                    itemModal.style.backgroundImage = `url(${backdropUrl})`;
-
-                                    const overlayModal = document.querySelector('.overlay-modal');
-                                    overlayModal.style.display = 'block'; // Torna a overlay visível 
-                                    
-                                    itemModal.showModal();
-                                                        
-                                })
+                                 carouselDiv.addEventListener('click', () => {
+                                    const params = new URLSearchParams({
+                                        title: movie.title,
+                                        original_title: movie.original_title,
+                                        genres: genresNames,
+                                        release_date: movie.release_date,
+                                        imgUrl: imgUrl,
+                                        backdropUrl: backdropUrl,
+                                        trailerUrl: trailerYtUrl,
+                                        overview: movie.overview
+                                    });
+                                
+                                    window.location.href = `filme.php?${params.toString()}`;
+                                });
 
                                 containerNew.appendChild(carouselDiv);
                                                         
@@ -204,6 +199,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
                                     containerWrap.addEventListener('mouseenter', () => {
                                         clearInterval(autoScrollInterval); // Cancela o setInterval ao passar o mouse
+                                        activateAllItems(); // Torna todos os itens ativos
+                                    });
+
+                                    // Desativar quando scroll
+                                    containerWrap.addEventListener('scroll', () => {
+                                        clearInterval(autoScrollInterval); // Volta a deixar apenas o item atual como 'active'
                                         activateAllItems(); // Torna todos os itens ativos
                                     });
 
@@ -324,8 +325,8 @@ document.addEventListener('DOMContentLoaded', function() {
                                 const itemModal = document.getElementById('movieDialog');
                                 itemModal.style.backgroundImage = `url(${backdropUrl})`;
 
-                                const overlayModal = document.querySelector('.overlay-modal');
-                                overlayModal.style.display = 'block'; // Torna a overlay visível 
+                                    const overlayModal = document.querySelector('.overlay-modal');
+                                    overlayModal.style.display = 'block'; // Torna a overlay visível 
                                 
                                 itemModal.showModal();
                                 //checkProviders();
@@ -419,9 +420,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             } else if(providerNames.toLocaleLowerCase().includes('max')){
                                 providerLogo.style.fontFamily = "HBO Max"; 
                             }*/
-                            
-                            // Evento de clique para abrir o modal
-                                                    
+                                                                                
                         })
                         .catch(error => console.error('Erro ao buscar o trailer:', error));
                 });
@@ -451,7 +450,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const buttonWidth = this.offsetWidth; // Largura do botão
         slider.style.transform = `translateX(${buttonWidth}px)`; // Move para a direita
     });
-
     loadContent();
 });
 
