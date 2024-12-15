@@ -18,8 +18,23 @@
             </ul>
         </nav>
 
-            <input type="text" class="search-bar" id="searchmovie" placeholder="Pesquisar filme ou série" autocomplete="off">
+        <div id="loading" class="loading-overlay" style="display: none;">
+            <div class="spinner"></div>
+            <p>Carregando...</p>
+        </div>
+
+
+
+        <div id = "search-div">
+
+            <div>
+                <input type="text" class="search-bar" id="searchmovie" placeholder="Pesquisar filme ou série" autocomplete="off" >
                 <!-- <button id="botaoPesquisar">Pesquisar</button> -->
+
+                <div id="results" style="display: none;"></div>
+            </div>
+
+        </div>       
 
             <div id="searchResults" style="display: none;"></div>
 

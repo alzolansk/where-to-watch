@@ -39,37 +39,6 @@
                 <button id="close-trailer" onclick="closeTrailer()">X</button>
             </dialog>
 
-            <dialog id="movieDialog" class="movie-dialog">
-                <div id="moviecontent" class="modal-class">
-                <div class="poster-title-id">
-                <img src="" alt="Poster Filme" id="itemPoster" class="posterItem">
-                <div class="type-title-genre">
-                <p id="mediaTypeParagraph" class="mediaTypeParagraph"></p>
-                <h2 id="itemName" class="animate__animated animate__backInLeft"></h2>
-                <p id="itemGenre"></p>
-                <h3 class="wtw-font">
-                        <span class="wtw-white">
-                            Onde
-                        </span>
-                        
-                        <span class="wtw-red">
-                           assistir?
-                        </span>
-                    </h2>
-                <p id="providerInfo"></p>
-                <div>
-                <p id="release-date"></p>
-                <p id="logoProvider"></p>
-                </div>
-                </div>
-                </div>
-                <p id="itemOverview" class="sinopse"></p>
-                <img id="backdrop" src="" style="display: none;" alt="Backdrop Image">
-                <button id="closeItem" class="btn btn-danger">Fechar</button>
-            </div>
-            <div class="overlay-modal"></div> <!-- Camada de fundo preto -->
-            </dialog>
-
             <div class="wrap">
 
                 <div class="cinema-container">
@@ -138,7 +107,7 @@
                     <!-- Os filmes com maiores notas serão ecibidos aqui -->
                 </div>
             </div>
-            
+            <!--            
                 <?php 
 
                 if(isset($_SESSION['nome'])){
@@ -151,8 +120,7 @@
 
             <div class="carousel-container">
 
-                <!--    <button class="prev" onclick="scrollLeftCustom()">&#10094;</button>  Seta anterior -->
-
+                    <button class="prev" onclick="scrollLeftCustom()">&#10094;</button>  Seta anterior 
                 <div class="row" id="popular-movies-container">
                         <?php if ($result_filmes->num_rows > 0): ?>
                         <?php while($row = $result_filmes->fetch_assoc()): ?>
@@ -177,7 +145,7 @@
                     <?php endif; ?>
                 </div>
 
-                <!--  <button class="next" onclick="scrollRight()">&#10095;</button> Seta próximo -->
+                  <button class="next" onclick="scrollRight()">&#10095;</button> Seta próximo 
 
             </div>
 
@@ -209,12 +177,14 @@
                         <?php endif; ?>
                     </div>
             </div>
+                                            -->
+
         </div>        
+
     </section>
 </body>
 
 <script src="js/container.js"></script>
 <script src="js/script.js"></script>
-<script src="js/searchingmovies.js"></script>
 
 </html>
