@@ -32,11 +32,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             providerDiv.innerText = `Cinemas mais próximos de você!`;
 
-            console.log('Provider oculto');
-        } else{
-            console.log(providers);
         }
-
 
         //Formatação de data
         const formatDate = (dateString) => {
@@ -93,7 +89,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     card.addEventListener('click', () => {
                         const castName = card.getAttribute('data-cast-name');
                         const profileImg = card.getAttribute('data-profile-img');
-                        console.log(profileImg);
             
                         // Atualiza o modal com as informações do ator
                         document.getElementById('actorName').innerText = castName;
@@ -103,8 +98,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         itemModal.showModal();
                        
                     })
-
-                    console.log(providers);
 
                 })
             })

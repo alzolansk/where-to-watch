@@ -4,19 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="css/movie.css">
-    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
     
     <title id="title-movie"></title>
 </head>
 <body>
-    <?php
 
-    include_once('dashboard.php');
+    <?php include_once('dashboard.php'); ?>
 
-    ?>
-
-    <main>
+    <main class="interface-section">
         
         <div id="movie-div" class="movieDiv">
             <div id="movie-info" class="movieInfo">
@@ -27,7 +24,7 @@
                             <span class="wtw-white">
                                 Onde
                             </span>
-                            
+                        
                             <span class="wtw-red">
                             assistir?
                             </span>
@@ -55,7 +52,7 @@
         <!-- Modal ATOR -->
         <dialog id="actorDialog" class="actor-dialog">
             <div id="actorContent" class="modal-class">
-                <div class="">
+                <div class="poster-actor">
                     <img src="" alt="Poster Ator" id="actorPoster" class="profileImg">
                     <div class="">
                     <h2 id="actorName" class=""></h2>

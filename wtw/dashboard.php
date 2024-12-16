@@ -2,7 +2,7 @@
     
     <div class="faixa">
 
-       <li><a href="index.php" class="logo"> <img src="imagens/Where-toWatch.png" alt="logo" style="width: 80px; margin-bottom: 10px;"></li></a>
+       <li><a href="index.php" class="logo"> <img src="imagens/Where-toWatch.png" alt="logo" style="width: 80px"></li></a>
 
         <nav id="menu-buttons" class="hidden-menu">
             <ul id="ulBotoes">
@@ -86,3 +86,188 @@
         </dialog>
     </div>
 </nav>
+
+<style>
+    
+/* Main Menu */
+
+.faixa {
+    display: flex;
+    position: fixed; /* Fixa o elemento na janela de visualização */
+    top: 0; /* Define a posição no topo */
+    left: 0; /* Define a posição na borda esquerda */
+    width: 100%; /* Faz o menu ocupar toda a largura da página */
+    z-index: 1000; /* Garante que o menu fique acima de outros elementos */
+
+    flex-direction: row;
+    align-items: center; /* Centraliza verticalmente */
+    height: auto;
+    border: solid 1px black;
+    background-color: rgb(12, 12, 12);
+    padding: 10px 10px 10px 10px;
+}
+
+.faixa ul{
+    display: flex;
+    text-decoration: none;
+    list-style: none;
+    margin: 0;
+    font-size: 15px;
+}
+
+.faixa ul li{
+    padding: 8px;
+    text-decoration: none;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.user-menu {
+    display: column;
+    white-space: nowrap;
+    align-items: center; /* Alinha verticalmente os elementos */
+}
+
+#menu a{
+    color: rgb(247, 247, 247);
+}
+
+#menu ul li :hover{
+    transition:60s;
+}
+
+#menu ul :hover{
+    transition: 0.4s;
+    background-color: rgba(77, 77, 77, 0.329);
+    border-radius: 5px;
+    text-decoration: none;
+}
+
+.menu-trigger{
+    display: none;
+    padding: 5px;
+}
+
+.menu-trigger:hover {
+    background-color: rgba(77, 77, 77, 0.329);
+    border-radius: 5px;
+    transition: 0.4s;
+}
+
+@media (max-width: 440px){
+
+    .menu-trigger{
+        display: flex;
+        cursor: pointer;
+    }
+
+    .hidden-menu {
+        opacity: 0;
+        max-height: 0;
+        overflow: hidden;
+        transition: opacity 0.4s ease, max-height 0.4s ease;
+    }
+
+    .active-menu {
+        opacity: 1;
+        max-height: 500px; 
+        transition: opacity 0.4s ease, max-height 0.4s ease;
+    }
+}
+
+
+/* Search Bar*/
+
+#search-div{
+    width: 50%;
+    margin: 0 auto;
+}
+
+.search-bar {
+    margin: 0 auto;
+    border-radius: 10px;
+    height: 35px;
+    width: 50%;
+    background: #d7d7d7;
+    background: -webkit-linear-gradient(0deg, #d7d7d7 0%, #eeeeee 100%);
+    background: linear-gradient(0deg, #d7d7d7 0%, #eeeeee 100%);
+}
+
+@media (max-width: 1000px) { 
+    #search-div {
+        width: 30%; /* Oculta a barra de pesquisa */
+    }  
+}
+
+@media (max-width: 800px) { 
+    #search-div {
+        display: none; /* Oculta a barra de pesquisa */
+    }  
+
+}
+
+input::placeholder{
+    padding: 10px;
+}
+
+
+/*Search Movie// procurar filmes*/
+
+#results {
+    position: absolute;
+    max-height: 200px; 
+    width: 25%;
+    overflow-y: auto; /* Habilita rolagem vertical */
+    border: 0.5px solid #363636;
+    padding: 5px 0px 0px 0px; 
+    background-color: #202020d8; 
+    border-radius: 15px 15px 15px 15px;
+    box-shadow: 0px 4px 8px rgb(0, 0, 0);
+    z-index: 30;
+}
+
+#results {
+    display: flex; 
+    border-bottom: 1px solid #ddd;
+    padding: 5px;
+}
+
+#results div:last-child {
+    border-bottom: none; /* Remove a linha de separação do último item */
+}
+
+#results::-webkit-scrollbar {
+    border: none;
+}
+
+#results::-webkit-scrollbar-track {
+    background-color: rgb(48, 48, 48);
+    border-radius: 15px;
+}
+
+#results::-webkit-scrollbar-thumb{
+    background-color: #161616;
+    border-radius: 15px; 
+    height: 25px;
+    box-shadow: 2px 2px 2px 1px rgba(0, 0, 0, 0.2);
+} 
+
+#results img {
+    width: 40px; 
+    height: 65px;
+    border-radius: 5px;
+    margin-right: 10px;
+}
+
+#results h3 {
+    font-size: 100%;
+    margin: 0; /* Remove a margem padrão do título */
+}
+
+#results div:hover{
+    background-color: #111111;
+    transition: 0.1s ease-in-out;
+    cursor: pointer;
+}
+
+</style>

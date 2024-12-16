@@ -106,7 +106,6 @@ document.addEventListener('DOMContentLoaded', function() {
                                                                                     
                                                 if (allProviders) {
                                                     providerNames = allProviders;
-                                                    console.log(`Provedores: ${allProviders}`);
                                                 }
                                             }        
 
@@ -151,6 +150,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function loadContent(){
         showLoading(); // Mostra o spinner ao começar
+
+        const upcomingCaption = document.getElementById('cinemaContainer');
         
         const popularUrl = `https://api.themoviedb.org/3/trending/${mediaType}/week?api_key=${apiKey}&language=pt-BR&page=1`;
         const topRatedUrl = `https://api.themoviedb.org/3/${mediaType}/top_rated?api_key=${apiKey}&language=pt-BR&page=1&sort_by=popularity.desc`;
@@ -201,7 +202,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
                         const castArray = creditsData.cast.slice(0,10);
                         let castHtml = '';
-                        console.log(creditsData);
                         if(castArray && castArray.length > 0){
                             castArray.forEach(cast => {
                                 const castName = cast.name;
@@ -596,8 +596,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         })
                         .catch(error => console.error('Erro ao buscar o trailer:', error));
                 });
-            })
-        });
+            });
+        })
         })
         .catch(error => console.error('Erro ao carregar conteúdo:', error))
         .finally(() => {

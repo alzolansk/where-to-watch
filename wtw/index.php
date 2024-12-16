@@ -31,7 +31,7 @@
     ?>
 
 
-    <section id="interface" class="interface-session">
+    <section id="interface" class="interface-section">
 
             <!-- Modal para o trailer -->
             <dialog id="dialog" class="dialog">
@@ -41,7 +41,7 @@
 
             <div class="wrap">
 
-                <div class="cinema-container">
+                <div class="cinema-container" id="cinemaContainer">
                     <h2 class="cinema-font">
                         <span class="title-wrap">
                             Chegando nos cinemas
