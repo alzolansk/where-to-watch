@@ -187,10 +187,11 @@
     margin: 0 auto;
     border-radius: 10px;
     height: 35px;
-    width: 50%;
+    width: 75%;
     background: #d7d7d7;
     background: -webkit-linear-gradient(0deg, #d7d7d7 0%, #eeeeee 100%);
     background: linear-gradient(0deg, #d7d7d7 0%, #eeeeee 100%);
+    padding: 0px 10px; 
 }
 
 @media (max-width: 1000px) { 
@@ -215,20 +216,20 @@ input::placeholder{
 
 #results {
     position: absolute;
-    max-height: 200px; 
-    width: 25%;
+    height: 200px; 
+    width: 38%;
     overflow-y: auto; /* Habilita rolagem vertical */
-    border: 0.5px solid #363636;
     padding: 5px 0px 0px 0px; 
-    background-color: #202020d8; 
     border-radius: 15px 15px 15px 15px;
     box-shadow: 0px 4px 8px rgb(0, 0, 0);
     z-index: 30;
+    border-bottom: 1px solid #ddd;
+    background-color: rgba(22, 22, 22, 0.92);
+    transition: 4s ease-in-out;
 }
 
 #results {
     display: flex; 
-    border-bottom: 1px solid #ddd;
     padding: 5px;
 }
 
@@ -253,21 +254,30 @@ input::placeholder{
 } 
 
 #results img {
-    width: 40px; 
-    height: 65px;
-    border-radius: 5px;
+    width: 80px; 
+    height: 115px;
+    background-size: cover;
+    border-radius: 10px;
     margin-right: 10px;
 }
 
 #results h3 {
-    font-size: 100%;
-    margin: 0; /* Remove a margem padrão do título */
+    font-size: 20px;
+    margin: 0;
 }
 
 #results div:hover{
-    background-color: #111111;
-    transition: 0.1s ease-in-out;
+    background-color:rgb(0, 0, 0);
     cursor: pointer;
 }
 
+.resultsDiv{
+    display: flex;
+    padding: 10px 0px;
+}
+
+.movie-info{
+    top: 0;
+    left: 0;
+}
 </style>

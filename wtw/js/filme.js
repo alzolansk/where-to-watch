@@ -23,15 +23,12 @@ document.addEventListener('DOMContentLoaded', function() {
         //Verificação de upcoming
         if(upcoming){
             document.getElementById('providers').innerText = "Cinemas mais próximos de você!";
-        } else{
-            document.getElementById('providers').innerText = providers;
-        }
-
-        if(providers == null || providers.length < 1){
+        } else if(providers == null || providers.length <  1){
             const providerDiv = document.getElementById('providers');
 
-            providerDiv.innerText = `Cinemas mais próximos de você!`;
-
+            providerDiv.innerText = `Não encontrado em nenhum provedor`;
+        }else{
+            document.getElementById('providers').innerText = providers;
         }
 
         //Formatação de data

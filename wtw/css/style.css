@@ -12,12 +12,17 @@
 
  @import url('https://fonts.googleapis.com/css2?family=Mukta:wght@200;300;400;500;600;700;800&display=swap');
 
+ @import url('https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,100..900;1,100..900&display=swap');
+
+ @import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap');
+
+
 
 
  @media (max-width: 1200px) {
     body {
         font-size: 90%;
-        font-family: Arial, Helvetica, sans-serif;
+        font-family: Nunito;
     }
 }
 
@@ -34,8 +39,7 @@
     text-decoration: none;
     list-style: none;
     box-sizing: border-box;
-    font-family: Arial, Helvetica, sans-serif;
-    
+    font-family: Nunito;  
 }
 
 body{
@@ -220,7 +224,7 @@ body{
 }
 
 .wtw-white{
-    color: white;
+    color: white; 
 }
 
 .wtw-red{
@@ -261,7 +265,7 @@ body{
     font-weight: 200;
 }
 
-/*Galeria de Destques*/
+/*Galeria de Em Breve*/
 
 .wrap{
     height: 100%;
@@ -284,6 +288,14 @@ body{
     overflow-y: hidden;
     overflow-x: scroll; /* Evita barra de rolagem vertical, mas mantém horizontal */
     gap: 400px;
+}
+
+
+@media (max-width: 900px) {
+    .container-wrap {
+        gap: 350px;
+        height: 300px;
+    }
 }
 
 .cinema-container{
@@ -349,6 +361,15 @@ body{
     opacity: 1;
 }
 
+
+@media (max-width: 900px) {
+    .upcomingItem {
+        width: 25%;
+        height: 200px;
+        padding: 10px;
+    }
+}
+
 .upcomingItem{
     width: 100%;
     max-width: 500px;
@@ -358,6 +379,7 @@ body{
     cursor: pointer;
     width: 900px;
     height: 100%;
+    max-width: 900px;
     z-index: 1;
     border-radius: 35px;
     filter: brightness(0.7); /* Torna o backdrop um pouco mais escuro */
@@ -368,9 +390,14 @@ body{
 .backdropContainer:hover .backdropImg{
     filter: brightness(0.9);
     transform: scale(1.05); /* Aumenta um pouco mais ao passar o mouse */
-
 }
 
+@media (max-width: 900px) {
+    .backdropImg {
+        width: 800px;
+        height: 90%;
+    }
+}
 
 .itemInfo{
     display: flex;
@@ -424,7 +451,6 @@ body{
 .movie-pt-title{
     padding-left: 10px;
 }
-
 
 .frontImage{
     max-width: 130px;
@@ -687,14 +713,16 @@ button.prev:hover, button.next:hover {
     padding: 20px;
 }
 
-.container h2{
+.maisPop, .indicaSpan{
     text-align: left;
-    font-family: Bebas Neue;
+    font-family: Nunito;
+    font-weight: 700;
     background-color: rgb(2, 2, 2);
     color: rgb(255, 255, 255);
     padding-top: 20px;
     padding-bottom: 20px;
 }
+
 
 @media (max-width: 600px) {
     .container {

@@ -12,7 +12,7 @@ if (isset($_POST['submit'])){
   $senha = $_POST['senha'];
   $confirm_senha = $_POST['confirmasenha'];
 
-  $stmt = $conexao->prepare("SELECT idUser FROM users WHERE emailUser = ?");
+  $stmt = $conexao->prepare("SELECT id_user FROM tb_users WHERE email_user = ?");
   $stmt->bind_param("s", $email);
   $stmt->execute();
   $stmt->store_result();
@@ -30,7 +30,7 @@ if (isset($_POST['submit'])){
 
   $hashed_password = password_hash($senha, PASSWORD_DEFAULT);
 
-  $insert_stmt = $conexao->prepare("INSERT INTO users (nameuser, emailuser, pswdUser) VALUES (?, ?, ?)");
+  $insert_stmt = $conexao->prepare("INSERT INTO tb_users (name_user, email_user, pswd_user) VALUES (?, ?, ?)");
   $insert_stmt->bind_param("sss", $nome, $email, $hashed_password);
   
   if ($insert_stmt->execute()) {

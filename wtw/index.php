@@ -22,11 +22,11 @@
     include_once('dashboard.php');
     include_once('config/config.php');
 
-    $sql_consult_filmes = "SELECT * FROM items WHERE type_item = 'Filme'";
-    $result_filmes = $conexao->query($sql_consult_filmes);
+    //$sql_consult_filmes = "SELECT * FROM tb_items WHERE type_item = 'Filme'";
+    //$result_filmes = $conexao->query($sql_consult_filmes);
 
-    $sql_consult_serie = "SELECT * FROM items WHERE type_item = 'Serie'";
-    $result_serie = $conexao->query($sql_consult_serie);
+    //$sql_consult_serie = "SELECT * FROM tb_items WHERE type_item = 'Serie'";
+    //$result_serie = $conexao->query($sql_consult_serie);
 
     ?>
 
@@ -72,7 +72,7 @@
         <div class="container">
 
             <h2><b>|</b>
-                <span>
+                <span class="maisPop">
                     Mais populares no
                 </span>
                 
@@ -97,7 +97,7 @@
                 <span class="logo-font2">
                     WATCH
                 </span>
-                <span>
+                <span class="indicaSpan">
                     indica
                 </span>
             </h2>

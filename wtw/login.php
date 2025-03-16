@@ -11,7 +11,7 @@ if(isset($_POST['submit'])) {
   $email = $_POST['email'];
   $senha = $_POST['senha'];
 
-  $stmt = $conexao->prepare("SELECT idUser, nameUser, pswdUser FROM users WHERE emailUser = ?");
+  $stmt = $conexao->prepare("SELECT id_user, name_user, pswd_user FROM tb_users WHERE email_user = ?");
   $stmt->bind_param("s", $email);
   $stmt->execute();
   $stmt->store_result();

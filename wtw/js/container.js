@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('searchmovie').addEventListener('input', function() {
         const query = this.value.trim();
         if (query.length > 0) {
-            const allMoviesUrl = `https://api.themoviedb.org/3/search/multi?api_key=${apiKey}&query=${encodeURIComponent(query)}&language=pt-BR&page=1`;
+            const allMoviesUrl = `https://api.themoviedb.org/3/search/multi?api_key=${apiKey}&query=${encodeURIComponent(query)}&language=pt-BR&page=1&sort_by=popularity.desc`;
     
             fetch(allMoviesUrl)
             .then(response => response.json())
@@ -43,14 +43,15 @@ document.addEventListener('DOMContentLoaded', function() {
                         if (movie.media_type === 'movie' || movie.media_type === 'tv') {
                             const title = movie.title || movie.name; // Para pegar o título do filme ou da série
                             const { imgUrl, trailerUrl, rating, backdropUrl, providerUrl, detailsUrl} = defineMovieConstants(movie, movie.media_type, apiKey);
-                            const overview = movie.overview; // Sinopse
-    
+                            const overview = `“${movie.overview}”`; // Sinopse
+                            const upperTitle = title.toUpperCase();
+                            
                             const resultsDiv = document.createElement('div');
                             resultsDiv.innerHTML += `
-                                <div>
-                                    <img src="${imgUrl}" alt="${title}">
+                                <div class="resultsDiv">
+                                    <img src="${imgUrl}" alt="${upperTitle}">
                                     <div class="movie-info">
-                                        <h3>${title}</h3>
+                                        <h3>${upperTitle}</h3>
                                     </div>
                                 </div>
                             `;
@@ -116,7 +117,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                                     release_date: movie.release_date || movie.first_air_date,
                                                     imgUrl: imgUrl,
                                                     backdropUrl: backdropUrl,
-                                                    overview: movie.overview,
+                                                    overview: `“${movie.overview}”`,
                                                     id: movie.id,
                                                     mediaTp: movie.media_type,
                                                     provider_name: providerNames  
@@ -155,14 +156,13 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const popularUrl = `https://api.themoviedb.org/3/trending/${mediaType}/week?api_key=${apiKey}&language=pt-BR&page=1`;
         const topRatedUrl = `https://api.themoviedb.org/3/${mediaType}/top_rated?api_key=${apiKey}&language=pt-BR&page=1&sort_by=popularity.desc`;
-        const upcomingUrl = `https://api.themoviedb.org/3/movie/upcoming?api_key=${apiKey}&language=pt-BR&page=1&release_date.gte=2024-13-14&release_date.lte=2024-12-31`;
+        const upcomingUrl = `https://api.themoviedb.org/3/movie/upcoming?api_key=${apiKey}&language=pt-BR&page=1&sort_by=release_date.desc`;
 
         fetch(upcomingUrl)
             .then(response => response.json())
             .then(upcomingData => {
                 const wrapMovies = upcomingData.results.slice(0, 10);
                 const containerNew = document.getElementById('container-wrap');  
-
 
                 wrapMovies.forEach(movie => {
                     const carouselDiv = document.createElement('div');
@@ -251,7 +251,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                         imgUrl: imgUrl,
                                         backdropUrl: backdropUrl,
                                         trailerUrl: trailerYtUrl,
-                                        overview: movie.overview,
+                                        overview: `“${movie.overview}”`,
                                         id: movie.id,
                                         mediaTp: mediaType,
                                         itemFetch: "upcoming"
@@ -349,6 +349,11 @@ document.addEventListener('DOMContentLoaded', function() {
                                     });     
 
                                     containerWrap.addEventListener('mouseenter', () => {
+                                        clearInterval(autoScrollInterval); // Cancela o setInterval ao passar o mouse
+                                        activateAllItems(); // Torna todos os itens ativos
+                                    });
+
+                                    containerWrap.addEventListener('click', () => {
                                         clearInterval(autoScrollInterval); // Cancela o setInterval ao passar o mouse
                                         activateAllItems(); // Torna todos os itens ativos
                                     });
@@ -464,7 +469,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     imgUrl: imgUrl,
                                     backdropUrl: backdropUrl,
                                     trailerUrl: trailerYtUrl,
-                                    overview: movie.overview,
+                                    overview: `“${movie.overview}”`,
                                     id: movie.id,
                                     mediaTp: movie.media_type,
                                     provider_name: providerNames  
@@ -573,7 +578,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     imgUrl: imgUrl,
                                     backdropUrl: backdropUrl,
                                     trailerUrl: trailerYtUrl,
-                                    overview: movie.overview,
+                                    overview: `“${movie.overview}”`,
                                     id: movie.id,
                                     mediaTp: mediaType,
                                     provider_name: providerNames  
@@ -606,7 +611,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
      // Botões para alternar entre filmes e séries
-     document.getElementById('showMovies').addEventListener('click', function() {
+    document.getElementById('showMovies').addEventListener('click', function() {
         this.classList.add('active');
         document.getElementById('showSeries').classList.remove('active')
         mediaType = 'movie';  // Mudar para filmes
@@ -629,4 +634,5 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     loadContent();        // Carregar conteúdo de filmes
+
 });
