@@ -22,16 +22,16 @@
     include_once('dashboard.php');
     include_once('config/config.php');
 
-    $sql_consult_filmes = "SELECT * FROM items WHERE type_item = 'Filme'";
-    $result_filmes = $conexao->query($sql_consult_filmes);
+    //$sql_consult_filmes = "SELECT * FROM tb_items WHERE type_item = 'Filme'";
+    //$result_filmes = $conexao->query($sql_consult_filmes);
 
-    $sql_consult_serie = "SELECT * FROM items WHERE type_item = 'Serie'";
-    $result_serie = $conexao->query($sql_consult_serie);
+    //$sql_consult_serie = "SELECT * FROM tb_items WHERE type_item = 'Serie'";
+    //$result_serie = $conexao->query($sql_consult_serie);
 
     ?>
 
 
-    <section id="interface" class="interface-session">
+    <section id="interface" class="interface-section">
 
             <!-- Modal para o trailer -->
             <dialog id="dialog" class="dialog">
@@ -76,7 +76,7 @@
 
             <div class="wrap">
 
-                <div class="cinema-container">
+                <div class="cinema-container" id="cinemaContainer">
                     <h2 class="cinema-font">
                         <span class="title-wrap">
                             chegando nos cinemas
@@ -108,8 +108,9 @@
         <div class="container">
 
             <h2><b>|</b>
-                <span>
-                    Destaques da semana no
+
+              <span class="maisPop">
+                    Mais populares no
                 </span>
                 
                 <span class="logo-font">
@@ -133,7 +134,7 @@
                 <span class="logo-font2">
                     WATCH
                 </span>
-                <span>
+                <span class="indicaSpan">
                     indica
                 </span>
             </h2>
@@ -143,8 +144,7 @@
                     <!-- Os filmes com maiores notas serão ecibidos aqui -->
                 </div>
             </div>
-            <!--
-            
+            <!--            
                 <?php 
 
                 if(isset($_SESSION['nome'])){
@@ -157,8 +157,7 @@
 
             <div class="carousel-container">
 
-                    <button class="prev" onclick="scrollLeftCustom()">&#10094;</button>  Seta anterior
-
+                    <button class="prev" onclick="scrollLeftCustom()">&#10094;</button>  Seta anterior 
                 <div class="row" id="popular-movies-container">
                         <?php if ($result_filmes->num_rows > 0): ?>
                         <?php while($row = $result_filmes->fetch_assoc()): ?>
@@ -182,8 +181,6 @@
                         <p>Nenhum filme encontrado.</p>
                     <?php endif; ?>
                 </div>
-
-                  <button class="next" onclick="scrollRight()">&#10095;</button> Seta próximo
 
             </div>
 
@@ -215,13 +212,14 @@
                         <?php endif; ?>
                     </div>
             </div>
-        </div>  
-                        -->      
+                                            -->
+
+        </div>        
+
     </section>
 </body>
 
 <script src="js/container.js"></script>
 <script src="js/script.js"></script>
-<script src="js/searchingmovies.js"></script>
 
 </html>

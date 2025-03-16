@@ -1,0 +1,299 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@500&display=swap');
+
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@500&display=swap');
+
+@import url('https://fonts.googleapis.com/css2?family=Lato:wght@700&display=swap');
+
+
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap');
+
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@100..900&display=swap');
+
+@import url('https://fonts.googleapis.com/css2?family=Mukta:wght@200;300;400;500;600;700;800&display=swap');
+
+@import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap');
+
+
+@media (max-width: 1200px) {
+   body {
+       font-size: 90%;
+       font-family: Arial, Helvetica, sans-serif;
+   }
+}
+
+@media (max-width: 768px) {
+   body {
+       font-size: 85%;
+   }
+}
+
+*{
+   margin: 0;
+   padding: 0;
+   border:none;
+   text-decoration: none;
+   list-style: none;
+   box-sizing: border-box;
+        
+}
+
+body{
+   background-color: rgb(0, 0, 0);
+   color: white;
+   overflow-x: hidden;
+   font-family: Nunito;
+}
+
+.interface-section{
+    margin-top: 60px; /* Adiciona um espaçamento para evitar sobreposição do menu fixo */
+}
+
+/*Loading*/
+
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 6px solid #ccc;
+    border-top: 6px solid #D7171E;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loading-overlay p {
+    margin-top: 10px;
+    color: white;
+    font-size: 18px;
+    font-weight: bold;
+    padding-left: 10px;
+}
+
+/*Filme*/
+
+.posterItem{
+    width: 230px;
+    border-radius: 40px;
+}
+
+.movieDiv{
+    display: flex;
+    position: relative;
+    max-width: 1800px;
+    width: 1800px;
+    margin: auto;
+    height: 500px;
+    margin-top: 0;
+}
+
+.movieInfo{
+    z-index: 3;
+    padding: 20px;
+    width: 1300px;
+}
+
+#backdropImage{
+    position: absolute;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    object-fit:cover;
+}
+
+.overlay {
+    position: absolute; /* Posiciona a sobreposição */
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgb(0, 0, 0, 0.7); /* Preto com opacidade */
+    z-index: 2;
+}
+
+.poster-title{
+    display: flex;
+    gap: 10px; /* Espaçamento entre o pôster e o título */
+    padding-left: 10px;
+}
+
+.genre-title{
+    font-family: Nunito;
+    gap: 50px;
+    font-weight: 500;
+}
+
+#genreMovie{
+    background: rgb(215, 23, 30, 0.5);
+    background: linear-gradient(90deg, rgba(172,23,28,1) 0%, rgba(215,23,30,0.10127801120448177) 80%, rgba(0, 0, 0, 0) 100%);
+    color: #eeeeee;
+    width: 500px;
+    border-radius: 10px;
+    padding: 3px 10px 3px;
+    font-family: Nunito;
+    font-weight: 500;
+}
+
+#movieOverview{
+    padding: 20px 0px;
+    font-size: 18px;
+    font-family: Nunito;
+    font-weight: 300;
+}
+
+#itemName{
+    font-family: Bebas Neue;
+    font-size: 70px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    height: 100px;
+    animation-duration: 0.5s; /* don't forget to set a duration! */
+    margin: 0;
+}
+
+.wtw-font{
+    font-family: bebas Neue;
+    font-size: 30px;
+    margin: 0;
+    padding-left: 10px;
+    height: 40px;
+}
+
+.providersNames{
+    padding-left: 10px;
+    font-weight: Bold;
+    font-family: lato;
+    width: 210px;
+}
+
+.wtw-white, .wtw-red{
+    color: white;
+}
+
+.poster-provider{
+    background: rgb(215, 23, 30, 0.5);
+    background: linear-gradient(0deg, rgba(172,23,28,1) 0%, rgba(215,23,30,1) 20%, rgba(0, 0, 0, 0) 100%);
+    padding-bottom: 20px;
+    border-radius: 40px 40px 25px 25px;
+}
+
+/* Cast/Elenco */
+
+.castDiv{
+    z-index: 1;
+    position: absolute;
+    padding: 5px 60px;
+}
+
+#cast-list{
+    margin-top: 20px;
+    display: flex;
+    gap: 15px;
+    overflow-x: scroll;
+    width: 1700px;
+    max-height: 300px;
+    padding-bottom: 10px;
+    scroll-behavior: smooth; /* Rolar suavemente */
+    overflow-x: auto; /* Scroll apenas quando necessário */
+    overflow-y: hidden; /* Scroll apenas quando necessário */
+    cursor: pointer;
+
+}
+
+.actor-card{
+    background-color: #0a0a0a;
+    border-radius: 15px;
+    width: 145px;
+    padding-bottom: 10px;
+    transition: transform 0.4s ease, box-shadow 0.4s ease; /* Animações suaves */
+}
+
+.actor-card:hover{
+    transform: scale(1.04);
+}
+
+.actor-img{
+    width: 145px;
+    height: 180px;
+    object-fit: cover;
+    border-radius: 20px;
+}
+
+.actor-name{
+    text-decoration: none;
+}
+
+.actor-name:hover{
+    text-decoration: underline;
+}
+
+.poster-actor h2{
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.p-div{
+    padding: 10px 5px;
+}
+
+.p-div p{
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#release-date{
+    padding-top: 10px;
+}
+
+::-webkit-scrollbar{
+    background-color: #1b1b1b;
+    border-radius: 30px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-thumb{
+    background-color: #080808;
+    border-radius: 30px;
+}
+
+/*Modal dos Atores*/
+
+.actor-dialog{
+    max-width: 1200px;
+    margin: auto;
+    position: fixed;
+    top: 0;
+    left: 0;
+    max-height: 600px;
+    width: 100%;
+    height: 100%;
+    border-radius: 30px;
+    border: none;
+    background-image: url(''); /* Para ser definido dinamicamente via JS */
+    background-size: cover; /* Para cobrir todo o dialog */
+    background-position: center; /* Centralizar a imagem */
+    color: rgb(0, 0, 0);
+    box-shadow:  2px 2px 5000px 1000px rgba(0, 0, 0, 0.507);
+    position: fixed; /* Para posicionar o conteúdo do modal */
+    animation: modalFadein 0.2s ease-in forwards;
+}
+
+.profileImg{
+    width: 250px;
+    border-radius: 30px;
+}

@@ -10,16 +10,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const detailsUrl = `https://api.themoviedb.org/3/${mediaType}/${movie.id}?api_key=${apiKey}&language=pt-BR&page=1`;
         const providerUrl = `https://api.themoviedb.org/3/${mediaType}/${movie.id}/watch/providers?api_key=${apiKey}&language=pt-BR&page=1sort_by=display_priority.cresc`
         const backdropUrl = `https://image.tmdb.org/t/p/w1280/${movie.backdrop_path}}`
-        const creditsUrl = `https://api.themoviedb.org/3/${mediaType}/${movie.id}/credits?api_key=${apiKey}&language=pt-BR&page=1sort_by=display_priority.cresc`;
+        const creditsUrl = `https://api.themoviedb.org/3/${mediaType}/${movie.id}/credits?api_key=${apiKey}&language=pt-BR&page=1`
 
         return { imgUrl, trailerUrl, rating, detailsUrl, providerUrl, backdropUrl, creditsUrl };
     }
-
-    function formatarData(data) {
-        const [ano, mes, dia] = data.split('-'); // Divide a data em ano, mês e dia
-        return `${dia}/${mes}/${ano}`; // Retorna a data no formato desejado
-    }
-
 
     function activateBackdropContainer(element) {
         // Remove a classe 'active' de todos os contêineres
@@ -32,11 +26,138 @@ document.addEventListener('DOMContentLoaded', function() {
         element.classList.add('active');
     }
 
-    function loadContent(){
+    //Pesquisar filme
+    document.getElementById('searchmovie').addEventListener('input', function() {
+        const query = this.value.trim();
+        if (query.length > 0) {
+            const allMoviesUrl = `https://api.themoviedb.org/3/search/multi?api_key=${apiKey}&query=${encodeURIComponent(query)}&language=pt-BR&page=1&sort_by=popularity.desc`;
+    
+            fetch(allMoviesUrl)
+            .then(response => response.json())
+            .then(data => {
+                const resultsContainer = document.getElementById('results');
+                resultsContainer.innerHTML = ''; // Limpa resultados anteriores
+    
+                // Verifica se existem resultados
+                if (data.results && data.results.length > 0) {
+                    data.results.forEach(movie => {
+                        if (movie.media_type === 'movie' || movie.media_type === 'tv') {
+                            const title = movie.title || movie.name; // Para pegar o título do filme ou da série
+                            const { imgUrl, trailerUrl, rating, backdropUrl, providerUrl, detailsUrl} = defineMovieConstants(movie, movie.media_type, apiKey);
+                            const overview = `“${movie.overview}”`; // Sinopse
+                            const upperTitle = title.toUpperCase();
+                            
+                            const resultsDiv = document.createElement('div');
+                            resultsDiv.innerHTML += `
+                                <div class="resultsDiv">
+                                    <img src="${imgUrl}" alt="${upperTitle}">
+                                    <div class="movie-info">
+                                        <h3>${upperTitle}</h3>
+                                    </div>
+                                </div>
+                            `;
+                            
+                            // Evento de clique para abrir o modal
+                            resultsDiv.addEventListener('click', function() {
+                                // Nova requisição para obter detalhes do filme
 
-        const trendingUrl = `https://api.themoviedb.org/3/trending/${mediaType}/week?api_key=${apiKey}&language=pt-BR&page=1`;
+                                fetch(detailsUrl)
+                                .then(response => response.json())
+                                .then(data => {
+                                
+                                    const genresArray = data.genres;
+                                    let genresNames = '';
+                                    if (genresArray && genresArray.length > 0) {
+                                        genresNames = genresArray.map(genres => genres.name).join(", "); //String "join" separa os diversos gêneros
+                                    }
+    
+                                    return fetch(providerUrl)
+                                        .then(providerResponse => providerResponse.json())
+                                        .then(providerData => {
+    
+                                            let providerNames = ''; // Mensagem caso não haja provedores
+                                            const providers = providerData.results?.BR; // Acessa os provedores para o país BR
+                                            let providerLogos = '';
+    
+                                            if (providers){
+    
+                                            /* Processo pegar logo
+                                                const processProviders = (providerArray) => {
+                                                return providerArray.map(p => {
+                                                    const logoUrl = `https://image.tmdb.org/t/p/w45${p.logo_path}`; 
+                                                    return `<img src="${logoUrl}" alt="${p.provider_name}" title="${p.provider_name}">`; // Adiciona a imagem da logo
+                                                }).join(" ");
+                                                };
+    
+                                                const buyLogos = providers.buy && providers.buy.length > 0 ? processProviders(providers.buy) : '';
+                                                const rentLogos = providers.rent && providers.rent.length > 0 ? processProviders(providers.rent) : '';
+    
+                                                // Concatena todas as categorias de provedores
+                                                const allLogos = [buyLogos, rentLogos].filter(Boolean).join(" ");
+    
+                                                // Se houver logos de provedores, substitui a mensagem padrão
+                                                if (allLogos) {
+                                                    providerLogos = allLogos;
+                                                }
+    
+                                            */
+    
+                                                const rentProviders = providers.rent ? providers.rent.slice(0,1).map(p => p.provider_name).join(", ") : '';
+                                                const flatrateProviders = providers.flatrate ? providers.flatrate.slice(0,3).map(p => p.provider_name).join(", "): '';
+                                                const allProviders = [rentProviders, flatrateProviders].filter(Boolean).join(", ");
+                                                                                    
+                                                if (allProviders) {
+                                                    providerNames = allProviders;
+                                                }
+                                            }        
+
+                                            // Evento de clique para abrir a pagina
+                                                const params = new URLSearchParams({
+                                                    title: movie.title || movie.name,
+                                                    genres: genresNames,
+                                                    release_date: movie.release_date || movie.first_air_date,
+                                                    imgUrl: imgUrl,
+                                                    backdropUrl: backdropUrl,
+                                                    overview: `“${movie.overview}”`,
+                                                    id: movie.id,
+                                                    mediaTp: movie.media_type,
+                                                    provider_name: providerNames  
+                                                });
+
+                                                window.location.href = `filme.php?${params.toString()}`;
+
+                                        });
+                                })
+                                .catch(error => console.error('Erro ao buscar detalhes do filme:', error)); 
+                            });
+    
+                            resultsContainer.appendChild(resultsDiv);
+                        }
+                    });
+    
+                    resultsContainer.style.display = 'block';
+                } else {
+                    resultsContainer.innerHTML = '<p>Nenhum resultado encontrado.</p>';
+                    resultsContainer.style.display = 'block';
+                }
+            })
+            .catch(error => console.error('Erro:', error));
+        } else {
+            // Check empty
+            const resultsContainer = document.getElementById('results');
+            resultsContainer.innerHTML = '';
+            resultsContainer.style.display = 'none';
+        }
+    });
+
+    function loadContent(){
+        showLoading(); // Mostra o spinner ao começar
+
+        const upcomingCaption = document.getElementById('cinemaContainer');
+        
+        const popularUrl = `https://api.themoviedb.org/3/trending/${mediaType}/week?api_key=${apiKey}&language=pt-BR&page=1`;
         const topRatedUrl = `https://api.themoviedb.org/3/${mediaType}/top_rated?api_key=${apiKey}&language=pt-BR&page=1&sort_by=popularity.desc`;
-        const upcomingUrl = `https://api.themoviedb.org/3/movie/upcoming?api_key=${apiKey}&language=pt-BR&page=1&release_date.gte=2024-13-14&release_date.lte=2024-12-31`;
+        const upcomingUrl = `https://api.themoviedb.org/3/movie/upcoming?api_key=${apiKey}&language=pt-BR&page=1&sort_by=release_date.desc`;
 
         fetch(upcomingUrl)
             .then(response => response.json())
@@ -44,14 +165,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 const wrapMovies = upcomingData.results.slice(0, 10);
                 const containerNew = document.getElementById('container-wrap');  
 
-
                 wrapMovies.forEach(movie => {
                     const carouselDiv = document.createElement('div');
                     
                     carouselDiv.addEventListener('click', () => activateBackdropContainer(carouselDiv));
 
-                    const { imgUrl, trailerUrl, rating, detailsUrl, backdropUrl, creditsUrl } = defineMovieConstants(movie, 'movie', apiKey);
+                    const { imgUrl, trailerUrl, detailsUrl, backdropUrl, creditsUrl } = defineMovieConstants(movie, 'movie', apiKey);
+
                     const mediaTypeTxt = movie.media_type === 'movie' ? 'Filme' : 'Série';
+                    const mediaType = 'movie';
 
                     fetch(detailsUrl)
                     .then(response => response.json())
@@ -75,22 +197,21 @@ document.addEventListener('DOMContentLoaded', function() {
                                     console.log("Trailer key vazia");
                                 } 
                             }
-
+                                    
                     fetch(creditsUrl)
-                        .then(response => response.json())
-                        .then(creditsData => {
+                    .then(response => response.json())
+                    .then(creditsData =>{
 
-                            const castArray = creditsData.cast.slice(0,10);
-                            let castHtml = '';
-                                  
-                            if(castArray && castArray.length > 0){
-                                castArray.forEach(cast => {
-                                    const castName = cast.name;
-                                    const castRole = cast.character;
+                        const castArray = creditsData.cast.slice(0,10);
+                        let castHtml = '';
+                        if(castArray && castArray.length > 0){
+                            castArray.forEach(cast => {
+                                const castName = cast.name;
+                                const castRole = cast.character;
 
-                                    const profileImg = cast.profile_path ? `https://image.tmdb.org/t/p/w500/${cast.profile_path}` : 'imagens/user.png'; // Avatar padrão se não houver imagem
+                                const profileImg = cast.profile_path ? `https://image.tmdb.org/t/p/w500/${cast.profile_path}` : 'imagens/user.png'; // Avatar padrão se não houver imagem
 
-                                    // Criação de um elemento HTML para cada ator, incluindo nome e imagem
+                                // Criação de um elemento HTML para cada ator, incluindo nome e imagem
                                     castHtml += `
                                     <div class="actor-card">
                                         <img src="${profileImg}" alt="${castName}" class="actor-img">
@@ -99,11 +220,11 @@ document.addEventListener('DOMContentLoaded', function() {
                                             <p class="actor-role">${castRole}</p>
                                         </div>
                                     </div>
+                                    `
+                                    ;
                                     `;
-                                
-                                const trailerYtUrl = `https://www.youtube.com/watch?v=${trailerKey}`;
                             
-
+                           const trailerYtUrl = `https://www.youtube.com/watch?v=${trailerKey}`;                         
                                 carouselDiv.innerHTML = `
                                     <div class="backdropContainer active">
                                         <div class="upcomingItem">
@@ -118,41 +239,33 @@ document.addEventListener('DOMContentLoaded', function() {
                                             </div>
                                         
                                             <img src="${imgUrl}" class="frontImage">
+                                            
                                         </div>
                                     </div>
                                 `
 
-                                 // Evento de clique para abrir o modal
-                                carouselDiv.addEventListener('click', () => {
-                                    document.getElementById('itemName').innerText = movie.title; // Define o título no modal
-                                    document.getElementById('itemPoster').src = imgUrl;
-                                    document.getElementById('itemGenre').innerText = `Gênero: ${genresNames}`;
-                                    document.getElementById('itemOverview').innerText = movie.overview;
-                                    document.getElementById('providerInfo').innerText = ``;
-                                    document.getElementById('ratingValue').innerText = rating;
-                                    document.getElementById('cast-container').innerHTML = castHtml;
+                                 // Evento de clique para abrir a pagina
+                                 carouselDiv.addEventListener('click', () => {
+                                    const params = new URLSearchParams({
+                                        title: movie.title,
+                                        original_title: movie.original_title,
+                                        genres: genresNames,
+                                        release_date: movie.release_date,
+                                        imgUrl: imgUrl,
+                                        backdropUrl: backdropUrl,
+                                        trailerUrl: trailerYtUrl,
+                                        overview: `“${movie.overview}”`,
+                                        id: movie.id,
+                                        mediaTp: mediaType,
+                                        itemFetch: "upcoming"
+                                    });
+                                
+                                    window.location.href = `filme.php?${params.toString()}`;
 
-                                    //document.getElementById('castPfp').src = profileImg;
+                                });
+                            });
+                        }
 
-                                    const dataApi = movie.release_date;
-                                    const dataFormatada = formatarData(dataApi);
-                                    console.log(dataFormatada);
-
-                                    document.getElementById('release-date').innerText = `Data de lançamento: ${dataFormatada}`;
-
-
-                                    const itemModal = document.getElementById('movieDialog');
-                                    itemModal.style.backgroundImage = `url(${backdropUrl})`;
-
-                                    const overlayModal = document.querySelector('.overlay-modal');
-                                    overlayModal.style.display = 'block'; // Torna a overlay visível 
-
-                                    const wtwFont = document.querySelector('.wtw-font')
-                                    wtwFont.style.display = 'none';
-                                    
-                                    itemModal.showModal();
-                                                        
-                                })
 
                                 containerNew.appendChild(carouselDiv);
                                                         
@@ -191,7 +304,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                             
                                 if (items.length > 0) {
-                                    const intervalTime = 2500; 
+                                    const intervalTime = 2000; 
                         
                                      function deactivateAllItemsExceptCurrent() {
                                         items.forEach((item, index) => {
@@ -209,11 +322,12 @@ document.addEventListener('DOMContentLoaded', function() {
                                     items[currentIndex].classList.add('active');
                                     const itemOffset = items[currentIndex].offsetLeft;
                                     const containerCenter = (containerWrap.clientWidth / 2) - (items[currentIndex].clientWidth / 2);
+                                    
                                     containerWrap.scrollTo({
                                         left: itemOffset - containerCenter,
                                         behavior: 'smooth'
                                     });
-
+                                    
                                     autoScrollInterval = setInterval(showNextItem, intervalTime);
                                     
                                     containerWrap.addEventListener('scroll', () => {
@@ -222,6 +336,11 @@ document.addEventListener('DOMContentLoaded', function() {
                                     });     
 
                                     containerWrap.addEventListener('mouseenter', () => {
+                                        clearInterval(autoScrollInterval); // Cancela o setInterval ao passar o mouse
+                                        activateAllItems(); // Torna todos os itens ativos
+                                    });
+
+                                    containerWrap.addEventListener('click', () => {
                                         clearInterval(autoScrollInterval); // Cancela o setInterval ao passar o mouse
                                         activateAllItems(); // Torna todos os itens ativos
                                     });
@@ -235,26 +354,22 @@ document.addEventListener('DOMContentLoaded', function() {
                                     containerWrap.scrollTo({
                                         left: itemOffset - containerCenter,
                                         behavior: 'smooth'
-                                    });    
+                                    });
                                                                                            
-                        
                             } else {
                                 console.error("Nenhum backdropContainer encontrado");
                             }
-                            
-                        }, 100); // Ajuste o tempo se necessário para garantir que o DOM esteja pronto  
-                        });
-                        } else {
-                            console.log('Elenco não encontrado.');
-                        }
-                        })                         
+
+                        }, 100); // Ajuste o tempo se necessário para garantir que o DOM esteja pronto
+                        })    
+
                     })
                     .catch(error => console.error('Erro ao buscar o trailer:', error));
                 });
               })
             })
-            
-            
+        })
+
     
 
         fetch(trendingUrl)
@@ -280,7 +395,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         const flatrateProviders = providers.flatrate ? providers.flatrate.slice(0,3).map(p => p.provider_name).join(", "): '';
                         const allProviders = [rentProviders, flatrateProviders].filter(Boolean).join(", ");
 
-
                         if(allProviders){
                             providerNames = allProviders;
                         } else {
@@ -301,7 +415,6 @@ document.addEventListener('DOMContentLoaded', function() {
                                 genresNames = genresArray.map(genres => genres.name).join(", "); //String "join" separa os diversos gêneros
                         }
     
-                        
                         fetch(trailerUrl)
                         .then(response => response.json())
                         .then(trailerData => {
@@ -367,31 +480,25 @@ document.addEventListener('DOMContentLoaded', function() {
                                 </div>
                             `;
                             
+                            // Evento de clique para abrir a pagina
                             movieDiv.addEventListener('click', () => {
-                                document.getElementById('itemName').innerText = movie.title || movie.name; // Define o título no modal
-                                document.getElementById('itemPoster').src = imgUrl;
-                                document.getElementById('itemGenre').innerText = `Gênero: ${genresNames}`;
-                                document.getElementById('mediaTypeParagraph').innerText = mediaTypeTxt;
-                                document.getElementById('providerInfo').innerText = providerNames;
-                                document.getElementById('itemOverview').innerText = movie.overview;
-                                document.getElementById('cast-container').innerHTML = castHtml;
-                                const wtwFont = document.querySelector('.wtw-font')
+                                const params = new URLSearchParams({
+                                    title: movie.title || movie.name,
+                                    original_title: movie.original_title,
+                                    genres: genresNames,
+                                    release_date: movie.release_date || movie.first_air_date,
+                                    imgUrl: imgUrl,
+                                    backdropUrl: backdropUrl,
+                                    trailerUrl: trailerYtUrl,
+                                    overview: `“${movie.overview}”`,
+                                    id: movie.id,
+                                    mediaTp: movie.media_type,
+                                    provider_name: providerNames  
+                                });
+                            
+                                window.location.href = `filme.php?${params.toString()}`;
 
-                                /*const dataApi = movie.release_date;
-                                const dataFormatada = formatarData(dataApi);
-
-                                document.getElementById('release-date').innerText = `Data de lançamento: ${dataFormatada}`;*/
-
-                                const itemModal = document.getElementById('movieDialog');
-                                itemModal.style.backgroundImage = `url(${backdropUrl})`;
-
-                                const overlayModal = document.querySelector('.overlay-modal');
-                                overlayModal.style.display = 'block'; // Torna a overlay visível 
-                                wtwFont.style.display = 'block';
-                                
-                                itemModal.showModal();
-                                //checkProviders();
-                            })
+                            });
 
                             container.appendChild(movieDiv); 
                             
@@ -417,12 +524,22 @@ document.addEventListener('DOMContentLoaded', function() {
                 container.innerHTML = ""; // Limpa o container
 
                 movies.forEach(movie => {
+                
                     const movieDiv = document.createElement('div');
                     movieDiv.classList.add('col-md-3', 'movies');
 
-                    const { imgUrl, trailerUrl, rating, providerUrl, backdropUrl } = defineMovieConstants(movie, mediaType, apiKey);
+                    const { imgUrl, trailerUrl, rating, backdropUrl, providerUrl, detailsUrl} = defineMovieConstants(movie, mediaType, apiKey);
 
                     const carouselDiv = document.createElement('div');
+
+                    fetch(detailsUrl)
+                        .then(response => response.json())
+                        .then(data => {
+                            const genresArray = data.genres;
+                            let genresNames = '';
+                            if (genresArray && genresArray.length > 0) {
+                                genresNames = genresArray.map(genres => genres.name).join(", "); //String "join" separa os diversos gêneros
+                        }
 
                     fetch(providerUrl)
                     .then(response => response.json())
@@ -477,6 +594,26 @@ document.addEventListener('DOMContentLoaded', function() {
 
                             container.appendChild(movieDiv);  
 
+                            // Evento de clique para abrir a pagina
+                            movieDiv.addEventListener('click', () => {
+                                const params = new URLSearchParams({
+                                    title: movie.title || movie.name,
+                                    original_title: movie.original_title,
+                                    genres: genresNames,
+                                    release_date: movie.release_date || movie.first_air_date,
+                                    imgUrl: imgUrl,
+                                    backdropUrl: backdropUrl,
+                                    trailerUrl: trailerYtUrl,
+                                    overview: `“${movie.overview}”`,
+                                    id: movie.id,
+                                    mediaTp: mediaType,
+                                    provider_name: providerNames  
+                                });
+                                                
+                                window.location.href = `filme.php?${params.toString()}`;
+
+                            });
+
                             /*const providerLogo = movieDiv.querySelector('.provider-name');
 
                             if (providerNames.toLowerCase().includes('netflix')) {  // Verifica se inclui "Netflix"
@@ -486,18 +623,21 @@ document.addEventListener('DOMContentLoaded', function() {
                             } else if(providerNames.toLocaleLowerCase().includes('max')){
                                 providerLogo.style.fontFamily = "HBO Max"; 
                             }*/
-                            
-                            // Evento de clique para abrir o modal
-                                                    
+                                                                                
                         })
                         .catch(error => console.error('Erro ao buscar o trailer:', error));
                 });
-            })
+            });
+        })
+        })
+        .catch(error => console.error('Erro ao carregar conteúdo:', error))
+        .finally(() => {
+            hideLoading(); // Esconde o spinner quando tudo está carregado
         });
-    }
+        }
 
      // Botões para alternar entre filmes e séries
-     document.getElementById('showMovies').addEventListener('click', function() {
+    document.getElementById('showMovies').addEventListener('click', function() {
         this.classList.add('active');
         document.getElementById('showSeries').classList.remove('active')
         mediaType = 'movie';  // Mudar para filmes
@@ -511,26 +651,6 @@ document.addEventListener('DOMContentLoaded', function() {
         this.classList.add('active');
         document.getElementById('showMovies').classList.remove('active');
     });
+    loadContent();        // Carregar conteúdo de filmes
 
-    /*document.getElementById('showAnime').addEventListener('click', function() {
-        mediaType = 'tv';     // Mudar para séries
-        loadContent();        // Carregar conteúdo de séries
-        this.classList.add('active');
-        document.getElementById('showMovies').classList.remove('active');
-        
-    });*/
-
-    const rowContainer = document.querySelector('.container');
-    rowContainer.style.display = 'inherit';
-
-    loadContent();
-});
-
-document.getElementById('closeItem').addEventListener('click', function() {
-    const modal = document.getElementById('movieDialog');
-    modal.close();
-    
-    // Ocultar a overlay
-    const overlay = document.querySelector('.overlay');
-    overlay.style.display = 'none';
 });
