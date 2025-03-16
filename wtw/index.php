@@ -39,12 +39,47 @@
                 <button id="close-trailer" onclick="closeTrailer()">X</button>
             </dialog>
 
+            <dialog id="movieDialog" class="movie-dialog">
+                <div id="moviecontent" class="modal-class">
+                    <div class="poster-title-id">
+                        <img src="" alt="Poster Filme" id="itemPoster" class="posterItem">
+                    <div class="type-title-genre">
+                    <p id="mediaTypeParagraph" class="mediaTypeParagraph"></p>
+                    <div class="title-rating">
+                        <h2 id="itemName" class="animate__animated animate__backInLeft"></h2>
+                        <p id="ratingValue"></p>
+                    </div>
+                    <p id="itemGenre"></p>
+                    <h3 class="wtw-font" id="wtwContainer">
+                        <span class="wtw-white">
+                            Onde
+                        </span>
+                        
+                        <span class="wtw-red">
+                           assistir?
+                        </span>
+                    </h2>
+                    <p id="providerInfo"></p>
+                    <div>
+                        <p id="release-date"></p>
+                        <p id="logoProvider"></p>
+                    </div>
+                </div>
+                </div>
+                <p id="itemOverview" class="sinopse"></p>
+                <img id="backdrop" src="" style="display: none;" alt="Backdrop Image">
+                <div id="cast-container" class="cast-div"> <!-- informações de elenco --></div>
+                <button id="closeItem" class="btn btn-danger">Fechar</button>
+            </div>
+            <div class="overlay-modal"></div> <!-- Camada de fundo preto -->
+            </dialog>
+
             <div class="wrap">
 
                 <div class="cinema-container" id="cinemaContainer">
                     <h2 class="cinema-font">
                         <span class="title-wrap">
-                            Chegando nos cinemas
+                            chegando nos cinemas
                         </span>
                         
                         <span class="title-wrap2">
@@ -66,13 +101,15 @@
                 <div class="style-buttons">
                     <button id="showMovies" class="btn-category active">Filmes</button>
                     <button id="showSeries" class="btn-category">Séries</button>
+                    <!--<button id="showAnime" class="btn-category">Animações</button>-->
                 </div>
             </div>
 
         <div class="container">
 
             <h2><b>|</b>
-                <span class="maisPop">
+
+              <span class="maisPop">
                     Mais populares no
                 </span>
                 
@@ -144,8 +181,6 @@
                         <p>Nenhum filme encontrado.</p>
                     <?php endif; ?>
                 </div>
-
-                  <button class="next" onclick="scrollRight()">&#10095;</button> Seta próximo 
 
             </div>
 

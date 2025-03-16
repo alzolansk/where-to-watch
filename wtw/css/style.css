@@ -12,6 +12,7 @@
 
  @import url('https://fonts.googleapis.com/css2?family=Mukta:wght@200;300;400;500;600;700;800&display=swap');
 
+fixing-bugs
  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,100..900;1,100..900&display=swap');
 
  @import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap');
@@ -177,9 +178,9 @@ body{
 /*Dialog Filme*/
 
 .movie-dialog{
-    max-width: 1200px;
+    max-width: 1350px;
     margin: auto;
-    max-height: 600px;
+    max-height: 850px;
     width: 100%;
     height: 100%;
     border-radius: 30px;
@@ -221,6 +222,7 @@ body{
 .wtw-font{
     font-family: Bebas Neue;
     font-size: 30px;
+    display: none;
 }
 
 .wtw-white{
@@ -234,7 +236,9 @@ body{
 .posterItem{
     z-index: 4;
     width: 200px;
+    position: relative;
     border-radius: 40px;
+    max-height: 300px;
 }
 
 .overlay-modal {
@@ -265,7 +269,124 @@ body{
     font-weight: 200;
 }
 
-/*Galeria de Em Breve*/
+.sinopse{
+    margin-top: 10px;
+    background-color: #0000005d;
+    border-radius: 4px;
+    padding: 5px;
+}
+
+.title-rating{
+    margin: auto;
+    justify-content: center;
+    align-items: center;
+    display: flex;
+    gap: 20px;
+}
+
+/*Elenco*/
+
+.cast-div{
+    display: flex;
+    flex-direction: row;
+    max-width: 1240px;
+    width: 100%;
+    max-height: 400px;
+    height: 100%;
+    gap: 20px;
+    padding: 10px 10px 20px;
+    overflow-y: hidden;
+    overflow-x: scroll;
+}
+
+::-webkit-scrollbar {
+    width: 0.7em;
+    background-color: rgb(29, 29, 29);
+    border: none;
+    border-radius: 10px;
+}
+   
+::-webkit-scrollbar-track {
+    box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
+}
+   
+::-webkit-scrollbar-thumb {
+    border-radius: 10px;
+    background-color: #0e0e0e;
+    outline: none;
+}
+
+::-webkit-scrollbar-button:single-button:horizontal:decrement {
+    height: 18px;
+    width: 18px;
+    background-position: 3px 3px;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' fill='rgb(96, 96, 96)'><polygon points='0,50 50,100 50,0'/></svg>");
+
+}
+
+::-webkit-scrollbar-button:single-button:horizontal:decrement:hover {
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' fill='rgb(112, 112, 112)'><polygon points='0,50 50,100 50,0'/></svg>");
+}
+
+::-webkit-scrollbar-button:single-button:horizontal:decrement:active {
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' fill='rgb(128, 128, 128)'><polygon points='0,50 50,100 50,0'/></svg>");
+}
+
+/* Right */
+::-webkit-scrollbar-button:single-button:horizontal:increment {
+    height: 18px;
+    width: 18px;
+    background-position: 3px 3px;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' fill='rgb(96, 96, 96)'><polygon points='0,0 0,100 50,50'/></svg>");
+}
+
+::-webkit-scrollbar-button:single-button:horizontal:increment:hover {
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' fill='rgb(112, 112, 112)'><polygon points='0,0 0,100 50,50'/></svg>");
+}
+
+::-webkit-scrollbar-button:single-button:horizontal:increment:active {
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' fill='rgb(128, 128, 128)'><polygon points='0,0 0,100 50,50'/></svg>");
+}
+
+/*Cartão ator*/
+.actor-card{
+    background-color: rgba(105, 105, 105, 0.712);
+    border-radius: 20px;
+    max-width: 150px;
+    width: 100%;
+    cursor: pointer;
+}
+
+.actor-name:hover{
+    color: white;
+}
+
+.actor-card p{
+    margin: 0 auto;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.actor-role{
+    color: #adadad;
+    font-size: 15px;
+}
+
+.p-div{
+    padding: 8px 6px 8px;
+    width: 100%;
+}
+
+.actor-img{
+    border-radius: 20px 20px 0px 0px;
+    width: 150px;
+    height: 200px;
+    object-fit: cover; /* Corta a imagem ao invés de achatá-la */
+    overflow: hidden; /* Esconde as partes que ultrapassarem o quadrado */
+}
+
 
 .wrap{
     height: 100%;
@@ -322,7 +443,7 @@ body{
 }
 
 .title-wrap, .title-wrap2{
-    font-family: 'HBO Max', 'Arial';
+    font-family: 'HBO Max', Gabarito;
     font-size: 60px;
 }
 
@@ -682,13 +803,18 @@ button.prev:hover, button.next:hover {
     cursor: pointer;
     font-size: 16px;
     border-radius: 30px;
-    transition: background-color 0.3s ease, color 0.3s ease; /* Altere para as propriedades desejadas */
+    font-family: Mukta;
+    font-size: 18px;
+    transition: background-color 0.4s ease, color 0.3s ease; /* Altere para as propriedades desejadas */
 }
 
 .btn-category.active {
     box-shadow:  2px 2px 8px 1px rgba(0, 0, 0, 0.507);
     background-color: #1a1a1a;
     color: white;
+    font-weight: 500;
+    transform: scale(1.07);
+    font-size: 19px;
 }
 
 .btn-category:focus{
@@ -711,6 +837,7 @@ button.prev:hover, button.next:hover {
     min-width: 1000px;
     margin: 0 auto; 
     padding: 20px;
+    display: none;
 }
 
 .maisPop, .indicaSpan{
@@ -790,7 +917,7 @@ button.prev:hover, button.next:hover {
     flex-direction: row;
     height: 100%;
     cursor: pointer;
-    /*transition: transform 0.3s ease-in-out;*/
+    transition: transform 0.3s ease-in-out;
     animation: rowFadein 0.5s ease-in forwards; 
 }
 

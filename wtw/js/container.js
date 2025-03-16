@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     const apiKey = 'dc3b4144ae24ddabacaeda024ff0585c';
     let mediaType = 'movie'; // Inicialmente filmes
+    //let genreSuf = '';
 
     function defineMovieConstants(movie, mediaType, apiKey) {
         const imgUrl = `https://image.tmdb.org/t/p/w500${movie.poster_path}`;
@@ -170,6 +171,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     carouselDiv.addEventListener('click', () => activateBackdropContainer(carouselDiv));
 
                     const { imgUrl, trailerUrl, detailsUrl, backdropUrl, creditsUrl } = defineMovieConstants(movie, 'movie', apiKey);
+
                     const mediaTypeTxt = movie.media_type === 'movie' ? 'Filme' : 'Série';
                     const mediaType = 'movie';
 
@@ -193,7 +195,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                                 if(!trailerKey){
                                     console.log("Trailer key vazia");
-                                }
+                                } 
                             }
                                     
                     fetch(creditsUrl)
@@ -220,6 +222,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     </div>
                                     `
                                     ;
+                                    `;
                             
                            const trailerYtUrl = `https://www.youtube.com/watch?v=${trailerKey}`;                         
                                 carouselDiv.innerHTML = `
@@ -263,6 +266,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             });
                         }
 
+
                                 containerNew.appendChild(carouselDiv);
                                                         
                                 setTimeout(() => {
@@ -292,24 +296,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     left: itemOffset - containerCenter,
                                     behavior: 'smooth'
                                 });
-                                }
-
-                                /* Função para centralizar o item ativo
-                                function scrollNextItem() {
-                                    const wrap = document.querySelector('.container-wrap');
-                                    const scrollAmount = wrap.clientWidth * 0.60; // Mova 25% da largura do contêiner
-   
-                                containerWrap.scrollBy({
-                                    left: -scrollAmount, // Valor que vai para a esquerda.
-                                    behavior: 'smooth'
-                                });
-                                }
-
-                                containerWrap.addEventListener('scroll', () => {
-                                    activateAllItems(); // Torna todos os itens ativos
-                                    scrollNextItem();
-                                });  */
-                                                                
+                                }                                                                
 
                                 items.forEach(container => {
                                     container.classList.remove('active');
@@ -375,18 +362,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
                         }, 100); // Ajuste o tempo se necessário para garantir que o DOM esteja pronto
                         })    
+
                     })
                     .catch(error => console.error('Erro ao buscar o trailer:', error));
                 });
+              })
             })
         })
 
     
 
-        fetch(popularUrl)
+        fetch(trendingUrl)
             .then(response => response.json())
-            .then(popularData => {
-                const movies = popularData.results;
+            .then(trendingData => {
+                const movies = trendingData.results;
                 const container = document.getElementById('popular-movies-container');
                 container.innerHTML = ""; // Limpa o container
 
@@ -395,7 +384,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     movieDiv.classList.add('col-md-3', 'movies');
                     const mediaTypeTxt = movie.media_type === 'movie' ? 'Filme' : 'Série';
 
-                    const { imgUrl, trailerUrl, rating, backdropUrl, providerUrl, detailsUrl} = defineMovieConstants(movie, mediaType, apiKey);
+                    const { imgUrl, trailerUrl, rating, backdropUrl, providerUrl, detailsUrl, creditsUrl} = defineMovieConstants(movie, mediaType, apiKey);
 
                     fetch(providerUrl)
                     .then(response => response.json())
@@ -412,6 +401,11 @@ document.addEventListener('DOMContentLoaded', function() {
                             console.log('Nenhum provedor encontrado para BR.');
                         }
                         
+                        if (providerNames.toLowerCase().includes('disney')) {
+                            const providerHref = `www.disneyplus.com/pt-br/series/the-simpsons`
+                        }
+
+
                         fetch(detailsUrl)
                         .then(response => response.json())
                         .then(data => {
@@ -434,6 +428,33 @@ document.addEventListener('DOMContentLoaded', function() {
                                     console.log("Trailer key vazia");
                                }
                             }
+
+                        fetch(creditsUrl)
+                        .then(response => response.json())
+                        .then(creditsData => {
+
+                            const castArray = creditsData.cast.slice(0,10);
+                            let castHtml = '';
+                                  
+                            if(castArray && castArray.length > 0){
+                                castArray.forEach(cast => {
+                                    const castName = cast.name;
+                                    const castRole = cast.character;
+                                    console.log(castName);
+
+                                    const profileImg = cast.profile_path ? `https://image.tmdb.org/t/p/w500/${cast.profile_path}` : 'imagens/user.png'; // Avatar padrão se não houver imagem
+
+                                    // Criação de um elemento HTML para cada ator, incluindo nome e imagem
+                                    castHtml += `
+                                    <div class="actor-card">
+                                        <img src="${profileImg}" alt="${castName}" class="actor-img">
+                                        <div class="p-div">
+                                            <a href="https://www.google.com/search?q=${castName}" class="actor-name" target="_blank">${castName}</a>
+                                            <p class="actor-role">${castRole}</p>
+                                        </div>
+                                    </div>
+                                    `;
+                                                                
                             const trailerYtUrl = `https://www.youtube.com/watch?v=${trailerKey}`;
 
                             movieDiv.innerHTML = `
@@ -483,7 +504,12 @@ document.addEventListener('DOMContentLoaded', function() {
                             
                             // Evento de clique para abrir o modal
 
+                        });
+                        } else {
+                            console.log('elenco não encontrado')
+                        }
                         })
+                    })
                     })
                         .catch(error => console.error('Erro ao buscar o trailer:', error));
                 });
@@ -617,9 +643,6 @@ document.addEventListener('DOMContentLoaded', function() {
         mediaType = 'movie';  // Mudar para filmes
         loadContent();        // Carregar conteúdo de filmes
         
-        // Mova o slider para o botão de filmes
-        slider.style.transform = "translateX(0)";
-
     });
 
     document.getElementById('showSeries').addEventListener('click', function() {
@@ -627,12 +650,7 @@ document.addEventListener('DOMContentLoaded', function() {
         loadContent();        // Carregar conteúdo de séries
         this.classList.add('active');
         document.getElementById('showMovies').classList.remove('active');
-
-        // Mova o slider para o botão de séries
-        const buttonWidth = this.offsetWidth; // Largura do botão
-        slider.style.transform = `translateX(${buttonWidth}px)`; // Move para a direita
     });
-
     loadContent();        // Carregar conteúdo de filmes
 
 });
