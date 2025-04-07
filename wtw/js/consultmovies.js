@@ -108,7 +108,7 @@ document.getElementById('searchmovieInput').addEventListener('input', function()
                                         document.getElementById('providerMovie').innerText = `Provedores: ${providerNames}`; // Exibe provedores
                                         document.getElementById('mediaTypeP').innerText = `Tipo: ${mediaTypeText}`;
                                         
-                                        document.getElementById('addMovieButton').innerText = `Adicionar ${title} ao Where to Watch`; //Adicionar "serie" ou "filme" no Where To Watch
+                                        document.getElementById('addMovieButton').innerText = `Adicionar ${title} ao where you Watch`; //Adicionar "serie" ou "filme" no Where To Watch
                                         
                                         const modal = document.getElementById('addMovieScreen');
                                         modal.style.backgroundImage = `url(${backdropUrl})`;

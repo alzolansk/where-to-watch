@@ -2,7 +2,15 @@
     
     <div class="faixa">
 
-       <li><a href="index.php" class="logo"> <img src="imagens/Where-toWatch.png" alt="logo" style="width: 80px"></li></a>
+      <!-- <li><a href="index.php" class="logo"> <img src="imagens/Where-toWatch.png" alt="logo" style="width: 80px"></li></a> -->
+        <a href="index.php" class="home-header">
+            <h2 class="logo">             
+                <span class="logo-font">where you</span>
+                <span class="logo-font2">
+                    WATCH
+                </span>
+            </h2>
+        </a>
 
         <nav id="menu-buttons" class="hidden-menu">
             <ul id="ulBotoes">
@@ -50,7 +58,7 @@
             echo '</div>';
 
             } else if (isset($_SESSION['nome'])) {
-                echo '<div class="user-menu">';
+                echo '<div class="user-greeting">';
                 echo "<label>Olá, " . $_SESSION['nome'] . " ";
                 echo '<a href= logout.php class=btn-danger> Sair </a>';
                 echo '</div>';
@@ -98,13 +106,12 @@
     left: 0; /* Define a posição na borda esquerda */
     width: 100%; /* Faz o menu ocupar toda a largura da página */
     z-index: 1000; /* Garante que o menu fique acima de outros elementos */
-
     flex-direction: row;
     align-items: center; /* Centraliza verticalmente */
-    height: auto;
+    height: 62px;
     border: solid 1px black;
     background-color: rgb(12, 12, 12);
-    padding: 10px 10px 10px 10px;
+    padding: 0px 30px;
 }
 
 .faixa ul{
@@ -113,6 +120,8 @@
     list-style: none;
     margin: 0;
     font-size: 15px;
+    margin-left: 20px;
+
 }
 
 .faixa ul li{
@@ -122,10 +131,41 @@
     text-overflow: ellipsis;
 }
 
-.user-menu {
-    display: column;
-    white-space: nowrap;
-    align-items: center; /* Alinha verticalmente os elementos */
+.user-greeting {
+    background-color: #1a1a1a;
+    color: white;
+    padding: 5px 20px;
+    border-radius: 25px;
+    font-size: 16px;
+    font-family: 'Nunito', sans-serif;
+    display: inline-block;
+    animation: fadeInDown 0.6s ease;
+    height: 60%; /* se estiver dentro de um nav fixo */
+
+}
+
+.user-greeting strong {
+    color: #D7171E;
+}
+
+.user-greeting a {
+    background-color: #D7171E;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-size: 13px;
+    text-decoration: none;
+}
+
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-15px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 #menu a{
@@ -280,4 +320,36 @@ input::placeholder{
     top: 0;
     left: 0;
 }
+
+.logo {
+  font-size: 24px;
+  letter-spacing: 0;
+  word-spacing: 0;
+}
+
+.logo span {
+  display: inline;
+  padding: 0;
+  margin: 0;
+}
+
+.logo-font{
+    font-family: Quicksand;
+    font-weight: 600;
+    font-size: 30px;
+}
+
+.logo-font2{
+    font-family: Bebas Neue;
+    font-size: 35px;
+    color: #D7171E;
+}
+
+.home-header,
+.home-header:hover,
+.home-header:focus,
+.home-header:visited {
+    text-decoration: none;
+}
+
 </style>

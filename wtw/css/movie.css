@@ -4,12 +4,15 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Lato:wght@700&display=swap');
 
-
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&family=Outfit:wght@300..700&display=swap');
 
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@100..900&display=swap');
 
+@import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&family=Quicksand:wght@300..700&display=swap');
+
 @import url('https://fonts.googleapis.com/css2?family=Mukta:wght@200;300;400;500;600;700;800&display=swap');
+
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,100..900;1,100..900&display=swap');
 
 @import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap');
 
@@ -33,9 +36,8 @@
    border:none;
    text-decoration: none;
    list-style: none;
-   box-sizing: border-box;
-        
-}
+   box-sizing: border-box;       
+} 
 
 body{
    background-color: rgb(0, 0, 0);
@@ -88,47 +90,95 @@ body{
 /*Filme*/
 
 .posterItem{
-    width: 230px;
+    width: 210px;
     border-radius: 40px;
 }
 
-.movieDiv{
+/*.movieDiv{
     display: flex;
     position: relative;
     max-width: 1800px;
     width: 1800px;
     margin: auto;
     height: 500px;
-    margin-top: 0;
+    margin-top: 10px;
 }
 
 .movieInfo{
     z-index: 3;
     padding: 20px;
     width: 1300px;
-}
+    padding-left: 30px;
+    padding-top: 30px;
+}*/
 
-#backdropImage{
-    position: absolute;
-    z-index: 1;
+.movieInfo {
+    display: flex;
+    max-width: 1200px;
     width: 100%;
-    height: 100%;
-    object-fit:cover;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 40px;
+    color: white;
+    z-index: 3;
 }
 
-.overlay {
-    position: absolute; /* Posiciona a sobreposição */
+.movieDiv {
+    position: relative;
+    width: 100%;
+    height: 510px;
+    max-height: 700px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px 20px;
+    overflow: hidden;
+}
+  
+.backdrop-container {
+    position: absolute;
     top: 0;
     left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgb(0, 0, 0, 0.7); /* Preto com opacidade */
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    z-index: 1;
+  }
+  
+  #backdropImage {
+    position: absolute;
+    top: 0;
+    left: 0; /* cobre tudo */
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 1;
+  }
+  
+  /* Gradiente que cobre a parte esquerda da tela */
+  #leftGradient {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 220px;
+    background: linear-gradient(to right, rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0));
+    height: 100%;
     z-index: 2;
-}
-
+  }
+  
+  /* Overlay preta por cima da imagem */
+  .overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 2;
+  }
+  
 .poster-title{
     display: flex;
-    gap: 10px; /* Espaçamento entre o pôster e o título */
     padding-left: 10px;
 }
 
@@ -136,6 +186,7 @@ body{
     font-family: Nunito;
     gap: 50px;
     font-weight: 500;
+    margin-left: 20px
 }
 
 #genreMovie{
@@ -150,18 +201,23 @@ body{
 }
 
 #movieOverview{
-    padding: 20px 0px;
+    padding: 0px 0px 10px;
     font-size: 18px;
     font-family: Nunito;
     font-weight: 300;
 }
 
+#overviewTitle{
+    font-weight: 700;
+    font-family: Nunito;
+}
+
 #itemName{
     font-family: Bebas Neue;
-    font-size: 70px;
-    text-overflow: ellipsis;
+    font-size: 60px;
+    text-overflow: ellipsis; 
     white-space: nowrap;
-    height: 100px;
+    height: 85px;
     animation-duration: 0.5s; /* don't forget to set a duration! */
     margin: 0;
 }
@@ -192,33 +248,107 @@ body{
     border-radius: 40px 40px 25px 25px;
 }
 
-/* Cast/Elenco */
+/*Seção de notificações*/
 
-.castDiv{
-    z-index: 1;
-    position: absolute;
-    padding: 5px 60px;
+.tools-section {
+    display:flex;
+    flex-direction: row;
+    gap: 10px;
 }
 
+.tools {
+    font-family: Nunito;
+    color: white;
+    text-decoration: none;
+    margin-bottom: 10px;
+    display: inline-block;
+    margin: 0;
+}
+
+.tools::after{
+    content: " | ";
+    font-size: 22px;
+    font-weight: bold;
+}
+
+.tools:last-child::after, 
+.tools:last-child::before{
+    content:none;
+}
+
+/*Dropdown*/
+
+.dropbtn{
+    background: rgb(215, 23, 30, 0.7);
+    color: white;
+    padding: 0px 5px;
+    border-radius: 5px;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: #111;
+    min-width: 160px;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+    z-index: 1;
+    border-radius: 8px;
+    padding: 10px 0;
+}
+  
+.dropdown-content a {
+    color: white;
+    padding: 8px 16px;
+    text-decoration: none;
+    display: block;
+}
+  
+.dropdown-content a:hover {
+    background-color: #333;
+}
+  
+.notify-dropdown:hover .dropdown-content {
+    display: block;
+}
+
+.notify-dropdown {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+  
+
+/* Cast/Elenco */
+
+.castDiv {
+    margin: 0 auto;
+    padding: 0 40px 20px 40px;
+    justify-content: center;
+    position: relative;
+    width: 100%;
+    max-width: 1200px;
+    justify-content: center;
+    align-items: center;
+  }  
+
 #cast-list{
-    margin-top: 20px;
     display: flex;
     gap: 15px;
-    overflow-x: scroll;
-    width: 1700px;
+    width: 100%;
     max-height: 300px;
     padding-bottom: 10px;
     scroll-behavior: smooth; /* Rolar suavemente */
     overflow-x: auto; /* Scroll apenas quando necessário */
     overflow-y: hidden; /* Scroll apenas quando necessário */
     cursor: pointer;
-
+    position: relative;
+    z-index: 1;
 }
 
 .actor-card{
     background-color: #0a0a0a;
     border-radius: 15px;
-    width: 145px;
+    width: 130px;
     padding-bottom: 10px;
     transition: transform 0.4s ease, box-shadow 0.4s ease; /* Animações suaves */
 }
@@ -228,14 +358,22 @@ body{
 }
 
 .actor-img{
-    width: 145px;
-    height: 180px;
+    width: 130px;
+    height: 170px;
     object-fit: cover;
     border-radius: 20px;
 }
 
 .actor-name{
     text-decoration: none;
+    font-family: Nunito;
+    font-weight: bold;
+    font-size: 16px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+    max-width: 100%;
 }
 
 .actor-name:hover{
@@ -252,8 +390,13 @@ body{
 }
 
 .p-div p{
-    text-overflow: ellipsis;
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+    max-width: 100%;
+    font-size: 14px;
+    color: #ccc;
 }
 
 #release-date{
@@ -269,6 +412,30 @@ body{
 ::-webkit-scrollbar-thumb{
     background-color: #080808;
     border-radius: 30px;
+}
+
+.cast-fade {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 80px;
+    height: 100%;
+    background: linear-gradient(to left, #000 60%, transparent);
+    z-index: 2;
+    pointer-events: none;
+    opacity: 1;
+    transition: opacity 0.4s ease-in-out;
+}
+.cast-fade.hidden {
+    opacity: 0;
+}  
+
+.cast-label{
+    font-family: Nunito;
+    font-size: 25px;
+    font-weight: 600;
+    border-radius: 20px;
+    width: 100px;
 }
 
 /*Modal dos Atores*/
@@ -297,3 +464,14 @@ body{
     width: 250px;
     border-radius: 30px;
 }
+
+.cast-fade {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 80px;
+    height: 100%;
+    background: linear-gradient(to left, #000 60%, transparent);
+    z-index: 2;
+    pointer-events: none;
+  }

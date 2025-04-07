@@ -4,16 +4,23 @@ document.addEventListener('DOMContentLoaded', function() {
     const params = new URLSearchParams(window.location.search);
     const apiKey = 'dc3b4144ae24ddabacaeda024ff0585c';
     const mediaType = params.get('mediaTp');
-
     const movieId = params.get('id');
     const creditsUrl = `https://api.themoviedb.org/3/${mediaType}/${movieId}/credits?api_key=${apiKey}&language=pt-BR&page=1`
 
+    let mediaTypeTranslated = '';
+
+    if (mediaType === 'movie') {
+        mediaTypeTranslated = 'filme';
+      } else if (mediaType === 'tv') {
+        mediaTypeTranslated = 'série';
+      }
+      
     // Recupera os dados
     const title = params.get('title');
     const originalTitle = params.get('original_title');
     const genres = params.get('genres');
     const releaseDate = params.get('release_date');
-    const imgUrl = params.get('imgUrl');
+    const imgUrl = new URLSearchParams(window.location.search).get('imgUrl');
     const backdropUrl = params.get('backdropUrl');
     const trailerUrl = params.get('trailerUrl');
     const overview = params.get('overview');
@@ -42,13 +49,17 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('release-date').innerText = `Lançamento: ${formattedReleaseDate}`;
 
     // Atualiza o conteúdo da página
-    document.getElementById('title-movie').innerText = `${title} - Where to Watch?`;
+    document.getElementById('title-movie').innerText = `${title} - Where you Watch`;
     document.getElementById('itemName').innerText = title;
     document.getElementById('genreMovie').innerText = `Gêneros: ${genres}`;
     document.getElementById('itemPoster').src = imgUrl;
     document.getElementById('backdropImage').src = backdropUrl;
     document.getElementById('trailer-link').href = trailerUrl;
     document.getElementById('movieOverview').innerText = overview;
+    // Atualiza a palavra no span
+    document.getElementById('media-type').innerText = mediaTypeTranslated;
+
+    const backdropOverlay = document.getElementById('backdropOverlay');  
 
     fetch(creditsUrl)
     .then(response => response.json())
@@ -104,6 +115,26 @@ document.addEventListener('DOMContentLoaded', function() {
         hideLoading(); // Esconde o spinner após tudo estar carregado
     });
 })
+
+const castList = document.getElementById('cast-list');
+const castFade = document.getElementById('castFade');
+
+function updateFadeVisibility() {
+    const atEnd = castList.scrollLeft;
+
+  if (atEnd) {
+    castFade.classList.add('hidden');
+  } else {
+    castFade.classList.remove('hidden');
+  }
+}
+
+// Verifica ao rolar
+castList.addEventListener('scroll', updateFadeVisibility);
+
+// Verifica ao carregar
+window.addEventListener('load', updateFadeVisibility);
+
 
 
 document.getElementById('closeItem').addEventListener('click', function() {

@@ -9,9 +9,9 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
     <link rel="stylesheet" href="css/style.css">
     <!--<link rel="stylesheet" href="css/searchmovie.css">-->
-    <link rel="icon" href="imagens/favicon-wtw.png">
+    <link rel="icon" href="imagens/wywatch-favicon-nofundo.png">
 
-    <title>Where To Watch?</title>
+    <title>Where You WATCH</title>
 
 </head>
 
@@ -44,7 +44,7 @@
                 <div class="cinema-container" id="cinemaContainer">
                     <h2 class="cinema-font">
                         <span class="title-wrap">
-                            Chegando nos cinemas
+                            chegando nos cinemas
                         </span>
                         
                         <span class="title-wrap2">
@@ -77,7 +77,7 @@
                 </span>
                 
                 <span class="logo-font">
-                    Where To
+                    where you
                 </span>
                 <span class="logo-font2">
                     WATCH
@@ -92,7 +92,7 @@
 
             <h2><b>|</b>
                 <span class="logo-font">
-                    Where to
+                    where you
                 </span>
                 <span class="logo-font2">
                     WATCH

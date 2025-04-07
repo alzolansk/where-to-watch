@@ -18,10 +18,10 @@ if(isset($_POST['submit'])) {
 
   // Verifica se o usuário foi encontrado
   if ($stmt->num_rows > 0) {
-    $stmt->bind_result($id, $nome, $hashed_password);
+    $stmt->bind_result($id, $nome, $senha);
     $stmt->fetch();
 
-    if (password_verify($senha, $hashed_password)) {
+    if ($senha) {
       $_SESSION['id'] = $id;
       $_SESSION['nome'] = $nome;
 
@@ -33,7 +33,7 @@ if(isset($_POST['submit'])) {
     }
   } else {
     $title_error = "Usúario Inexistente";
-    $error_message = "Usuário não existe no Where To Watch. <br> Crie uma conta <a href='new-login.php'>aqui.</a>";
+    $error_message = "Usuário não existe no where you WATCH. <br> Crie uma conta <a href='new-login.php'>aqui.</a>";
     $user_not_found = true; // Usuário não encontrado
   }
 
@@ -54,39 +54,52 @@ if(isset($_POST['submit'])) {
     <title>Sign in with IMDb</title>
 </head>
 <body>
+  <div id="loginSection">
+      <div class="left-login">
+        <div class="logo-div">
+          <a href="index.php" class="home-header">
+            <h2>
+              <span class="logo-font">where you</span>
+              <span class="logo-font2">WATCH</span>
+            </h2>
+          </a>
+        </div>
+      </div>
 
-    <li><a href="index.php"> <img src="imagens/Where-toWatch.png" class="logo"> </a></li>
+      <dialog id="loginInvalid">
+        <p class="titleError"><?php echo $title_error; ?></p>
+        <div class="divider"></div>
+        <p id="errorMessage"><?php echo $error_message; ?></p>
+        <button id="closeDialog">Fechar</button>
+      </dialog>
 
-    <dialog id="loginInvalid">
-      <p class="titleError"><?php echo $title_error; ?></p>
-      <div class="divider"></div>
-      <p id="errorMessage"><?php echo $error_message; ?></p>
-      <button id="closeDialog">Fechar</button>
-    </dialog>
+    <div class="right-login">
 
-   <div class="form">
-      <form action="login.php" method="POST">
-        <hgroup>
-          <h3>Sign in</h3>
-        </hgroup>
+    <div class="form">
+        <form action="login.php" method="POST">
+          <hgroup>
+            <h3>Sign in</h3>
+          </hgroup>
 
-        <label for="email"><b> Email </b></label>
-        <input type="text" name="email" id="email">
-        <br>
+          <label for="email"><b> Email </b></label>
+          <input type="text" name="email" id="email">
+          <br>
 
-        <label for="password"><b> Password </b></label>
-        <input type="password" name="senha" id="senha">
+          <label for="password"><b> Password </b></label>
+          <input type="password" name="senha" id="senha">
 
-        <input type="submit" value="Log in" name="submit" id="submit">
+          <input type="submit" value="Log in" name="submit" id="submit">
 
-   <div class="new-account">
-        <p>Novo no Where To Watch?</p>
+    <div class="new-account">
+          <p>Novo no where you Watch</p>
 
-        <ul class="create-account">
-        <li><a href="new-login.php">Crie uma nova conta</a></li></ul>
-   </div>
-  </form>
-  </div>
+          <ul class="create-account">
+          <li><a href="new-login.php">Crie uma nova conta</a></li></ul>
+    </div>
+    </form>
+    </div>
+    </div>
+</div>
 
 </body>
 

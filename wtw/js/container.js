@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Remove a classe 'active' de todos os contêineres
         const allContainers = document.querySelectorAll('.backdropContainer');
         allContainers.forEach(container => {
-            container.classList.remove('active');
+            containmenter.classList.remove('active');
         });
     
         // Adiciona a classe 'active' ao contêiner clicado
@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         if (movie.media_type === 'movie' || movie.media_type === 'tv') {
                             const title = movie.title || movie.name; // Para pegar o título do filme ou da série
                             const { imgUrl, trailerUrl, rating, backdropUrl, providerUrl, detailsUrl} = defineMovieConstants(movie, movie.media_type, apiKey);
-                            const overview = `“${movie.overview}”`; // Sinopse
+                            const overview = `${movie.overview}`; // Sinopse
                             const upperTitle = title.toUpperCase();
                             
                             const resultsDiv = document.createElement('div');
@@ -117,7 +117,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                                     release_date: movie.release_date || movie.first_air_date,
                                                     imgUrl: imgUrl,
                                                     backdropUrl: backdropUrl,
-                                                    overview: `“${movie.overview}”`,
+                                                    overview: `${movie.overview}`,
                                                     id: movie.id,
                                                     mediaTp: movie.media_type,
                                                     provider_name: providerNames  
@@ -251,7 +251,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                         imgUrl: imgUrl,
                                         backdropUrl: backdropUrl,
                                         trailerUrl: trailerYtUrl,
-                                        overview: `“${movie.overview}”`,
+                                        overview: `${movie.overview}`,
                                         id: movie.id,
                                         mediaTp: mediaType,
                                         itemFetch: "upcoming"
@@ -293,23 +293,6 @@ document.addEventListener('DOMContentLoaded', function() {
                                     behavior: 'smooth'
                                 });
                                 }
-
-                                /* Função para centralizar o item ativo
-                                function scrollNextItem() {
-                                    const wrap = document.querySelector('.container-wrap');
-                                    const scrollAmount = wrap.clientWidth * 0.60; // Mova 25% da largura do contêiner
-   
-                                containerWrap.scrollBy({
-                                    left: -scrollAmount, // Valor que vai para a esquerda.
-                                    behavior: 'smooth'
-                                });
-                                }
-
-                                containerWrap.addEventListener('scroll', () => {
-                                    activateAllItems(); // Torna todos os itens ativos
-                                    scrollNextItem();
-                                });  */
-                                                                
 
                                 items.forEach(container => {
                                     container.classList.remove('active');
@@ -452,7 +435,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 
                                     <li class="watch-trailer">
                                         <a href="#" onclick="event.preventDefault(); showTrailer('${trailerYtUrl}'); event.stopPropagation();">
-                                            <img src="imagens/video-start.png" alt=""> Trailer
+                                            ▶ Trailer
                                         </a>
                                     </li>
                                     </div>
@@ -469,7 +452,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     imgUrl: imgUrl,
                                     backdropUrl: backdropUrl,
                                     trailerUrl: trailerYtUrl,
-                                    overview: `“${movie.overview}”`,
+                                    overview: `${movie.overview}`,
                                     id: movie.id,
                                     mediaTp: movie.media_type,
                                     provider_name: providerNames  
@@ -578,7 +561,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     imgUrl: imgUrl,
                                     backdropUrl: backdropUrl,
                                     trailerUrl: trailerYtUrl,
-                                    overview: `“${movie.overview}”`,
+                                    overview: `${movie.overview}`,
                                     id: movie.id,
                                     mediaTp: mediaType,
                                     provider_name: providerNames  

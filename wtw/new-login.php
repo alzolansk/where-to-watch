@@ -11,6 +11,7 @@ if (isset($_POST['submit'])){
   $email = $_POST['email'];
   $senha = $_POST['senha'];
   $confirm_senha = $_POST['confirmasenha'];
+  $phonenumber = $_POST['phone'];
 
   $stmt = $conexao->prepare("SELECT id_user FROM tb_users WHERE email_user = ?");
   $stmt->bind_param("s", $email);
@@ -19,8 +20,8 @@ if (isset($_POST['submit'])){
 
   if ($stmt->num_rows > 0) {
     $title_error = "Usuário existente";
-    $error_message = "Este e-mail já está cadastrado no Where to Watch. Gostaria de realizar login? <a href=\"login.php\">Clique aqui</a>";
-  } else if(empty($nome) || empty($senha) || empty($email)){
+    $error_message = "Este e-mail já está cadastrado no where you Watch. Gostaria de realizar login? <a href=\"login.php\">Clique aqui</a>";
+  } else if(empty($nome) || empty($senha) || empty($email)|| empty($phonenumber)){
     $title_error = "Campos vazios";
     $error_message = "Preencha todos os campos";
   } else if($senha !== $confirm_senha){
@@ -30,8 +31,8 @@ if (isset($_POST['submit'])){
 
   $hashed_password = password_hash($senha, PASSWORD_DEFAULT);
 
-  $insert_stmt = $conexao->prepare("INSERT INTO tb_users (name_user, email_user, pswd_user) VALUES (?, ?, ?)");
-  $insert_stmt->bind_param("sss", $nome, $email, $hashed_password);
+  $insert_stmt = $conexao->prepare("INSERT INTO tb_users (name_user, email_user, pswd_user, phone_number) VALUES (?, ?, ?, ?)");
+  $insert_stmt->bind_param("ssss", $nome, $email, $senha, $phonenumber);
   
   if ($insert_stmt->execute()) {
     echo "Usuário cadastrado com sucesso!";
@@ -59,10 +60,18 @@ $conexao->close();
     <link rel="stylesheet" href="css/login.css">
     <title>Sign in with IMDb</title>
 </head>
-<body>
-
-    
-    <li><a href="index.php"> <img src="imagens/Where-toWatch.png" class="logo"> </a></li>
+<body>  
+  <div id="loginSection">
+    <div class="left-login">
+      <div class="logo-div">
+        <a href="index.php" class="home-header">
+          <h2>
+            <span class="logo-font">where you</span>
+            <span class="logo-font2">WATCH</span>
+          </h2>
+        </a>
+      </div>
+    </div>
 
     <dialog id="loginInvalid">
       <p class="titleError"><?php echo $title_error; ?></p>
@@ -71,32 +80,38 @@ $conexao->close();
       <button id="closeDialog">Fechar</button>
     </dialog>
 
-   <div class="form">
-      <form action="new-login.php" method="POST">
-        <hgroup>
-          <h3> Criar conta </h3>
-        </hgroup>
+    <div class="right-login">
 
-        <label for="name"> <b> Nome </b></label>
-        <input type="text" name="nome" id="nome">
+      <div class="form">
+        <form action="new-login.php" method="POST">
+          <hgroup>
+            <h3> Criar conta </h3>
+          </hgroup>
 
-        <label for="email"><b> Email </b></label>
-        <input type="text" name="email" id="email">
-        <br>
+          <label for="name"> <b> Nome </b></label>
+          <input type="text" name="nome" id="nome">
 
-        <label for="password"><b> Password </b></label>
-        <input type="password" name="senha" id="senha">
+          <label for="email"><b> Email </b></label>
+          <input type="text" name="email" id="email">
 
-        <label for="password"><b> Confirme a senha </b></label>
-        <input type="password" name="confirmasenha" id="confirma_senha">
+          <label for="phoneNumber"><b> Número de telefone </b></label>
+          <input type="number" name="phone" id="phone">
+          <br>
 
-        <li class="accountExist">Ja tem uma conta?<a href="login.php"> Clique aqui</a></li></ul>
+          <label for="password"><b> Password </b></label>
+          <input type="password" name="senha" id="senha">
 
-        <input type="submit" value="Sign in" name="submit" id="submit">
-        
-  </form>
+          <label for="password"><b> Confirme a senha </b></label>
+          <input type="password" name="confirmasenha" id="confirma_senha">
+
+          <li class="accountExist">Ja tem uma conta?<a href="login.php"> Clique aqui</a></li></ul>
+
+          <input type="submit" value="Sign in" name="submit" id="submit">
+          
+        </form>
+      </div>
+    </div>
   </div>
-
 </body>
 
 <script>

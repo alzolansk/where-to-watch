@@ -1,37 +1,94 @@
 
   @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@500&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@100..900&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Mukta:wght@200;300;400;500;600;700;800&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&family=Quicksand:wght@300..700&display=swap');
+
 
 body{
     color: rgb(0, 0, 0);
     list-style: none;
-    background-color: rgb(255, 255, 255);
+    background-color: black;
+    font-family: Nunito;
 }
+
+#loginSection {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+  }
+  
+  .left-login, .right-login {
+    width: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .left-login .logo-div {
+    text-align: center;
+  }
+  
+  .right-login form {
+    margin: 0;
+  }
+  
 
 ul{
     list-style: none;
 }
 
-
 h3{
-    color: rgb(0, 0, 0);
+    color: rgb(255, 255, 255);
     padding-bottom: 5px;
 }
 
+.logo-div {
+    text-align: center;
+    margin: 10px auto;
+}
+.logo {
+    display: inline-block;
+}
+
+.logo-font{
+    font-family: Quicksand;
+    font-weight: 600;
+    font-size: 80px;
+    color: white;
+}
+
+.logo-font2{
+    font-family: Bebas Neue;
+    font-size: 75px;
+    color: #D7171E;
+}
+
+.home-header,
+.home-header:hover,
+.home-header:focus,
+.home-header:visited {
+    text-decoration: none;
+    color: white;
+}
+
 form{
-    width: 350px;
+    width: 800px;
     height: 450px;
-    border: solid 0.5px rgb(197, 197, 197);
-    background-color: #f8f8f8;
-    border-radius: 5px;
+    background-color: rgba(17, 17, 17, 0.92);
+    border-radius: 10px;
     padding: 25px 25px 350px 25px;
-    margin: 0 auto;
+    margin:auto;
+    box-shadow: 0 4px 12px rgba(215, 23, 30, 0.1);
 }
 
 label{
     font-size: 0.9em;
     padding-left: 7px;
     height: 10px;
-    color: rgb(0, 0, 0);
+    color: #D7171E;
 }
 
 input {
@@ -51,13 +108,13 @@ input {
 }
 
 #submit{
-    background: linear-gradient(to bottom, #f79090, #e23b3b);
+    background: #D7171E;
     padding: 5.8px;
-    border: 1px solid grey;
     position: relative;
     top: 17px;
     text-align: center;
     font-size: 0.9em;
+    border: none;
 }
 
 .new-account{
