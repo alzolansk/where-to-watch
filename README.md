@@ -74,6 +74,8 @@ Desenvolvedor Front-end e entusiasta em UX, API e produtos digitais.
 
 ---
 
-## 📝 Licença
+## 📝 Copyright
 
-Este projeto está sob licença MIT — fique à vontade para usar, modificar e compartilhar.
+Todos os direitos reservados © 2025 João Vitor Alves de Alencar
+
+Este código-fonte é apenas para fins de demonstração. A reprodução, cópia, modificação, distribuição ou qualquer forma de reutilização, total ou parcial, sem autorização prévia do autor, é estritamente proibida.
