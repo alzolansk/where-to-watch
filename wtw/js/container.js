@@ -161,7 +161,7 @@ document.addEventListener('DOMContentLoaded', function() {
         fetch(upcomingUrl)
             .then(response => response.json())
             .then(upcomingData => {
-                const wrapMovies = upcomingData.results.slice(0, 10);
+                const wrapMovies = upcomingData.results.slice(0, 30);
                 const containerNew = document.getElementById('container-wrap');  
 
                 wrapMovies.forEach(movie => {
@@ -177,10 +177,47 @@ document.addEventListener('DOMContentLoaded', function() {
                     .then(response => response.json())
                     .then(data => {
                         const genresArray = data.genres;
+                        const companies = data.production_companies;
                         let genresNames = '';
                         if (genresArray && genresArray.length > 0) {
                             genresNames = genresArray.map(genres => genres.name).join(", "); //String "join" separa os diversos gêneros
-                    }
+                        }
+
+                        let allLogosHTML = "";
+
+                        companies.slice(0, 2).forEach(company => {
+                             
+                            const hasHomepage = data.homepage && data.homepage.trim() !== "";
+                            const releaseDate = new Date(data.release_date);
+                            const today = new Date();
+                            const threeMonthsAgo = new Date();
+                            threeMonthsAgo.setMonth(today.getMonth() - 3);
+
+                            const threeMonthsAhead = new Date();
+                            threeMonthsAhead.setMonth(today.getMonth() + 3);
+
+                            const isInRange = releaseDate >= threeMonthsAgo && releaseDate <= threeMonthsAhead;
+
+                            if (company.logo_path) {
+                                const logoUrl = `https://image.tmdb.org/t/p/w92${company.logo_path}`;
+
+                                let companyLogoFilter = '';
+                                
+                                if (company.name.includes("Avanti Pictures")
+                                    || company.name.includes("DNA")
+                                    || company.name.includes("Warner")
+                                    || company.name.includes("Proximity ")) {
+                                    companyLogoFilter = 'filter: grayscale(60%) brightness(1.1) contrast(110%);';
+                                } else {
+                                    companyLogoFilter = 'filter: brightness(0) invert(1); mix-blend-mode: screen;';
+                                }
+                                
+                                allLogosHTML += `<img src="${logoUrl}" alt="${company.name}" class="company-logo" style="${companyLogoFilter}">`;
+                            }
+
+                            if (hasHomepage && isInRange) {
+                                // Aqui você renderiza o card no slider
+                            console.log(data.homepage);         
 
                     fetch(trailerUrl)
                         .then(response => response.json())
@@ -200,6 +237,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     .then(response => response.json())
                     .then(creditsData =>{
 
+                    
+
                         const castArray = creditsData.cast.slice(0,10);
                         let castHtml = '';
                         if(castArray && castArray.length > 0){
@@ -207,7 +246,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 const castName = cast.name;
                                 const castRole = cast.character;
 
-                                const profileImg = cast.profile_path ? `https://image.tmdb.org/t/p/w500/${cast.profile_path}` : 'imagens/user.png'; // Avatar padrão se não houver imagem
+                                const profileImg = cast.profile_path ? `https://image.tmdb.org/t/p/w300/${cast.profile_path}` : 'imagens/user.png'; // Avatar padrão se não houver imagem
 
                                 // Criação de um elemento HTML para cada ator, incluindo nome e imagem
                                     castHtml += `
@@ -227,14 +266,17 @@ document.addEventListener('DOMContentLoaded', function() {
                                         <div class="upcomingItem">
                                             <img src="${backdropUrl}" class="backdropImg">
                                             <div class="itemInfo">
-                                                <h2 class="movie-title">${movie.original_title}</h2>
-                                                <p class="movie-pt-title">${movie.title}</p>
+                                                <h2 class="movie-pt-title">${movie.title}</h2>
+                                                <p class="movie-title">${movie.original_title}</p>
                                                 <p class="genre-name">${genresNames}</p>
                                                 <button class="trailer-link" onclick="showTrailer('${trailerYtUrl}'); event.stopPropagation();">
                                                     <img src="imagens/video-start.png" alt="" id="trailer">
                                                 </button>
                                             </div>
-                                        
+                                            
+                                            <div class="company-logo-container">${allLogosHTML}</div>
+
+
                                             <img src="${imgUrl}" class="frontImage">
                                             
                                         </div>
@@ -254,7 +296,8 @@ document.addEventListener('DOMContentLoaded', function() {
                                         overview: `${movie.overview}`,
                                         id: movie.id,
                                         mediaTp: mediaType,
-                                        itemFetch: "upcoming"
+                                        itemFetch: "upcoming",
+                                        producerName : company.name
                                     });
                                 
                                     window.location.href = `filme.php?${params.toString()}`;
@@ -277,7 +320,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 // Remova a classe 'active' do item atual
                                 items[currentIndex].classList.remove('active');
                                 
-                                // Mova para o próximo item
+                                // move para o próximo item
                                 currentIndex = (currentIndex + 1) % items.length;
                                 
                                 // Adiciona a classe 'active' ao próximo item
@@ -285,7 +328,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 
                                 // Centraliza o item ativo no container
                                 const itemOffset = items[currentIndex].offsetLeft;
-                                const containerCenter = (containerWrap.clientWidth / 4.5) - (items[currentIndex].clientWidth / 4.5);
+                                const containerCenter = (containerWrap.clientWidth / 4) - (items[currentIndex].clientWidth / 4);
                                 
                                 // Ajuste o scroll para centralizar o item ativo
                                 containerWrap.scrollTo({
@@ -298,7 +341,6 @@ document.addEventListener('DOMContentLoaded', function() {
                                     container.classList.remove('active');
                                 });
 
-                            
                                 if (items.length > 0) {
                                     const intervalTime = 2000; 
                         
@@ -335,12 +377,12 @@ document.addEventListener('DOMContentLoaded', function() {
                                         clearInterval(autoScrollInterval); // Cancela o setInterval ao passar o mouse
                                         activateAllItems(); // Torna todos os itens ativos
                                     });
-
+/*
                                     containerWrap.addEventListener('click', () => {
                                         clearInterval(autoScrollInterval); // Cancela o setInterval ao passar o mouse
                                         activateAllItems(); // Torna todos os itens ativos
                                     });
-
+*/
                                     // Retomar o comportamento original ao sair do mouse
                                     containerWrap.addEventListener('mouseleave', () => {
                                         deactivateAllItemsExceptCurrent(); // Volta a deixar apenas o item atual como 'active'
@@ -360,8 +402,11 @@ document.addEventListener('DOMContentLoaded', function() {
                         })    
                     })
                     .catch(error => console.error('Erro ao buscar o trailer:', error));
+                    }
                 });
             })
+          });
+
         })
 
     
@@ -402,7 +447,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             let genresNames = '';
                             if (genresArray && genresArray.length > 0) {
                                 genresNames = genresArray.map(genres => genres.name).join(", "); //String "join" separa os diversos gêneros
-                        }
+                            }
     
                         fetch(trailerUrl)
                         .then(response => response.json())
@@ -496,7 +541,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             let genresNames = '';
                             if (genresArray && genresArray.length > 0) {
                                 genresNames = genresArray.map(genres => genres.name).join(", "); //String "join" separa os diversos gêneros
-                        }
+                            }
 
                     fetch(providerUrl)
                     .then(response => response.json())

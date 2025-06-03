@@ -6,8 +6,7 @@
 
  @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap');
 
- @import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&family=Quicksand:wght@300..700&display=swap');
-
+ @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@300..700&display=swap');
 
  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@100..900&display=swap');
 
@@ -17,19 +16,10 @@
 
  @import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap');
 
- @import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Quicksand:wght@300..700&display=swap');
-
-
  @media (max-width: 1200px) {
     body {
         font-size: 90%;
         font-family: Nunito;
-    }
-}
-
-@media (max-width: 768px) {
-    body {
-        font-size: 85%;        
     }
 }
 
@@ -49,10 +39,6 @@ body{
     overflow-x: hidden;
 }
 
-.interface-section{
-    margin-top: 60px; /* Adiciona um espaçamento para evitar sobreposição do menu fixo */
-}
-
 /*Loading*/
 
 .loading-overlay {
@@ -68,7 +54,19 @@ body{
     z-index: 1000;
 }
 
-.spinner {
+.iris svg {
+    width: 80px;   /* Ajuste conforme necessário */
+    height: 80px;
+    display: block;
+}
+
+.iris {
+    display: flex;
+    flex-direction: column;  /* Para empilhar o SVG e o texto */
+    align-items: center;
+}
+
+/*.spinner {
     width: 50px;
     height: 50px;
     border: 6px solid #ccc;
@@ -82,6 +80,7 @@ body{
     100% { transform: rotate(360deg); }
 }
 
+*/ 
 .loading-overlay p {
     margin-top: 10px;
     color: white;
@@ -89,6 +88,17 @@ body{
     font-weight: bold;
     padding-left: 10px;
 }
+
+
+.iris ellipse {
+    animation: blink 1s infinite alternate;
+  }
+  
+@keyframes blink {
+    0%, 90%, 100% { opacity: 1; }
+    95% { opacity: 0.3; }
+  }
+
 
 /* Main Trailer John Wick
 
@@ -278,9 +288,9 @@ body{
 }
 
 .container-wrap{
-    padding: 37px 20px 20px 20px;
+    padding: 10px 20px 20px 20px;
     position: relative;
-    height: 100%;
+    height: 600px;
     max-height: 650px;
     max-width: 1400px;
     width: 100%;
@@ -288,15 +298,7 @@ body{
     flex-direction: row;
     overflow-y: hidden;
     overflow-x: scroll; /* Evita barra de rolagem vertical, mas mantém horizontal */
-    gap: 400px;
-}
-
-
-@media (max-width: 900px) {
-    .container-wrap {
-        gap: 350px;
-        height: 300px;
-    }
+    gap: 50px;
 }
 
 .cinema-container{
@@ -341,17 +343,11 @@ body{
     z-index: 1;
 }
 
-@media (max-width: 950px) {
-    .container-wrap{
-        padding: 20px;
-    }
-}
-
 .backdropContainer{
     padding: 20px;
     flex: none;
-    width: 100%;
-    height: 100%;
+    width: 900px;
+    height: 600px;
     position: relative; /* Certifica que .itemInfo seja posicionado dentro desse container */
     /* transition: opacity 1s ease; Transição suave para o efeito de centralização 
     transition: opacity 0.5s ease-in-out;*/
@@ -364,24 +360,14 @@ body{
 }
 
 
-@media (max-width: 900px) {
-    .upcomingItem {
-        width: 25%;
-        height: 200px;
-        padding: 10px;
-    }
-}
-
 .upcomingItem{
-    width: 100%;
-    max-width: 500px;
+    position: relative;
 }
 
 .backdropImg{
     cursor: pointer;
     width: 900px;
     height: 100%;
-    max-width: 900px;
     z-index: 1;
     border-radius: 35px;
     filter: brightness(0.7); /* Torna o backdrop um pouco mais escuro */
@@ -390,15 +376,8 @@ body{
 }
 
 .backdropContainer:hover .backdropImg{
-    filter: brightness(0.9);
+    filter: brightness(0.9) contrast(115%) saturate(110%);
     transform: scale(1.05); /* Aumenta um pouco mais ao passar o mouse */
-}
-
-@media (max-width: 900px) {
-    .backdropImg {
-        width: 800px;
-        height: 90%;
-    }
 }
 
 .itemInfo{
@@ -406,7 +385,7 @@ body{
     flex-direction: column;
     justify-content: center;
     position: absolute;
-    width: 100%;
+    width: 650px;
     top: 65%;
     left: 200px; /* Posiciona ao lado da frontImage */
     box-sizing: border-box; /* Garante que padding não afete o tamanho do container */
@@ -419,27 +398,6 @@ body{
     white-space: nowrap;
     text-overflow: ellipsis;
     transition: 0.2s ease-in-out;
-}
-
-
-@media (max-width: 950px) {
-    .itemInfo{
-        left: 180px;
-    }
-}
-
-@media (max-width: 500px) {
-    .itemInfo{
-        left: 120px;
-        top: 60%;
-    }
-}
-
-
-@media (max-width: 580px) {
-    .itemInfo h2{
-        font-size: 30px;
-    }
 }
 
 .movie-name{
@@ -470,6 +428,26 @@ body{
     bottom: 5px;
 }
 
+.company-logo {
+    max-width: 100px;
+    top: 10px;
+    right: 10px;
+    max-height: 40px;
+    padding: 3px;
+    z-index: 5; /* acima do backdrop */
+    transition: 0.4s ease-in-out;
+}
+
+.company-logo-container {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: flex;
+    gap: 6px;
+    z-index: 5;
+}
+
+
 .backdropContainer:hover .frontImage {
     transform: translateX(-10%) scale(1.2); /* Aumenta um pouco mais ao passar o mouse */
     box-shadow: 0px 20px 40px rgba(0, 0, 0, 0.7); /* Sombra mais forte no hover */
@@ -480,37 +458,9 @@ body{
     font-weight:600;
 }
 
-@media (max-width: 500px) {
-    .frontImage{
-        transform: none;
-        width: 100px;
-        border-radius: 5px;
-        left: 10px;
-    }
-
-    .backdropImg{
-        border-radius: 15px;
-    }
-
-}
-
-@media (max-width: 344px) {
-    .frontImage{
-        transform: none;
-        width: 80px;
-    }
-
-}
-
-@media (max-width: 950px) {
-    .frontImage{
-        transform: none;
-    }
-
-    .frontImage:hover{
-        transform: none;
-        box-shadow: none;
-    }
+.backdropContainer:hover .company-logo {
+    transform: scale(1.1); /* Aumenta um pouco mais ao passar o mouse */
+    gap: 40px;
 }
 
 .trailer-link{
@@ -547,7 +497,7 @@ body{
 .logo-font{
     font-family: Quicksand;
     font-size: 40px;
-    font-weight: 450;
+    font-weight: 500;
 }
 
 .logo-font2{
@@ -718,9 +668,8 @@ button.prev:hover, button.next:hover {
 
 .maisPop, .indicaSpan{
     text-align: left;
-    font-family: Nunito;
-    font-weight: 700;
-    background-color: rgb(2, 2, 2);
+    font-family: Quicksand;
+    font-weight: 600;
     color: rgb(255, 255, 255);
     padding-top: 20px;
     padding-bottom: 20px;
@@ -877,28 +826,6 @@ button.prev:hover, button.next:hover {
     color: aliceblue;
 }
 
-@media (max-width: 768px) {
-    .movie-name{
-        white-space:unset;
-    }
-}
-
-@media (max-width: 1000px){
-
-    .movie-name{
-        font-size: 18px;
-    }
-
-    .watch-trailer{
-        font-size: 15px;
-    }
-
-    .watch-trailer img{
-        width: 8px;
-    }
-
-}
-
 .watch-movie{
     font-family: Lato;
     text-align: center;
@@ -935,16 +862,125 @@ button.prev:hover, button.next:hover {
     min-width: 220px; /* Define um tamanho mínimo para a imagem */
 }
 
-@media (max-width: 1000px) {
+/* RESPONSIVIDADE */
+
+@media (max-width: 900px) {
+    .backdropContainer{
+        width: 500px;
+    }
+
+    .frontImage{
+        width: 100px;
+    }
+
+    .backdropImg {
+        width: 500px;
+        height: 260px;
+    }
+
+    .container-wrap {
+        gap: 30px;
+        height: 320px;
+        padding: 20px;
+    }
+
+    .company-logo{
+        max-width: 70px;
+        height: 50%;
+    }
+
+    .company-logo-container{
+        top: 20px;
+        right: 10px;
+    }
+    
     .img-fluid{
         width: 220px;
         height: 90%;
+    }
+
+    .itemInfo{
+        width: 320px;
+    }
+
+    .itemInfo h2{
+        font-size: 25px;
+    }
+
+    .movie-title{
+        display: none;
+    }
+
+    .upcomingItem {
+        width: 100%;
+        padding: 10px;
+    }
+
+    .backdropContainer.active{
+        height: 280px;
+    }
+
+    .movie-name{
+        font-size: 18px;
+    }
+
+    .watch-trailer{
+        font-size: 15px;
+    }
+
+    .watch-trailer img{
+        width: 8px;
     }
 }
 
-@media (max-width: 800px) {
+@media(max-width: 1200px){
     .img-fluid{
-        width: 220px;
-        height: 90%;
+        height: 80%;
     }
+}
+
+@media (max-width: 950px) {
+    .itemInfo{
+        left: 180px;
+    }
+}
+
+@media (max-width: 500px) {
+    .frontImage{
+        width: 100px;
+        border-radius: 5px;
+        left: 10px;
+    }
+    
+    .container-wrap{
+        padding: 0;
+        gap: 30px;
+    }
+
+    .backdropImg{
+        width: 430px;
+    }
+
+    .backdropContainer{
+        width: 460px;
+    }
+
+    .itemInfo{
+        position: absolute;
+        width: 60%;          /* ou algo menor, tipo 90% */
+        left: 110px;
+        padding: 10px;
+        box-sizing: border-box;
+    }
+
+    .upcomingItem{
+        width:  460px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .company-logo-container{
+        right: 30px;
+    }
+
 }

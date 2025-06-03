@@ -57,15 +57,15 @@ $conexao->close();
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
-    <link rel="stylesheet" href="css/login.css">
+    <link rel="stylesheet" href="css/new-login.css">
     <title>Sign in with IMDb</title>
 </head>
 <body>  
-  <div id="loginSection">
+  <div class="login-container">
     <div class="left-login">
       <div class="logo-div">
         <a href="index.php" class="home-header">
-          <h2>
+          <h2 class="logo-h2">
             <span class="logo-font">where you</span>
             <span class="logo-font2">WATCH</span>
           </h2>
@@ -96,7 +96,6 @@ $conexao->close();
 
           <label for="phoneNumber"><b> Número de telefone </b></label>
           <input type="number" name="phone" id="phone">
-          <br>
 
           <label for="password"><b> Password </b></label>
           <input type="password" name="senha" id="senha">

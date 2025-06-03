@@ -26,6 +26,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const overview = params.get('overview');
     const providers = params.get('provider_name');
     const upcoming = params.get('itemFetch');
+    const producerName = params.get('producerName');
+    console.log(producerName);
 
         //Verificação de upcoming
         if(upcoming){
@@ -47,7 +49,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Formata a data de lançamento
     const formattedReleaseDate = formatDate(releaseDate);
     document.getElementById('release-date').innerText = `Lançamento: ${formattedReleaseDate}`;
-
     // Atualiza o conteúdo da página
     document.getElementById('title-movie').innerText = `${title} - Where you Watch`;
     document.getElementById('itemName').innerText = title;

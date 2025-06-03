@@ -9,9 +9,9 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
     <link rel="stylesheet" href="css/style.css">
     <!--<link rel="stylesheet" href="css/searchmovie.css">-->
-    <link rel="icon" href="imagens/wywatch-favicon-nofundo.png">
+    <link rel="icon" href="imagens/wywatch-favicon-iris-nobackground.png">
 
-    <title>Where You WATCH</title>
+    <title>where you watch</title>
 
 </head>
 
@@ -41,7 +41,7 @@
 
             <div class="wrap">
 
-                <div class="cinema-container" id="cinemaContainer">
+               <!-- <div class="cinema-container" id="cinemaContainer">
                     <h2 class="cinema-font">
                         <span class="title-wrap">
                             chegando nos cinemas
@@ -52,7 +52,7 @@
                         </span>
                     </h2>
                 </div>
-                
+                !-->
 
             <button class="prev" onclick="scrollLeftCustom()">&#10094;</button>
 

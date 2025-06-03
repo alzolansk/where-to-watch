@@ -54,11 +54,11 @@ if(isset($_POST['submit'])) {
     <title>Sign in with IMDb</title>
 </head>
 <body>
-  <div id="loginSection">
+  <div class="login-container">
       <div class="left-login">
         <div class="logo-div">
           <a href="index.php" class="home-header">
-            <h2>
+            <h2 class="logo-h2">
               <span class="logo-font">where you</span>
               <span class="logo-font2">WATCH</span>
             </h2>
@@ -75,29 +75,29 @@ if(isset($_POST['submit'])) {
 
     <div class="right-login">
 
-    <div class="form">
-        <form action="login.php" method="POST">
-          <hgroup>
-            <h3>Sign in</h3>
-          </hgroup>
+      <div class="form">
+          <form action="login.php" method="POST">
+            <hgroup>
+              <h3>Entrar no Where You Watch</h3>
+            </hgroup>
 
-          <label for="email"><b> Email </b></label>
-          <input type="text" name="email" id="email">
-          <br>
+            <label for="email"><b> Email </b></label>
+            <input type="text" name="email" id="email">
+            <br>
 
-          <label for="password"><b> Password </b></label>
-          <input type="password" name="senha" id="senha">
+            <label for="password"><b> Password </b></label>
+            <input type="password" name="senha" id="senha">
 
-          <input type="submit" value="Log in" name="submit" id="submit">
+            <input type="submit" value="Log in" name="submit" id="submit">
 
-    <div class="new-account">
-          <p>Novo no where you Watch</p>
+            <div class="new-account">
+              <p>Novo no where you Watch</p>
 
-          <ul class="create-account">
-          <li><a href="new-login.php">Crie uma nova conta</a></li></ul>
-    </div>
-    </form>
-    </div>
+              <ul class="create-account">
+              <li><a href="new-login.php">Crie uma nova conta</a></li></ul>
+            </div>
+          </form>
+      </div>
     </div>
 </div>
 

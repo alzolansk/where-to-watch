@@ -27,7 +27,32 @@
         </nav>
 
         <div id="loading" class="loading-overlay" style="display: none;">
-            <div class="spinner"></div>
+            <div class="iris">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1036.96 1068.64">
+                    <defs>
+                        <style>
+                            .fil1 {fill:#FEFEFE;}
+                            .fil0 {fill:#D80814;}
+                            .eyelid { transform-origin: center; animation: blink 1s infinite; }
+                            @keyframes blink {
+                                0%, 90%, 100% { transform: scaleY(1); }
+                                95% { transform: scaleY(0.1); }
+                            }
+                        </style>
+                    </defs>
+                    <g id="Camada_1">
+                        <!-- Pálpebra (Eyelid) -->
+                        <g class="eyelid">
+                            <path class="fil0" d="M532.42 0.03c-322.51,-0.12 -481.5,242.15 -531.95,492.2 347.34,-325.33 697.1,-320.9 1036.48,2.01 -30.69,-257.9 -229.35,-497.39 -504.53,-494.21z"/>
+                        </g>
+                        <!-- Parte inferior branca -->
+                        <path class="fil1" d="M531.95 1068.61c-322.51,0.12 -481.5,-242.15 -531.95,-492.2 347.34,325.33 697.1,320.9 1036.49,-2.01 -30.69,257.9 -229.36,497.39 -504.53,494.21z"/>
+                        <!-- Íris -->
+                        <ellipse class="fil0" cx="512.12" cy="527.36" rx="191.4" ry="191.94"/>
+                    </g>
+                </svg>
+            </div>
+
             <p>Carregando...</p>
         </div>
 
@@ -67,51 +92,39 @@
                 echo '</div>';
             }
             ?>  
-
-
-
-        <dialog id="addMovieScreen">
-            <div id="moviecontent" class="modal-flex">
-            <div class="poster-title-id">
-                <img src="" alt="Poster Filme" id="moviePoster" class="img-fluid2">
-            <div>
-                <h2 id="movieTitle"></h2>
-                <p id="idTMDB"></p>
-                <p id="movieGenre"></p>
-            <div>
-                <p id="providerItem"></p>
-                <p id="logoProvider"></p>
-                <p id="mediaTypeP"></p>
-            </div>
-            <button id="addMovieButton" class="btn btn-danger">Adicionar filme/série</button>
-            </div>
-            </div>
-            <p id="movieSinopse" class="sinopse"></p>
-            <img id="backdrop" src="" style="display: none;" alt="Backdrop Image">
-            <button id="closeModal" class="btn btn-secondary">Fechar</button>
-            </div>
-         <div class="overlay"></div> <!-- Camada de fundo preto -->
-        </dialog>
     </div>
 </nav>
 
 <style>
     
+*{
+    margin: 0;
+    padding: 0;
+    border:none;
+    text-decoration: none;
+    list-style: none;
+    box-sizing: border-box;
+    font-family: Nunito;  
+}
+
 /* Main Menu */
+#menu{
+    width:100%;
+    height: 64px;
+}
 
 .faixa {
     display: flex;
-    position: fixed; /* Fixa o elemento na janela de visualização */
     top: 0; /* Define a posição no topo */
     left: 0; /* Define a posição na borda esquerda */
-    width: 100%; /* Faz o menu ocupar toda a largura da página */
+    width: 1400px; /* Faz o menu ocupar toda a largura da página */
     z-index: 1000; /* Garante que o menu fique acima de outros elementos */
     flex-direction: row;
     align-items: center; /* Centraliza verticalmente */
-    height: 62px;
     border: solid 1px black;
-    background-color: rgb(12, 12, 12);
-    padding: 0px 30px;
+    background-color: rgb(0, 0, 0);
+    margin: 0 auto;
+    height: 60px;
 }
 
 .faixa ul{
@@ -121,7 +134,6 @@
     margin: 0;
     font-size: 15px;
     margin-left: 20px;
-
 }
 
 .faixa ul li{
@@ -129,6 +141,14 @@
     text-decoration: none;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+.user-menu ul li{
+    padding-left: 30px; /* espaço para a lupa */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='white'%3E%3Cpath d='M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM12.735 14c.618 0 1.093-.561.872-1.139a6.002 6.002 0 0 0-11.215 0c-.22.578.254 1.139.872 1.139h9.47Z'/%3E%3C/svg%3E");
+    background-position: 8px center;
+    background-size: 20px 20px; /* largura altura */
+    background-repeat: no-repeat;
 }
 
 .user-greeting {
@@ -141,7 +161,6 @@
     display: inline-block;
     animation: fadeInDown 0.6s ease;
     height: 60%; /* se estiver dentro de um nav fixo */
-
 }
 
 .user-greeting strong {
@@ -250,6 +269,18 @@
 input::placeholder{
     padding: 10px;
 }
+
+input[type="text"] {
+  background-color: #000;
+  border: 1px solid #ccc;
+  color: #fff;
+  padding-left: 30px; /* espaço para a lupa */
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='white'><path fill-rule='evenodd' d='M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z' clip-rule='evenodd'/></svg>");
+  background-position: 8px center;
+  background-size: 20px 20px; /* largura altura */
+  background-repeat: no-repeat;
+}
+
 
 
 /*Search Movie// procurar filmes*/
