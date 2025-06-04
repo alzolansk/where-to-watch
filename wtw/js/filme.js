@@ -30,6 +30,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const ticketSite = params.get('');
     console.log(producerName);
 
+    // Limpa a URL exibida após capturar todos os parâmetros
+    window.history.replaceState({}, '', `http://localhost/WhereToWatch/wtw/filme.php?id=${movieId}`);
+
         //Verificação de upcoming
         if(upcoming == "upcoming"){
             document.getElementById('providers').innerHTML = `
