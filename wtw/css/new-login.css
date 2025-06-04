@@ -9,8 +9,30 @@ body {
   background-color: black;
   font-family: Quicksand;
   margin: 0;
-  padding: 0;   
+  padding: 0; 
 }
+
+a:hover{
+  outline: none;
+  text-decoration: none;
+}
+
+li::marker {
+  content: none;
+} 
+
+/* Chrome, Safari, Edge */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
 
 .login-container {
   display: flex;
@@ -151,7 +173,7 @@ dialog {
   margin-bottom: 10px;
 }
 
-/* Responsivo */
+/* Responsividade */
 @media (max-width: 768px) {
   .login-container {
     flex-direction: column;

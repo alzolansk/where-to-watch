@@ -27,19 +27,24 @@ document.addEventListener('DOMContentLoaded', function() {
     const providers = params.get('provider_name');
     const upcoming = params.get('itemFetch');
     const producerName = params.get('producerName');
+    const ticketSite = params.get('');
     console.log(producerName);
 
         //Verificação de upcoming
-        if(upcoming){
-            document.getElementById('providers').innerText = "Cinemas mais próximos de você!";
+        if(upcoming == "upcoming"){
+            document.getElementById('providers').innerHTML = `
+            <p> Cinemas mais próximos de você!
+            <a href="${ticketSite}" target="_blank" class="buy-tickets"> Compre aqui </a>
+            </p>
+            `;
         } else if(providers == null || providers.length <  1){
             const providerDiv = document.getElementById('providers');
 
             providerDiv.innerText = `Não encontrado em nenhum provedor`;
-        }else{
+        }else if(providers.length > 1){
             document.getElementById('providers').innerText = providers;
         }
-
+        
         //Formatação de data
         const formatDate = (dateString) => {
             const [year, month, day] = dateString.split("-"); // Divide a data pelo separador '-'

@@ -54,12 +54,12 @@
                 </div>
                 !-->
 
-            <button class="prev" onclick="scrollLeftCustom()">&#10094;</button>
+            <button id="btnLeft" class="prev" onclick="scrollLeftCustom()">&#10094;</button>
 
             <div id="container-wrap" class="container-wrap">
                 <!--Primeiro container com trailer e backdrop-->
             </div>
-            <button class="next" onclick="scrollRight()">&#10095;</button>
+            <button id="btnRight" class="next" onclick="scrollRight()">&#10095;</button>
             </div>
             
             <div class="category-buttons">

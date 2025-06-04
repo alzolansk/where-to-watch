@@ -9,20 +9,32 @@ document.addEventListener('DOMContentLoaded', function() {
         const detailsUrl = `https://api.themoviedb.org/3/${mediaType}/${movie.id}?api_key=${apiKey}&language=pt-BR&page=1`;
         const providerUrl = `https://api.themoviedb.org/3/${mediaType}/${movie.id}/watch/providers?api_key=${apiKey}&language=pt-BR&page=1sort_by=display_priority.cresc`
         const backdropUrl = `https://image.tmdb.org/t/p/w1280/${movie.backdrop_path}}`
+        const movieLogoUrl = `https://api.themoviedb.org/3/movie/${movie.id}/images?api_key=${apiKey}&include_image_language=null,pt`
         const creditsUrl = `https://api.themoviedb.org/3/${mediaType}/${movie.id}/credits?api_key=${apiKey}&language=pt-BR&page=1`
 
-        return { imgUrl, trailerUrl, rating, detailsUrl, providerUrl, backdropUrl, creditsUrl };
+        return { imgUrl, trailerUrl, rating, detailsUrl, providerUrl, backdropUrl, creditsUrl, movieLogoUrl };
     }
 
     function activateBackdropContainer(element) {
-        // Remove a classe 'active' de todos os contêineres
         const allContainers = document.querySelectorAll('.backdropContainer');
+        const containerWrap = document.querySelector('.container-wrap');
+
+        // Remove a classe 'active' de todos os contêineres
         allContainers.forEach(container => {
-            containmenter.classList.remove('active');
+            container.classList.remove('active');
         });
-    
+
         // Adiciona a classe 'active' ao contêiner clicado
         element.classList.add('active');
+
+        // Centraliza o item no contêiner
+        const itemOffset = element.offsetLeft;
+        const containerCenter = (containerWrap.clientWidth / 2) - (element.clientWidth / 2);
+
+        containerWrap.scrollTo({
+            left: itemOffset - containerCenter,
+            behavior: 'smooth'
+        });
     }
 
     //Pesquisar filme
@@ -42,9 +54,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     data.results.forEach(movie => {
                         if (movie.media_type === 'movie' || movie.media_type === 'tv') {
                             const title = movie.title || movie.name; // Para pegar o título do filme ou da série
-                            const { imgUrl, trailerUrl, rating, backdropUrl, providerUrl, detailsUrl} = defineMovieConstants(movie, movie.media_type, apiKey);
+                            const { imgUrl, trailerUrl, rating, backdropUrl, providerUrl, detailsUrl, movieLogoUrl} = defineMovieConstants(movie, movie.media_type, apiKey);
                             const overview = `${movie.overview}`; // Sinopse
-                            const upperTitle = title.toUpperCase();
+                            const upperTitle = title;
                             
                             const resultsDiv = document.createElement('div');
                             resultsDiv.innerHTML += `
@@ -161,7 +173,7 @@ document.addEventListener('DOMContentLoaded', function() {
         fetch(upcomingUrl)
             .then(response => response.json())
             .then(upcomingData => {
-                const wrapMovies = upcomingData.results.slice(0, 30);
+                const wrapMovies = upcomingData.results.slice(0, 20);
                 const containerNew = document.getElementById('container-wrap');  
 
                 wrapMovies.forEach(movie => {
@@ -169,7 +181,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     carouselDiv.addEventListener('click', () => activateBackdropContainer(carouselDiv));
 
-                    const { imgUrl, trailerUrl, detailsUrl, backdropUrl, creditsUrl } = defineMovieConstants(movie, 'movie', apiKey);
+                    const { imgUrl, trailerUrl, detailsUrl, backdropUrl, creditsUrl, movieLogoUrl } = defineMovieConstants(movie, 'movie', apiKey);
                     const mediaTypeTxt = movie.media_type === 'movie' ? 'Filme' : 'Série';
                     const mediaType = 'movie';
 
@@ -181,7 +193,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         let genresNames = '';
                         if (genresArray && genresArray.length > 0) {
                             genresNames = genresArray.map(genres => genres.name).join(", "); //String "join" separa os diversos gêneros
-                        }
+                        }                            
 
                         let allLogosHTML = "";
 
@@ -197,28 +209,29 @@ document.addEventListener('DOMContentLoaded', function() {
                             threeMonthsAhead.setMonth(today.getMonth() + 3);
 
                             const isInRange = releaseDate >= threeMonthsAgo && releaseDate <= threeMonthsAhead;
-
                             if (company.logo_path) {
-                                const logoUrl = `https://image.tmdb.org/t/p/w92${company.logo_path}`;
+                                const companyLogoUrl = `https://image.tmdb.org/t/p/w92${company.logo_path}`;
 
                                 let companyLogoFilter = '';
                                 
                                 if (company.name.includes("Avanti Pictures")
                                     || company.name.includes("DNA")
                                     || company.name.includes("Warner")
-                                    || company.name.includes("Proximity ")) {
+                                    || company.name.includes("Proximity")
+                                    || company.name.includes("American Empirical")
+                                    || company.name.includes("Encyclopedia")) {
                                     companyLogoFilter = 'filter: grayscale(60%) brightness(1.1) contrast(110%);';
                                 } else {
                                     companyLogoFilter = 'filter: brightness(0) invert(1); mix-blend-mode: screen;';
                                 }
                                 
-                                allLogosHTML += `<img src="${logoUrl}" alt="${company.name}" class="company-logo" style="${companyLogoFilter}">`;
+                                allLogosHTML += `<img src="${companyLogoUrl}" alt="${company.name}" class="company-logo" style="${companyLogoFilter}">`;
                             }
 
                             if (hasHomepage && isInRange) {
                                 // Aqui você renderiza o card no slider
-                            console.log(data.homepage);         
-
+                                //console.log(movie.id);
+                                
                     fetch(trailerUrl)
                         .then(response => response.json())
                         .then(trailerData => {
@@ -237,176 +250,171 @@ document.addEventListener('DOMContentLoaded', function() {
                     .then(response => response.json())
                     .then(creditsData =>{
 
-                    
 
-                        const castArray = creditsData.cast.slice(0,10);
-                        let castHtml = '';
-                        if(castArray && castArray.length > 0){
-                            castArray.forEach(cast => {
-                                const castName = cast.name;
-                                const castRole = cast.character;
+                    fetch(movieLogoUrl)
+                    .then(response => response.json())
+                    .then(imageData => {
 
-                                const profileImg = cast.profile_path ? `https://image.tmdb.org/t/p/w300/${cast.profile_path}` : 'imagens/user.png'; // Avatar padrão se não houver imagem
+                        if (imageData.logos && imageData.logos.length > 0) {
+                        const logoPath = imageData.logos[0].file_path;
+                        const fullLogoUrl = `https://image.tmdb.org/t/p/w500${logoPath}`;
 
-                                // Criação de um elemento HTML para cada ator, incluindo nome e imagem
-                                    castHtml += `
-                                    <div class="actor-card">
-                                        <img src="${profileImg}" alt="${castName}" class="actor-img">
-                                        <div class="p-div">
-                                            <a href="https://www.google.com/search?q=${castName}" class="actor-name" target="_blank">${castName}</a>
-                                            <p class="actor-role">${castRole}</p>
-                                        </div>
-                                    </div>
-                                    `
-                                    ;
-                            
-                           const trailerYtUrl = `https://www.youtube.com/watch?v=${trailerKey}`;                         
-                                carouselDiv.innerHTML = `
-                                    <div class="backdropContainer active">
-                                        <div class="upcomingItem">
-                                            <img src="${backdropUrl}" class="backdropImg">
-                                            <div class="itemInfo">
-                                                <h2 class="movie-pt-title">${movie.title}</h2>
-                                                <p class="movie-title">${movie.original_title}</p>
-                                                <p class="genre-name">${genresNames}</p>
-                                                <button class="trailer-link" onclick="showTrailer('${trailerYtUrl}'); event.stopPropagation();">
-                                                    <img src="imagens/video-start.png" alt="" id="trailer">
-                                                </button>
+                            const castArray = creditsData.cast.slice(0,10);
+                            let castHtml = '';
+                            if(castArray && castArray.length > 0){
+                                castArray.forEach(cast => {
+                                    const castName = cast.name;
+                                    const castRole = cast.character;
+
+                                    const profileImg = cast.profile_path ? `https://image.tmdb.org/t/p/w300/${cast.profile_path}` : 'imagens/user.png'; // Avatar padrão se não houver imagem
+
+                                    // Criação de um elemento HTML para cada ator, incluindo nome e imagem
+                                        castHtml += `
+                                        <div class="actor-card">
+                                            <img src="${profileImg}" alt="${castName}" class="actor-img">
+                                            <div class="p-div">
+                                                <a href="https://www.google.com/search?q=${castName}" class="actor-name" target="_blank">${castName}</a>
+                                                <p class="actor-role">${castRole}</p>
                                             </div>
-                                            
-                                            <div class="company-logo-container">${allLogosHTML}</div>
-
-
-                                            <img src="${imgUrl}" class="frontImage">
-                                            
                                         </div>
-                                    </div>
-                                `
-
-                                 // Evento de clique para abrir a pagina
-                                 carouselDiv.addEventListener('click', () => {
-                                    const params = new URLSearchParams({
-                                        title: movie.title,
-                                        original_title: movie.original_title,
-                                        genres: genresNames,
-                                        release_date: movie.release_date,
-                                        imgUrl: imgUrl,
-                                        backdropUrl: backdropUrl,
-                                        trailerUrl: trailerYtUrl,
-                                        overview: `${movie.overview}`,
-                                        id: movie.id,
-                                        mediaTp: mediaType,
-                                        itemFetch: "upcoming",
-                                        producerName : company.name
-                                    });
+                                        `
+                                        ;
                                 
-                                    window.location.href = `filme.php?${params.toString()}`;
+                            const trailerYtUrl = `https://www.youtube.com/watch?v=${trailerKey}`;                         
+                                    carouselDiv.innerHTML = `
+                                        <div class="backdropContainer active">
+                                            <div class="upcomingItem">
+                                                <img src="${backdropUrl}" class="backdropImg">
+                                                <div class="itemInfo">
+                                                    <h2 class="movie-pt-title">${movie.title}</h2>
+                                                    <p class="movie-title">${movie.original_title}</p>
+                                                    <p class="genre-name">${genresNames}</p>
+                                                    <button class="trailer-link" onclick="showTrailer('${trailerYtUrl}'); event.stopPropagation();">
+                                                        <img src="imagens/video-start.png" alt="" id="trailer">
+                                                    </button>
+                                                </div>
+                                                
+                                                <div class="company-logo-container">${allLogosHTML}</div>
 
-                                });
-                            });
-                        }
 
-                                containerNew.appendChild(carouselDiv);
-                                                        
-                                setTimeout(() => {
-                                    
-                                let currentIndex = 0;
-                                const items = document.querySelectorAll('.backdropContainer');
-                                const containerWrap = document.querySelector('.container-wrap');
-                                let autoScrollInterval; // Variável para o intervalo
+                                                <img src="${imgUrl}" class="frontImage">
+                                                
+                                            </div>
+                                        </div>
+                                    `
 
-                                // Função para centralizar o item ativo
-                                function showNextItem() {
-                                // Remova a classe 'active' do item atual
-                                items[currentIndex].classList.remove('active');
-                                
-                                // move para o próximo item
-                                currentIndex = (currentIndex + 1) % items.length;
-                                
-                                // Adiciona a classe 'active' ao próximo item
-                                items[currentIndex].classList.add('active');
-                                
-                                // Centraliza o item ativo no container
-                                const itemOffset = items[currentIndex].offsetLeft;
-                                const containerCenter = (containerWrap.clientWidth / 4) - (items[currentIndex].clientWidth / 4);
-                                
-                                // Ajuste o scroll para centralizar o item ativo
-                                containerWrap.scrollTo({
-                                    left: itemOffset - containerCenter,
-                                    behavior: 'smooth'
-                                });
-                                }
-
-                                items.forEach(container => {
-                                    container.classList.remove('active');
-                                });
-
-                                if (items.length > 0) {
-                                    const intervalTime = 2000; 
-                        
-                                     function deactivateAllItemsExceptCurrent() {
-                                        items.forEach((item, index) => {
-                                            if (index !== currentIndex) {
-                                                item.classList.remove('active');
-                                            }
+                                    // Evento de clique para abrir a pagina
+                                    carouselDiv.addEventListener('click', () => {
+                                        const params = new URLSearchParams({
+                                            title: movie.title || movie.name,
+                                            original_title: movie.original_title,
+                                            genres: genresNames,
+                                            release_date: movie.release_date || movie.first_air_date,
+                                            imgUrl: imgUrl,
+                                            backdropUrl: backdropUrl,
+                                            trailerUrl: trailerYtUrl,
+                                            overview: `${movie.overview}`,
+                                            id: movie.id,
+                                            mediaTp: mediaType,
+                                            itemFetch: "Upcoming",
+                                            ticketUrl: data.homepage,
+                                            producerName: company.name
                                         });
-                                    }
+                                                
+                                        window.location.href = `filme.php?${params.toString()}`;
 
-                                    function activateAllItems() {
-                                        items.forEach(item => item.classList.add('active'));
-                                    }
-                                                                        
-                                    // Defina o primeiro item como ativo no início
-                                    items[currentIndex].classList.add('active');
-                                    const itemOffset = items[currentIndex].offsetLeft;
-                                    const containerCenter = (containerWrap.clientWidth / 2) - (items[currentIndex].clientWidth / 2);
-                                    
-                                    containerWrap.scrollTo({
-                                        left: itemOffset - containerCenter,
-                                        behavior: 'smooth'
                                     });
-                                    
-                                    autoScrollInterval = setInterval(showNextItem, intervalTime);
-                                    
-                                    containerWrap.addEventListener('scroll', () => {
-                                        clearInterval(autoScrollInterval); // Cancela o setInterval ao passar o mouse
-                                        activateAllItems(); // Torna todos os itens ativos
-                                    });     
-
-                                    containerWrap.addEventListener('mouseenter', () => {
-                                        clearInterval(autoScrollInterval); // Cancela o setInterval ao passar o mouse
-                                        activateAllItems(); // Torna todos os itens ativos
-                                    });
-/*
-                                    containerWrap.addEventListener('click', () => {
-                                        clearInterval(autoScrollInterval); // Cancela o setInterval ao passar o mouse
-                                        activateAllItems(); // Torna todos os itens ativos
-                                    });
-*/
-                                    // Retomar o comportamento original ao sair do mouse
-                                    containerWrap.addEventListener('mouseleave', () => {
-                                        deactivateAllItemsExceptCurrent(); // Volta a deixar apenas o item atual como 'active'
-                                        autoScrollInterval = setInterval(showNextItem, intervalTime); // Retoma o setInterval
-                                    });
-
-                                    containerWrap.scrollTo({
-                                        left: itemOffset - containerCenter,
-                                        behavior: 'smooth'
-                                    });
-                                                                                           
-                            } else {
-                                console.error("Nenhum backdropContainer encontrado");
+                                });
                             }
 
-                        }, 100); // Ajuste o tempo se necessário para garantir que o DOM esteja pronto
-                        })    
+                        containerNew.appendChild(carouselDiv);
+                                                        
+                        setTimeout(() => {
+                            const items = document.querySelectorAll('.backdropContainer');
+                            const containerWrap = document.querySelector('.container-wrap');
+
+                            if (items.length === 0 || !containerWrap) return;
+
+                            let currentIndex = 0;
+                            let autoScrollInterval;
+                            let isUserInteracting = false;
+
+                            function centerItem(index) {
+                                const item = items[index];
+                                if (!item) return;
+
+                                items.forEach(el => el.classList.remove('active'));
+                                item.classList.add('active');
+
+                                const itemOffset = item.offsetLeft;
+                                const itemWidth = item.offsetWidth;
+                                const containerWidth = containerWrap.clientWidth;
+                                const scrollLeft = itemOffset - (containerWidth / 2) + (itemWidth / 2);
+
+                                containerWrap.scrollTo({
+                                    left: scrollLeft,
+                                    behavior: 'smooth'
+                                });
+                            }
+
+                            function showNextItem() {
+                                if (isUserInteracting) return;
+                                currentIndex = (currentIndex + 1) % items.length;
+                                centerItem(currentIndex);
+                            }
+
+                            function startAutoScroll() {
+                                stopAutoScroll(); // Garantir que só existe um
+                                autoScrollInterval = setInterval(showNextItem, 4000);
+                            }
+
+                            function stopAutoScroll() {
+                                if (autoScrollInterval) {
+                                    clearInterval(autoScrollInterval);
+                                    autoScrollInterval = null;
+                                }
+                            }
+
+                            // Inicia o scroll
+                            centerItem(currentIndex);
+                            startAutoScroll();
+
+                            containerWrap.addEventListener('mouseenter', () => {
+                                isUserInteracting = true;
+                                stopAutoScroll();
+                            });
+
+                            containerWrap.addEventListener('mouseleave', () => {
+                                isUserInteracting = false;
+                                startAutoScroll();
+                            });
+
+                            document.getElementById("btnRight").addEventListener("click", () => {
+                                isUserInteracting = true;
+                                stopAutoScroll(); // Cancela o auto-scroll
+                            });
+
+                            document.getElementById("btnLeft").addEventListener("click", () => {
+                                isUserInteracting = true;
+                                stopAutoScroll();
+                            });
+
+                            containerWrap.addEventListener('wheel', () => {
+                                isUserInteracting = true;
+                                stopAutoScroll();
+                            }, { passive: true });
+
+
+                        }, 500); // Ajuste o tempo se necessário para garantir que o DOM esteja pront
+                        }
+                        })   
+                        }); 
                     })
                     .catch(error => console.error('Erro ao buscar o trailer:', error));
                     }
                 });
             })
           });
-
         })
 
     
@@ -499,10 +507,12 @@ document.addEventListener('DOMContentLoaded', function() {
                                     trailerUrl: trailerYtUrl,
                                     overview: `${movie.overview}`,
                                     id: movie.id,
-                                    mediaTp: movie.media_type,
-                                    provider_name: providerNames  
+                                    mediaTp: mediaType,
+                                    itemFetch: mediaType,
+                                    ticketUrl: data.homepage,
+                                    provider_name: providerNames 
                                 });
-                            
+                                                
                                 window.location.href = `filme.php?${params.toString()}`;
 
                             });
@@ -609,7 +619,9 @@ document.addEventListener('DOMContentLoaded', function() {
                                     overview: `${movie.overview}`,
                                     id: movie.id,
                                     mediaTp: mediaType,
-                                    provider_name: providerNames  
+                                    itemFetch: mediaType,
+                                    ticketUrl: data.homepage,
+                                    provider_name: providerNames 
                                 });
                                                 
                                 window.location.href = `filme.php?${params.toString()}`;

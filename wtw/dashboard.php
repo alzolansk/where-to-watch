@@ -103,13 +103,11 @@
     border:none;
     text-decoration: none;
     list-style: none;
-    box-sizing: border-box;
-    font-family: Nunito;  
 }
 
 /* Main Menu */
 #menu{
-    width:100%;
+    max-width:100%;
     height: 64px;
 }
 
@@ -117,7 +115,7 @@
     display: flex;
     top: 0; /* Define a posição no topo */
     left: 0; /* Define a posição na borda esquerda */
-    width: 1400px; /* Faz o menu ocupar toda a largura da página */
+    max-width: 1400px; /* Faz o menu ocupar toda a largura da página */
     z-index: 1000; /* Garante que o menu fique acima de outros elementos */
     flex-direction: row;
     align-items: center; /* Centraliza verticalmente */
@@ -155,7 +153,7 @@
     background-color: #1a1a1a;
     color: white;
     padding: 5px 20px;
-    border-radius: 25px;
+    border-radius: 15px;
     font-size: 16px;
     font-family: 'Nunito', sans-serif;
     display: inline-block;
@@ -234,6 +232,13 @@
     }
 }
 
+@media screen and (max-width: 500px) {
+  .logo-font {
+    font-size: 24px;
+  }
+
+}
+
 
 /* Search Bar*/
 
@@ -246,7 +251,7 @@
     margin: 0 auto;
     border-radius: 10px;
     height: 35px;
-    width: 75%;
+    width: 60%;
     background: #d7d7d7;
     background: -webkit-linear-gradient(0deg, #d7d7d7 0%, #eeeeee 100%);
     background: linear-gradient(0deg, #d7d7d7 0%, #eeeeee 100%);
@@ -254,12 +259,6 @@
 }
 
 @media (max-width: 1000px) { 
-    #search-div {
-        width: 30%; /* Oculta a barra de pesquisa */
-    }  
-}
-
-@media (max-width: 800px) { 
     #search-div {
         display: none; /* Oculta a barra de pesquisa */
     }  
@@ -352,11 +351,6 @@ input[type="text"] {
     left: 0;
 }
 
-.logo {
-  font-size: 24px;
-  letter-spacing: 0;
-  word-spacing: 0;
-}
 
 .logo span {
   display: inline;

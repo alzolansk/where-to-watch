@@ -330,6 +330,10 @@ body{
     font-size: 60px;
 }
 
+.movieLogo{
+    max-width: 100px;
+}
+
 .title-wrap{
     color: aliceblue;
 }
@@ -370,14 +374,14 @@ body{
     height: 100%;
     z-index: 1;
     border-radius: 35px;
-    filter: brightness(0.7); /* Torna o backdrop um pouco mais escuro */
-    object-fit: cover; /* Mantém a proporção da imagem */
+    filter: brightness(0.7); /* tornar o backdrop um pouco mais escuro */
+    object-fit: cover; /* manter proporção da imagem */
     transition: 0.4s ease-in-out;
 }
 
 .backdropContainer:hover .backdropImg{
     filter: brightness(0.9) contrast(115%) saturate(110%);
-    transform: scale(1.05); /* Aumenta um pouco mais ao passar o mouse */
+    transform: scale(1.05); /* aumentar ao passar o mouse */
 }
 
 .itemInfo{
@@ -387,9 +391,9 @@ body{
     position: absolute;
     width: 650px;
     top: 65%;
-    left: 200px; /* Posiciona ao lado da frontImage */
-    box-sizing: border-box; /* Garante que padding não afete o tamanho do container */
-    z-index: 3; /* Garante que o título e o botão estejam acima da frontImage e do backdrop */
+    left: 200px; /* posicionar lado da frontImage */
+    box-sizing: border-box; /* garantir que padding não afete o tamanho do container */
+    z-index: 3; /* garantir que o título e o botão estejam acima da frontImage e do backdrop */
 }
 
 .itemInfo h2{
@@ -401,15 +405,11 @@ body{
 }
 
 .movie-name{
-    white-space: nowrap;     /* Impede que o texto quebre para a próxima linha */
-    overflow: hidden;        /* Esconde o texto que ultrapassar os limites */
-    text-overflow: ellipsis; /* Adiciona '...' no lugar do texto cortado */
-    width: 100%;             /* Define o tamanho máximo da largura */
+    white-space: nowrap;    
+    overflow: hidden;        /* esconder o texto que ultrapassar os limites */
+    text-overflow: ellipsis; /* '...' no lugar do texto cortado */
+    width: 100%;             /* definir o tamanho máximo da largura */
     display: block;
-}
-
-.movie-pt-title{
-    padding-left: 10px;
 }
 
 .frontImage{
@@ -418,9 +418,9 @@ body{
     position: absolute;
     border-radius: 15px;
     left: 40px; 
-    transition: translateX(-40%) scale(1.2); /* Centraliza e amplia um pouco a imagem */
+    transition: translateX(-40%) scale(1.2); /* centralizar e ampliar um pouco a imagem */
     z-index: 2;
-    box-shadow: 0px 15px 30px rgba(0, 0, 0, 0.5); /* Sombra para efeito 3D */
+    box-shadow: 0px 15px 30px rgba(0, 0, 0, 0.5);
     position: absolute;
     transition: transform 0.3s ease-in-out;
     flex: 1;
@@ -449,17 +449,17 @@ body{
 
 
 .backdropContainer:hover .frontImage {
-    transform: translateX(-10%) scale(1.2); /* Aumenta um pouco mais ao passar o mouse */
-    box-shadow: 0px 20px 40px rgba(0, 0, 0, 0.7); /* Sombra mais forte no hover */
+    transform: translateX(-10%) scale(1.2); /* aumentar ao passar o mouse */
+    box-shadow: 0px 20px 40px rgba(0, 0, 0, 0.7); 
 }
 
-.backdropContainer:hover .movie-title {
-    transform: translateX(-1%) scale(1.03); /* Aumenta um pouco mais ao passar o mouse */
+.backdropContainer:hover .movie-pt-title {
+    transform: translateX(-1%) scale(1.03); /* aumentar ao passar o mouse */
     font-weight:600;
 }
 
 .backdropContainer:hover .company-logo {
-    transform: scale(1.1); /* Aumenta um pouco mais ao passar o mouse */
+    transform: scale(1.1); /* aumentar ao passar o mouse */
     gap: 40px;
 }
 
@@ -618,7 +618,7 @@ button.prev:hover, button.next:hover {
     display: flex;
     border-radius: 30px;
     justify-content: center; 
-    align-items: center;     /* Centraliza os botões verticalmente */
+    align-items: center;   
     margin-top: 20px;
 }
 
@@ -635,12 +635,12 @@ button.prev:hover, button.next:hover {
     cursor: pointer;
     font-size: 16px;
     border-radius: 30px;
-    transition: background-color 0.5s ease, color 0.3s ease; /* Altere para as propriedades desejadas */
+    transition: background-color 0.5s ease, color 0.3s ease;
 }
 
 .btn-category.active {
     box-shadow:  2px 2px 8px 1px rgba(0, 0, 0, 0.507);
-    background-color: rgba(215, 23, 30, 0.8); /* Vermelho com opacidade */;
+    background-color: rgba(215, 23, 30, 0.8); 
     color: white;
 }
 
@@ -701,7 +701,7 @@ button.prev:hover, button.next:hover {
     overflow-y: hidden;
     -ms-overflow-style: none;
     scrollbar-width: none; 
-    transition: transform 0.3s ease-in-out; /* Transição suave */
+    transition: transform 0.3s ease-in-out; /*  suave */
 }
 
 .row:hover{
@@ -758,7 +758,7 @@ button.prev:hover, button.next:hover {
   }
 
 .description:hover{
-    transform: scale(1.05); /* Move a descrição para cima */
+    transform: scale(1.05); /* mover a descrição para cima */
     background: rgb(13,13,13);
     background: linear-gradient(0deg, rgba(17,17,17,1) 0%, rgba(17,17,17,0) 100%);
 
@@ -771,7 +771,7 @@ button.prev:hover, button.next:hover {
 }
 
 .description .img-fluid{
-    transition: transform 0.3s ease, border-radius 0.3s ease; /* Adiciona transição suave para transform e border-radius */
+    transition: transform 0.3s ease, border-radius 0.3s ease; /* transição suave para transform e border-radius */
 }
 
 .description a{
@@ -859,7 +859,7 @@ button.prev:hover, button.next:hover {
     display: block;
     position: relative;
     height: 400px;
-    min-width: 220px; /* Define um tamanho mínimo para a imagem */
+    min-width: 220px; /* tamanho mínimo para a imagem */
 }
 
 /* RESPONSIVIDADE */
@@ -967,7 +967,7 @@ button.prev:hover, button.next:hover {
 
     .itemInfo{
         position: absolute;
-        width: 60%;          /* ou algo menor, tipo 90% */
+        width: 60%;        
         left: 110px;
         padding: 10px;
         box-sizing: border-box;

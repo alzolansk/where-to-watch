@@ -20,7 +20,6 @@
 @media (max-width: 1200px) {
    body {
        font-size: 90%;
-       font-family: Arial, Helvetica, sans-serif;
    }
 }
 
@@ -43,7 +42,6 @@ body{
    background-color: rgb(0, 0, 0);
    color: white;
    overflow-x: hidden;
-   font-family: Nunito;
 }
 
 
@@ -121,6 +119,10 @@ body{
     z-index: 3;
 }
 
+.interface-section{
+    padding: 0;
+}
+
 .movieDiv {
     position: relative;
     width: 100%;
@@ -153,6 +155,17 @@ body{
     z-index: 1;
     filter: blur(2px) contrast(130%) saturate(110%);
   }
+
+  
+.buy-tickets{
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23D7171E'%3E%3Cpath d='M6.22 8.72a.75.75 0 0 0 1.06 1.06l5.22-5.22v1.69a.75.75 0 0 0 1.5 0v-3.5a.75.75 0 0 0-.75-.75h-3.5a.75.75 0 0 0 0 1.5h1.69L6.22 8.72Z'/%3E%3Cpath d='M3.5 6.75c0-.69.56-1.25 1.25-1.25H7A.75.75 0 0 0 7 4H4.75A2.75 2.75 0 0 0 2 6.75v4.5A2.75 2.75 0 0 0 4.75 14h4.5A2.75 2.75 0 0 0 12 11.25V9a.75.75 0 0 0-1.5 0v2.25c0 .69-.56 1.25-1.25 1.25h-4.5c-.69 0-1.25-.56-1.25-1.25v-4.5Z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right;
+    padding-right: 20px;
+    padding-left: 3px;
+    background-color: #ffffff;
+    color: #D7171E;
+}
   
   /* Gradiente que cobre a parte esquerda da tela */
   #leftGradient {
@@ -217,12 +230,12 @@ body{
     text-overflow: ellipsis; 
     white-space: nowrap;
     height: 85px;
-    animation-duration: 0.5s; /* don't forget to set a duration! */
+    animation-duration: 0.5s; 
     margin: 0;
 }
 
 .wtw-font{
-    font-family: bebas Neue;
+    font-family: 'Bebas Neue';
     font-size: 30px;
     margin: 0;
     padding-left: 10px;
@@ -349,7 +362,7 @@ body{
     border-radius: 15px;
     width: 130px;
     padding-bottom: 10px;
-    transition: transform 0.4s ease, box-shadow 0.4s ease; /* Animações suaves */
+    transition: transform 0.4s ease, box-shadow 0.4s ease; /*  suaves */
 }
 
 .actor-card:hover{

@@ -8,6 +8,9 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
     
     <title id="title-movie"></title>
+
+    <link rel="icon" href="imagens/wywatch-favicon-iris-nobackground.png">
+
 </head>
 <body>
 

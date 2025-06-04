@@ -32,24 +32,40 @@ function closeTrailer() {
 }
 
 //Função setinhas de navegação
-function scrollLeftCustom(){
-   const wrap = document.querySelector('.container-wrap');
-   const scrollAmount = wrap.clientWidth * 0.60; // Mova 25% da largura do contêiner
+function scrollToNextItem(direction = 'right') {
+    const items = document.querySelectorAll('.backdropContainer');
+    const wrap = document.querySelector('.container-wrap');
+    const activeIndex = Array.from(items).findIndex(item => item.classList.contains('active'));
 
-   wrap.scrollBy({
-      left: -scrollAmount, // Valor que vai para a esquerda.
-      behavior: 'smooth'
-   });
+    let nextIndex = direction === 'right' ? activeIndex + 1 : activeIndex - 1;
+
+    // Garante que o índice fique no intervalo permitido
+    if (nextIndex < 0) nextIndex = 0;
+    if (nextIndex >= items.length) nextIndex = items.length - 1;
+
+    // Remove classe 'active' de todos e adiciona no novo item
+    items.forEach(item => item.classList.remove('active'));
+    const targetItem = items[nextIndex];
+    targetItem.classList.add('active');
+
+    // Centraliza o novo item no contêiner
+    const itemOffset = targetItem.offsetLeft;
+    const containerCenter = (wrap.clientWidth / 2) - (targetItem.clientWidth / 2);
+    wrap.scrollTo({
+        left: itemOffset - containerCenter,
+        behavior: 'smooth'
+    });
 }
 
-function scrollRight(){
-   const wrap = document.querySelector('.container-wrap');
-   const scrollAmount = wrap.clientWidth * 0.60; // Mova 25% da largura do contêiner
-   wrap.scrollBy({
-      left: scrollAmount, //Valor que vai para a direita.
-      behavior: 'smooth'
-   });
+// Atalhos para usar nos botões de seta
+function scrollLeftCustom() {
+    scrollToNextItem('left');
 }
+
+function scrollRight() {
+    scrollToNextItem('right');
+}
+
 
 /* Menu */
 document.getElementById('menuIcon').addEventListener('click', function(){
