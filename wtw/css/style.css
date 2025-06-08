@@ -412,6 +412,7 @@ body{
     display: block;
 }
 
+
 .frontImage{
     max-width: 130px;
     width: 100%;
@@ -494,18 +495,48 @@ body{
     }
 }
 
-.logo-font{
+.logo{
+  display: flex;
+  align-items: center;
+}
+
+.logo-font,
+.logo-font2,
+.logo-font-y {
+  display: inline;
+  padding: 0;
+  margin: 0;
+}
+
+.logo-font, 
+.logo-font-y{
     font-family: Quicksand;
-    font-size: 40px;
-    font-weight: 500;
+    font-weight: 600;
+    font-size: 30px;
+}
+
+.logo-font{
+    margin-left: 10px;
+}
+
+.logo-font-y{
+    margin-left: 10px;
 }
 
 .logo-font2{
     font-family: Bebas Neue;
-    font-size: 50px;
+    font-size: 35px;
     color: #D7171E;
+    margin-left: 10px;
 }
 
+.logo-eye {
+  display: inline;
+  height: 0.65em;
+  margin-top: 2.5px;
+  padding: 0;
+
+}
 
 /* Trailer Dialog Window */
 
@@ -673,6 +704,7 @@ button.prev:hover, button.next:hover {
     color: rgb(255, 255, 255);
     padding-top: 20px;
     padding-bottom: 20px;
+    padding-right: 10px;
 }
 
 
@@ -726,11 +758,31 @@ button.prev:hover, button.next:hover {
     padding: 5px;
 }
 
-.info p{
-    font-size: 15px;
-    color: rgb(143, 143, 143);
+.provider-tag{
+    font-size: 14px;
+    color: rgb(224, 224, 224);
     padding-top: 5px;
     padding-left: 5px;
+    padding: 5px;
+    border-radius: 5px;
+}
+
+.provider-logo {
+    max-width: 45px;
+    max-height: 30px;
+    border-radius: 10px;
+    filter: brightness(1.2) contrast(120%) grayscale(20%);
+    mix-blend-mode: lighten;
+}
+
+.provider-logo-container {
+    display: flex;
+    gap: 4px;
+    padding-top: 10px;
+}
+
+.provider-group{
+    display: flex;
 }
 
 .description{
@@ -861,6 +913,7 @@ button.prev:hover, button.next:hover {
     height: 400px;
     min-width: 220px; /* tamanho mínimo para a imagem */
 }
+
 
 /* RESPONSIVIDADE */
 

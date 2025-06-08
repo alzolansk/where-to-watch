@@ -18,7 +18,7 @@ document.getElementById('searchmovie').addEventListener('input', function() {
                     if (item.media_type === 'movie' || item.media_type === 'tv') {
                         const title = item.title || item.name; // Para pegar o título do filme ou da série
                         const imageUrl = `https://image.tmdb.org/t/p/w500${item.poster_path}&language=pt-BR&page=1`;
-                        const backdropUrl = `https://image.tmdb.org/t/p/w1280/${item.backdrop_path}}`;
+                        const backdropUrl = `https://image.tmdb.org/t/p/w1280/${item.backdrop_path}`;
                         const idTmdb = item.id;
                         const overview = item.overview; // Sinopse
 

@@ -35,7 +35,7 @@
    border:none;
    text-decoration: none;
    list-style: none;
-   box-sizing: border-box;       
+   box-sizing: border-box;  
 } 
 
 body{
@@ -247,6 +247,10 @@ body{
     font-weight: Bold;
     font-family: lato;
     width: 210px;
+}
+
+.logo-provider{
+    border-radius: 10px;
 }
 
 .wtw-white, .wtw-red{

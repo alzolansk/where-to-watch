@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const mediaType = params.get('mediaTp');
     const movieId = params.get('id');
     const creditsUrl = `https://api.themoviedb.org/3/${mediaType}/${movieId}/credits?api_key=${apiKey}&language=pt-BR&page=1`
+    const providerUrl = `https://api.themoviedb.org/3/${mediaType}/${movieId}/watch/providers?api_key=${apiKey}&language=pt-BR&page=1`;
 
     let mediaTypeTranslated = '';
 
@@ -27,8 +28,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const providers = params.get('provider_name');
     const upcoming = params.get('itemFetch');
     const producerName = params.get('producerName');
-    const ticketSite = params.get('');
-    console.log(producerName);
+    const ticketSite = params.get('ticketUrl');
+
+    // Limpa a URL exibida após capturar todos os parâmetros
+    window.history.replaceState({}, '', `http://localhost/WhereToWatch/wtw/filme.php?id=${movieId}`);
 
         //Verificação de upcoming
         if(upcoming == "upcoming"){
@@ -39,12 +42,98 @@ document.addEventListener('DOMContentLoaded', function() {
             `;
         } else if(providers == null || providers.length <  1){
             const providerDiv = document.getElementById('providers');
-
             providerDiv.innerText = `Não encontrado em nenhum provedor`;
-        }else if(providers.length > 1){
-            document.getElementById('providers').innerText = providers;
+        } else {
+            fetch(providerUrl)
+            .then(response => response.json())
+            .then(providerData => {
+                const providers = providerData.results?.BR;
+
+                const query = encodeURIComponent(title);
+                const streamingProviders = [];
+                const rentalProviders = [];
+
+                const providerSearchMap = {
+                    "netflix": `https://www.netflix.com/search?q=${query}`,
+                    "apple tv": `https://tv.apple.com/search?term=${query}`,
+                    "amazon video": `https://www.amazon.com/s?k=${query}`,
+                    "prime video": `https://www.primevideo.com/search?phrase=${query}`, 
+                    "disney": `https://www.disneyplus.com/search?q=${query}`,
+                    "max": `https://play.hbomax.com/search?q=${query}`,
+                    "globoplay": `https://globoplay.globo.com/busca/?q=${query}`,
+                    "paramount": `https://www.paramountplus.com/br/search/?keyword=${query}`,
+                    "telecine": `https://globoplay.globo.com/busca/tudo/${query}/`,
+                    "claro tv": `https://www.clarotvmais.com.br/busca?q=${query}`
+                };
+
+                const processProviders = (providerArray, targetArray) => {
+                    if (!providerArray) return;
+
+                    providerArray.forEach(provider => {
+                        const name = provider.provider_name;
+                        const providerName = name.toLowerCase();
+                        let searchUrl = '';
+
+                        if (providerName.includes("netflix") || providerName.includes("apple")) {
+                            if (ticketSite && ticketSite.includes(providerName)) {
+                                searchUrl = ticketSite;
+                            } else {
+                                searchUrl = providerSearchMap[providerName.includes("netflix") ? "netflix" : "apple tv"];
+                            }
+                        } else {
+                            for (const key in providerSearchMap) {
+                                if (providerName.includes(key)) {
+                                    searchUrl = providerSearchMap[key];
+                                    break;
+                                }
+                            }
+
+                            if (!searchUrl) {
+                                searchUrl = `https://www.google.com/search?q=${encodeURIComponent(name + ' ' + title)}`;
+                            }
+                        }
+
+                        targetArray.push({
+                            name,
+                            logo: `https://image.tmdb.org/t/p/w45${provider.logo_path}`,
+                            url: searchUrl
+                        });
+                    });
+                };
+
+                // Processa flatrate (streaming) e rent (aluguel)
+                processProviders(providers?.flatrate, streamingProviders);
+                processProviders(providers?.rent, rentalProviders);
+
+                // Exibe no HTML
+                const providersContainer = document.getElementById("providers");
+                let html = '';
+
+                if (streamingProviders.length > 0) {
+                    html += streamingProviders.map(p => `
+                        <a href="${p.url}" target="_blank" class="provider-tag">
+                            <img src="${p.logo}" alt="${p.name}" class="logo-provider" />
+                        </a>
+                    `).join('');
+                    html += '<span class="provider-type">Streaming</span>';
+                }
+
+                if (rentalProviders.length > 0) {
+                    html += rentalProviders.map(p => `
+                        <a href="${p.url}" target="_blank" class="provider-tag">
+                            <img src="${p.logo}" alt="${p.name}" class="logo-provider" />
+                        </a>
+                    `).join('');
+                    html += '<span class="provider-type">Aluguel</span>';
+                }
+
+                if (html) {
+                    providersContainer.innerHTML = html;
+                } else {
+                    providersContainer.innerText = "Nenhum provedor encontrado.";
+                }
+            })
         }
-        
         //Formatação de data
         const formatDate = (dateString) => {
             const [year, month, day] = dateString.split("-"); // Divide a data pelo separador '-'
@@ -117,8 +206,10 @@ document.addEventListener('DOMContentLoaded', function() {
             })
         } 
     })
+    
     .finally(() => {
         hideLoading(); // Esconde o spinner após tudo estar carregado
+        window.history.replaceState({}, '', `filme.php?id=${id}`);
     });
 })
 
@@ -146,5 +237,4 @@ window.addEventListener('load', updateFadeVisibility);
 document.getElementById('closeItem').addEventListener('click', function() {
     const modal = document.getElementById('actorDialog');
     modal.close();
-
 });

@@ -5,10 +5,11 @@
       <!-- <li><a href="index.php" class="logo"> <img src="imagens/Where-toWatch.png" alt="logo" style="width: 80px"></li></a> -->
         <a href="index.php" class="home-header">
             <h2 class="logo">             
-                <span class="logo-font">where you</span>
-                <span class="logo-font2">
-                    WATCH
-                </span>
+                <span class="logo-font">where</span>
+                <span class="logo-font-y"> y </span>
+                <img src="imagens/eye-icon2.svg" alt="o" class="logo-eye" />
+                <span class="logo-font">u</span>
+                <span class="logo-font2">WATCH</span>
             </h2>
         </a>
 
@@ -123,6 +124,7 @@
     background-color: rgb(0, 0, 0);
     margin: 0 auto;
     height: 60px;
+    font-family: Nunito;
 }
 
 .faixa ul{
@@ -351,23 +353,44 @@ input[type="text"] {
     left: 0;
 }
 
+.logo{
+  display: flex;
+  align-items: center;
+}
 
-.logo span {
+
+.logo-font,
+.logo-font2,
+.logo-font-y {
   display: inline;
   padding: 0;
   margin: 0;
 }
 
-.logo-font{
+.logo-font, 
+.logo-font-y{
     font-family: Quicksand;
     font-weight: 600;
     font-size: 30px;
+}
+
+.logo-font-y{
+    margin-left: 5px;
 }
 
 .logo-font2{
     font-family: Bebas Neue;
     font-size: 35px;
     color: #D7171E;
+    margin-left: 5px;
+}
+
+.logo-eye {
+  display: inline;
+  height: 0.65em;
+  margin-top: 2.5px;
+  padding: 0;
+
 }
 
 .home-header,

@@ -45,31 +45,44 @@ a {
   margin: 10px auto;
   order: 0;
 }
-
-.logo {
-  display: inline-block;
-  padding-bottom: 28px;
-  width: 105px;
-  margin: 0 auto;
-  position: relative;
-  top: 10px;
+.logo{
+  display: flex;
+  align-items: center;
 }
 
-.logo-font {
-  font-family: Quicksand;
-  font-weight: 600;
-  font-size: 80px;
-  color: white;
+
+.logo-font,
+.logo-font2,
+.logo-font-y {
+  display: inline;
+  padding: 0;
+  margin: 0;
 }
 
-.logo-font2 {
-  font-family: Bebas Neue;
-  font-size: 75px;
-  color: #D7171E;
+.logo-font, 
+.logo-font-y{
+    font-family: Quicksand;
+    font-weight: 600;
+    font-size: 75px;
 }
 
-.logo-h2{
-    display: inline-block;     /* Garante que tudo fique contido */
+.logo-font-y{
+    margin-left: 15px;
+}
+
+.logo-font2{
+    font-family: Bebas Neue;
+    font-size: 80px;
+    color: #D7171E;
+    margin-left: 15px;
+}
+
+.logo-eye {
+  display: inline;
+  height: 1.6em;
+  margin-top: 5px;
+  padding: 0;
+
 }
 
 .home-header,

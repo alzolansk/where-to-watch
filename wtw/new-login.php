@@ -67,10 +67,13 @@ $conexao->close();
     <div class="left-login">
       <div class="logo-div">
         <a href="index.php" class="home-header">
-          <h2 class="logo-h2">
-            <span class="logo-font">where you</span>
-            <span class="logo-font2">WATCH</span>
-          </h2>
+            <h2 class="logo">             
+              <span class="logo-font">where</span>
+              <span class="logo-font-y"> y </span>
+              <img src="imagens/eye-icon2.svg" alt="o" class="logo-eye" />
+              <span class="logo-font">u</span>
+              <span class="logo-font2">WATCH</span>
+            </h2>
         </a>
       </div>
     </div>

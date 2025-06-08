@@ -7,8 +7,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const trailerUrl = `https://api.themoviedb.org/3/${mediaType}/${movie.id}/videos?api_key=${apiKey}&language=pt-BR&page=1`;
         const rating = movie.vote_average.toFixed(2);
         const detailsUrl = `https://api.themoviedb.org/3/${mediaType}/${movie.id}?api_key=${apiKey}&language=pt-BR&page=1`;
-        const providerUrl = `https://api.themoviedb.org/3/${mediaType}/${movie.id}/watch/providers?api_key=${apiKey}&language=pt-BR&page=1sort_by=display_priority.cresc`
-        const backdropUrl = `https://image.tmdb.org/t/p/w1280/${movie.backdrop_path}}`
+        const providerUrl = `https://api.themoviedb.org/3/${mediaType}/${movie.id}/watch/providers?api_key=${apiKey}&language=pt-BR&page=1&sort_by=display_priority.cresc`
+        const backdropUrl = `https://image.tmdb.org/t/p/w1280/${movie.backdrop_path}`
         const movieLogoUrl = `https://api.themoviedb.org/3/movie/${movie.id}/images?api_key=${apiKey}&include_image_language=null,pt`
         const creditsUrl = `https://api.themoviedb.org/3/${mediaType}/${movie.id}/credits?api_key=${apiKey}&language=pt-BR&page=1`
 
@@ -229,8 +229,6 @@ document.addEventListener('DOMContentLoaded', function() {
                             }
 
                             if (hasHomepage && isInRange) {
-                                // Aqui você renderiza o card no slider
-                                //console.log(movie.id);
                                 
                     fetch(trailerUrl)
                         .then(response => response.json())
@@ -316,7 +314,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                             overview: `${movie.overview}`,
                                             id: movie.id,
                                             mediaTp: mediaType,
-                                            itemFetch: "Upcoming",
+                                            itemFetch: "upcoming",
                                             ticketUrl: data.homepage,
                                             producerName: company.name
                                         });
@@ -437,9 +435,32 @@ document.addEventListener('DOMContentLoaded', function() {
                     .then(response => response.json())
                     .then(providerData => {
                         let providerNames = '';
+                        let providerLogos = '';
                         const providers = providerData.results?.BR;
-                        const rentProviders = providers.rent ? providers.rent.slice(0,1).map(p => p.provider_name).join(", ") : '';
-                        const flatrateProviders = providers.flatrate ? providers.flatrate.slice(0,3).map(p => p.provider_name).join(", "): '';
+
+                        const logoBaseUrl = "https://image.tmdb.org/t/p/w92";
+                        const filterProviders = (arr = []) => arr.filter(p =>
+                            !p.provider_name.includes("Standard with Ads") &&
+                            !p.provider_name.includes("Amazon Channel")
+                        );
+                        const rentFiltered = providers.rent ? filterProviders(providers.rent) : [];
+                        const flatrateFiltered = providers.flatrate ? filterProviders(providers.flatrate) : [];
+                        const rentLogoImgs = rentFiltered.slice(0,1).map(p => `<img src="${logoBaseUrl}${p.logo_path}" class="provider-logo" title="${p.provider_name}">`);
+                        const flatrateLogoImgs = flatrateFiltered.slice(0,3).map(p => `<img src="${logoBaseUrl}${p.logo_path}" class="provider-logo" title="${p.provider_name}">`);
+                        
+                        const logoGroups = [];
+                        if (flatrateLogoImgs.length) {
+                            logoGroups.push(flatrateLogoImgs.join(' ') + `<p class="provider-tag">Streaming</p>`);
+                        }
+                        if (rentLogoImgs.length) {
+                            logoGroups.push(rentLogoImgs.join(' ') + `<p class="provider-tag">Aluguel</p>`);
+                        }
+                        if (logoGroups.length) {
+                            providerLogos = logoGroups.map(group => `<div class="provider-group">${group}</div>`).join(' ');
+                        }
+
+                        const rentProviders = rentFiltered.slice(0,1).map(p => p.provider_name).join(", ") || '';
+                        const flatrateProviders = flatrateFiltered.slice(0,3).map(p => p.provider_name).join(", ") || '';
                         const allProviders = [rentProviders, flatrateProviders].filter(Boolean).join(", ");
 
                         if(allProviders){
@@ -483,7 +504,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     <p class="rating-value">${rating}</p>
                                     <li class="movie-name">
                                         <a href="#">${movie.title || movie.name}</a>
-                                        <p class="provider-name">${providerNames}</p>
+                                        <div class="provider-logo-container">${providerLogos}</div>
                                     </li>
                                 
                                     <li class="watch-trailer">
@@ -557,18 +578,39 @@ document.addEventListener('DOMContentLoaded', function() {
                     .then(response => response.json())
                     .then(providerData => {
                         let providerNames = '';
+                        let providerLogos = '';
                         const providers = providerData.results?.BR;
-                        const rentProviders = providers.rent ? providers.rent.slice(0,1).map(p => p.provider_name).join(", ") : '';
-                        const flatrateProviders = providers.flatrate ? providers.flatrate.slice(0,3).map(p => p.provider_name).join(", "): '';
-                        const allProviders = [rentProviders, flatrateProviders].filter(Boolean).join(", ");
+                    
+                        const logoBaseUrl = "https://image.tmdb.org/t/p/w92";
+                        const filterProviders = (arr = []) => arr.filter(p =>
+                            !p.provider_name.includes("Standard with Ads") &&
+                            !p.provider_name.includes("Amazon Channel")
+                        );
+                        const rentFiltered = providers.rent ? filterProviders(providers.rent) : [];
+                        const flatrateFiltered = providers.flatrate ? filterProviders(providers.flatrate) : [];
+                        const rentLogoImgs = rentFiltered.slice(0,1).map(p => `<img src="${logoBaseUrl}${p.logo_path}" class="provider-logo" title="${p.provider_name}">`);
+                        const flatrateLogoImgs = flatrateFiltered.slice(0,3).map(p => `<img src="${logoBaseUrl}${p.logo_path}" class="provider-logo" title="${p.provider_name}">`);
+                        const logoGroups = [];
+                        if (flatrateLogoImgs.length) {
+                            logoGroups.push(flatrateLogoImgs.join(' ') + `<p class="provider-tag">Streaming</p>`);
+                        }
+                        if (rentLogoImgs.length) {
+                            logoGroups.push(rentLogoImgs.join(' ') + `<p class="provider-tag">Aluguel</p>`);
+                        }
+                        if (logoGroups.length) {
+                            providerLogos = logoGroups.map(group => `<div class="provider-group">${group}</div>`).join(' ');
+                        }
 
+                        const rentProviders = rentFiltered.slice(0,1).map(p => p.provider_name).join(", ") || '';
+                        const flatrateProviders = flatrateFiltered.slice(0,3).map(p => p.provider_name).join(", ") || '';
+                        const allProviders = [rentProviders, flatrateProviders].filter(Boolean).join(", ");
 
                         if(allProviders){
                             providerNames = allProviders;
                         } else {
                             console.log('Nenhum provedor encontrado para BR.');
                         }
-
+                        
                     fetch(trailerUrl)
                         .then(response => response.json())
                         .then(trailerData => {
@@ -593,7 +635,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     <p class="rating-value">${rating}</p>
                                     <li class="movie-name">
                                         <a href="#">${movie.title || movie.name}</a>
-                                        <p class="provider-name">${providerNames}</p>
+                                        <div class="provider-logo-container">${providerLogos}</div>
                                     </li>
                                     <li class="watch-trailer">
                                         <a href="#" onclick="event.preventDefault(); showTrailer('${trailerYtUrl}'); event.stopPropagation();">

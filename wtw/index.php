@@ -71,17 +71,14 @@
 
         <div class="container">
 
-            <h2><b>|</b>
-                <span class="maisPop">
-                    Mais populares no
-                </span>
-                
-                <span class="logo-font">
-                    where you
-                </span>
-                <span class="logo-font2">
-                    WATCH
-                </span>
+            <h2 class="logo"><b>|</b>
+                <span class="maisPop">Mais populares no</span>
+
+                <span class="logo-font"> where</span>
+                <span class="logo-font-y"> y </span>
+                <img src="imagens/eye-icon2.svg" alt="o" class="logo-eye" />
+                <span class="logo-font">u</span>
+                <span class="logo-font2">WATCH</span>
             </h2>
 
             <div class="carousel-container">
@@ -90,13 +87,12 @@
                 </div>
             </div>
 
-            <h2><b>|</b>
-                <span class="logo-font">
-                    where you
-                </span>
-                <span class="logo-font2">
-                    WATCH
-                </span>
+            <h2 class="logo"><b>|</b>
+                <span class="logo-font"> where</span>
+                <span class="logo-font-y"> y </span>
+                <img src="imagens/eye-icon2.svg" alt="o" class="logo-eye" />
+                <span class="logo-font">u</span>
+                <span class="logo-font2">WATCH</span>
                 <span class="indicaSpan">
                     indica
                 </span>
@@ -180,7 +176,12 @@
                                             -->
 
         </div>        
-
+        <footer>
+            <p class="justwatch-attr">
+                Dados de provedores fornecidos por 
+                <a href="https://www.justwatch.com" target="_blank" rel="noopener noreferrer">JustWatch</a>
+            </p>
+        </footer>
     </section>
 </body>
 

@@ -64,21 +64,50 @@ input[type="number"] {
 }
 
 .logo-div {
+  max-width: 800px;
   text-align: center;
+  margin: 10px auto;
+  order: 0;
 }
 
-.logo-font {
-  white-space: nowrap;
-  font-family: Quicksand;
-  font-weight: 600;
-  font-size: 80px;
-  color: white;
+.logo{
+  display: flex;
+  align-items: center;
 }
 
-.logo-font2 {
-  font-family: Bebas Neue;
-  font-size: 80px;
-  color: #D7171E;
+.logo-font,
+.logo-font2,
+.logo-font-y {
+  display: inline;
+  padding: 0;
+  margin: 0;
+}
+
+.logo-font, 
+.logo-font-y{
+    color: #fff;
+    font-family: Quicksand;
+    font-weight: 600;
+    font-size: 75px;
+}
+
+.logo-font-y{
+    margin-left: 15px;
+}
+
+.logo-font2{
+    font-family: Bebas Neue;
+    font-size: 80px;
+    color: #D7171E;
+    margin-left: 15px;
+}
+
+.logo-eye {
+  display: inline;
+  height: 1.6em;
+  margin-top: 5px;
+  padding: 0;
+
 }
 
 form {
