@@ -250,7 +250,37 @@ body{
 }
 
 .logo-provider{
-    border-radius: 10px;
+    border-radius: 6px;
+    width: 45px;
+    height: 30px;
+    object-fit: contain; 
+    background-color: white; /* ou #f5f5f5 para suavizar */
+    transition: 0.2s ease-in-out;
+}
+
+.logo-provider:hover{
+    transform: scale(1.1) translateX(-5%);
+}
+
+.provider-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 2px;
+    margin-bottom: 10px;
+}
+
+.provider-tag {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px;
+    border-radius: 8px;
+        transition: transform 0.2s;
+}
+
+.provider-tag:hover {
+    transform: scale(1.05);
 }
 
 .wtw-white, .wtw-red{

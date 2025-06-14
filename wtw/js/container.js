@@ -1,6 +1,15 @@
 document.addEventListener('DOMContentLoaded', function() {
     const apiKey = 'dc3b4144ae24ddabacaeda024ff0585c';
     let mediaType = 'movie'; // Inicialmente filmes
+    
+    // Cache para evitar duplicidade
+    const fetchCache = {};
+    const fetchJson = url => {
+        if (!fetchCache[url]) {
+            fetchCache[url] = fetch(url).then(r => r.json());
+        }
+        return fetchCache[url];
+    };
 
     function defineMovieConstants(movie, mediaType, apiKey) {
         const imgUrl = `https://image.tmdb.org/t/p/w500${movie.poster_path}`;
@@ -42,9 +51,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const query = this.value.trim();
         if (query.length > 0) {
             const allMoviesUrl = `https://api.themoviedb.org/3/search/multi?api_key=${apiKey}&query=${encodeURIComponent(query)}&language=pt-BR&page=1&sort_by=popularity.desc`;
-    
-            fetch(allMoviesUrl)
-            .then(response => response.json())
+
+            fetchJson(allMoviesUrl)
             .then(data => {
                 const resultsContainer = document.getElementById('results');
                 resultsContainer.innerHTML = ''; // Limpa resultados anteriores
@@ -72,8 +80,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             resultsDiv.addEventListener('click', function() {
                                 // Nova requisição para obter detalhes do filme
 
-                                fetch(detailsUrl)
-                                .then(response => response.json())
+                                fetchJson(detailsUrl)
                                 .then(data => {
                                 
                                     const genresArray = data.genres;
@@ -82,8 +89,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                         genresNames = genresArray.map(genres => genres.name).join(", "); //String "join" separa os diversos gêneros
                                     }
     
-                                    return fetch(providerUrl)
-                                        .then(providerResponse => providerResponse.json())
+                                    return fetchJson(providerUrl)
                                         .then(providerData => {
     
                                             let providerNames = ''; // Mensagem caso não haja provedores
@@ -170,8 +176,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const topRatedUrl = `https://api.themoviedb.org/3/${mediaType}/top_rated?api_key=${apiKey}&language=pt-BR&page=1&sort_by=popularity.desc`;
         const upcomingUrl = `https://api.themoviedb.org/3/movie/upcoming?api_key=${apiKey}&language=pt-BR&page=1&sort_by=release_date.desc`;
 
-        fetch(upcomingUrl)
-            .then(response => response.json())
+        fetchJson(upcomingUrl)
             .then(upcomingData => {
                 const wrapMovies = upcomingData.results.slice(0, 20);
                 const containerNew = document.getElementById('container-wrap');  
@@ -185,8 +190,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     const mediaTypeTxt = movie.media_type === 'movie' ? 'Filme' : 'Série';
                     const mediaType = 'movie';
 
-                    fetch(detailsUrl)
-                    .then(response => response.json())
+                    fetchJson(detailsUrl)
                     .then(data => {
                         const genresArray = data.genres;
                         const companies = data.production_companies;
@@ -230,8 +234,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                             if (hasHomepage && isInRange) {
                                 
-                    fetch(trailerUrl)
-                        .then(response => response.json())
+                    fetchJson(trailerUrl)
                         .then(trailerData => {
                             const trailerPath = trailerData.results;
 
@@ -244,13 +247,11 @@ document.addEventListener('DOMContentLoaded', function() {
                                 }
                             }
                                     
-                    fetch(creditsUrl)
-                    .then(response => response.json())
+                    fetchJson(creditsUrl)
                     .then(creditsData =>{
 
 
-                    fetch(movieLogoUrl)
-                    .then(response => response.json())
+                    fetchJson(movieLogoUrl)
                     .then(imageData => {
 
                         if (imageData.logos && imageData.logos.length > 0) {
@@ -417,8 +418,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     
 
-        fetch(popularUrl)
-            .then(response => response.json())
+            fetchJson(popularUrl)
             .then(popularData => {
                 const movies = popularData.results;
                 const container = document.getElementById('popular-movies-container');
@@ -430,9 +430,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     const mediaTypeTxt = movie.media_type === 'movie' ? 'Filme' : 'Série';
 
                     const { imgUrl, trailerUrl, rating, backdropUrl, providerUrl, detailsUrl} = defineMovieConstants(movie, mediaType, apiKey);
-
-                    fetch(providerUrl)
-                    .then(response => response.json())
+                    
+                    fetchJson(providerUrl)
                     .then(providerData => {
                         let providerNames = '';
                         let providerLogos = '';
@@ -441,7 +440,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         const logoBaseUrl = "https://image.tmdb.org/t/p/w92";
                         const filterProviders = (arr = []) => arr.filter(p =>
                             !p.provider_name.includes("Standard with Ads") &&
-                            !p.provider_name.includes("Amazon Channel")
+                            !p.provider_name.includes("Amazon Channel") &&
+                            !p.provider_name.includes("paramount plus apple tv channel") &&
+                            !p.provider_name.includes("paramount plus premium")
                         );
                         const rentFiltered = providers.rent ? filterProviders(providers.rent) : [];
                         const flatrateFiltered = providers.flatrate ? filterProviders(providers.flatrate) : [];
@@ -478,7 +479,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 genresNames = genresArray.map(genres => genres.name).join(", "); //String "join" separa os diversos gêneros
                             }
     
-                        fetch(trailerUrl)
+                        fetch(trailerUrl)   
                         .then(response => response.json())
                         .then(trailerData => {
                             const trailerPath = trailerData.results;
@@ -574,8 +575,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 genresNames = genresArray.map(genres => genres.name).join(", "); //String "join" separa os diversos gêneros
                             }
 
-                    fetch(providerUrl)
-                    .then(response => response.json())
+                    fetchJson(providerUrl)
                     .then(providerData => {
                         let providerNames = '';
                         let providerLogos = '';
@@ -584,8 +584,11 @@ document.addEventListener('DOMContentLoaded', function() {
                         const logoBaseUrl = "https://image.tmdb.org/t/p/w92";
                         const filterProviders = (arr = []) => arr.filter(p =>
                             !p.provider_name.includes("Standard with Ads") &&
-                            !p.provider_name.includes("Amazon Channel")
+                            !p.provider_name.includes("Amazon Channel") &&
+                            !p.provider_name.includes("Paramount Plus Apple TV Channel") &&
+                            !p.provider_name.includes("paramount plus premium")
                         );
+
                         const rentFiltered = providers.rent ? filterProviders(providers.rent) : [];
                         const flatrateFiltered = providers.flatrate ? filterProviders(providers.flatrate) : [];
                         const rentLogoImgs = rentFiltered.slice(0,1).map(p => `<img src="${logoBaseUrl}${p.logo_path}" class="provider-logo" title="${p.provider_name}">`);
@@ -611,8 +614,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             console.log('Nenhum provedor encontrado para BR.');
                         }
                         
-                    fetch(trailerUrl)
-                        .then(response => response.json())
+                    fetchJson(trailerUrl)
                         .then(trailerData => {
                             const trailerPath = trailerData.results;
 

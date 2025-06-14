@@ -1,144 +1,253 @@
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
+
     showLoading();
     // Obtém os parâmetros da URL
     const params = new URLSearchParams(window.location.search);
     const apiKey = 'dc3b4144ae24ddabacaeda024ff0585c';
-    const mediaType = params.get('mediaTp');
+    let mediaType = params.get('mediaTp');
     const movieId = params.get('id');
-    const creditsUrl = `https://api.themoviedb.org/3/${mediaType}/${movieId}/credits?api_key=${apiKey}&language=pt-BR&page=1`
+    
+    // Recupera os dados
+    let title = params.get('title');
+    let originalTitle = params.get('original_title');
+    let genres = params.get('genres');
+    let releaseDate = params.get('release_date');
+    let imgUrl = params.get('imgUrl');
+    let backdropUrl = params.get('backdropUrl');
+    let trailerUrl = params.get('trailerUrl');
+    let overview = params.get('overview');
+    const upcoming = params.get('itemFetch');
+    const ticketSite = params.get('ticketUrl');
+
+    const fetchDetailsById = async (id) => {
+        const fetchData = async (type) => {
+            const url = `https://api.themoviedb.org/3/${type}/${id}?api_key=${apiKey}&language=pt-BR&append_to_response=videos`;
+            const response = await fetch(url);
+            return { type, data: await response.json(), status: response.status };
+        };
+
+        let { type, data, status } = await fetchData('movie');
+        if (status === 404 || data.success === false) {
+            ({ type, data } = await fetchData('tv'));
+        }
+        return { type, data };
+    };
+
+    if (!title || !mediaType) {
+        try {
+            const { type, data } = await fetchDetailsById(movieId);
+            mediaType = type;
+            title = data.title || data.name || '';
+            originalTitle = data.original_title || data.original_name || '';
+            releaseDate = data.release_date || data.first_air_date || '';
+            genres = data.genres ? data.genres.map(g => g.name).join(', ') : '';
+            imgUrl = data.poster_path ? `https://image.tmdb.org/t/p/w500${data.poster_path}` : '';
+            backdropUrl = data.backdrop_path ? `https://image.tmdb.org/t/p/w1280${data.backdrop_path}` : '';
+            overview = data.overview || '';
+            const trailer = data.videos?.results?.find(v => v.type === 'Trailer' && v.site === 'YouTube');
+            trailerUrl = trailer ? `https://www.youtube.com/watch?v=${trailer.key}` : '#';
+        } catch (error) {
+            console.error('Erro ao buscar detalhes do título:', error);
+        }
+    }
+
+    const creditsUrl = `https://api.themoviedb.org/3/${mediaType}/${movieId}/credits?api_key=${apiKey}&language=pt-BR&page=1`;
     const providerUrl = `https://api.themoviedb.org/3/${mediaType}/${movieId}/watch/providers?api_key=${apiKey}&language=pt-BR&page=1`;
 
     let mediaTypeTranslated = '';
 
     if (mediaType === 'movie') {
         mediaTypeTranslated = 'filme';
-      } else if (mediaType === 'tv') {
+    } else if (mediaType === 'tv') {
         mediaTypeTranslated = 'série';
-      }
-      
-    // Recupera os dados
-    const title = params.get('title');
-    const originalTitle = params.get('original_title');
-    const genres = params.get('genres');
-    const releaseDate = params.get('release_date');
-    const imgUrl = new URLSearchParams(window.location.search).get('imgUrl');
-    const backdropUrl = params.get('backdropUrl');
-    const trailerUrl = params.get('trailerUrl');
-    const overview = params.get('overview');
-    const providers = params.get('provider_name');
-    const upcoming = params.get('itemFetch');
-    const producerName = params.get('producerName');
-    const ticketSite = params.get('ticketUrl');
+    }
+    
+    // Define cores de fundo para cada provedor
+    const providerBgColors = {
+    'Netflix': '#000000',
+    'Amazon Prime Video': '#FFFFFF',
+    'Amazon Video': '#FFFFFF',
+    'HBO Max': '#0A0A0A',
+    'Max': '#0A0A0A',
+    'Paramount Plus': '#2766FB',
+    'Paramount+': '#2766FB',
+    'Claro video': '#ffffff',
+    'Claro tv+' : '#0F0F0F',
+    'YouTube': '#FF0000',
+    'Microsoft Store': '#0078D9',
+    'Google Play Movies': '#ffffff',
+    'Star Plus': '#141927',
+    'Star+': '#141927',
+    'Rakuten TV': '#E50914',
+    'MGM': '#D4AF37',
+    'Now': '#002776',
+    'Looke': '#333333',
+    'VIX': '#F28E1C',
+    'Telecine Play': '#FF1E1E',
+    'Pluto TV': '#662D91',
+    'Crunchyroll': '#FF5D01',
+    'Oldflix': '#ffffff'
+    };
+
+    const providersWithGradient = {
+        'Apple TV': 'linear-gradient(135deg, #000000, #434343)',
+        'Globoplay': 'linear-gradient(140deg, #FF0033 30%, #FF5D0D 90%, #FF7C00 100%)',
+        'Disney': ''
+    };
+
+    const providerLogoFb = {
+        'apple tv': 'https://play-lh.googleusercontent.com/1XBAZjSOWaVM7UDFKvzuMR-WRoR5gCnsYrw17_ihHLcJKT9Qc7hXptHwWQ3Bf83mry4=w240-h480-rw'
+    };
 
     // Limpa a URL exibida após capturar todos os parâmetros
     window.history.replaceState({}, '', `http://localhost/WhereToWatch/wtw/filme.php?id=${movieId}`);
 
-        //Verificação de upcoming
-        if(upcoming == "upcoming"){
-            document.getElementById('providers').innerHTML = `
-            <p> Cinemas mais próximos de você!
-            <a href="${ticketSite}" target="_blank" class="buy-tickets"> Compre aqui </a>
-            </p>
-            `;
-        } else if(providers == null || providers.length <  1){
-            const providerDiv = document.getElementById('providers');
-            providerDiv.innerText = `Não encontrado em nenhum provedor`;
-        } else {
-            fetch(providerUrl)
-            .then(response => response.json())
-            .then(providerData => {
-                const providers = providerData.results?.BR;
+    //Verificação de upcoming
+    if(upcoming == "upcoming"){
+        document.getElementById('providers').innerHTML = `
+        <p> Cinemas mais próximos de você!
+        <a href="${ticketSite}" target="_blank" class="buy-tickets"> Compre aqui </a>
+        </p>
+        `;
+    } else {
+        try {
+            const response = await fetch(providerUrl);
+            const providerData = await response.json();
+            const providers = providerData.results?.BR;
 
-                const query = encodeURIComponent(title);
-                const streamingProviders = [];
-                const rentalProviders = [];
+            const query = encodeURIComponent(title);
+            const streamingProviders = [];
+            const rentalProviders = [];
 
-                const providerSearchMap = {
-                    "netflix": `https://www.netflix.com/search?q=${query}`,
-                    "apple tv": `https://tv.apple.com/search?term=${query}`,
-                    "amazon video": `https://www.amazon.com/s?k=${query}`,
-                    "prime video": `https://www.primevideo.com/search?phrase=${query}`, 
-                    "disney": `https://www.disneyplus.com/search?q=${query}`,
-                    "max": `https://play.hbomax.com/search?q=${query}`,
-                    "globoplay": `https://globoplay.globo.com/busca/?q=${query}`,
-                    "paramount": `https://www.paramountplus.com/br/search/?keyword=${query}`,
-                    "telecine": `https://globoplay.globo.com/busca/tudo/${query}/`,
-                    "claro tv": `https://www.clarotvmais.com.br/busca?q=${query}`
-                };
+            const providerSearchMap = {
+                "netflix": `https://www.netflix.com/search?q=${query}`,
+                "apple tv": `https://tv.apple.com/search?term=${query}`,
+                "amazon video": `https://www.primevideo.com/-/pt/search/ref=atv_nb_sug?ie=UTF8&phrase=${query}`,
+                "prime video": `https://www.primevideo.com/search?phrase=${query}`, 
+                "disney": `https://www.disneyplus.com/search?q=${query}`,
+                "max": `https://play.hbomax.com/search?q=${query}`,
+                "globoplay": `https://globoplay.globo.com/busca/?q=${query}`,
+                "paramount": `https://www.paramountplus.com/br/search/?keyword=${query}`,
+                "telecine": `https://globoplay.globo.com/busca/tudo/${query}/`,
+                "claro tv": `https://www.clarotvmais.com.br/busca?q=${query}`,
+                "oldflix": `https://oldflix.com.br/home/catalog?search=${query}`,
+                "crunchyroll": `https://www.crunchyroll.com/pt-br/search?q=${query}`
+            };
 
-                const processProviders = (providerArray, targetArray) => {
-                    if (!providerArray) return;
+            const ignoredProviders = [
+                'Amazon Channel',
+                'Paramount Channel',
+                'Standard with Ads',
+                'paramount plus apple tv channel',
+                'paramount plus premium'
+            ];
+            const processProviders = (providerArray, targetArray) => {
+                if (!providerArray) return;
 
-                    providerArray.forEach(provider => {
-                        const name = provider.provider_name;
-                        const providerName = name.toLowerCase();
-                        let searchUrl = '';
+                providerArray.forEach(provider => {
+                    const name = provider.provider_name;
 
-                        if (providerName.includes("netflix") || providerName.includes("apple")) {
-                            if (ticketSite && ticketSite.includes(providerName)) {
-                                searchUrl = ticketSite;
-                            } else {
-                                searchUrl = providerSearchMap[providerName.includes("netflix") ? "netflix" : "apple tv"];
-                            }
+                    if (ignoredProviders.some(p => name.toLowerCase().includes(p.toLowerCase()))) {
+                        return;
+                    }
+
+                    const providerName = name.toLowerCase();
+
+                    let searchUrl = '';
+
+                    if (providerName.includes("netflix") || providerName.includes("apple")) {
+                        if (ticketSite && ticketSite.includes("tv.apple") || ticketSite.includes(providerName)) {
+                            searchUrl = ticketSite;
                         } else {
-                            for (const key in providerSearchMap) {
-                                if (providerName.includes(key)) {
-                                    searchUrl = providerSearchMap[key];
-                                    break;
-                                }
-                            }
-
-                            if (!searchUrl) {
-                                searchUrl = `https://www.google.com/search?q=${encodeURIComponent(name + ' ' + title)}`;
+                            searchUrl = providerSearchMap[providerName.includes("netflix") ? "netflix" : "apple tv"];
+                        }
+                    } else {
+                        for (const key in providerSearchMap) {
+                            if (providerName.includes(key)) {
+                                searchUrl = providerSearchMap[key];
+                                break;
                             }
                         }
 
-                        targetArray.push({
-                            name,
-                            logo: `https://image.tmdb.org/t/p/w45${provider.logo_path}`,
-                            url: searchUrl
-                        });
+                        if (!searchUrl) {
+                            searchUrl = `https://www.google.com/search?q=${encodeURIComponent(name + ' ' + title)}`;
+                        }
+                    }
+
+                    targetArray.push({
+                        name,
+                        logo: `https://image.tmdb.org/t/p/w300${provider.logo_path}`,
+                        url: searchUrl
                     });
-                };
 
-                // Processa flatrate (streaming) e rent (aluguel)
-                processProviders(providers?.flatrate, streamingProviders);
-                processProviders(providers?.rent, rentalProviders);
+                });
+            };
 
-                // Exibe no HTML
-                const providersContainer = document.getElementById("providers");
-                let html = '';
+            // Processa flatrate (streaming) e rent (aluguel)
+            processProviders(providers?.flatrate, streamingProviders);
+            processProviders(providers?.rent, rentalProviders);
 
-                if (streamingProviders.length > 0) {
-                    html += streamingProviders.map(p => `
-                        <a href="${p.url}" target="_blank" class="provider-tag">
-                            <img src="${p.logo}" alt="${p.name}" class="logo-provider" />
-                        </a>
-                    `).join('');
-                    html += '<span class="provider-type">Streaming</span>';
-                }
+            // Exibe no HTML
+            const providersContainer = document.getElementById("providers");
 
-                if (rentalProviders.length > 0) {
-                    html += rentalProviders.map(p => `
-                        <a href="${p.url}" target="_blank" class="provider-tag">
-                            <img src="${p.logo}" alt="${p.name}" class="logo-provider" />
-                        </a>
-                    `).join('');
-                    html += '<span class="provider-type">Aluguel</span>';
-                }
+            let html = '';
 
-                if (html) {
-                    providersContainer.innerHTML = html;
-                } else {
-                    providersContainer.innerText = "Nenhum provedor encontrado.";
-                }
-            })
+            if (streamingProviders.length > 0) {
+                html += `
+                    <div class="provider-row">
+                        ${streamingProviders.map(p =>{                        
+                            const backgroundColor = providerBgColors[p.name] || '#1a1a1a';
+                            const gradient = providersWithGradient[p.name];
+                            const providerKey = p.name.trim().toLowerCase();
+                            const customLogo = providerLogoFb[providerKey];
+                            const src = customLogo || p.logo;
+                            const style = gradient ? `background-image: ${gradient};` : `background-color: ${backgroundColor};`;
+                            return `
+                            <a href="${p.url}" target="_blank" class="provider-tag">
+                                <img src="${src}" alt="${p.name}" class="logo-provider" style="${style};" />
+                            </a>
+                        `;
+                        }).join('')}
+                        <span class="provider-type">Streaming</span>
+                    </div>
+                `;
+            }
+
+            if (rentalProviders.length > 0) {
+                html += `
+                    <div class="provider-row">
+                        ${rentalProviders.map(p =>{                        
+                            const backgroundColor = providerBgColors[p.name] || '#1a1a1a';
+                            const gradient = providersWithGradient[p.name];
+                            const providerKey = p.name.trim().toLowerCase();
+                            const customLogo = providerLogoFb[providerKey];
+                            const style = gradient ? `background-image: ${gradient};` : `background-color: ${backgroundColor};`;
+                            const src = customLogo || p.logo;
+
+                            return `
+                            <a href="${p.url}" target="_blank" class="provider-tag">
+                                <img src="${src}" alt="${p.name}" class="logo-provider" style="${style};" />
+                            </a>
+                        `;
+                        }).join('')}
+                        <span class="provider-type">Aluguel</span>
+                    </div>
+                `;
+            }
+            if (html) {
+                providersContainer.innerHTML = html;
+            } else {
+                providersContainer.innerText = "Nenhum provedor encontrado.";
+            }
+        } catch (err) {
+            document.getElementById('providers').innerText = 'Não encontrado em nenhum provedor';
         }
-        //Formatação de data
-        const formatDate = (dateString) => {
-            const [year, month, day] = dateString.split("-"); // Divide a data pelo separador '-'
-            return `${day}/${month}/${year}`; // Retorna no formato 'dd/mm/aaaa'
-        };
+    }
+    //Formatação de data
+    const formatDate = (dateString) => {
+        const [year, month, day] = dateString.split("-"); // Divide a data pelo separador '-'
+        return `${day}/${month}/${year}`; // Retorna no formato 'dd/mm/aaaa'
+    };
     
     // Formata a data de lançamento
     const formattedReleaseDate = formatDate(releaseDate);
@@ -185,7 +294,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 castList.innerHTML = castHtml;
 
-                
                 const actorCards = document.querySelectorAll('.actor-card');
                 actorCards.forEach(card => {
 
@@ -199,9 +307,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
                         const itemModal = document.getElementById('actorDialog');
                         itemModal.showModal();
-                       
                     })
-
                 })
             })
         } 
@@ -209,7 +315,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     .finally(() => {
         hideLoading(); // Esconde o spinner após tudo estar carregado
-        window.history.replaceState({}, '', `filme.php?id=${id}`);
+        window.history.replaceState({}, '', `filme.php?id=${movieId}`);
     });
 })
 
