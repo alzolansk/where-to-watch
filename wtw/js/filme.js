@@ -1,11 +1,56 @@
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
     showLoading();
     // Obtém os parâmetros da URL
     const params = new URLSearchParams(window.location.search);
     const apiKey = 'dc3b4144ae24ddabacaeda024ff0585c';
-    const mediaType = params.get('mediaTp');
+    let mediaType = params.get('mediaTp');
     const movieId = params.get('id');
-    const creditsUrl = `https://api.themoviedb.org/3/${mediaType}/${movieId}/credits?api_key=${apiKey}&language=pt-BR&page=1`
+
+    // Recupera os dados
+    let title = params.get('title');
+    let originalTitle = params.get('original_title');
+    let genres = params.get('genres');
+    let releaseDate = params.get('release_date');
+    let imgUrl = params.get('imgUrl');
+    let backdropUrl = params.get('backdropUrl');
+    let trailerUrl = params.get('trailerUrl');
+    let overview = params.get('overview');
+    const upcoming = params.get('itemFetch');
+    const ticketSite = params.get('ticketUrl');
+
+    const fetchDetailsById = async (id) => {
+        const fetchData = async (type) => {
+            const url = `https://api.themoviedb.org/3/${type}/${id}?api_key=${apiKey}&language=pt-BR&append_to_response=videos`;
+            const response = await fetch(url);
+            return { type, data: await response.json(), status: response.status };
+        };
+
+        let { type, data, status } = await fetchData('movie');
+        if (status === 404 || data.success === false) {
+            ({ type, data } = await fetchData('tv'));
+        }
+        return { type, data };
+    };
+
+    if (!title || !mediaType) {
+        try {
+            const { type, data } = await fetchDetailsById(movieId);
+            mediaType = type;
+            title = data.title || data.name || '';
+            originalTitle = data.original_title || data.original_name || '';
+            releaseDate = data.release_date || data.first_air_date || '';
+            genres = data.genres ? data.genres.map(g => g.name).join(', ') : '';
+            imgUrl = data.poster_path ? `https://image.tmdb.org/t/p/w500${data.poster_path}` : '';
+            backdropUrl = data.backdrop_path ? `https://image.tmdb.org/t/p/w1280${data.backdrop_path}` : '';
+            overview = data.overview || '';
+            const trailer = data.videos?.results?.find(v => v.type === 'Trailer' && v.site === 'YouTube');
+            trailerUrl = trailer ? `https://www.youtube.com/watch?v=${trailer.key}` : '#';
+        } catch (error) {
+            console.error('Erro ao buscar detalhes do título:', error);
+        }
+    }
+
+    const creditsUrl = `https://api.themoviedb.org/3/${mediaType}/${movieId}/credits?api_key=${apiKey}&language=pt-BR&page=1`;
     const providerUrl = `https://api.themoviedb.org/3/${mediaType}/${movieId}/watch/providers?api_key=${apiKey}&language=pt-BR&page=1`;
 
     let mediaTypeTranslated = '';
@@ -16,20 +61,6 @@ document.addEventListener('DOMContentLoaded', function() {
         mediaTypeTranslated = 'série';
       }
       
-    // Recupera os dados
-    const title = params.get('title');
-    const originalTitle = params.get('original_title');
-    const genres = params.get('genres');
-    const releaseDate = params.get('release_date');
-    const imgUrl = new URLSearchParams(window.location.search).get('imgUrl');
-    const backdropUrl = params.get('backdropUrl');
-    const trailerUrl = params.get('trailerUrl');
-    const overview = params.get('overview');
-    const providers = params.get('provider_name');
-    const upcoming = params.get('itemFetch');
-    const producerName = params.get('producerName');
-    const ticketSite = params.get('ticketUrl');
-
     // Limpa a URL exibida após capturar todos os parâmetros
     window.history.replaceState({}, '', `http://localhost/WhereToWatch/wtw/filme.php?id=${movieId}`);
 
@@ -40,13 +71,10 @@ document.addEventListener('DOMContentLoaded', function() {
             <a href="${ticketSite}" target="_blank" class="buy-tickets"> Compre aqui </a>
             </p>
             `;
-        } else if(providers == null || providers.length <  1){
-            const providerDiv = document.getElementById('providers');
-            providerDiv.innerText = `Não encontrado em nenhum provedor`;
         } else {
-            fetch(providerUrl)
-            .then(response => response.json())
-            .then(providerData => {
+            try {
+                const response = await fetch(providerUrl);
+                const providerData = await response.json();
                 const providers = providerData.results?.BR;
 
                 const query = encodeURIComponent(title);
@@ -132,7 +160,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else {
                     providersContainer.innerText = "Nenhum provedor encontrado.";
                 }
-            })
+            } catch (err) {
+                document.getElementById('providers').innerText = 'Não encontrado em nenhum provedor';
+            }
         }
         //Formatação de data
         const formatDate = (dateString) => {
@@ -209,7 +239,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     .finally(() => {
         hideLoading(); // Esconde o spinner após tudo estar carregado
-        window.history.replaceState({}, '', `filme.php?id=${id}`);
+        window.history.replaceState({}, '', `filme.php?id=${movieId}`);
     });
 })
 
