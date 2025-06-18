@@ -138,7 +138,8 @@ document.addEventListener('DOMContentLoaded', function() {
                                                     overview: `${movie.overview}`,
                                                     id: movie.id,
                                                     mediaTp: movie.media_type,
-                                                    provider_name: providerNames  
+                                                    provider_name: providerNames,
+                                                    ticketUrl: data.homepage
                                                 });
 
                                                 window.location.href = `filme.php?${params.toString()}`;
@@ -174,11 +175,11 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const popularUrl = `https://api.themoviedb.org/3/trending/${mediaType}/week?api_key=${apiKey}&language=pt-BR&page=1`;
         const topRatedUrl = `https://api.themoviedb.org/3/${mediaType}/top_rated?api_key=${apiKey}&language=pt-BR&page=1&sort_by=popularity.desc`;
-        const upcomingUrl = `https://api.themoviedb.org/3/movie/upcoming?api_key=${apiKey}&language=pt-BR&page=1&sort_by=release_date.desc`;
+        const cinemaUrl = `https://api.themoviedb.org/3/movie/now_playing?api_key=${apiKey}&language=pt-BR&page=1&sort_by=release_date.desc`;
 
-        fetchJson(upcomingUrl)
-            .then(upcomingData => {
-                const wrapMovies = upcomingData.results.slice(0, 20);
+        fetchJson(cinemaUrl)
+            .then(cinemaData => {
+                const wrapMovies = cinemaData.results.slice(0, 20);
                 const containerNew = document.getElementById('container-wrap');  
 
                 wrapMovies.forEach(movie => {
@@ -202,7 +203,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         let allLogosHTML = "";
 
                         companies.slice(0, 2).forEach(company => {
-                             
                             const hasHomepage = data.homepage && data.homepage.trim() !== "";
                             const releaseDate = new Date(data.release_date);
                             const today = new Date();

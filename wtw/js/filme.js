@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Obtém os parâmetros da URL
     const params = new URLSearchParams(window.location.search);
     const apiKey = 'dc3b4144ae24ddabacaeda024ff0585c';
-    let mediaType = params.get('mediaTp');
+    let mediaType = params.get('mediaTp') || params.get('type') || (params.has('tv') ? 'tv' : 'movie');
     const movieId = params.get('id');
     
     // Recupera os dados
@@ -19,24 +19,21 @@ document.addEventListener('DOMContentLoaded', async function() {
     const upcoming = params.get('itemFetch');
     const ticketSite = params.get('ticketUrl');
 
-    const fetchDetailsById = async (id) => {
-        const fetchData = async (type) => {
-            const url = `https://api.themoviedb.org/3/${type}/${id}?api_key=${apiKey}&language=pt-BR&append_to_response=videos`;
-            const response = await fetch(url);
-            return { type, data: await response.json(), status: response.status };
-        };
-
-        let { type, data, status } = await fetchData('movie');
-        if (status === 404 || data.success === false) {
-            ({ type, data } = await fetchData('tv'));
-        }
-        return { type, data };
+    const fetchDetailsById = async (id, type) => {
+        const url = `https://api.themoviedb.org/3/${type}/${id}?api_key=${apiKey}&language=pt-BR&append_to_response=videos`;
+        const response = await fetch(url);
+        const data = await response.json();
+        return { type, data, status: response.status };
     };
 
     if (!title || !mediaType) {
         try {
-            const { type, data } = await fetchDetailsById(movieId);
-            mediaType = type;
+            const { type, data, status } = await fetchDetailsById(movieId, mediaType);
+
+            if (status !== 200 || data.success === false) {
+                throw new Error('ID ou tipo inválido.');
+            }
+
             title = data.title || data.name || '';
             originalTitle = data.original_title || data.original_name || '';
             releaseDate = data.release_date || data.first_air_date || '';
@@ -86,12 +83,14 @@ document.addEventListener('DOMContentLoaded', async function() {
     'Telecine Play': '#FF1E1E',
     'Pluto TV': '#662D91',
     'Crunchyroll': '#FF5D01',
-    'Oldflix': '#ffffff'
+    'Oldflix': '#ffffff',
+    'Apple TV+': '#000000'
     };
 
     const providersWithGradient = {
-        'Apple TV': 'linear-gradient(135deg, #000000, #434343)',
+        'Apple TV': 'linear-gradient(180deg, #323232, #141414)',
         'Globoplay': 'linear-gradient(140deg, #FF0033 30%, #FF5D0D 90%, #FF7C00 100%)',
+        'Univer Video': 'linear-gradient(130deg, #40577A 10%, #101824 70%, #161E29)',
         'Disney': ''
     };
 
@@ -100,7 +99,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     };
 
     // Limpa a URL exibida após capturar todos os parâmetros
-    window.history.replaceState({}, '', `http://localhost/WhereToWatch/wtw/filme.php?id=${movieId}`);
+    window.history.replaceState({}, '', `http://localhost/WhereToWatch/wtw/filme.php?id=${movieId}&${mediaType}`);
 
     //Verificação de upcoming
     if(upcoming == "upcoming"){
@@ -141,12 +140,13 @@ document.addEventListener('DOMContentLoaded', async function() {
                 'paramount plus apple tv channel',
                 'paramount plus premium'
             ];
+
             const processProviders = (providerArray, targetArray) => {
                 if (!providerArray) return;
 
                 providerArray.forEach(provider => {
                     const name = provider.provider_name;
-
+                    console.log(ticketSite  );
                     if (ignoredProviders.some(p => name.toLowerCase().includes(p.toLowerCase()))) {
                         return;
                     }
@@ -156,7 +156,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                     let searchUrl = '';
 
                     if (providerName.includes("netflix") || providerName.includes("apple")) {
-                        if (ticketSite && ticketSite.includes("tv.apple") || ticketSite.includes(providerName)) {
+                        if (ticketSite && (ticketSite.includes("tv.apple") || ticketSite.includes(providerName))) {
                             searchUrl = ticketSite;
                         } else {
                             searchUrl = providerSearchMap[providerName.includes("netflix") ? "netflix" : "apple tv"];
@@ -202,6 +202,8 @@ document.addEventListener('DOMContentLoaded', async function() {
                             const customLogo = providerLogoFb[providerKey];
                             const src = customLogo || p.logo;
                             const style = gradient ? `background-image: ${gradient};` : `background-color: ${backgroundColor};`;
+                            console.log(p.name);
+
                             return `
                             <a href="${p.url}" target="_blank" class="provider-tag">
                                 <img src="${src}" alt="${p.name}" class="logo-provider" style="${style};" />
@@ -274,15 +276,18 @@ document.addEventListener('DOMContentLoaded', async function() {
         let castHtml = '';
 
         if(castArray && castArray.length > 0){
+            let castHtml = '';
+            
             castArray.forEach(cast => {
                 const castName = cast.name;
                 const castRole = cast.character;
-
+                const castId = cast.id;
+                
                 const profileImg = cast.profile_path ? `https://image.tmdb.org/t/p/w500/${cast.profile_path}` : 'imagens/icon-cast.png'; // Avatar padrão se não houver imagem
 
                 // Criação de um elemento HTML para cada ator, incluindo nome e imagem
                     castHtml += `
-                    <div id="actorCard" class="actor-card" data-cast-name="${castName}" data-profile-img="${profileImg}">
+                    <div id="actorCard" class="actor-card" data-cast-name="${castName}" data-profile-img="${profileImg}" data-cast-id="${castId}">
                         <img src="${profileImg}" alt="${castName}" class="actor-img">
                         <div class="p-div">
                             <a href="https://www.google.com/search?q=${castName}" class="actor-name" target="_blank">${castName}</a>
@@ -291,23 +296,19 @@ document.addEventListener('DOMContentLoaded', async function() {
                     </div>
                     `
                     ;
-                
-                castList.innerHTML = castHtml;
+            })
+            castList.innerHTML = castHtml;
 
-                const actorCards = document.querySelectorAll('.actor-card');
-                actorCards.forEach(card => {
+            const actorCards = document.querySelectorAll('.actor-card');
 
-                    card.addEventListener('click', () => {
-                        const castName = card.getAttribute('data-cast-name');
-                        const profileImg = card.getAttribute('data-profile-img');
-            
-                        // Atualiza o modal com as informações do ator
-                        document.getElementById('actorName').innerText = castName;
-                        document.getElementById('actorPoster').src = profileImg;
-            
-                        const itemModal = document.getElementById('actorDialog');
-                        itemModal.showModal();
+            actorCards.forEach(card => {
+
+                card.addEventListener('click', () => {
+                    const castId = card.getAttribute('data-cast-id');
+                    const params = new URLSearchParams({
+                        personId: castId
                     })
+                    window.location.href = `person.php?${params.toString()}`;
                 })
             })
         } 
@@ -315,7 +316,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     
     .finally(() => {
         hideLoading(); // Esconde o spinner após tudo estar carregado
-        window.history.replaceState({}, '', `filme.php?id=${movieId}`);
+        window.history.replaceState({}, '', `filme.php?id=${movieId}&${mediaType}`);
     });
 })
 

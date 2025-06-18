@@ -87,7 +87,7 @@ body{
 
 .posterItem{
     width: 210px;
-    border-radius: 40px;
+    border-radius: 40px 40px 0px 0px;
 }
 
 /*.movieDiv{
@@ -167,27 +167,27 @@ body{
     color: #D7171E;
 }
   
-  /* Gradiente que cobre a parte esquerda da tela */
-  #leftGradient {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 220px;
-    background: linear-gradient(to right, rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0));
-    height: 100%;
-    z-index: 2;
-  }
-  
-  /* Overlay preta por cima da imagem */
-  .overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.6);
-    z-index: 2;
-  }
+/* Gradiente que cobre a parte esquerda da tela */
+#leftGradient {
+position: absolute;
+top: 0;
+left: 0;
+width: 220px;
+background: linear-gradient(to right, rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0));
+height: 100%;
+z-index: 2;
+}
+
+/* Overlay preta por cima da imagem */
+.overlay {
+position: absolute;
+top: 0;
+left: 0;
+width: 100%;
+height: 100%;
+background: rgba(0, 0, 0, 0.6);
+z-index: 2;
+}
   
 .poster-title{
     display: flex;
@@ -276,7 +276,7 @@ body{
     justify-content: center;
     padding: 2px;
     border-radius: 8px;
-        transition: transform 0.2s;
+    transition: transform 0.2s;
 }
 
 .provider-tag:hover {
