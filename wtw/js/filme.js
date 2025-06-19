@@ -1,6 +1,29 @@
 document.addEventListener('DOMContentLoaded', async function() {
 
     showLoading();
+
+    function waitForImages(container) {
+        return new Promise(resolve => {
+            const images = container ? container.querySelectorAll('img') : [];
+            if (images.length === 0) {
+                resolve();
+                return;
+            }
+            let loaded = 0;
+            const check = () => {
+                loaded++;
+                if (loaded === images.length) resolve();
+            };
+            images.forEach(img => {
+                if (img.complete) {
+                    check();
+                } else {
+                    img.addEventListener('load', check);
+                    img.addEventListener('error', check);
+                }
+            });
+        });
+    }
     // Obtém os parâmetros da URL
     const params = new URLSearchParams(window.location.search);
     const apiKey = 'dc3b4144ae24ddabacaeda024ff0585c';
@@ -43,6 +66,8 @@ document.addEventListener('DOMContentLoaded', async function() {
             overview = data.overview || '';
             const trailer = data.videos?.results?.find(v => v.type === 'Trailer' && v.site === 'YouTube');
             trailerUrl = trailer ? `https://www.youtube.com/watch?v=${trailer.key}` : '#';
+
+
         } catch (error) {
             console.error('Erro ao buscar detalhes do título:', error);
         }
@@ -91,7 +116,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         'Apple TV': 'linear-gradient(180deg, #323232, #141414)',
         'Globoplay': 'linear-gradient(140deg, #FF0033 30%, #FF5D0D 90%, #FF7C00 100%)',
         'Univer Video': 'linear-gradient(130deg, #40577A 10%, #101824 70%, #161E29)',
-        'Disney': ''
+        'Disney Plus': 'linear-gradient(180deg, #03202E 20%,#185563,  #4AD2DF);'
     };
 
     const providerLogoFb = {
@@ -123,14 +148,15 @@ document.addEventListener('DOMContentLoaded', async function() {
                 "apple tv": `https://tv.apple.com/search?term=${query}`,
                 "amazon video": `https://www.primevideo.com/-/pt/search/ref=atv_nb_sug?ie=UTF8&phrase=${query}`,
                 "prime video": `https://www.primevideo.com/search?phrase=${query}`, 
-                "disney": `https://www.disneyplus.com/search?q=${query}`,
+                "disney": `https://www.disneyplus.com/pt-br/browse/search?q=${query}`,
                 "max": `https://play.hbomax.com/search?q=${query}`,
                 "globoplay": `https://globoplay.globo.com/busca/?q=${query}`,
                 "paramount": `https://www.paramountplus.com/br/search/?keyword=${query}`,
                 "telecine": `https://globoplay.globo.com/busca/tudo/${query}/`,
                 "claro tv": `https://www.clarotvmais.com.br/busca?q=${query}`,
                 "oldflix": `https://oldflix.com.br/home/catalog?search=${query}`,
-                "crunchyroll": `https://www.crunchyroll.com/pt-br/search?q=${query}`
+                "crunchyroll": `https://www.crunchyroll.com/pt-br/search?q=${query}`,
+                "google":`https://www.youtube.com/results?search_query=${query}&sp=EgIQBA%253D%253D`
             };
 
             const ignoredProviders = [
@@ -138,7 +164,8 @@ document.addEventListener('DOMContentLoaded', async function() {
                 'Paramount Channel',
                 'Standard with Ads',
                 'paramount plus apple tv channel',
-                'paramount plus premium'
+                'paramount plus premium',
+                'Belas Artes'
             ];
 
             const processProviders = (providerArray, targetArray) => {
@@ -146,7 +173,6 @@ document.addEventListener('DOMContentLoaded', async function() {
 
                 providerArray.forEach(provider => {
                     const name = provider.provider_name;
-                    console.log(ticketSite  );
                     if (ignoredProviders.some(p => name.toLowerCase().includes(p.toLowerCase()))) {
                         return;
                     }
@@ -199,10 +225,9 @@ document.addEventListener('DOMContentLoaded', async function() {
                             const backgroundColor = providerBgColors[p.name] || '#1a1a1a';
                             const gradient = providersWithGradient[p.name];
                             const providerKey = p.name.trim().toLowerCase();
-                            const customLogo = providerLogoFb[providerKey];
+                            const customLogo = providerLogoFb[providerKey]? providerKey:p.logo;
                             const src = customLogo || p.logo;
                             const style = gradient ? `background-image: ${gradient};` : `background-color: ${backgroundColor};`;
-                            console.log(p.name);
 
                             return `
                             <a href="${p.url}" target="_blank" class="provider-tag">
@@ -236,8 +261,12 @@ document.addEventListener('DOMContentLoaded', async function() {
                     </div>
                 `;
             }
+
+            const allProviders = rentalProviders.length + streamingProviders.length;
+
             if (html) {
                 providersContainer.innerHTML = html;
+                console.log(allProviders);
             } else {
                 providersContainer.innerText = "Nenhum provedor encontrado.";
             }
@@ -315,8 +344,10 @@ document.addEventListener('DOMContentLoaded', async function() {
     })
     
     .finally(() => {
-        hideLoading(); // Esconde o spinner após tudo estar carregado
-        window.history.replaceState({}, '', `filme.php?id=${movieId}&${mediaType}`);
+        waitForImages(document).then(() => {
+            hideLoading(); // Esconde o spinner após tudo estar carregado
+            window.history.replaceState({}, '', `filme.php?id=${movieId}&${mediaType}`);
+        });
     });
 })
 
@@ -339,7 +370,18 @@ castList.addEventListener('scroll', updateFadeVisibility);
 // Verifica ao carregar
 window.addEventListener('load', updateFadeVisibility);
 
+function gerarSlug(title) {
+  if (!title || typeof title !== "string") return "";
 
+  return title
+    .replace(/&/g, "e")                     // troca & por e
+    .normalize("NFD")                       // remove acentos
+    .replace(/[\u0300-\u036f]/g, "")        // remove diacríticos
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, "")               // remove símbolos restantes
+    .trim()
+    .replace(/\s+/g, "-");                  // espaços viram hífens
+}
 
 document.getElementById('closeItem').addEventListener('click', function() {
     const modal = document.getElementById('actorDialog');

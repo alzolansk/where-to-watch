@@ -11,6 +11,29 @@ document.addEventListener('DOMContentLoaded', function() {
         return fetchCache[url];
     };
 
+    function waitForImages(container) {
+        return new Promise(resolve => {
+            const images = container ? container.querySelectorAll('img') : [];
+            if (images.length === 0) {
+                resolve();
+                return;
+            }
+            let loaded = 0;
+            const check = () => {
+                loaded++;
+                if (loaded === images.length) resolve();
+            };
+            images.forEach(img => {
+                if (img.complete) {
+                    check();
+                } else {
+                    img.addEventListener('load', check);
+                    img.addEventListener('error', check);
+                }
+            });
+        });
+    }
+
     function defineMovieConstants(movie, mediaType, apiKey) {
         const imgUrl = `https://image.tmdb.org/t/p/w500${movie.poster_path}`;
         const trailerUrl = `https://api.themoviedb.org/3/${mediaType}/${movie.id}/videos?api_key=${apiKey}&language=pt-BR&page=1`;
@@ -22,6 +45,13 @@ document.addEventListener('DOMContentLoaded', function() {
         const creditsUrl = `https://api.themoviedb.org/3/${mediaType}/${movie.id}/credits?api_key=${apiKey}&language=pt-BR&page=1`
 
         return { imgUrl, trailerUrl, rating, detailsUrl, providerUrl, backdropUrl, creditsUrl, movieLogoUrl };
+    }
+
+    function slugify(text) {
+        return text.toLowerCase()
+            .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-+|-+$/g, '');
     }
 
     function activateBackdropContainer(element) {
@@ -46,128 +76,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    //Pesquisar filme
-    document.getElementById('searchmovie').addEventListener('input', function() {
-        const query = this.value.trim();
-        if (query.length > 0) {
-            const allMoviesUrl = `https://api.themoviedb.org/3/search/multi?api_key=${apiKey}&query=${encodeURIComponent(query)}&language=pt-BR&page=1&sort_by=popularity.desc`;
-
-            fetchJson(allMoviesUrl)
-            .then(data => {
-                const resultsContainer = document.getElementById('results');
-                resultsContainer.innerHTML = ''; // Limpa resultados anteriores
-    
-                // Verifica se existem resultados
-                if (data.results && data.results.length > 0) {
-                    data.results.forEach(movie => {
-                        if (movie.media_type === 'movie' || movie.media_type === 'tv') {
-                            const title = movie.title || movie.name; // Para pegar o título do filme ou da série
-                            const { imgUrl, trailerUrl, rating, backdropUrl, providerUrl, detailsUrl, movieLogoUrl} = defineMovieConstants(movie, movie.media_type, apiKey);
-                            const overview = `${movie.overview}`; // Sinopse
-                            const upperTitle = title;
-                            
-                            const resultsDiv = document.createElement('div');
-                            resultsDiv.innerHTML += `
-                                <div class="resultsDiv">
-                                    <img src="${imgUrl}" alt="${upperTitle}">
-                                    <div class="movie-info">
-                                        <h3>${upperTitle}</h3>
-                                    </div>
-                                </div>
-                            `;
-                            
-                            // Evento de clique para abrir o modal
-                            resultsDiv.addEventListener('click', function() {
-                                // Nova requisição para obter detalhes do filme
-
-                                fetchJson(detailsUrl)
-                                .then(data => {
-                                
-                                    const genresArray = data.genres;
-                                    let genresNames = '';
-                                    if (genresArray && genresArray.length > 0) {
-                                        genresNames = genresArray.map(genres => genres.name).join(", "); //String "join" separa os diversos gêneros
-                                    }
-    
-                                    return fetchJson(providerUrl)
-                                        .then(providerData => {
-    
-                                            let providerNames = ''; // Mensagem caso não haja provedores
-                                            const providers = providerData.results?.BR; // Acessa os provedores para o país BR
-                                            let providerLogos = '';
-    
-                                            if (providers){
-    
-                                            /* Processo pegar logo
-                                                const processProviders = (providerArray) => {
-                                                return providerArray.map(p => {
-                                                    const logoUrl = `https://image.tmdb.org/t/p/w45${p.logo_path}`; 
-                                                    return `<img src="${logoUrl}" alt="${p.provider_name}" title="${p.provider_name}">`; // Adiciona a imagem da logo
-                                                }).join(" ");
-                                                };
-    
-                                                const buyLogos = providers.buy && providers.buy.length > 0 ? processProviders(providers.buy) : '';
-                                                const rentLogos = providers.rent && providers.rent.length > 0 ? processProviders(providers.rent) : '';
-    
-                                                // Concatena todas as categorias de provedores
-                                                const allLogos = [buyLogos, rentLogos].filter(Boolean).join(" ");
-    
-                                                // Se houver logos de provedores, substitui a mensagem padrão
-                                                if (allLogos) {
-                                                    providerLogos = allLogos;
-                                                }
-    
-                                            */
-    
-                                                const rentProviders = providers.rent ? providers.rent.slice(0,1).map(p => p.provider_name).join(", ") : '';
-                                                const flatrateProviders = providers.flatrate ? providers.flatrate.slice(0,3).map(p => p.provider_name).join(", "): '';
-                                                const allProviders = [rentProviders, flatrateProviders].filter(Boolean).join(", ");
-                                                                                    
-                                                if (allProviders) {
-                                                    providerNames = allProviders;
-                                                }
-                                            }        
-
-                                            // Evento de clique para abrir a pagina
-                                                const params = new URLSearchParams({
-                                                    title: movie.title || movie.name,
-                                                    genres: genresNames,
-                                                    release_date: movie.release_date || movie.first_air_date,
-                                                    imgUrl: imgUrl,
-                                                    backdropUrl: backdropUrl,
-                                                    overview: `${movie.overview}`,
-                                                    id: movie.id,
-                                                    mediaTp: movie.media_type,
-                                                    provider_name: providerNames,
-                                                    ticketUrl: data.homepage
-                                                });
-
-                                                window.location.href = `filme.php?${params.toString()}`;
-
-                                        });
-                                })
-                                .catch(error => console.error('Erro ao buscar detalhes do filme:', error)); 
-                            });
-    
-                            resultsContainer.appendChild(resultsDiv);
-                        }
-                    });
-    
-                    resultsContainer.style.display = 'block';
-                } else {
-                    resultsContainer.innerHTML = '<p>Nenhum resultado encontrado.</p>';
-                    resultsContainer.style.display = 'block';
-                }
-            })
-            .catch(error => console.error('Erro:', error));
-        } else {
-            // Check empty
-            const resultsContainer = document.getElementById('results');
-            resultsContainer.innerHTML = '';
-            resultsContainer.style.display = 'none';
-        }
-    });
-
     function loadContent(){
         showLoading(); // Mostra o spinner ao começar
 
@@ -178,8 +86,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const cinemaUrl = `https://api.themoviedb.org/3/movie/now_playing?api_key=${apiKey}&language=pt-BR&page=1&sort_by=release_date.desc`;
 
         fetchJson(cinemaUrl)
-            .then(cinemaData => {
-                const wrapMovies = cinemaData.results.slice(0, 20);
+            .then(cinemaData => {  
+                const wrapMovies = cinemaData.results.slice(0, 50);
                 const containerNew = document.getElementById('container-wrap');  
 
                 wrapMovies.forEach(movie => {
@@ -187,12 +95,27 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     carouselDiv.addEventListener('click', () => activateBackdropContainer(carouselDiv));
 
-                    const { imgUrl, trailerUrl, detailsUrl, backdropUrl, creditsUrl, movieLogoUrl } = defineMovieConstants(movie, 'movie', apiKey);
+                    const { imgUrl, trailerUrl, detailsUrl, backdropUrl, creditsUrl, movieLogoUrl, providerUrl } = defineMovieConstants(movie, 'movie', apiKey);
                     const mediaTypeTxt = movie.media_type === 'movie' ? 'Filme' : 'Série';
                     const mediaType = 'movie';
 
                     fetchJson(detailsUrl)
                     .then(data => {
+                        const hasHomepage = data.homepage && data.homepage.trim() !== "";
+                        return fetchJson(providerUrl).then(providerData => ({ data, providerData, hasHomepage }));
+                    })
+                    .then(({ data, providerData, hasHomepage }) => {
+                        const providers = providerData.results?.BR;
+                        const hasProviders = providers && (
+                            (providers.rent && providers.rent.length > 0) ||
+                            (providers.flatrate && providers.flatrate.length > 0) ||
+                            (providers.buy && providers.buy.length > 0)
+                        );
+                        if (hasProviders) return;
+
+                        const slug = slugify(movie.title || movie.original_title);
+                        const ticketUrl = hasHomepage ? data.homepage : `https://www.ingresso.com/filme/${slug}`;
+
                         const genresArray = data.genres;
                         const companies = data.production_companies;
                         let genresNames = '';
@@ -203,7 +126,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         let allLogosHTML = "";
 
                         companies.slice(0, 2).forEach(company => {
-                            const hasHomepage = data.homepage && data.homepage.trim() !== "";
                             const releaseDate = new Date(data.release_date);
                             const today = new Date();
                             const threeMonthsAgo = new Date();
@@ -232,7 +154,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 allLogosHTML += `<img src="${companyLogoUrl}" alt="${company.name}" class="company-logo" style="${companyLogoFilter}">`;
                             }
 
-                            if (hasHomepage && isInRange) {
+                            if (isInRange) {
                                 
                     fetchJson(trailerUrl)
                         .then(trailerData => {
@@ -316,7 +238,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                             id: movie.id,
                                             mediaTp: mediaType,
                                             itemFetch: "upcoming",
-                                            ticketUrl: data.homepage,
+                                            ticketUrl: ticketUrl,
                                             producerName: company.name
                                         });
                                                 
@@ -690,7 +612,12 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .catch(error => console.error('Erro ao carregar conteúdo:', error))
         .finally(() => {
-            hideLoading(); // Esconde o spinner quando tudo está carregado
+            const containers = [
+                document.getElementById('container-wrap'),
+                document.getElementById('popular-movies-container'),
+                document.getElementById('top-movies-container')
+            ];
+            Promise.all(containers.map(c => waitForImages(c))).then(hideLoading);
         });
         }
 

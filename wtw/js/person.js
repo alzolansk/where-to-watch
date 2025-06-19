@@ -1,10 +1,36 @@
 document.addEventListener('DOMContentLoaded', function() {
+    showLoading();
+
+    function waitForImages(container) {
+        return new Promise(resolve => {
+            const images = container ? container.querySelectorAll('img') : [];
+            if (images.length === 0) {
+                resolve();
+                return;
+            }
+            let loaded = 0;
+            const check = () => {
+                loaded++;
+                if (loaded === images.length) resolve();
+            };
+            images.forEach(img => {
+                if (img.complete) {
+                    check();
+                } else {
+                    img.addEventListener('load', check);
+                    img.addEventListener('error', check);
+                }
+            });
+        });
+    }
+
     const apiKey = 'dc3b4144ae24ddabacaeda024ff0585c';
     const params = new URLSearchParams(window.location.search);
     const person_id = params.get('personId');
     const personUrl = `https://api.themoviedb.org/3/person/${person_id}?api_key=${apiKey}&language=pt-BR&append_to_response=movie_credits`
     const mediasUrl = `https://api.themoviedb.org/3/person/${person_id}/movie_credits?api_key=${apiKey}&language=pt-BR`
-
+    const taggedImages = `https://api.themoviedb.org/3/person/${person_id}/tagged_images?api_key${apiKey}`
+    
     function definePersonConstants(personData) {
         const profileUrl = `https://image.tmdb.org/t/p/w500${personData.profile_path}`;
         return { profileUrl };
@@ -58,12 +84,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 const card = document.createElement('div');
                 card.classList.add('timeline-item');
                 card.innerHTML = `
-                    <img src="${poster}" alt="${title}" />
+                <div class="timeline-circle">
+                    <img src="${poster}" alt="${title}" class="movie-poster" />
+                </div>
                     <p>${title}</p>
                     <span>${year}</span>
                 `;
                 document.getElementById('timeline-container').appendChild(card);
             });
         });
+    })
+    .finally(() => {
+        waitForImages(document).then(hideLoading);
     });
-})
+});

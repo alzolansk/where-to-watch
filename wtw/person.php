@@ -41,4 +41,6 @@
     </main>
 </body>
 <script src="js/person.js"></script>
+<script src="js/search.js"></script>
+<script src="js/script.js"></script>
 </html>

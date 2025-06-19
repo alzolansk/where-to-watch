@@ -198,7 +198,7 @@
 #menu ul :hover{
     transition: 0.4s;
     background-color: rgba(77, 77, 77, 0.329);
-    border-radius: 5px;
+    border-radius: 20px;
     text-decoration: none;
 }
 
@@ -241,113 +241,96 @@
 
 }
 
-
 /* Search Bar*/
 
-#search-div{
-    width: 50%;
-    margin: 0 auto;
+#search-div {
+    width: 100%;
+    max-width: 600px;
+    margin: 0px auto;
+    position: relative;
 }
 
 .search-bar {
-    margin: 0 auto;
-    border-radius: 10px;
-    height: 35px;
-    width: 60%;
-    background: #d7d7d7;
-    background: -webkit-linear-gradient(0deg, #d7d7d7 0%, #eeeeee 100%);
-    background: linear-gradient(0deg, #d7d7d7 0%, #eeeeee 100%);
-    padding: 0px 10px; 
+    width: 100%;
+    height: 42px;
+    padding: 0 0px 0 40px;
+    border-radius: 30px;
+    border: none;
+    background: linear-gradient(0deg, #1f1f1f 0%, #2e2e2e 100%);
+    color: white;
+    font-size: 16px;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='white'><path fill-rule='evenodd' d='M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z' clip-rule='evenodd'/></svg>");
+    background-position: 12px center;
+    background-repeat: no-repeat;
+    background-size: 18px 18px;
+    transition: box-shadow 0.3s ease;
 }
 
-@media (max-width: 1000px) { 
+.search-bar:focus {
+    outline: none;
+    box-shadow: 0 0 10px rgba(255, 50, 50, 0.5);
+}
+
+input::placeholder {
+    color: #aaa;
+}
+
+@media (max-width: 1000px) {
     #search-div {
-        display: none; /* Oculta a barra de pesquisa */
-    }  
-
+        display: none;
+    }
 }
-
-input::placeholder{
-    padding: 10px;
-}
-
-input[type="text"] {
-  background-color: #000;
-  border: 1px solid #ccc;
-  color: #fff;
-  padding-left: 30px; /* espaço para a lupa */
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='white'><path fill-rule='evenodd' d='M9.965 11.026a5 5 0 1 1 1.06-1.06l2.755 2.754a.75.75 0 1 1-1.06 1.06l-2.755-2.754ZM10.5 7a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z' clip-rule='evenodd'/></svg>");
-  background-position: 8px center;
-  background-size: 20px 20px; /* largura altura */
-  background-repeat: no-repeat;
-}
-
-
-
-/*Search Movie// procurar filmes*/
 
 #results {
     position: absolute;
-    height: 200px; 
-    width: 38%;
-    overflow-y: auto; /* Habilita rolagem vertical */
-    padding: 5px 0px 0px 0px; 
-    border-radius: 15px 15px 15px 15px;
-    box-shadow: 0px 4px 8px rgb(0, 0, 0);
-    z-index: 30;
-    border-bottom: 1px solid #ddd;
-    background-color: rgba(22, 22, 22, 0.92);
-    transition: 4s ease-in-out;
-}
-
-#results {
-    display: flex; 
-    padding: 5px;
-}
-
-#results div:last-child {
-    border-bottom: none; /* Remove a linha de separação do último item */
+    top: 100%;
+    width: 100%;
+    max-height: 280px;
+    overflow-y: auto;
+    background: rgba(20, 20, 20, 0.96);
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.7);
+    z-index: 999;
+    margin-top: 8px;
+    padding: 8px 0;
 }
 
 #results::-webkit-scrollbar {
-    border: none;
+    width: 8px;
 }
 
-#results::-webkit-scrollbar-track {
-    background-color: rgb(48, 48, 48);
-    border-radius: 15px;
-}
-
-#results::-webkit-scrollbar-thumb{
-    background-color: #161616;
-    border-radius: 15px; 
-    height: 25px;
-    box-shadow: 2px 2px 2px 1px rgba(0, 0, 0, 0.2);
-} 
-
-#results img {
-    width: 80px; 
-    height: 115px;
-    background-size: cover;
+#results::-webkit-scrollbar-thumb {
+    background-color: #333;
     border-radius: 10px;
-    margin-right: 10px;
 }
 
-#results h3 {
-    font-size: 20px;
-    margin: 0;
+.resultsDiv {
+    display: flex;
+    align-items: center;
+    padding: 8px 16px;
+    transition: background 0.2s ease;
 }
 
-#results div:hover{
-    background-color:rgb(0, 0, 0);
+.resultsDiv:hover {
+    background-color: #111;
     cursor: pointer;
 }
 
-.resultsDiv{
-    display: flex;
-    padding: 10px 0px;
+#results img {
+    width: 50px;
+    height: 70px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-right: 12px;
+    flex-shrink: 0;
 }
 
+#results h3 {
+    font-size: 16px;
+    font-weight: 500;
+    margin: 0;
+    color: #eee;
+}
 .movie-info{
     top: 0;
     left: 0;

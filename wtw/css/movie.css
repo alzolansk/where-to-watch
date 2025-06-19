@@ -399,8 +399,9 @@ z-index: 2;
     transition: transform 0.4s ease, box-shadow 0.4s ease; /*  suaves */
 }
 
-.actor-card:hover{
-    transform: scale(1.04);
+.actor-card:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 16px rgba(255, 0, 0, 0.25);
 }
 
 .actor-img{
@@ -410,20 +411,23 @@ z-index: 2;
     border-radius: 20px;
 }
 
-.actor-name{
-    text-decoration: none;
-    font-family: Nunito;
-    font-weight: bold;
-    font-size: 16px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    display: block;
-    max-width: 100%;
+.actor-name {
+  font-family: 'Nunito', sans-serif;
+  font-weight: 600;
+  font-size: 15px;
+  color: #fff;
+  margin-top: 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+  max-width: 100%;
+  transition: color 0.3s ease;
 }
 
-.actor-name:hover{
-    text-decoration: underline;
+.actor-name:hover {
+  color: #ff4444;
+  text-decoration: none;
 }
 
 .poster-actor h2{
@@ -432,32 +436,31 @@ z-index: 2;
 }
 
 .p-div{
-    padding: 10px 5px;
+  padding: 6px 8px 0 8px;
 }
 
 .p-div p{
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    display: block;
-    max-width: 100%;
-    font-size: 14px;
-    color: #ccc;
+  font-size: 13px;
+  color: #aaa;
+  margin: 4px 0 0 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 #release-date{
     padding-top: 10px;
 }
 
-::-webkit-scrollbar{
-    background-color: #1b1b1b;
-    border-radius: 30px;
-    height: 10px;
+::-webkit-scrollbar {
+  height: 8px;
 }
-
-::-webkit-scrollbar-thumb{
-    background-color: #080808;
-    border-radius: 30px;
+::-webkit-scrollbar-track {
+  background: #121212;
+}
+::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 8px;
 }
 
 .cast-fade {
@@ -478,8 +481,9 @@ z-index: 2;
 
 .cast-label{
     font-family: Nunito;
-    font-size: 25px;
-    font-weight: 600;
+    font-size: 24px;
+    font-weight: 700;
+    color: white;
     border-radius: 20px;
     width: 100px;
 }
@@ -510,14 +514,3 @@ z-index: 2;
     width: 250px;
     border-radius: 30px;
 }
-
-.cast-fade {
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 80px;
-    height: 100%;
-    background: linear-gradient(to left, #000 60%, transparent);
-    z-index: 2;
-    pointer-events: none;
-  }
