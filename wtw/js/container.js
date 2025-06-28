@@ -2,6 +2,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const apiKey = 'dc3b4144ae24ddabacaeda024ff0585c';
     let mediaType = 'movie'; // Inicialmente filmes
     
+    let autoScrollInterval;
+    let autoScrollSetupDone = false;
     // Cache para evitar duplicidade
     const fetchCache = {};
     const fetchJson = url => {
@@ -74,6 +76,84 @@ document.addEventListener('DOMContentLoaded', function() {
             left: itemOffset - containerCenter,
             behavior: 'smooth'
         });
+    }
+
+    function initAutoScroll() {
+        const items = document.querySelectorAll('.backdropContainer');
+        const containerWrap = document.querySelector('.container-wrap');
+
+        if (items.length === 0 || !containerWrap) return;
+
+        let currentIndex = 0;
+        let isUserInteracting = false;
+
+        function centerItem(index) {
+            const item = items[index];
+            if (!item) return;
+
+            items.forEach(el => el.classList.remove('active'));
+            item.classList.add('active');
+
+            const itemOffset = item.offsetLeft;
+            const itemWidth = item.offsetWidth;
+            const containerWidth = containerWrap.clientWidth;
+            const scrollLeft = itemOffset - (containerWidth / 2) + (itemWidth / 2);
+
+            containerWrap.scrollTo({
+                left: scrollLeft,
+                behavior: 'smooth'
+            });
+        }
+
+        function showNextItem() {
+            if (isUserInteracting) return;
+            currentIndex = (currentIndex + 1) % items.length;
+            centerItem(currentIndex);
+        }
+
+        function startAutoScroll() {
+            stopAutoScroll();
+            autoScrollInterval = setInterval(showNextItem, 2000);
+        }
+
+        function stopAutoScroll() {
+            if (autoScrollInterval) {
+                clearInterval(autoScrollInterval);
+                autoScrollInterval = null;
+            }
+        }
+
+        centerItem(currentIndex);
+        startAutoScroll();
+
+        if (!autoScrollSetupDone) {
+            containerWrap.addEventListener('mouseenter', () => {
+                isUserInteracting = true;
+                stopAutoScroll();
+            });
+
+            containerWrap.addEventListener('mouseleave', () => {
+                isUserInteracting = false;
+                startAutoScroll();
+            });
+
+            document.getElementById('btnRight').addEventListener('click', () => {
+                isUserInteracting = true;
+                stopAutoScroll();
+            });
+
+            document.getElementById('btnLeft').addEventListener('click', () => {
+                isUserInteracting = true;
+                stopAutoScroll();
+            });
+
+            containerWrap.addEventListener('wheel', () => {
+                isUserInteracting = true;
+                stopAutoScroll();
+            }, { passive: true });
+
+            autoScrollSetupDone = true;
+        }
     }
 
     function loadContent(){
@@ -250,83 +330,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
                         containerNew.appendChild(carouselDiv);
                                                         
-                        setTimeout(() => {
-                            const items = document.querySelectorAll('.backdropContainer');
-                            const containerWrap = document.querySelector('.container-wrap');
-
-                            if (items.length === 0 || !containerWrap) return;
-
-                            let currentIndex = 0;
-                            let autoScrollInterval;
-                            let isUserInteracting = false;
-
-                            function centerItem(index) {
-                                const item = items[index];
-                                if (!item) return;
-
-                                items.forEach(el => el.classList.remove('active'));
-                                item.classList.add('active');
-
-                                const itemOffset = item.offsetLeft;
-                                const itemWidth = item.offsetWidth;
-                                const containerWidth = containerWrap.clientWidth;
-                                const scrollLeft = itemOffset - (containerWidth / 2) + (itemWidth / 2);
-
-                                containerWrap.scrollTo({
-                                    left: scrollLeft,
-                                    behavior: 'smooth'
-                                });
-                            }
-
-                            function showNextItem() {
-                                if (isUserInteracting) return;
-                                currentIndex = (currentIndex + 1) % items.length;
-                                centerItem(currentIndex);
-                            }
-
-                            function startAutoScroll() {
-                                stopAutoScroll(); // Garantir que só existe um
-                                autoScrollInterval = setInterval(showNextItem, 4000);
-                            }
-
-                            function stopAutoScroll() {
-                                if (autoScrollInterval) {
-                                    clearInterval(autoScrollInterval);
-                                    autoScrollInterval = null;
-                                }
-                            }
-
-                            // Inicia o scroll
-                            centerItem(currentIndex);
-                            startAutoScroll();
-
-                            containerWrap.addEventListener('mouseenter', () => {
-                                isUserInteracting = true;
-                                stopAutoScroll();
-                            });
-
-                            containerWrap.addEventListener('mouseleave', () => {
-                                isUserInteracting = false;
-                                startAutoScroll();
-                            });
-
-                            document.getElementById("btnRight").addEventListener("click", () => {
-                                isUserInteracting = true;
-                                stopAutoScroll(); // Cancela o auto-scroll
-                            });
-
-                            document.getElementById("btnLeft").addEventListener("click", () => {
-                                isUserInteracting = true;
-                                stopAutoScroll();
-                            });
-
-                            containerWrap.addEventListener('wheel', () => {
-                                isUserInteracting = true;
-                                stopAutoScroll();
-                            }, { passive: true });
-
-
-                        }, 500); // Ajuste o tempo se necessário para garantir que o DOM esteja pront
                         }
                         })   
                         }); 
@@ -337,7 +340,7 @@ document.addEventListener('DOMContentLoaded', function() {
             })
           });
         })
-
+        setTimeout(initAutoScroll, 500);
     
 
             fetchJson(popularUrl)

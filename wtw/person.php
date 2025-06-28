@@ -17,20 +17,20 @@
                 
                 <div class="name-bio">
                     <h1 id="person-name"><span id="heart-icon">♡</span></h1>
+                    <h2 id="profession-label-1" style="display: none;">Profissão</h2>
+                    <p id="person-profession-1" style="display: none;"></p>   
                     <h3 id="bio-h3" class="bio-label">Biografia</h3>
                     <p id="person-bio" class="person-bio"></p>
-                </div>
-            </div>
-
-            <!-- LINHA DO TEMPO DE FILMES -->
-            <div id="timeline-section" class="timeline-section">
-                <div class="timeline-container" id="timeline-container">
-                <!-- Os filmes serão inseridos aqui via JS -->
+                    <!-- LINHA DO TEMPO DE FILMES -->
+                    <div id="timeline-section" class="timeline-section">
+                        <div class="timeline-container" id="timeline-container">
+                        </div>
+                    </div>
                 </div>
             </div>
             
-            <h2>Profissão</h2>
-            <p id="person-profession" class="person-profession">Profissão</p>
+            <h2 id="profession-label-2">Profissão</h2>
+            <p id="person-profession-2" class="person-profession-2 label-2">Profissão</p>
 
             <!-- SESSÃO: COLABOROU COM -->
             <h2 class="worked-title">Worked with</h2>

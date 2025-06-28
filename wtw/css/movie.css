@@ -362,8 +362,107 @@ z-index: 2;
     align-items: center;
     gap: 5px;
 }
-  
 
+/*Seasons Div*/
+.seasons-section {
+    padding: 10px 0;
+    overflow-x: auto;
+}
+
+.seasons-container {
+    display: flex;
+    gap: 20px;
+}
+
+.seasons-container{
+  display: flex;
+  flex-wrap: wrap; /* permite quebrar linha se não couber */
+  gap: 50px;
+  justify-content: flex-start; /* ou flex-start se quiser alinhado à esquerda */
+}
+
+.seasons-container{
+  display: flex;
+  flex-wrap: wrap; /* permite quebrar linha se não couber */
+  gap: 50px;
+  justify-content: flex-start; /* ou flex-start se quiser alinhado à esquerda */
+}
+
+.season-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 110px;
+  gap: 6px;
+  text-align: center;
+  transition: 0.2s ease-in-out;
+}
+
+.season-item:hover{
+   transform: translateY(-2px) scale(1.1);
+}
+
+.season-item:hover .season-circle{
+   box-shadow: 0 0 15px 5px rgba(255, 0, 0, 1);;
+}
+
+.seasons-circle {
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  position: relative;
+  display: block;
+  background: radial-gradient(
+    circle,
+    rgba(255, 0, 0, 0.0) 60%,   /* centro transparente */
+    rgba(255, 0, 0, 0.4) 70%,   /* meio avermelhado */
+    rgb(255, 10, 10) 100%   /* borda forte */
+  );
+  padding: 8px;
+  box-shadow: 0 0 10px 1px rgba(255, 0, 0, 0.8);
+  z-index: 1;
+  overflow: hidden;
+  border: 1px solid #d7171d8e;
+  transition: 0.2s ease-in-out;
+}
+
+.seasons-circle img {
+  border-radius: 50%;
+  z-index: 2;
+  position: absolute;
+  width: 94px;
+  height: 94px;
+}
+
+.season-poster{
+   object-fit: cover;
+   width: 100%;
+   height: 100%;
+   display: block;
+   background: #000;
+   filter: contrast(1.2) saturate(1.2) opacity(0.3);
+}
+
+.p-season{
+  width: 100%;
+  overflow: hidden;
+}
+
+.season-name {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 20px;
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+  max-width: 100%;
+}  
+
+.year-season{
+   font-family: Quicksand;
+   font-weight: 500;
+}
 /* Cast/Elenco */
 
 .castDiv {
@@ -486,6 +585,77 @@ z-index: 2;
     color: white;
     border-radius: 20px;
     width: 100px;
+}
+
+@media (max-width: 768px) {
+    .movieDiv {
+        flex-direction: column;
+        height: auto;
+    }
+
+    .movieInfo {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .posterItem {
+        width: 150px;
+        margin-bottom: 15px;
+    }
+
+    .interface-section {
+        padding: 0 10px;
+    }
+
+    .castDiv {
+        padding: 0 20px;
+    }
+
+    #cast-list {
+        gap: 10px;
+    }
+
+    .actor-dialog {
+        max-width: 90%;
+    }
+
+    .profileImg {
+        width: 180px;
+    }
+}
+
+@media (max-width: 480px) {
+    #itemName {
+        font-size: 40px;
+    }
+
+    .genre-title {
+        margin-left: 10px;
+        font-size: 14px;
+    }
+
+    .movieInfo {
+        gap: 20px;
+    }
+
+    .actor-dialog {
+        width: 95%;
+        height: auto;
+    }
+
+    #cast-list {
+        max-height: 250px;
+    }
+
+    .actor-card {
+        width: 110px;
+    }
+
+    .actor-img {
+        width: 110px;
+        height: 150px;
+    }
 }
 
 /*Modal dos Atores*/

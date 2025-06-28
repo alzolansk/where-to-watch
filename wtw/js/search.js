@@ -17,12 +17,16 @@ document.addEventListener('DOMContentLoaded', () => {
                         data.results.forEach(item => {
                             if (item.media_type === 'movie' || item.media_type === 'tv') {
                                 const title = item.title || item.name;
+                                const type = item.media_type == 'movie' ? 'Filme' : 'Série';
                                 const imgUrl = `https://image.tmdb.org/t/p/w500${item.poster_path}`;
                                 const div = document.createElement('div');
                                 div.innerHTML = `
                                     <div class="resultsDiv">
                                         <img src="${imgUrl}" alt="${title}">
-                                        <div class="movie-info"><h3>${title}</h3></div>
+                                        <div class="movie-info">
+                                            <h3>${title}</h3>
+                                            <p class="type">${type}</p>
+                                        </div>
                                     </div>`;
                                 div.addEventListener('click', () => {
                                     const params = new URLSearchParams({ id: item.id, mediaTp: item.media_type });

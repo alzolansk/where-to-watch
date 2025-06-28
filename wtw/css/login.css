@@ -215,6 +215,7 @@ dialog {
   .logo-div {
     order: -1;
     width: 80%;
+    margin: 0 auto;
   }
 
   .logo-font {
@@ -224,9 +225,56 @@ dialog {
 
   .logo-font2 {
     font-size: 60px;
+    margin-left: 5px;    
+  }
+
+  .logo-font-y{
+    font-size: 60px;
+    margin-left: 5px;    
+  }
+
+  .logo-eye{
+    width: 25px;
   }
 
   form {
     height: auto;
+  }
+
+  .login-label{
+    font-size: 20px;
+  }
+}
+
+@media (max-width: 600px) {
+  .login-container {
+    padding: 20px;
+  }
+
+  label,
+  input {
+    font-size: 1em;
+  }
+
+  input[type="submit"]#submit {
+    font-size: 1em;
+  }
+}
+
+@media (max-width: 480px) {
+  .logo-font {
+    font-size: 35px;
+  }
+
+  .logo-font2 {
+    font-size: 45px;
+  }
+
+  .logo-font-y{
+    font-size: 35px;
+  }
+
+  form {
+    padding: 15px;
   }
 }

@@ -71,6 +71,10 @@ input::placeholder{
     flex-direction: column;
 }
 
+.type{
+    color: #363636;
+}
+
 /*Modal Filme*/
 
 #addMovieScreen{
@@ -158,4 +162,26 @@ input::placeholder{
     position: relative;
     height: auto;
     min-width: 200px; /* Define um tamanho mínimo para a imagem */
+}
+
+@media (max-width: 768px) {
+    #addMovieScreen {
+        width: 90%;
+        height: auto;
+    }
+
+    #results {
+        width: 100%;
+        margin-left: 0;
+    }
+}
+
+@media (max-width: 480px) {
+    .modal-flex h2 {
+        font-size: 40px;
+    }
+
+    #search-div {
+        padding: 10px;
+    }
 }

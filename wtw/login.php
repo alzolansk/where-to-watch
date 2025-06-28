@@ -83,7 +83,7 @@ if(isset($_POST['submit'])) {
       <div class="form">
           <form action="login.php" method="POST">
             <hgroup>
-              <h3>Entrar no Where You Watch</h3>
+              <h3 class="login-label">Entrar no Where You Watch</h3>
             </hgroup>
 
             <label for="email"><b> Email </b></label>

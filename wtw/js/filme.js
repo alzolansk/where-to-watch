@@ -165,7 +165,8 @@ document.addEventListener('DOMContentLoaded', async function() {
                 'Standard with Ads',
                 'paramount plus apple tv channel',
                 'paramount plus premium',
-                'Belas Artes'
+                'Belas Artes',
+                'With Ads'
             ];
 
             const processProviders = (providerArray, targetArray) => {
@@ -293,8 +294,22 @@ document.addEventListener('DOMContentLoaded', async function() {
     document.getElementById('movieOverview').innerText = overview;
     // Atualiza a palavra no span
     document.getElementById('media-type').innerText = mediaTypeTranslated;
-
     const backdropOverlay = document.getElementById('backdropOverlay');  
+
+
+    // Exemplo: renderizar na timeline
+    const card = document.createElement('div');
+    card.classList.add('season-item');
+    card.innerHTML = `
+        <div class="seasons-circle">
+            <img src="" alt="" class="season-poster" />
+        </div>
+        <div class="p-season">
+            <p class="season-name">Teste</p>
+            <span class="year-season">Teste year</span>
+        </div>
+    `;
+    document.getElementById('seasons-container').appendChild(card);
 
     fetch(creditsUrl)
     .then(response => response.json())

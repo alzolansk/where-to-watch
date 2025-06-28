@@ -60,7 +60,10 @@
                             </div>
                         </li>
 
-                        
+                        <div id="seasons-section" class="seasons-section">
+                            <div class="seasons-container" id="seasons-container">
+                        </div>
+                    </div>
                     </div>
                 </div>
             </div>

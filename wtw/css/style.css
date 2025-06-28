@@ -712,14 +712,73 @@ button.prev:hover, button.next:hover {
     .container {
         width: 95%;
         padding: 15px;
+    } 
+
+    .category-buttons {
+        flex-direction: column;
+        gap: 10px;
     }
-    
+
+    .btn-category {
+        font-size: 14px;
+        padding: 8px 15px;
+    }
+
+    .carousel-container {
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 768px) {
+    .gallery-wrapper,
+    .gallery {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .backdropContainer,
+    .backdropImg {
+        width: 100%;
+        height: auto;
+    }
+
+    .frontImage {
+        left: 15px;
+        max-width: 100px;
+    }
+
+    .itemInfo {
+        left: 50%;
+        transform: translateX(-50%);
+        width: 80%;
+    }
+
+    .company-logo {
+        max-width: 60px;
+    }
 }
 
 @media (max-width: 480px) {
-    .container {
-        width: 100%;
+    .title-wrap,
+    .title-wrap2 {
+        font-size: 40px;
+    }
+
+    .container-wrap {
+        gap: 20px;
         padding: 10px;
+    }
+
+    .backdropContainer {
+        width: 100%;
+    }
+
+    .btn-category {
+        width: 100%;
+    }
+
+    .carousel-container {
+        gap: 15px;
     }
 }
 
