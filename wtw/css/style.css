@@ -1124,3 +1124,33 @@ button.prev:hover, button.next:hover {
     }
 
 }
+
+/* Transition effects for switching between movies and series */
+.media-section.fade-out-left {
+    animation: slideOutLeft 0.5s forwards;
+}
+.media-section.fade-in-right {
+    animation: slideInRight 0.5s forwards;
+}
+.media-section.fade-out-right {
+    animation: slideOutRight 0.5s forwards;
+}
+.media-section.fade-in-left {
+    animation: slideInLeft 0.5s forwards;
+}
+@keyframes slideOutLeft {
+    from { opacity: 1; transform: translateX(0); }
+    to { opacity: 0; transform: translateX(-100%); }
+}
+@keyframes slideInRight {
+    from { opacity: 0; transform: translateX(100%); }
+    to { opacity: 1; transform: translateX(0); }
+}
+@keyframes slideOutRight {
+    from { opacity: 1; transform: translateX(0); }
+    to { opacity: 0; transform: translateX(100%); }
+}
+@keyframes slideInLeft {
+    from { opacity: 0; transform: translateX(-100%); }
+    to { opacity: 1; transform: translateX(0); }
+}

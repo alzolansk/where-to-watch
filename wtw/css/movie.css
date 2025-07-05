@@ -214,7 +214,7 @@ z-index: 2;
 
 #movieOverview{
     padding: 0px 0px 10px;
-    font-size: 18px;
+    font-size: 16px;
     font-family: Nunito;
     font-weight: 300;
 }
@@ -371,23 +371,11 @@ z-index: 2;
     display: flex;
 }
 
-.seasons-container {
-    display: flex;
-    gap: 20px;
-    padding: 0px 20px;
-}
-
 .seasons-container{
   display: flex;
   flex-wrap: wrap; /* permite quebrar linha se não couber */
   gap: 50px;
-  justify-content: flex-start; /* ou flex-start se quiser alinhado à esquerda */
-}
-
-.seasons-container{
-  display: flex;
-  flex-wrap: wrap; /* permite quebrar linha se não couber */
-  gap: 50px;
+  padding: 0px 20px;
   justify-content: flex-start; /* ou flex-start se quiser alinhado à esquerda */
 }
 
@@ -415,13 +403,6 @@ z-index: 2;
   border-radius: 50%;
   position: relative;
   display: block;
-  background: radial-gradient(
-    circle,
-    rgba(255, 0, 0, 0.0) 60%,   /* centro transparente */
-    rgba(255, 0, 0, 0.4) 70%,   /* meio avermelhado */
-    rgb(255, 10, 10) 100%   /* borda forte */
-  );
-  padding: 8px;
   box-shadow: 0 0 10px 1px rgba(255, 0, 0, 0.8);
   z-index: 1;
   overflow: hidden;
@@ -432,9 +413,9 @@ z-index: 2;
 .seasons-circle img {
   border-radius: 50%;
   z-index: 2;
-  position: absolute;
-  width: 74px;
-  height: 74px;
+  filter: opacity(2);
+  width: 100%;
+  height: 100%;
 }
 
 .season-poster{
@@ -453,7 +434,7 @@ z-index: 2;
 
 .season-name {
   font-family: 'Bebas Neue', sans-serif;
-  font-size: 20px;
+  font-size: 17px;
   line-height: 1.1;
   white-space: nowrap;
   overflow: hidden;

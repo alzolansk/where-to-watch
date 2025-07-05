@@ -287,20 +287,31 @@ document.addEventListener('DOMContentLoaded', async () => {
     const backdropOverlay = document.getElementById('backdropOverlay');  
 
     // Seasons
-    if(mediaType == 'tv'){
-        let seasons = [];
-        const card = document.createElement('div');
-        card.classList.add('season-item');
-        card.innerHTML = `
-            <div class="seasons-circle">
-                <img src="" alt="" class="season-poster" />
-            </div>
-            <div class="p-season">
-                <p class="season-name">Teste</p>
-                <span class="year-season">Teste year</span>
-            </div>
-        `;
-        document.getElementById('seasons-container').appendChild(card);
+    if (mediaType === 'tv') {
+        try {
+            const detailsData = await fetchJson(`https://api.themoviedb.org/3/tv/${movieId}?api_key=${apiKey}&language=pt-BR`);
+            const seasons = detailsData.seasons || [];
+            const seasonsContainer = document.getElementById('seasons-container');
+            seasonsContainer.innerHTML = '';
+            seasons.forEach(season => {
+                const poster = season.poster_path ? `https://image.tmdb.org/t/p/w300${season.poster_path}` : 'imagens/icon-cast.png';
+                const year = season.air_date ? season.air_date.slice(0, 4) : '';
+                const card = document.createElement('div');
+                card.classList.add('season-item');
+                card.innerHTML = `
+                    <div class="seasons-circle">
+                        <img src="${poster}" alt="${season.name}" class="season-poster" />
+                    </div>
+                    <div class="p-season">
+                        <p class="season-name">${season.name}</p>
+                        <span class="year-season">${year}</span>
+                    </div>
+                `;
+                seasonsContainer.appendChild(card);
+            });
+        } catch (err) {
+            console.error('Erro ao buscar temporadas:', err);
+        }
     }
 
     const creditsData = await fetchJson(creditsUrl);

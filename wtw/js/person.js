@@ -130,11 +130,7 @@ document.addEventListener('DOMContentLoaded', function() {
             hideLoading();
             const interval = setInterval(() => {
             const items = document.querySelectorAll('.timeline-item');
-            if (items.length > 1) {
-                clearInterval(interval);
-                drawTimelineCurve();
-            }
-            }, 1000);
+            }, 200);
         });
     });
 });
@@ -150,51 +146,4 @@ function renderTimelineCard(title, year, poster) {
         <span>${year}</span>
     `;
     document.getElementById('timeline-container').appendChild(card);
-}
-
-
-function drawTimelineCurve() {
-    const container = document.getElementById('timeline-container');
-    const items = container.querySelectorAll('.timeline-item');
-    console.log("🎯 Quantidade de .timeline-item:", items.length);
-    if (items.length < 2) {
-        console.warn("⚠️ Poucos itens para desenhar a linha.");
-        return;
-    }
-    console.log("🚨 drawTimelineCurve foi chamada!");
-
-    let svg = document.getElementById('timeline-curve');
-
-    if (!svg) return;
-
-    const firstCircle = items[0].querySelector('.timeline-circle');
-    const baseline = firstCircle.offsetTop + firstCircle.offsetHeight / 2;
-    const totalWidth = container.scrollWidth;
-    const amplitude = 40;
-
-    svg.setAttribute('width', totalWidth);
-    svg.setAttribute('height', baseline + amplitude + 10);
-
-    let pathData = `M ${items[0].offsetLeft + items[0].offsetWidth / 2} ${baseline}`;
-    let direction = 1;
-
-    for (let i = 1; i < items.length; i++) {
-        const prevCenter = items[i - 1].offsetLeft + items[i - 1].offsetWidth / 2;
-        const currCenter = items[i].offsetLeft + items[i].offsetWidth / 2;
-        const midX = (prevCenter + currCenter) / 2;
-        const cpY = baseline + amplitude * direction;
-        pathData += ` C ${midX} ${cpY}, ${midX} ${cpY}, ${currCenter} ${baseline}`;
-        direction *= -1;
-    }
-
-    let path = svg.querySelector('path');
-    if (!path) {
-        path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        svg.appendChild(path);
-    }
-    path.setAttribute('d', pathData);
-    path.setAttribute('fill', 'none');
-    path.setAttribute('stroke', '#ff0f0f');
-    path.setAttribute('stroke-width', '3');
-    path.setAttribute('stroke-linecap', 'round');
 }

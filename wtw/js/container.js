@@ -1,7 +1,8 @@
 document.addEventListener('DOMContentLoaded', function() {
     const apiKey = 'dc3b4144ae24ddabacaeda024ff0585c';
     let mediaType = 'movie'; // Inicialmente filmes
-    
+    const contentSection = document.querySelector(".media-section");
+
     let autoScrollInterval;
     let autoScrollSetupDone = false;
     // Cache para evitar duplicidade
@@ -154,6 +155,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
             autoScrollSetupDone = true;
         }
+    }
+
+    function switchMedia(newType) {
+        const outClass = newType === "tv" ? "fade-out-left" : "fade-out-right";
+        const inClass = newType === "tv" ? "fade-in-right" : "fade-in-left";
+        contentSection.classList.add(outClass);
+        setTimeout(() => {
+            mediaType = newType;
+            loadContent();
+            contentSection.classList.remove(outClass);
+            contentSection.classList.add(inClass);
+            setTimeout(() => contentSection.classList.remove(inClass), 500);
+        }, 500);
     }
 
     function loadContent(){
@@ -889,8 +903,8 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('showMovies').addEventListener('click', function() {
         this.classList.add('active');
         document.getElementById('showSeries').classList.remove('active')
-        mediaType = 'movie';  // Mudar para filmes
-        loadContent();        // Carregar conteúdo de filmes
+        switchMedia("movie");
+
         
         // Mova o slider para o botão de filmes
         slider.style.transform = "translateX(0)";
@@ -898,10 +912,9 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     document.getElementById('showSeries').addEventListener('click', function() {
-        mediaType = 'tv';     // Mudar para séries
-        loadContent();        // Carregar conteúdo de séries
-        this.classList.add('active');
-        document.getElementById('showMovies').classList.remove('active');
+        this.classList.add("active");
+        document.getElementById("showMovies").classList.remove("active");
+        switchMedia("tv");
 
         // Mova o slider para o botão de séries
         const buttonWidth = this.offsetWidth; // Largura do botão

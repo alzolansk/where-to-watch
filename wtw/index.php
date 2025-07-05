@@ -61,14 +61,15 @@
             </div>
             <button id="btnRight" class="next" onclick="scrollRight()">&#10095;</button>
             </div>
-            
+
             <div class="category-buttons">
                 <div class="style-buttons">
                     <button id="showMovies" class="btn-category active">Filmes</button>
                     <button id="showSeries" class="btn-category">Séries</button>
                 </div>
             </div>
-
+            
+        <div class="media-section">
         <div class="container">
 
             <h2 class="logo"><b>|</b>
@@ -212,6 +213,7 @@
                 <a href="https://www.justwatch.com" target="_blank" rel="noopener noreferrer">JustWatch</a>
             </p>
         </footer>
+        </div> <!-- end media-section -->
     </section>
 </body>
 
