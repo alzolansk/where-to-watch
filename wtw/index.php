@@ -82,9 +82,11 @@
             </h2>
 
             <div class="carousel-container">
+                <button class="nav-arrow slider-prev" data-target="popular-movies-container">&#10094;</button>
                 <div class="row" id="popular-movies-container">
                     <!-- Os filmes populares serão ecibidos aqui -->
                 </div>
+                <button class="nav-arrow slider-next" data-target="popular-movies-container">&#10095;</button>
             </div>
 
             <h2 class="logo"><b>|</b>
@@ -99,9 +101,37 @@
             </h2>
 
             <div class="carousel-container">
+                <button class="nav-arrow slider-prev" data-target="top-movies-container">&#10094;</button>
                 <div class="row" id="top-movies-container">
                     <!-- Os filmes com maiores notas serão ecibidos aqui -->
                 </div>
+                <button class="nav-arrow slider-next" data-target="top-movies-container">&#10095;</button>
+            </div>
+
+            <h2 class="logo"><b>|</b>
+                <span class="logo-font"> Bombando</span>
+                <span class="logo-font2">essa semana</span>
+            </h2>
+
+            <div class="carousel-container">
+                <button class="nav-arrow slider-prev" data-target="trending-movies-container">&#10094;</button>
+                <div class="row" id="trending-movies-container">
+                    <!-- Os filmes com maiores notas serão ecibidos aqui -->
+                </div>
+                <button class="nav-arrow slider-next" data-target="trending-movies-container">&#10095;</button>
+            </div>
+
+            <h2 class="logo"><b>|</b>
+                <span class="logo-font"> Para os amantes de </span>
+                <span class="logo-font2">musicais</span>
+            </h2>
+
+            <div class="carousel-container">
+                <button class="nav-arrow slider-prev" data-target="musical-movies-container">&#10094;</button>
+                <div class="row" id="musical-movies-container">
+                    <!-- Os filmes com maiores notas serão ecibidos aqui -->
+                </div>
+                <button class="nav-arrow slider-next" data-target="musical-movies-container">&#10095;</button>
             </div>
             <!--            
                 <?php 

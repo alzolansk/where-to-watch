@@ -70,7 +70,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById("person-bio").innerText = bioFirstParagraph;
         document.getElementById("person-img").src = profileUrl;
 
-        fetch(mediasUrl)
+        return fetch(mediasUrl)
         .then(response => response.json())
         .then(mediasData => {
             const credits = mediasData.cast;
@@ -84,50 +84,58 @@ document.addEventListener('DOMContentLoaded', function() {
             });
 
             // ✅ Use sortedCredits aqui
-            sortedCredits.forEach(item => {
+            const fetchPromises = sortedCredits.map(item => {
                 const title = item.title || item.name;
                 const year = (item.release_date || item.first_air_date || '').slice(0, 4);
                 let poster = item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : '';
                 const imageUrl = `https://api.themoviedb.org/3/movie/${item.id}/images?api_key=${apiKey}`;
 
-                fetch(imageUrl)
-                .then(response => response.json())
-                .then(imageData => {
-                    const logos = (imageData.logos || []).filter(logo => logo && logo.iso_639_1 === "pt" && logo.file_path);;
-                    const logoPath = logos[0].file_path;
-                    const logo = logoPath
-                    ? `https://image.tmdb.org/t/p/w500${logoPath}`
-                    : 'assets/img/logo-placeholder.png';
-                    let type = 'movie';
-                    
-                    // Exemplo: renderizar na timeline
-                    const card = document.createElement('div');
-                    card.classList.add('timeline-item');
-                    card.innerHTML = `
-                        <div class="timeline-circle">
-                            <img src="${poster}" alt="${title}" class="movie-poster" />
-                            <img src="${logo}" alt="${title} logo" class="movie-logo" />
-                        </div>
-                        <div class="p-timeline">
-                            <p class="movie-name">${title}</p>
-                            <span class="year-movie">${year}</span>
-                        </div>
-                    `;
-                    document.getElementById('timeline-container').appendChild(card);
-                    card.addEventListener('click', () =>{
-                        const params = new URLSearchParams({
-                            id: item.id,
-                            mediaType: type
-                        })
-                        
-                        window.location.href = `filme.php?${params.toString()}`;
-                    })
-                });
+                return fetch(imageUrl)
+                    .then(response => response.json())
+                    .then(imageData => {
+                        const logos = (imageData.logos || []).filter(logo => logo && logo.iso_639_1 === "pt" && logo.file_path);
+                        const logoPath = logos[0].file_path;
+                        const logo = logoPath
+                            ? `https://image.tmdb.org/t/p/w500${logoPath}`
+                            : 'assets/img/logo-placeholder.png';
+                        let type = 'movie';
+
+                        const card = document.createElement('div');
+                        card.classList.add('timeline-item');
+                        card.innerHTML = `
+                            <div class="timeline-circle">
+                                <img src="${poster}" alt="${title}" class="movie-poster" />
+                                <img src="${logo}" alt="${title} logo" class="movie-logo" />
+                            </div>
+                            <div class="p-timeline">
+                                <p class="movie-name">${title}</p>
+                                <span class="year-movie">${year}</span>
+                            </div>
+                        `;
+                        document.getElementById('timeline-container').appendChild(card);
+                        card.addEventListener('click', () => {
+                            const params = new URLSearchParams({
+                                id: item.id,
+                                mediaType: type
+                            });
+                            window.location.href = `filme.php?${params.toString()}`;
+                        });
+                    });
             });
+            return Promise.all(fetchPromises);
         });
     })
     .finally(() => {
-        waitForImages(document).then(hideLoading);
+        waitForImages(document).then(() => {
+            hideLoading();
+            const interval = setInterval(() => {
+            const items = document.querySelectorAll('.timeline-item');
+            if (items.length > 1) {
+                clearInterval(interval);
+                drawTimelineCurve();
+            }
+            }, 1000);
+        });
     });
 });
 
@@ -142,4 +150,51 @@ function renderTimelineCard(title, year, poster) {
         <span>${year}</span>
     `;
     document.getElementById('timeline-container').appendChild(card);
+}
+
+
+function drawTimelineCurve() {
+    const container = document.getElementById('timeline-container');
+    const items = container.querySelectorAll('.timeline-item');
+    console.log("🎯 Quantidade de .timeline-item:", items.length);
+    if (items.length < 2) {
+        console.warn("⚠️ Poucos itens para desenhar a linha.");
+        return;
+    }
+    console.log("🚨 drawTimelineCurve foi chamada!");
+
+    let svg = document.getElementById('timeline-curve');
+
+    if (!svg) return;
+
+    const firstCircle = items[0].querySelector('.timeline-circle');
+    const baseline = firstCircle.offsetTop + firstCircle.offsetHeight / 2;
+    const totalWidth = container.scrollWidth;
+    const amplitude = 40;
+
+    svg.setAttribute('width', totalWidth);
+    svg.setAttribute('height', baseline + amplitude + 10);
+
+    let pathData = `M ${items[0].offsetLeft + items[0].offsetWidth / 2} ${baseline}`;
+    let direction = 1;
+
+    for (let i = 1; i < items.length; i++) {
+        const prevCenter = items[i - 1].offsetLeft + items[i - 1].offsetWidth / 2;
+        const currCenter = items[i].offsetLeft + items[i].offsetWidth / 2;
+        const midX = (prevCenter + currCenter) / 2;
+        const cpY = baseline + amplitude * direction;
+        pathData += ` C ${midX} ${cpY}, ${midX} ${cpY}, ${currCenter} ${baseline}`;
+        direction *= -1;
+    }
+
+    let path = svg.querySelector('path');
+    if (!path) {
+        path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        svg.appendChild(path);
+    }
+    path.setAttribute('d', pathData);
+    path.setAttribute('fill', 'none');
+    path.setAttribute('stroke', '#ff0f0f');
+    path.setAttribute('stroke-width', '3');
+    path.setAttribute('stroke-linecap', 'round');
 }

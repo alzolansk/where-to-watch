@@ -640,11 +640,39 @@ button.prev:hover, button.next:hover {
     color: rgb(0, 0, 0);
 }
 
+.nav-arrow {
+    position: absolute;
+    top: 50%;
+    width: 45px;
+    height: 125px;
+    transform: translateY(-50%);
+    background-color: #000000;
+    border: none;
+    color: #fff;
+    font-size: 1.6rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s, transform 0.3s;
+    pointer-events: auto;
+    z-index: 2;
+}
 
-/* Filmes e Séries */
+.nav-arrow:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+.slider-prev { left: 0; }
+.slider-next { right: 0; }
+.nav-arrow:hover {
+    opacity: 1;
+    transform: translateY(-50%) scale(1.1);
+}
 
 /* User's navigation area*/
-
 .category-buttons{
     display: flex;
     border-radius: 30px;

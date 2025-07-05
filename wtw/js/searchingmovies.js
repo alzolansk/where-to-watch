@@ -38,6 +38,7 @@ document.getElementById('searchmovie').addEventListener('input', function() {
                             // Nova requisição para obter detalhes do filme
                             const mediaType = item.media_type;
                             const mediaTypeText = item.media_type === 'movie' ? 'filme' : 'série';
+                            const year = (item.release_date || item.first_air_date || '').slice(0, 4);
                             const detailsUrl = `https://api.themoviedb.org/3/${mediaType}/${idTmdb}?api_key=${apiKey}&language=pt-BR&page=1`;
                             const providerUrl = `https://api.themoviedb.org/3/${mediaType}/${idTmdb}/watch/providers?api_key=dc3b4144ae24ddabacaeda024ff0585c&language=pt-BR&page=1`;
 
@@ -61,27 +62,6 @@ document.getElementById('searchmovie').addEventListener('input', function() {
 
                                         if (providers){
 
-                                        /* Processo pegar logo
-                                            const processProviders = (providerArray) => {
-                                            return providerArray.map(p => {
-                                                const logoUrl = `https://image.tmdb.org/t/p/w45${p.logo_path}`; 
-                                                return `<img src="${logoUrl}" alt="${p.provider_name}" title="${p.provider_name}">`; // Adiciona a imagem da logo
-                                            }).join(" ");
-                                            };
-
-                                            const buyLogos = providers.buy && providers.buy.length > 0 ? processProviders(providers.buy) : '';
-                                            const rentLogos = providers.rent && providers.rent.length > 0 ? processProviders(providers.rent) : '';
-
-                                            // Concatena todas as categorias de provedores
-                                            const allLogos = [buyLogos, rentLogos].filter(Boolean).join(" ");
-
-                                            // Se houver logos de provedores, substitui a mensagem padrão
-                                            if (allLogos) {
-                                                providerLogos = allLogos;
-                                            }
-
-                                        */
-
                                             const buyProviders = providers.buy ? providers.buy.map(p => p.provider_name).join(", ") : '';
                                             const rentProviders = providers.rent ? providers.rent.map(p => p.provider_name).join(", ") : '';
                                             const flatrateProviders = providers.flatrate ? providers.flatrate.map(p => p.provider_name).join(", ") : '';
@@ -98,7 +78,6 @@ document.getElementById('searchmovie').addEventListener('input', function() {
                                         document.getElementById('movieTitle').innerText = title; // Define o título no modal
                                         document.getElementById('moviePoster').src = imageUrl; // Define a imagem no modal
                                         document.getElementById('movieSinopse').innerText = overview; // Define a sinopse
-                                        document.getElementById('idTMDB').innerText = `ID TMDb: ${idTmdb}`; // Define ID TMDb
                                         document.getElementById('movieGenre').innerText = `Gêneros: ${genresNames}`; // Exibe os gêneros
                                         document.getElementById('providerItem').innerText = `Provedores: ${providerNames}`; // Exibe provedores
                                         document.getElementById('mediaTypeP').innerText = `Tipo: ${mediaTypeText}`;

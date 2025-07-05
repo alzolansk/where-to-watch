@@ -1,32 +1,32 @@
-document.addEventListener('DOMContentLoaded', async function() {
+document.addEventListener('DOMContentLoaded', async () => {
 
     showLoading();
 
-    function waitForImages(container) {
-        return new Promise(resolve => {
-            const images = container ? container.querySelectorAll('img') : [];
-            if (images.length === 0) {
-                resolve();
-                return;
+    const waitForImages = container => new Promise(resolve => {
+        const images = container ? container.querySelectorAll('img') : [];
+        if (images.length === 0) {
+            resolve();
+            return;
+        }
+        let loaded = 0;
+        const check = () => {
+            loaded++;
+            if (loaded === images.length) resolve();
+        };
+        images.forEach(img => {
+            if (img.complete) {
+                check();
+            } else {
+                img.addEventListener('load', check);
+                img.addEventListener('error', check);
             }
-            let loaded = 0;
-            const check = () => {
-                loaded++;
-                if (loaded === images.length) resolve();
-            };
-            images.forEach(img => {
-                if (img.complete) {
-                    check();
-                } else {
-                    img.addEventListener('load', check);
-                    img.addEventListener('error', check);
-                }
-            });
+
         });
-    }
+    });
     // Obtém os parâmetros da URL
     const params = new URLSearchParams(window.location.search);
     const apiKey = 'dc3b4144ae24ddabacaeda024ff0585c';
+    const fetchJson = url => fetch(url).then(r => r.json());
     let mediaType = params.get('mediaTp') || params.get('type') || (params.has('tv') ? 'tv' : 'movie');
     const movieId = params.get('id');
     
@@ -41,6 +41,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     let overview = params.get('overview');
     const upcoming = params.get('itemFetch');
     const ticketSite = params.get('ticketUrl');
+    const genresArray = params.get('genresJson')
 
     const fetchDetailsById = async (id, type) => {
         const url = `https://api.themoviedb.org/3/${type}/${id}?api_key=${apiKey}&language=pt-BR&append_to_response=videos`;
@@ -67,7 +68,6 @@ document.addEventListener('DOMContentLoaded', async function() {
             const trailer = data.videos?.results?.find(v => v.type === 'Trailer' && v.site === 'YouTube');
             trailerUrl = trailer ? `https://www.youtube.com/watch?v=${trailer.key}` : '#';
 
-
         } catch (error) {
             console.error('Erro ao buscar detalhes do título:', error);
         }
@@ -76,14 +76,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     const creditsUrl = `https://api.themoviedb.org/3/${mediaType}/${movieId}/credits?api_key=${apiKey}&language=pt-BR&page=1`;
     const providerUrl = `https://api.themoviedb.org/3/${mediaType}/${movieId}/watch/providers?api_key=${apiKey}&language=pt-BR&page=1`;
 
-    let mediaTypeTranslated = '';
-
-    if (mediaType === 'movie') {
-        mediaTypeTranslated = 'filme';
-    } else if (mediaType === 'tv') {
-        mediaTypeTranslated = 'série';
-    }
-    
     // Define cores de fundo para cada provedor
     const providerBgColors = {
     'Netflix': '#000000',
@@ -136,7 +128,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     } else {
         try {
             const response = await fetch(providerUrl);
-            const providerData = await response.json();
+            const providerData = await fetchJson(providerUrl);
             const providers = providerData.results?.BR;
 
             const query = encodeURIComponent(title);
@@ -267,7 +259,6 @@ document.addEventListener('DOMContentLoaded', async function() {
 
             if (html) {
                 providersContainer.innerHTML = html;
-                console.log(allProviders);
             } else {
                 providersContainer.innerText = "Nenhum provedor encontrado.";
             }
@@ -290,81 +281,65 @@ document.addEventListener('DOMContentLoaded', async function() {
     document.getElementById('genreMovie').innerText = `Gêneros: ${genres}`;
     document.getElementById('itemPoster').src = imgUrl;
     document.getElementById('backdropImage').src = backdropUrl;
-    document.getElementById('trailer-link').href = trailerUrl;
+    document.getElementById('trailerFrame').href = trailerUrl;
     document.getElementById('movieOverview').innerText = overview;
     // Atualiza a palavra no span
-    document.getElementById('media-type').innerText = mediaTypeTranslated;
     const backdropOverlay = document.getElementById('backdropOverlay');  
 
+    // Seasons
+    if(mediaType == 'tv'){
+        let seasons = [];
+        const card = document.createElement('div');
+        card.classList.add('season-item');
+        card.innerHTML = `
+            <div class="seasons-circle">
+                <img src="" alt="" class="season-poster" />
+            </div>
+            <div class="p-season">
+                <p class="season-name">Teste</p>
+                <span class="year-season">Teste year</span>
+            </div>
+        `;
+        document.getElementById('seasons-container').appendChild(card);
+    }
 
-    // Exemplo: renderizar na timeline
-    const card = document.createElement('div');
-    card.classList.add('season-item');
-    card.innerHTML = `
-        <div class="seasons-circle">
-            <img src="" alt="" class="season-poster" />
-        </div>
-        <div class="p-season">
-            <p class="season-name">Teste</p>
-            <span class="year-season">Teste year</span>
-        </div>
-    `;
-    document.getElementById('seasons-container').appendChild(card);
+    const creditsData = await fetchJson(creditsUrl);
+    const castArray = creditsData.cast.slice(0, 20);
+    const castListEl = document.getElementById('cast-list');
+    let castHtml = '';
 
-    fetch(creditsUrl)
-    .then(response => response.json())
-    .then(creditsData => {
+    if (castArray && castArray.length > 0) {
+        castArray.forEach(cast => {
+            const castName = cast.name;
+            const castRole = cast.character;
+            const castId = cast.id;
+            const profileImg = cast.profile_path ? `https://image.tmdb.org/t/p/w500/${cast.profile_path}` : 'imagens/icon-cast.png';
 
-        const castArray = creditsData.cast.slice(0,20);
-        const castList = document.getElementById('cast-list');
-        let castHtml = '';
-
-        if(castArray && castArray.length > 0){
-            let castHtml = '';
-            
-            castArray.forEach(cast => {
-                const castName = cast.name;
-                const castRole = cast.character;
-                const castId = cast.id;
-                
-                const profileImg = cast.profile_path ? `https://image.tmdb.org/t/p/w500/${cast.profile_path}` : 'imagens/icon-cast.png'; // Avatar padrão se não houver imagem
-
-                // Criação de um elemento HTML para cada ator, incluindo nome e imagem
-                    castHtml += `
-                    <div id="actorCard" class="actor-card" data-cast-name="${castName}" data-profile-img="${profileImg}" data-cast-id="${castId}">
-                        <img src="${profileImg}" alt="${castName}" class="actor-img">
-                        <div class="p-div">
-                            <a href="https://www.google.com/search?q=${castName}" class="actor-name" target="_blank">${castName}</a>
-                            <p class="actor-role">${castRole}</p>
-                        </div>
+            castHtml += `
+                <div id="actorCard" class="actor-card" data-cast-name="${castName}" data-profile-img="${profileImg}" data-cast-id="${castId}">
+                    <img src="${profileImg}" alt="${castName}" class="actor-img">
+                    <div class="p-div">
+                        <a href="https://www.google.com/search?q=${castName}" class="actor-name" target="_blank">${castName}</a>
+                        <p class="actor-role">${castRole}</p>
                     </div>
-                    `
-                    ;
-            })
-            castList.innerHTML = castHtml;
+                </div>`;
 
-            const actorCards = document.querySelectorAll('.actor-card');
-
-            actorCards.forEach(card => {
-
-                card.addEventListener('click', () => {
-                    const castId = card.getAttribute('data-cast-id');
-                    const params = new URLSearchParams({
-                        personId: castId
-                    })
-                    window.location.href = `person.php?${params.toString()}`;
-                })
-            })
-        } 
-    })
-    
-    .finally(() => {
-        waitForImages(document).then(() => {
-            hideLoading(); // Esconde o spinner após tudo estar carregado
-            window.history.replaceState({}, '', `filme.php?id=${movieId}&${mediaType}`);
         });
-    });
-})
+
+        castListEl.innerHTML = castHtml;
+        document.querySelectorAll('.actor-card').forEach(card => {
+            card.addEventListener('click', () => {
+                const castId = card.getAttribute('data-cast-id');
+                const params = new URLSearchParams({ personId: castId });
+                window.location.href = `person.php?${params.toString()}`;
+            });
+        });
+    }
+
+    await waitForImages(document);
+    hideLoading();
+    window.history.replaceState({}, '', `filme.php?id=${movieId}&${mediaType}`);
+});
 
 const castList = document.getElementById('cast-list');
 const castFade = document.getElementById('castFade');
@@ -372,21 +347,19 @@ const castFade = document.getElementById('castFade');
 function updateFadeVisibility() {
     const atEnd = castList.scrollLeft;
 
-  if (atEnd) {
-    castFade.classList.add('hidden');
-  } else {
-    castFade.classList.remove('hidden');
-  }
+    if (atEnd) {
+        castFade.classList.add('hidden');
+    } else {
+        castFade.classList.remove('hidden');
+    }
 }
 
-// Verifica ao rolar
 castList.addEventListener('scroll', updateFadeVisibility);
 
-// Verifica ao carregar
 window.addEventListener('load', updateFadeVisibility);
 
 function gerarSlug(title) {
-  if (!title || typeof title !== "string") return "";
+  if (!title || typeof title !== "string") return '';
 
   return title
     .replace(/&/g, "e")                     // troca & por e
@@ -398,7 +371,7 @@ function gerarSlug(title) {
     .replace(/\s+/g, "-");                  // espaços viram hífens
 }
 
-document.getElementById('closeItem').addEventListener('click', function() {
+document.getElementById('closeItem').addEventListener('click', () => {
     const modal = document.getElementById('actorDialog');
     modal.close();
 });

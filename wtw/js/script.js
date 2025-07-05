@@ -21,7 +21,6 @@ function showTrailer(trailerUrl) {
     document.getElementById('trailerFrame').src = trailerUrl.replace("watch?v=", "embed/");
     document.getElementById('dialog').showModal();
     dialog.classList.add('show');
-
 }
 
 function closeTrailer() {
@@ -104,4 +103,24 @@ function hideLoading() {
    document.getElementById('loading').style.display = 'none';
 }
 
+function scrollRow(containerId, direction = 'right') {
+    const row = document.getElementById(containerId);
+    if (!row) return;
+    const distance = row.clientWidth;
+    const offset = direction === 'right' ? distance : -distance;
+    row.scrollBy({ left: offset, behavior: 'smooth' });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.slider-prev').forEach(btn => {
+        btn.addEventListener('click', () => {
+            scrollRow(btn.dataset.target, 'left');
+        });
+    });
+    document.querySelectorAll('.slider-next').forEach(btn => {
+        btn.addEventListener('click', () => {
+            scrollRow(btn.dataset.target, 'right');
+        });
+    });
+});
 

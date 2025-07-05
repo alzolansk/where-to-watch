@@ -136,7 +136,7 @@ if (errorMessageElement.innerText.trim() !== "") {
 
 closeDialogButton.addEventListener("click", function() {
    loginInvalidDialog.removeAttribute('open'); // Remove a classe para resetar o estado
-   loginInvalidDialog.close(); 
+   loginInvalidDialog.remove(); 
 });
 
 </script>

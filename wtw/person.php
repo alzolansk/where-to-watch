@@ -22,8 +22,11 @@
                     <h3 id="bio-h3" class="bio-label">Biografia</h3>
                     <p id="person-bio" class="person-bio"></p>
                     <!-- LINHA DO TEMPO DE FILMES -->
-                    <div id="timeline-section" class="timeline-section">
-                        <div class="timeline-container" id="timeline-container">
+                    <div class="timeline-container">
+                        <div id="timeline-section" class="timeline-section">
+                            <svg id="timeline-curve"></svg>
+                            <div class="timeline-container" id="timeline-container">
+                            </div>
                         </div>
                     </div>
                 </div>

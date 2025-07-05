@@ -19,13 +19,14 @@ document.addEventListener('DOMContentLoaded', () => {
                                 const title = item.title || item.name;
                                 const type = item.media_type == 'movie' ? 'Filme' : 'Série';
                                 const imgUrl = `https://image.tmdb.org/t/p/w500${item.poster_path}`;
+                                const year = (item.release_date || item.first_air_date || '').slice(0, 4);
                                 const div = document.createElement('div');
                                 div.innerHTML = `
                                     <div class="resultsDiv">
                                         <img src="${imgUrl}" alt="${title}">
                                         <div class="movie-info">
                                             <h3>${title}</h3>
-                                            <p class="type">${type}</p>
+                                            <p class="type">${type}, ${year}</p>
                                         </div>
                                     </div>`;
                                 div.addEventListener('click', () => {

@@ -292,6 +292,7 @@ z-index: 2;
     background: linear-gradient(0deg, rgba(172,23,28,1) 0%, rgba(215,23,30,1) 20%, rgba(0, 0, 0, 0) 100%);
     padding-bottom: 20px;
     border-radius: 40px 40px 25px 25px;
+    max-height: 550px; /* define um limite visual, ajustável */
 }
 
 /*Seção de notificações*/
@@ -367,11 +368,13 @@ z-index: 2;
 .seasons-section {
     padding: 10px 0;
     overflow-x: auto;
+    display: flex;
 }
 
 .seasons-container {
     display: flex;
     gap: 20px;
+    padding: 0px 20px;
 }
 
 .seasons-container{
@@ -392,7 +395,7 @@ z-index: 2;
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 110px;
+  width: 80px;
   gap: 6px;
   text-align: center;
   transition: 0.2s ease-in-out;
@@ -407,8 +410,8 @@ z-index: 2;
 }
 
 .seasons-circle {
-  width: 110px;
-  height: 110px;
+  width: 80px;
+  height: 80px;
   border-radius: 50%;
   position: relative;
   display: block;
@@ -430,8 +433,8 @@ z-index: 2;
   border-radius: 50%;
   z-index: 2;
   position: absolute;
-  width: 94px;
-  height: 94px;
+  width: 74px;
+  height: 74px;
 }
 
 .season-poster{
@@ -683,4 +686,67 @@ z-index: 2;
 .profileImg{
     width: 250px;
     border-radius: 30px;
+}
+
+/*Arrows*/
+
+button.prev, button.next {
+    position: absolute;
+    width: 50px;
+    height: 50px;
+    top: 50%;
+    border-radius: 40%;
+    transform: translateY(-50%);
+    background-color: rgba(0, 0, 0, 0.5);
+    border: none;
+    color: white;
+    font-size: 2rem;
+    cursor: pointer;
+    outline: none;
+    z-index: 1;
+    align-items: center;
+}
+
+button.prev {
+    left: 0;
+}
+
+button.next {
+    right: 0;
+}
+
+button.prev:hover, button.next:hover {
+    transform: translateY(-50%) scale(1.2);
+    transition: 0.5s;
+    background-color: rgba(141, 141, 141, 0.8);
+    color: rgb(0, 0, 0);
+}
+
+.nav-arrow {
+    position: absolute;
+    top: 50%;
+    width: 45px;
+    height: 125px;
+    transform: translateY(-50%);
+    background-color: #000000;
+    border: none;
+    color: #fff;
+    font-size: 1.6rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.3s, transform 0.3s;
+    pointer-events: auto;
+    z-index: 10;
+}
+
+.nav-arrow:focus {
+  outline: none;
+  box-shadow: none;
+}
+.slider-prev { left: 0; }
+.slider-next { right: 0; }
+.nav-arrow:hover {
+    transform: translateY(-50%) scale(1.1);
 }

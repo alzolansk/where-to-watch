@@ -20,6 +20,11 @@
 
     <!-- Container centralizado -->
     <div class="page-container">
+        <!-- Modal para o trailer -->
+        <dialog id="dialog" class="dialog">
+            <iframe id="trailerFrame" src="" title="Trailer" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            <button id="close-trailer" onclick="closeTrailer()">X</button>
+        </dialog>
         
         <div id="movie-div" class="movieDiv">
             <div id="movie-info" class="movieInfo">
@@ -44,8 +49,8 @@
                         <h4 id="overviewTitle"> Sinopse </h4>
                         <p id="movieOverview"></p>
                         
-                        <li class="tools-section">
-                            <a id="trailer-link" class="tools" href="#" target="_blank">▶ Assistir Trailer</a>
+                        <li class="tools-section" style="display:none;">
+                            <a id="trailerFrame" onclick="event.preventDefault(); showTrailer(); event.stopPropagation();" class="tools" href="#" target="_blank">▶ Assistir Trailer</a>
                             <a href="#" class="tools">&#128278; Assistir mais tarde</a>
 
                             <div class="tools notify-dropdown">
@@ -76,7 +81,9 @@
         
         <div class="castDiv">
             <h3 class="cast-label">Elenco</h3>
+            <button class="nav-arrow slider-prev" data-target="cast-list">&#10094;</button>
             <div id="cast-list"></div>
+            <button class="nav-arrow slider-next" data-target="cast-list">&#10095;</button>
             <div class="cast-fade" id="castFade"></div> <!-- fade-out -->
         </div>
 
