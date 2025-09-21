@@ -61,7 +61,7 @@
         <div class="container">
 
             <h2 class="section-heading">
-                <span class="section-heading__bar" aria-hidden="true">|</span>
+                <span class="section-heading__bar" aria-hidden="true">| </span>
                 <span class="section-heading__text">Mais populares no</span>
                 <span class="wyw-brand wyw-brand--sm section-heading__brand" aria-label="Where You Watch">
                     <span class="wyw-brand__where">where</span>
