@@ -65,8 +65,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const { profileUrl } = definePersonConstants(personData);
 
         document.getElementById("person-name").innerText = personName;
-        document.getElementById("person-profession-1").innerText = personProfession;
-        document.getElementById("person-profession-2").innerText = personProfession;
+        document.getElementById("profession-label-1").innerText = personProfession;
+        document.getElementById("profession-label-2").innerText = personProfession;
         document.getElementById("person-bio").innerText = bioFirstParagraph;
         document.getElementById("person-img").src = profileUrl;
 
@@ -74,55 +74,76 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(mediasData => {
             const credits = mediasData.cast;
-            const sortedCredits = credits
-            .filter(item => item.release_date || item.first_air_date)
-            //.filter(item => item.popularity > 3)
-            .sort((a, b) => {
+            const showMovieBtn = document.getElementById('show-all-movies');
+            const filteredCredits = credits.filter(item => item.release_date || item.first_air_date);
+
+            const sortedByPopularity = [...filteredCredits].sort((a, b) => b.popularity - a.popularity);
+            const topCredits = sortedByPopularity.slice(0, 5);
+            if(topCredits.length < 5){
+                showMovieBtn.style.display = 'none';
+            }
+            const topIds = new Set(topCredits.map(c => c.id));
+
+            const sortedTopCredits = [...topCredits].sort((a, b) => {
                 const dateA = new Date(a.release_date || a.first_air_date);
                 const dateB = new Date(b.release_date || b.first_air_date);
                 return dateA - dateB;
             });
 
-            // ✅ Use sortedCredits aqui
-            const fetchPromises = sortedCredits.map(item => {
+            const sortedCredits = filteredCredits.sort((a, b) => {
+                const dateA = new Date(a.release_date || a.first_air_date);
+                const dateB = new Date(b.release_date || b.first_air_date);
+                return dateA - dateB;
+            });
+
+            const remainingCredits = sortedCredits.filter(item => !topIds.has(item.id));
+
+            const renderCard = async (item, containerId) => {
                 const title = item.title || item.name;
                 const year = (item.release_date || item.first_air_date || '').slice(0, 4);
-                let poster = item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : '';
+                const poster = item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : '';
                 const imageUrl = `https://api.themoviedb.org/3/movie/${item.id}/images?api_key=${apiKey}`;
 
-                return fetch(imageUrl)
-                    .then(response => response.json())
-                    .then(imageData => {
-                        const logos = (imageData.logos || []).filter(logo => logo && logo.iso_639_1 === "pt" && logo.file_path);
-                        const logoPath = logos[0].file_path;
-                        const logo = logoPath
-                            ? `https://image.tmdb.org/t/p/w500${logoPath}`
-                            : 'assets/img/logo-placeholder.png';
-                        let type = 'movie';
+                const response = await fetch(imageUrl);
+                const imageData = await response.json();
+                const logos = (imageData.logos || []).filter(logo => logo && logo.iso_639_1 === "pt" && logo.file_path);
+                const logoPath = logos[0] && logos[0].file_path;
+                const logo = logoPath
+                    ? `https://image.tmdb.org/t/p/w500${logoPath}`
+                    : '';
+                const type = 'movie';
 
-                        const card = document.createElement('div');
-                        card.classList.add('timeline-item');
-                        card.innerHTML = `
-                            <div class="timeline-circle">
-                                <img src="${poster}" alt="${title}" class="movie-poster" />
-                                <img src="${logo}" alt="${title} logo" class="movie-logo" />
-                            </div>
-                            <div class="p-timeline">
-                                <p class="movie-name">${title}</p>
-                                <span class="year-movie">${year}</span>
-                            </div>
-                        `;
-                        document.getElementById('timeline-container').appendChild(card);
-                        card.addEventListener('click', () => {
-                            const params = new URLSearchParams({
-                                id: item.id,
-                                mediaType: type
-                            });
-                            window.location.href = `filme.php?${params.toString()}`;
-                        });
+                const card = document.createElement('div');
+                card.classList.add('timeline-item');
+                card.innerHTML = `
+                    <div class="timeline-circle">
+                        <img src="${poster}" alt="${title}" class="movie-poster" />
+                        <img src="${logo}" class="movie-logo" />
+                    </div>
+                    <div class="p-timeline">
+                        <p class="movie-name">${title}</p>
+                        <span class="year-movie">${year}</span>
+                    </div>
+                `;
+                document.getElementById(containerId).appendChild(card);
+                card.addEventListener('click', () => {
+                    const params = new URLSearchParams({
+                        id: item.id,
+                        mediaType: type
                     });
-            });
-            return Promise.all(fetchPromises);
+            
+                    window.location.href = `filme.php?${params.toString()}`;
+                });
+            };
+
+            const renderSequential = (creditsArray, containerId) => {
+                return creditsArray.reduce((promise, credit) => {
+                    return promise.then(() => renderCard(credit, containerId));
+                }, Promise.resolve());
+            };
+
+            return renderSequential(sortedTopCredits, 'timeline-container')
+                .then(() => renderSequential(remainingCredits, 'all-movies-list'));
         });
     })
     .finally(() => {
@@ -147,3 +168,17 @@ function renderTimelineCard(title, year, poster) {
     `;
     document.getElementById('timeline-container').appendChild(card);
 }
+
+document.getElementById('show-all-movies').addEventListener('click', () => {
+    const modal = document.getElementById('moviesModal');
+    const overlay = modal.querySelector('.overlay-modal');
+    overlay.style.display = 'block';
+    modal.showModal();
+});
+
+document.getElementById('closeMoviesModal').addEventListener('click', () => {
+    const modal = document.getElementById('moviesModal');
+    const overlay = modal.querySelector('.overlay-modal');
+    modal.close();
+    overlay.style.display = 'none';
+});

@@ -50,7 +50,7 @@
                         <p id="movieOverview"></p>
                         
                         <li class="tools-section" style="display:none;">
-                            <a id="trailerFrame" onclick="event.preventDefault(); showTrailer(); event.stopPropagation();" class="tools" href="#" target="_blank">▶ Assistir Trailer</a>
+                            <a id="trailerLink" onclick="event.preventDefault(); showTrailer(this.dataset.trailerUrl || this.href); event.stopPropagation();" class="tools" href="#" target="_blank">▶ Assistir Trailer</a>
                             <a href="#" class="tools">&#128278; Assistir mais tarde</a>
 
                             <div class="tools notify-dropdown">

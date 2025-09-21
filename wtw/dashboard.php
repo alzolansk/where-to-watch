@@ -1,3 +1,8 @@
+<?php
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+?>
 <nav id="menu">
     
     <div class="faixa">
@@ -17,12 +22,10 @@
             <ul id="ulBotoes">
                 
                 <li><a href="index.php">Pagina Inicial </a></li>
-                <?php 
-                session_start();
-
-                if(isset($_SESSION['nome'])){
-                    echo "<li> <a href='tmdb_consult.php'> Adicionar Filme </a></li>";
-                } 
+                <?php
+                if (isset($_SESSION['nome'])) {
+                    echo "<li><a href='tmdb_consult.php'> Adicionar Filme </a></li>";
+                }
                 ?>
             </ul>
         </nav>

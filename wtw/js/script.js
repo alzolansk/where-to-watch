@@ -1,4 +1,6 @@
 const buttonClose = document.getElementById("close-trailer");
+const trailerDialog = document.getElementById('dialog');
+const trailerFrame = document.getElementById('trailerFrame');
 
 function mudaFoto (foto){
    document.getElementById('trailer').src = foto
@@ -18,16 +20,33 @@ function senhaError (senha){
 
 //Funções dos Trailers
 function showTrailer(trailerUrl) {
-    document.getElementById('trailerFrame').src = trailerUrl.replace("watch?v=", "embed/");
-    document.getElementById('dialog').showModal();
-    dialog.classList.add('show');
+    if (!trailerDialog || !trailerFrame) {
+        return;
+    }
+
+    const url = (trailerUrl || trailerFrame.dataset.trailerUrl || '').trim();
+    if (!url) {
+        return;
+    }
+
+    trailerFrame.dataset.trailerUrl = url;
+    trailerFrame.src = url.replace('watch?v=', 'embed/');
+    trailerDialog.showModal();
+    trailerDialog.classList.add('show');
 }
 
 function closeTrailer() {
-    document.getElementById('dialog').close();
-    document.getElementById('trailerFrame').src = "";
-    dialog.classList.remove('show');
- 
+    if (!trailerDialog || !trailerFrame) {
+        return;
+    }
+
+    trailerDialog.close();
+    trailerFrame.src = '';
+    trailerDialog.classList.remove('show');
+}
+
+if (buttonClose) {
+    buttonClose.addEventListener('click', closeTrailer);
 }
 
 //Função setinhas de navegação

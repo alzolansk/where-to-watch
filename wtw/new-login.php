@@ -7,11 +7,11 @@ $title_error = "";
 
 if (isset($_POST['submit'])){
 
-  $nome = $_POST['nome'];
-  $email = $_POST['email'];
+  $nome = trim($_POST['nome']);
+  $email = filter_input(INPUT_POST, 'email', FILTER_VALIDATE_EMAIL);
   $senha = $_POST['senha'];
   $confirm_senha = $_POST['confirmasenha'];
-  $phonenumber = $_POST['phone'];
+  $phonenumber = preg_replace('/\D+/', '', $_POST['phone']);
 
   $stmt = $conexao->prepare("SELECT id_user FROM tb_users WHERE email_user = ?");
   $stmt->bind_param("s", $email);
@@ -21,9 +21,9 @@ if (isset($_POST['submit'])){
   if ($stmt->num_rows > 0) {
     $title_error = "Usuário existente";
     $error_message = "Este e-mail já está cadastrado no where you Watch. Gostaria de realizar login? <a href=\"login.php\">Clique aqui</a>";
-  } else if(empty($nome) || empty($senha) || empty($email)|| empty($phonenumber)){
-    $title_error = "Campos vazios";
-    $error_message = "Preencha todos os campos";
+  } else if(!$email){
+    $title_error = "Email inválido";
+    $error_message = "Digite um email válido.";
   } else if($senha !== $confirm_senha){
     $title_error = "Senhas diferentes";
     $error_message = "Senhas diferentes, insira a confimação de senha exatamente como a que você inseriu no campo \"Senha\"";
@@ -32,8 +32,8 @@ if (isset($_POST['submit'])){
   $hashed_password = password_hash($senha, PASSWORD_DEFAULT);
 
   $insert_stmt = $conexao->prepare("INSERT INTO tb_users (name_user, email_user, pswd_user, phone_number) VALUES (?, ?, ?, ?)");
-  $insert_stmt->bind_param("ssss", $nome, $email, $senha, $phonenumber);
-  
+  $insert_stmt->bind_param("ssss", $nome, $email, $hashed_password, $phonenumber);
+    
   if ($insert_stmt->execute()) {
     echo "Usuário cadastrado com sucesso!";
     header("Location: login.php");

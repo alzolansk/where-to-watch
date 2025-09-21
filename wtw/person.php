@@ -17,7 +17,7 @@
                 
                 <div class="name-bio">
                     <h1 id="person-name"><span id="heart-icon">♡</span></h1>
-                    <h2 id="profession-label-1" style="display: none;">Profissão</h2>
+                    <h2 id="profession-label-1" style="display: none;"></h2>
                     <p id="person-profession-1" style="display: none;"></p>   
                     <h3 id="bio-h3" class="bio-label">Biografia</h3>
                     <p id="person-bio" class="person-bio"></p>
@@ -26,6 +26,9 @@
                         <div id="timeline-section" class="timeline-section">
                             <svg id="timeline-curve"></svg>
                             <div class="timeline-container" id="timeline-container">
+                            </div>
+                            <div class="show-movies">
+                                <button id="show-all-movies" class="show-more-movies">Ver todos</button>
                             </div>
                         </div>
                     </div>
@@ -41,6 +44,14 @@
                 <!-- Os atores serão inseridos aqui via JS -->
             </div>
         </div>
+        
+        <dialog id="moviesModal" class="movie-dialog">
+            <div class="modal-class">
+                <button id="closeMoviesModal" class="btn btn-danger">Fechar</button>
+                <div id="all-movies-list" class="timeline-container"></div>
+            </div>
+            <div class="overlay-modal"></div>
+        </dialog>
     </main>
 </body>
 <script src="js/person.js"></script>

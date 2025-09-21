@@ -37,6 +37,7 @@ body{
     background-color: rgb(0, 0, 0);
     color: white;
     overflow-x: hidden;
+    overflow-y: hidden;
 }
 
 /*Loading*/
@@ -185,95 +186,35 @@ body{
 
 */
 
-/*Dialog Filme*/
-
-.movie-dialog{
-    max-width: 1200px;
-    margin: auto;
-    max-height: 600px;
-    width: 100%;
-    height: 100%;
-    border-radius: 30px;
-    border: none;
-    background-image: url(''); /* Para ser definido dinamicamente via JS */
-    background-size: cover; /* Para cobrir todo o dialog */
-    background-position: center; /* Centralizar a imagem */
-    color: rgb(0, 0, 0);
-    box-shadow:  2px 2px 5000px 1000px rgba(0, 0, 0, 0.507);
-    position: fixed; /* Para posicionar o conteúdo do modal */
-    animation: modalFadein 0.2s ease-in forwards;
-}
-
-@keyframes modalFadein {
-    0%{
-        opacity: 0;
-    }
-
-    100%{
-        opacity: 1;
-    }
-}
-
-.modal-class{
-    z-index: 2;
-    position: relative; /* Para posicionar o conteúdo */
-    padding: 25px; /* Espaçamento interno */
-    color: white; /* Texto branco para melhor contraste */
-    margin: none;
-}
-
-.modal-class h2{
-    font-family: Bebas Neue;
-    font-size: 75px;
-    animation-duration: 0.5s; /* don't forget to set a duration! */
-    z-index: 1;
-}
-
-.wtw-font{
-    font-family: Bebas Neue;
-    font-size: 30px;
-}
-
-.wtw-white{
-    color: white; 
-}
-
-.wtw-red{
-    color: #D7171E;
-}
-
-.posterItem{
-    z-index: 4;
-    width: 200px;
-    border-radius: 40px;
-}
-
-.overlay-modal {
-    position: absolute; /* Posiciona a sobreposição */
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgb(0, 0, 0, 0.7); /* Preto com opacidade */
-    display: none;
-    z-index: 1;
-}
-
-.poster-title-id{
+.provider-btn-container {
     display: flex;
-    gap: 10px; /* Espaçamento entre o pôster e o título */
+    justify-content: center;
+    gap: 30px;
 }
-
-.type-title-genre{
-    padding-top: 10px;
-}
-
-.mediaTypeParagraph, #itemGenre{
-    background-color: rgb(215, 23, 30, 0.7);
-    color: #eeeeee;
+.provider-btn-div{
+    background-color: rgb(8, 8, 8);
     border-radius: 10px;
-    padding: 3px 10px 3px;
-    font-weight: 200;
+}
+
+.provider-btn-container button {
+    background: transparent;
+    border: none;
+    padding: 10px;
+    transition: 0.2s ease-in-out;
+}
+
+.provider-btn-container img {
+    width: 45px;
+    height: auto;
+    border-radius: 10px;
+}
+
+.provider-btn-container button:hover{
+    transform: scale(1.15) translateX(-5%);
+}
+
+.provider-btn-container button:focus{
+    outline: none;
 }
 
 /*Galeria de Em Breve*/
@@ -296,7 +237,6 @@ body{
     width: 100%;
     display: flex;
     flex-direction: row;
-    overflow-y: hidden;
     overflow-x: scroll; /* Evita barra de rolagem vertical, mas mantém horizontal */
     gap: 50px;
 }
@@ -720,7 +660,6 @@ button.prev:hover, button.next:hover {
 .container{
     width: 100%;
     max-width: 1200px;
-    min-width: 1000px;
     margin: 0 auto; 
     padding: 20px;
 }
@@ -740,6 +679,7 @@ button.prev:hover, button.next:hover {
     .container {
         width: 95%;
         padding: 15px;
+        min-width: 0;
     } 
 
     .category-buttons {
@@ -753,15 +693,26 @@ button.prev:hover, button.next:hover {
     }
 
     .carousel-container {
-        flex-direction: column;
+        flex-direction: row;
+        gap: none;
     }
+
+    .description{
+        height: 75%;
+        max-width: 220px;
+    }
+
+    .img-fluid{
+        width: 195px;
+        height: 300px;
+    }
+
 }
 
 @media (max-width: 768px) {
-    .gallery-wrapper,
-    .gallery {
-        flex-direction: column;
-        align-items: center;
+
+    .container {
+        min-width: 0;
     }
 
     .backdropContainer,
@@ -774,15 +725,13 @@ button.prev:hover, button.next:hover {
         left: 15px;
         max-width: 100px;
     }
-
-    .itemInfo {
-        left: 50%;
-        transform: translateX(-50%);
-        width: 80%;
-    }
-
+    
     .company-logo {
         max-width: 60px;
+    }
+        
+    .nav-arrow{
+        opacity: 1;
     }
 }
 
@@ -801,12 +750,8 @@ button.prev:hover, button.next:hover {
         width: 100%;
     }
 
-    .btn-category {
-        width: 100%;
-    }
-
     .carousel-container {
-        gap: 15px;
+        gap: none;
     }
 }
 
@@ -820,7 +765,13 @@ button.prev:hover, button.next:hover {
     overflow-y: hidden;
     -ms-overflow-style: none;
     scrollbar-width: none; 
+    margin: 0 auto;
+    gap: 30px;
     transition: transform 0.3s ease-in-out; /*  suave */
+}
+
+.movies{
+    padding: 0;
 }
 
 .row:hover{
@@ -881,7 +832,7 @@ button.prev:hover, button.next:hover {
     flex-direction: row;
     height: 100%;
     cursor: pointer;
-    /*transition: transform 0.3s ease-in-out;*/
+    max-width: 280px;
     animation: rowFadein 0.5s ease-in forwards; 
     transition: transform 0.3s ease;
 }
@@ -998,7 +949,8 @@ button.prev:hover, button.next:hover {
     display: block;
     position: relative;
     height: 400px;
-    min-width: 220px; /* tamanho mínimo para a imagem */
+    min-width: 195px; /* tamanho mínimo para a imagem */
+    max-width: 300px;
 }
 
 
@@ -1032,6 +984,13 @@ button.prev:hover, button.next:hover {
     .company-logo-container{
         top: 20px;
         right: 10px;
+    }
+
+    .row{
+        gap: 10px;
+    }
+    .description{
+        width: 220px;
     }
     
     .img-fluid{
@@ -1070,12 +1029,6 @@ button.prev:hover, button.next:hover {
 
     .watch-trailer img{
         width: 8px;
-    }
-}
-
-@media(max-width: 1200px){
-    .img-fluid{
-        height: 80%;
     }
 }
 
@@ -1153,4 +1106,11 @@ button.prev:hover, button.next:hover {
 @keyframes slideInLeft {
     from { opacity: 0; transform: translateX(-100%); }
     to { opacity: 1; transform: translateX(0); }
+}
+
+/*Responsividade*/
+ @media (max-width: 1000px) {
+    .description {
+        height: 75%;
+    }
 }

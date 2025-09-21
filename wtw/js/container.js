@@ -2,14 +2,23 @@ document.addEventListener('DOMContentLoaded', function() {
     const apiKey = 'dc3b4144ae24ddabacaeda024ff0585c';
     let mediaType = 'movie'; // Inicialmente filmes
     const contentSection = document.querySelector(".media-section");
+    const sliderIndicator = document.querySelector('.style-buttons .slider-indicator');
 
     let autoScrollInterval;
     let autoScrollSetupDone = false;
     // Cache para evitar duplicidade
     const fetchCache = {};
-    const fetchJson = url => {
+    const fetchJson = (url) => {
+        if (!url || typeof url !== 'string') {
+            return Promise.reject(new Error('fetchJson called with invalid url'));
+        }
         if (!fetchCache[url]) {
-            fetchCache[url] = fetch(url).then(r => r.json());
+            fetchCache[url] = fetch(url).then(r => {
+                if (!r.ok) {
+                    throw new Error(`HTTP ${r.status} for ${url}`);
+                }
+                return r.json();
+            });
         }
         return fetchCache[url];
     };
@@ -38,12 +47,14 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function defineMovieConstants(movie, mediaType, apiKey) {
-        const imgUrl = `https://image.tmdb.org/t/p/w500${movie.poster_path}`;
+        const imgUrl = movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : 'imagens/icon-cast.png';
         const trailerUrl = `https://api.themoviedb.org/3/${mediaType}/${movie.id}/videos?api_key=${apiKey}&language=pt-BR&page=1`;
-        const rating = movie.vote_average.toFixed(2);
+        const rating = (typeof movie.vote_average === 'number' && movie.vote_average > 0)
+            ? movie.vote_average.toFixed(1)
+            : 'N/A';
         const detailsUrl = `https://api.themoviedb.org/3/${mediaType}/${movie.id}?api_key=${apiKey}&language=pt-BR&page=1`;
         const providerUrl = `https://api.themoviedb.org/3/${mediaType}/${movie.id}/watch/providers?api_key=${apiKey}&language=pt-BR&page=1&sort_by=display_priority.cresc`
-        const backdropUrl = `https://image.tmdb.org/t/p/w1280/${movie.backdrop_path}`
+        const backdropUrl = movie.backdrop_path ? `https://image.tmdb.org/t/p/w1280/${movie.backdrop_path}` : 'imagens/icon-cast.png'
         const movieLogoUrl = `https://api.themoviedb.org/3/movie/${movie.id}/images?api_key=${apiKey}&include_image_language=null,pt`
         const creditsUrl = `https://api.themoviedb.org/3/${mediaType}/${movie.id}/credits?api_key=${apiKey}&language=pt-BR&page=1`
 
@@ -202,7 +213,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         return fetchJson(providerUrl).then(providerData => ({ data, providerData, hasHomepage }));
                     })
                     .then(({ data, providerData, hasHomepage }) => {
-                        const providers = providerData.results?.BR;
+                        const providers = providerData?.results?.BR || {};
                         const hasProviders = providers && (
                             (providers.rent && providers.rent.length > 0) ||
                             (providers.flatrate && providers.flatrate.length > 0) ||
@@ -253,7 +264,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                             if (isInRange) {
                                 
-                    fetchJson(trailerUrl)
+                    fetchJson(trailerUrl || `https://api.themoviedb.org/3/${mediaType}/${movie.id}/videos?api_key=${apiKey}&language=pt-BR&page=1`)
                         .then(trailerData => {
                             const trailerPath = trailerData.results;
 
@@ -377,7 +388,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     .then(providerData => {
                         let providerNames = '';
                         let providerLogos = '';
-                        const providers = providerData.results?.BR;
+                        const providers = providerData?.results?.BR || {};
 
                         const logoBaseUrl = "https://image.tmdb.org/t/p/w92";
                         const filterProviders = (arr = []) => arr.filter(p =>
@@ -386,8 +397,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             !p.provider_name.includes("paramount plus apple tv channel") &&
                             !p.provider_name.includes("paramount plus premium")
                         );
-                        const rentFiltered = providers.rent ? filterProviders(providers.rent) : [];
-                        const flatrateFiltered = providers.flatrate ? filterProviders(providers.flatrate) : [];
+                        const rentFiltered = providers?.rent ? filterProviders(providers.rent) : [];
+                        const flatrateFiltered = providers?.flatrate ? filterProviders(providers.flatrate) : [];
                         const rentLogoImgs = rentFiltered.slice(0,1).map(p => `<img src="${logoBaseUrl}${p.logo_path}" class="provider-logo" title="${p.provider_name}">`);
                         const flatrateLogoImgs = flatrateFiltered.slice(0,3).map(p => `<img src="${logoBaseUrl}${p.logo_path}" class="provider-logo" title="${p.provider_name}">`);
                         
@@ -412,8 +423,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             console.log('Nenhum provedor encontrado para BR.');
                         }
                         
-                        fetch(detailsUrl)
-                        .then(response => response.json())
+                        fetchJson(detailsUrl)
                         .then(data => {
                             const genresArray = data.genres;
                             let genresNames = '';
@@ -421,13 +431,12 @@ document.addEventListener('DOMContentLoaded', function() {
                                 genresNames = genresArray.map(genres => genres.name).join(", "); //String "join" separa os diversos gêneros
                             }
     
-                        fetch(trailerUrl)   
-                        .then(response => response.json())
+                        fetchJson(trailerUrl || `https://api.themoviedb.org/3/${mediaType}/${movie.id}/videos?api_key=${apiKey}&language=pt-BR&page=1`)
                         .then(trailerData => {
                             const trailerPath = trailerData.results;
 
                             let trailerKey = '';
-                            if (trailerPath && trailerPath.length > 0) {
+                            if (Array.isArray(trailerPath) && trailerPath.length > 0) {
                                 trailerKey = trailerPath[0].key; 
 
                                 if(!trailerKey){
@@ -509,8 +518,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                     const carouselDiv = document.createElement('div');
 
-                    fetch(detailsUrl)
-                        .then(response => response.json())
+                    fetchJson(detailsUrl)
                         .then(data => {
                             const genresArray = data.genres;
                             let genresNames = '';
@@ -522,7 +530,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     .then(providerData => {
                         let providerNames = '';
                         let providerLogos = '';
-                        const providers = providerData.results?.BR;
+                        const providers = providerData?.results?.BR || {};
                     
                         const logoBaseUrl = "https://image.tmdb.org/t/p/w92";
                         const filterProviders = (arr = []) => arr.filter(p =>
@@ -532,8 +540,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             !p.provider_name.includes("paramount plus premium")
                         );
 
-                        const rentFiltered = providers.rent ? filterProviders(providers.rent) : [];
-                        const flatrateFiltered = providers.flatrate ? filterProviders(providers.flatrate) : [];
+                        const rentFiltered = providers?.rent ? filterProviders(providers.rent) : [];
+                        const flatrateFiltered = providers?.flatrate ? filterProviders(providers.flatrate) : [];
                         const rentLogoImgs = rentFiltered.slice(0,1).map(p => `<img src="${logoBaseUrl}${p.logo_path}" class="provider-logo" title="${p.provider_name}">`);
                         const flatrateLogoImgs = flatrateFiltered.slice(0,3).map(p => `<img src="${logoBaseUrl}${p.logo_path}" class="provider-logo" title="${p.provider_name}">`);
                         const logoGroups = [];
@@ -557,12 +565,12 @@ document.addEventListener('DOMContentLoaded', function() {
                             console.log('Nenhum provedor encontrado para BR.');
                         }
                         
-                    fetchJson(trailerUrl)
+                    fetchJson(trailerUrl || `https://api.themoviedb.org/3/${mediaType}/${movie.id}/videos?api_key=${apiKey}&language=pt-BR&page=1`)
                         .then(trailerData => {
                             const trailerPath = trailerData.results;
 
                             let trailerKey = '';
-                            if (trailerPath && trailerPath.length > 0) {
+                            if (Array.isArray(trailerPath) && trailerPath.length > 0) {
                                 trailerKey = trailerPath[0].key; 
                             } else {
                                 trailerKey = '';
@@ -648,8 +656,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                     const carouselDiv = document.createElement('div');
 
-                    fetch(detailsUrl)
-                        .then(response => response.json())
+                    fetchJson(detailsUrl)
                         .then(data => {
                             const genresArray = data.genres;
                             let genresNames = '';
@@ -661,7 +668,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     .then(providerData => {
                         let providerNames = '';
                         let providerLogos = '';
-                        const providers = providerData.results?.BR;
+                        const providers = providerData?.results?.BR || {};
                     
                         const logoBaseUrl = "https://image.tmdb.org/t/p/w92";
                         const filterProviders = (arr = []) => arr.filter(p =>
@@ -671,8 +678,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             !p.provider_name.includes("paramount plus premium")
                         );
 
-                        const rentFiltered = providers.rent ? filterProviders(providers.rent) : [];
-                        const flatrateFiltered = providers.flatrate ? filterProviders(providers.flatrate) : [];
+                        const rentFiltered = providers?.rent ? filterProviders(providers.rent) : [];
+                        const flatrateFiltered = providers?.flatrate ? filterProviders(providers.flatrate) : [];
                         const rentLogoImgs = rentFiltered.slice(0,1).map(p => `<img src="${logoBaseUrl}${p.logo_path}" class="provider-logo" title="${p.provider_name}">`);
                         const flatrateLogoImgs = flatrateFiltered.slice(0,3).map(p => `<img src="${logoBaseUrl}${p.logo_path}" class="provider-logo" title="${p.provider_name}">`);
                         const logoGroups = [];
@@ -696,12 +703,12 @@ document.addEventListener('DOMContentLoaded', function() {
                             console.log('Nenhum provedor encontrado para BR.');
                         }
                         
-                    fetchJson(trailerUrl)
+                    fetchJson(trailerUrl || `https://api.themoviedb.org/3/${mediaType}/${movie.id}/videos?api_key=${apiKey}&language=pt-BR&page=1`)
                         .then(trailerData => {
                             const trailerPath = trailerData.results;
 
                             let trailerKey = '';
-                            if (trailerPath && trailerPath.length > 0) {
+                            if (Array.isArray(trailerPath) && trailerPath.length > 0) {
                                 trailerKey = trailerPath[0].key; 
                             } else {
                                 trailerKey = '';
@@ -776,8 +783,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                     const carouselDiv = document.createElement('div');
 
-                    fetch(detailsUrl)
-                        .then(response => response.json())
+                    fetchJson(detailsUrl)
                         .then(data => {
                             const genresArray = data.genres;
                             let genresNames = '';
@@ -789,7 +795,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     .then(providerData => {
                         let providerNames = '';
                         let providerLogos = '';
-                        const providers = providerData.results?.BR;
+                        const providers = providerData?.results?.BR || {};
                     
                         const logoBaseUrl = "https://image.tmdb.org/t/p/w92";
                         const filterProviders = (arr = []) => arr.filter(p =>
@@ -799,8 +805,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             !p.provider_name.includes("paramount plus premium")
                         );
 
-                        const rentFiltered = providers.rent ? filterProviders(providers.rent) : [];
-                        const flatrateFiltered = providers.flatrate ? filterProviders(providers.flatrate) : [];
+                        const rentFiltered = providers?.rent ? filterProviders(providers.rent) : [];
+                        const flatrateFiltered = providers?.flatrate ? filterProviders(providers.flatrate) : [];
                         const rentLogoImgs = rentFiltered.slice(0,1).map(p => `<img src="${logoBaseUrl}${p.logo_path}" class="provider-logo" title="${p.provider_name}">`);
                         const flatrateLogoImgs = flatrateFiltered.slice(0,3).map(p => `<img src="${logoBaseUrl}${p.logo_path}" class="provider-logo" title="${p.provider_name}">`);
                         const logoGroups = [];
@@ -824,12 +830,12 @@ document.addEventListener('DOMContentLoaded', function() {
                             console.log('Nenhum provedor encontrado para BR.');
                         }
                         
-                    fetchJson(trailerUrl)
+                    fetchJson(trailerUrl || `https://api.themoviedb.org/3/${mediaType}/${movie.id}/videos?api_key=${apiKey}&language=pt-BR&page=1`)
                         .then(trailerData => {
                             const trailerPath = trailerData.results;
 
                             let trailerKey = '';
-                            if (trailerPath && trailerPath.length > 0) {
+                            if (Array.isArray(trailerPath) && trailerPath.length > 0) {
                                 trailerKey = trailerPath[0].key; 
                             } else {
                                 trailerKey = '';
@@ -907,7 +913,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
         
         // Mova o slider para o botão de filmes
-        slider.style.transform = "translateX(0)";
+        if (sliderIndicator) {
+            sliderIndicator.style.transform = 'translateX(0)';
+        }
 
     });
 
@@ -918,7 +926,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Mova o slider para o botão de séries
         const buttonWidth = this.offsetWidth; // Largura do botão
-        slider.style.transform = `translateX(${buttonWidth}px)`; // Move para a direita
+        if (sliderIndicator) {
+            sliderIndicator.style.transform = `translateX(${buttonWidth}px)`;
+        } // Move para a direita
     });
 
     loadContent();        // Carregar conteúdo de filmes

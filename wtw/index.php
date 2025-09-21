@@ -41,25 +41,22 @@
 
             <div class="wrap">
 
-               <!-- <div class="cinema-container" id="cinemaContainer">
-                    <h2 class="cinema-font">
-                        <span class="title-wrap">
-                            chegando nos cinemas
-                        </span>
-                        
-                        <span class="title-wrap2">
-                            em breve!
-                        </span>
-                    </h2>
-                </div>
-                !-->
+                <button id="btnLeft" class="prev" onclick="scrollLeftCustom()">&#10094;</button>
 
-            <button id="btnLeft" class="prev" onclick="scrollLeftCustom()">&#10094;</button>
-
-            <div id="container-wrap" class="container-wrap">
+                <div id="container-wrap" class="container-wrap">
                 <!--Primeiro container com trailer e backdrop-->
+                </div>
+                <button id="btnRight" class="next" onclick="scrollRight()">&#10095;</button>
             </div>
-            <button id="btnRight" class="next" onclick="scrollRight()">&#10095;</button>
+
+            <div class="provider-btn-container">
+                <div class="provider-btn-div">
+                    <button><img src="https://image.tmdb.org/t/p/w300/97yvRBw1GzX7fXprcF80er19ot.jpg" alt="Disney+"></button>
+                    <button><img src="https://image.tmdb.org/t/p/w300/pbpMk2JmcoNnQwx5JGpXngfoWtp.jpg" alt="Netflix"></button>
+                    <button><img src="https://image.tmdb.org/t/p/w92/68MNrwlkpF7WnmNPXLah69CR5cb.jpg" alt="Prime Video"></button>
+                    <button><img src="https://image.tmdb.org/t/p/w300/2E03IAZsX4ZaUqM7tXlctEPMGWS.jpg" alt="Apple TV+"></button>
+                    <button><img src="https://image.tmdb.org/t/p/w300/jbe4gVSfRlbPTdESXhEKpornsfu.jpg" alt="Apple TV+"></button>
+                </div>
             </div>
 
             <div class="category-buttons">
@@ -151,7 +148,6 @@
                 <div class="row" id="popular-movies-container">
                         <?php if ($result_filmes->num_rows > 0): ?>
                         <?php while($row = $result_filmes->fetch_assoc()): ?>
-                            <div class="col-md-3 movies">
                                 <div class="description">
                                     <li id="movie-li-link">
                                         <img src="<?= $row['img_url'] ?>" alt="" class="img-fluid">
@@ -165,7 +161,6 @@
                                         </a>
                                     </li>
                                 </div>
-                            </div>
                         <?php endwhile; ?>
                     <?php else: ?>
                         <p>Nenhum filme encontrado.</p>

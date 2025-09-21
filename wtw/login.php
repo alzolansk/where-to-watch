@@ -8,38 +8,40 @@ $title_error = "";
 
 if(isset($_POST['submit'])) {
 
-  $email = $_POST['email'];
-  $senha = $_POST['senha'];
+  $email = filter_input(INPUT_POST, 'email', FILTER_VALIDATE_EMAIL);
+  $senha_digitada = $_POST['senha'];
 
-  $stmt = $conexao->prepare("SELECT id_user, name_user, pswd_user FROM tb_users WHERE email_user = ?");
-  $stmt->bind_param("s", $email);
-  $stmt->execute();
-  $stmt->store_result();
-
-  // Verifica se o usuário foi encontrado
-  if ($stmt->num_rows > 0) {
-    $stmt->bind_result($id, $nome, $senha);
-    $stmt->fetch();
-
-    if ($senha) {
-      $_SESSION['id'] = $id;
-      $_SESSION['nome'] = $nome;
-
-      echo "Login realizado com sucesso!";
-      header("Location: index.php"); 
-      exit();
-    } else {
-      $error_message = "Senha incorreta.";
-    }
+  if (!$email) {
+    $error_message = "Email inválido.";
   } else {
-    $title_error = "Usúario Inexistente";
-    $error_message = "Usuário não existe no where you WATCH. <br> Crie uma conta <a href='new-login.php'>aqui.</a>";
-    $user_not_found = true; // Usuário não encontrado
-  }
+    $stmt = $conexao->prepare("SELECT id_user, name_user, pswd_user FROM tb_users WHERE email_user = ?");
+    $stmt->bind_param("s", $email);
+    $stmt->execute();
+    $stmt->store_result();
 
-  $stmt->close();
-  $conexao->close();
-} 
+    // Verifica se o usuário foi encontrado
+    if ($stmt->num_rows > 0) {
+      $stmt->bind_result($id, $nome, $senha_hash);
+      $stmt->fetch();
+
+      if (password_verify($senha_digitada, $senha_hash)) {
+        $_SESSION['id'] = $id;
+        $_SESSION['nome'] = $nome;
+
+        header("Location: index.php");
+        exit();
+      } else {
+        $error_message = "Senha incorreta.";
+      }
+    } else {
+      $title_error = "Usúario Inexistente";
+      $error_message = "Usuário não existe no where you WATCH. <br> Crie uma conta <a href='new-login.php'>aqui.</a>";
+      $user_not_found = true; // Usuário não encontrado 
+    }
+    $stmt->close();
+    $conexao->close();
+  }
+}
 
 ?>
 

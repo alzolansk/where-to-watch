@@ -28,8 +28,26 @@ document.addEventListener('DOMContentLoaded', async () => {
     const apiKey = 'dc3b4144ae24ddabacaeda024ff0585c';
     const fetchJson = url => fetch(url).then(r => r.json());
     let mediaType = params.get('mediaTp') || params.get('type') || (params.has('tv') ? 'tv' : 'movie');
+    if (mediaType !== 'tv' && mediaType !== 'movie') {
+        mediaType = 'movie';
+    }
     const movieId = params.get('id');
-    
+    const trailerFrameEl = document.getElementById('trailerFrame');
+    const trailerLinkEl = document.getElementById('trailerLink');
+    const releaseDateEl = document.getElementById('release-date');
+    const posterEl = document.getElementById('itemPoster');
+    const backdropEl = document.getElementById('backdropImage');
+    const titleEl = document.getElementById('title-movie');
+    const itemNameEl = document.getElementById('itemName');
+    const genreEl = document.getElementById('genreMovie');
+    const overviewEl = document.getElementById('movieOverview');
+
+    if (!movieId) {
+        console.error('Missing media identifier in filme.js');
+        hideLoading();
+        return;
+    }
+
     // Recupera os dados
     let title = params.get('title');
     let originalTitle = params.get('original_title');
@@ -39,6 +57,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     let backdropUrl = params.get('backdropUrl');
     let trailerUrl = params.get('trailerUrl');
     let overview = params.get('overview');
+
     const upcoming = params.get('itemFetch');
     const ticketSite = params.get('ticketUrl');
     const genresArray = params.get('genresJson')
@@ -115,9 +134,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         'apple tv': 'https://play-lh.googleusercontent.com/1XBAZjSOWaVM7UDFKvzuMR-WRoR5gCnsYrw17_ihHLcJKT9Qc7hXptHwWQ3Bf83mry4=w240-h480-rw'
     };
 
-    // Limpa a URL exibida após capturar todos os parâmetros
-    window.history.replaceState({}, '', `http://localhost/WhereToWatch/wtw/filme.php?id=${movieId}&${mediaType}`);
-
     //Verificação de upcoming
     if(upcoming == "upcoming"){
         document.getElementById('providers').innerHTML = `
@@ -127,7 +143,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         `;
     } else {
         try {
-            const response = await fetch(providerUrl);
             const providerData = await fetchJson(providerUrl);
             const providers = providerData.results?.BR;
 
@@ -193,9 +208,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                         }
                     }
 
+                    const logoPath = provider.logo_path
+                        ? `https://image.tmdb.org/t/p/w300${provider.logo_path}`
+                        : 'imagens/icon-cast.png';
+
                     targetArray.push({
                         name,
-                        logo: `https://image.tmdb.org/t/p/w300${provider.logo_path}`,
+                        logo: logoPath,
                         url: searchUrl
                     });
 
@@ -221,7 +240,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                             const customLogo = providerLogoFb[providerKey]? providerKey:p.logo;
                             const src = customLogo || p.logo;
                             const style = gradient ? `background-image: ${gradient};` : `background-color: ${backgroundColor};`;
-
                             return `
                             <a href="${p.url}" target="_blank" class="provider-tag">
                                 <img src="${src}" alt="${p.name}" class="logo-provider" style="${style};" />
@@ -263,26 +281,67 @@ document.addEventListener('DOMContentLoaded', async () => {
                 providersContainer.innerText = "Nenhum provedor encontrado.";
             }
         } catch (err) {
-            document.getElementById('providers').innerText = 'Não encontrado em nenhum provedor';
+            document.getElementById('providers').innerText = 'Nao encontrado em nenhum provedor';
         }
     }
     //Formatação de data
-    const formatDate = (dateString) => {
-        const [year, month, day] = dateString.split("-"); // Divide a data pelo separador '-'
-        return `${day}/${month}/${year}`; // Retorna no formato 'dd/mm/aaaa'
+    const formatDate = (dateString = '') => {
+        if (!dateString) {
+            return null;
+        }
+
+        const parts = dateString.split('-');
+        if (parts.length !== 3) {
+            return dateString;
+        }
+
+        const [year, month, day] = parts;
+        return `${day}/${month}/${year}`;
     };
     
-    // Formata a data de lançamento
+    // Formata a data de lancamento
     const formattedReleaseDate = formatDate(releaseDate);
-    document.getElementById('release-date').innerText = `Lançamento: ${formattedReleaseDate}`;
-    // Atualiza o conteúdo da página
-    document.getElementById('title-movie').innerText = `${title} - Where you Watch`;
-    document.getElementById('itemName').innerText = title;
-    document.getElementById('genreMovie').innerText = `Gêneros: ${genres}`;
-    document.getElementById('itemPoster').src = imgUrl;
-    document.getElementById('backdropImage').src = backdropUrl;
-    document.getElementById('trailerFrame').href = trailerUrl;
-    document.getElementById('movieOverview').innerText = overview;
+
+    const pageTitle = title ? `${title} - Where you Watch` : 'Where you Watch';
+    if (titleEl) {
+        titleEl.innerText = pageTitle;
+    }
+
+    if (itemNameEl) {
+        itemNameEl.innerText = title || 'Titulo indisponivel';
+    }
+
+    if (genreEl) {
+        genreEl.innerText = genres ? `Genres: ${genres}` : 'Genres: Not available';
+    }
+
+    if (posterEl) {
+        posterEl.src = imgUrl || 'imagens/icon-cast.png';
+    }
+
+    if (backdropEl) {
+        backdropEl.src = backdropUrl || 'imagens/icon-cast.png';
+    }
+
+    if (trailerLinkEl) {
+        const safeUrl = trailerUrl && trailerUrl !== '#' ? trailerUrl : '#';
+        trailerLinkEl.href = safeUrl;
+        trailerLinkEl.dataset.trailerUrl = safeUrl !== '#' ? safeUrl : '';
+    }
+
+    if (trailerFrameEl) {
+        trailerFrameEl.dataset.trailerUrl = trailerUrl && trailerUrl !== '#' ? trailerUrl : '';
+        trailerFrameEl.removeAttribute('src');
+    }
+
+    if (overviewEl) {
+        overviewEl.innerText = overview || 'Overview unavailable.';
+    }
+
+    if (releaseDateEl) {
+        releaseDateEl.innerText = formattedReleaseDate ? `Release date: ${formattedReleaseDate}` : '';
+    }
+
     // Atualiza a palavra no span
     const backdropOverlay = document.getElementById('backdropOverlay');  
 
@@ -349,7 +408,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     await waitForImages(document);
     hideLoading();
-    window.history.replaceState({}, '', `filme.php?id=${movieId}&${mediaType}`);
+    window.history.replaceState({}, '', `filme.php?id=${movieId}&type=${mediaType}`);
 });
 
 const castList = document.getElementById('cast-list');

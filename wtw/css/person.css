@@ -35,6 +35,8 @@ body{
    overflow-x: hidden;
    margin: 0;
    font-family: Nunito;
+   overflow-x: hidden;
+   overflow-y: hidden;
 }
 
 
@@ -76,7 +78,7 @@ body{
 .person-bio{
    margin-top: 5px;
    padding: 0px 0px 10px;
-   font-size: 18px;
+   font-size: 16px;
    font-family: Nunito;
    font-weight: 300;
 }
@@ -90,6 +92,7 @@ body{
     padding: 3px 10px 3px;
     font-family: Nunito;
     font-weight: 500;
+    font-size: 16px;
 }
 
 #profession-label-1{
@@ -105,7 +108,7 @@ body{
 }
 
 .timeline-section {
-    padding: 30px 20px;
+    padding: 10px 20px;
     margin-top: 10px;
     overflow-x: auto;
     position: relative;
@@ -250,7 +253,7 @@ body{
 
 .movie-name {
   font-family: 'Bebas Neue', sans-serif;
-  font-size: 20px;
+  font-size: 18px;
   line-height: 1.1;
   white-space: nowrap;
   overflow: hidden;
@@ -262,4 +265,34 @@ body{
 .year-movie{
    font-family: Quicksand;
    font-weight: 500;
+}
+
+.show-more-movies {
+  background-color: #D7171E;
+  color: #ffffff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 20px;
+  cursor: pointer;
+}
+
+.show-more-movies:focus {
+  outline: none;
+}
+
+.show-movies{
+    margin-top: 10px;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    display: flex;
+}
+
+.movie-dialog{
+    max-width: 800px;
+    width: 100%;
+    max-height: 600px;
+    margin: 0 auto;
+    background-color: #070707;
+    border-radius: 30px;
 }
