@@ -20,11 +20,6 @@ if (session_status() === PHP_SESSION_NONE) {
             <ul id="ulBotoes">
                 
                 <li><a href="index.php">Pagina Inicial </a></li>
-                <?php
-                if (isset($_SESSION['nome'])) {
-                    echo "<li><a href='tmdb_consult.php'> Adicionar Filme </a></li>";
-                }
-                ?>
             </ul>
         </nav>
 
@@ -115,7 +110,7 @@ if (session_status() === PHP_SESSION_NONE) {
     top: 0;
     z-index: 1000;
     min-height: 0;
-    background: linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05)); /*Glass transparency*/
+    background: linear-gradient(135deg, rgba(138, 138, 138, 0.15), rgba(255,255,255,0.05)); /*Glass transparency*/
     backdrop-filter: blur(20px) saturate(180%);
     -webkit-backdrop-filter: blur(20px) saturate(180%);
     border-bottom: 1px solid rgba(255, 255, 255, 0.034);
