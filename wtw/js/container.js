@@ -409,9 +409,11 @@ document.addEventListener('DOMContentLoaded', function() {
                         if (rentLogoImgs.length) {
                             logoGroups.push(rentLogoImgs.join(' ') + `<p class="provider-tag">Aluguel</p>`);
                         }
-                        if (logoGroups.length) {
-                            providerLogos = logoGroups.map(group => `<div class="provider-group">${group}</div>`).join(' ');
+                        if (!logoGroups.length) {
+                            return;
                         }
+
+                        providerLogos = logoGroups.map(group => `<div class="provider-group">${group}</div>`).join(' ');
 
                         const rentProviders = rentFiltered.slice(0,1).map(p => p.provider_name).join(", ") || '';
                         const flatrateProviders = flatrateFiltered.slice(0,3).map(p => p.provider_name).join(", ") || '';
@@ -551,9 +553,11 @@ document.addEventListener('DOMContentLoaded', function() {
                         if (rentLogoImgs.length) {
                             logoGroups.push(rentLogoImgs.join(' ') + `<p class="provider-tag">Aluguel</p>`);
                         }
-                        if (logoGroups.length) {
-                            providerLogos = logoGroups.map(group => `<div class="provider-group">${group}</div>`).join(' ');
+                        if (!logoGroups.length) {
+                            return;
                         }
+
+                        providerLogos = logoGroups.map(group => `<div class="provider-group">${group}</div>`).join(' ');
 
                         const rentProviders = rentFiltered.slice(0,1).map(p => p.provider_name).join(", ") || '';
                         const flatrateProviders = flatrateFiltered.slice(0,3).map(p => p.provider_name).join(", ") || '';
@@ -689,9 +693,11 @@ document.addEventListener('DOMContentLoaded', function() {
                         if (rentLogoImgs.length) {
                             logoGroups.push(rentLogoImgs.join(' ') + `<p class="provider-tag">Aluguel</p>`);
                         }
-                        if (logoGroups.length) {
-                            providerLogos = logoGroups.map(group => `<div class="provider-group">${group}</div>`).join(' ');
+                        if (!logoGroups.length) {
+                            return;
                         }
+
+                        providerLogos = logoGroups.map(group => `<div class="provider-group">${group}</div>`).join(' ');
 
                         const rentProviders = rentFiltered.slice(0,1).map(p => p.provider_name).join(", ") || '';
                         const flatrateProviders = flatrateFiltered.slice(0,3).map(p => p.provider_name).join(", ") || '';
@@ -816,9 +822,11 @@ document.addEventListener('DOMContentLoaded', function() {
                         if (rentLogoImgs.length) {
                             logoGroups.push(rentLogoImgs.join(' ') + `<p class="provider-tag">Aluguel</p>`);
                         }
-                        if (logoGroups.length) {
-                            providerLogos = logoGroups.map(group => `<div class="provider-group">${group}</div>`).join(' ');
+                        if (!logoGroups.length) {
+                            return;
                         }
+
+                        providerLogos = logoGroups.map(group => `<div class="provider-group">${group}</div>`).join(' ');
 
                         const rentProviders = rentFiltered.slice(0,1).map(p => p.provider_name).join(", ") || '';
                         const flatrateProviders = flatrateFiltered.slice(0,3).map(p => p.provider_name).join(", ") || '';

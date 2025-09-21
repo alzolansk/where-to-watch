@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', () => {
+﻿document.addEventListener('DOMContentLoaded', () => {
     const apiKey = 'dc3b4144ae24ddabacaeda024ff0585c';
     const searchInput = document.getElementById('searchmovie');
     const resultsContainer = document.getElementById('results');
@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         data.results.forEach(item => {
                             if (item.media_type === 'movie' || item.media_type === 'tv') {
                                 const title = item.title || item.name;
-                                const type = item.media_type == 'movie' ? 'Filme' : 'Série';
+                                const type = item.media_type == 'movie' ? 'Filme' : 'SÃ©rie';
                                 const imgUrl = `https://image.tmdb.org/t/p/w500${item.poster_path}`;
                                 const year = (item.release_date || item.first_air_date || '').slice(0, 4);
                                 const div = document.createElement('div');
@@ -49,3 +49,4 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
+

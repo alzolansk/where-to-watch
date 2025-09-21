@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Where You Watch — Play no que você ama, sem perder tempo.</title>
+  <meta name="description" content="Encontre onde assistir seus filmes e séries favoritos em segundos. Trailers, elencos e muito mais." />
+  <meta name="color-scheme" content="dark light" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet" />
+  <style>
+    :root{
+      --wyw-red: #D7171E;          /* primária */
+      --wyw-red-600:#c41022;
+      --wyw-red-300:#ff5858;
+      --wyw-ink:#0b0b0c;           /* quase preto */
+      --wyw-ink-2:#121214;
+      --wyw-ink-3:#1a1a1d;
+      --wyw-text:#f6f6f6;
+      --wyw-text-dim:#d8d8d8;
+      --radius-xl: 24px;
+      --radius-md: 14px;
+      --maxw: 1200px;
+      --pad: clamp(16px, 2.4vw, 28px);
+    }
+
+    /* Resetzinho */
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: "Outfit", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      color:var(--wyw-text);
+      background:
+        radial-gradient(1200px 70% at 80% 20%, rgba(225,29,46,.18) 0%, rgba(0,0,0,0) 60%),
+        linear-gradient(180deg, #1c0000 0%, #0c0b0e 70%, #070709 100%),
+        #000;
+    }
+
+    
+    .logo-div {
+      order: -1;
+      width: 80%;
+      margin: 0 auto;
+    }
+
+    .logo-font {
+      white-space: nowrap;
+      font-size: 50px;
+    }
+
+    .logo-font2 {
+      font-size: 60px;
+      font-weight: 900; color:var(--wyw-red);
+      font-size: clamp(60px, 2.6vw, 30px);
+      margin:.1rem 0 .6rem;
+      font-size: clamp(40px, 10vw, 120px);
+      line-height: .86;
+      font-weight: 900;
+      background: linear-gradient(180deg, #ff3b3b, var(--wyw-red-600));
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+      text-shadow: 0 10px 50px rgba(225,29,46,.25);
+      letter-spacing: .5px;
+    }
+
+    .logo-font-y{
+      font-size: 50px;
+      margin-left: 4px;
+      margin-right: -6px;
+    }
+
+    .logo-eye{
+      width: 30px;
+    }
+
+    .brand__eye{
+      width: 15px;
+      margin-top: -4px;
+    }
+
+
+    /* pattern de pontinhos à direita */
+    .dots::after{
+      content:"";
+      position:absolute; inset:0;
+      background-image: radial-gradient(rgba(255,255,255,.075) 1px, transparent 1px);
+      background-size:12px 12px;
+      mask-image: linear-gradient(90deg, transparent 0%, black 60%);
+      opacity:.35;
+      pointer-events:none;
+    }
+
+    header{
+      position:sticky; top:0; z-index:50;
+      backdrop-filter: blur(8px);
+      background: linear-gradient(180deg, rgba(0,0,0,.55), rgba(0,0,0,0));
+      border-bottom: 1px solid rgba(255,255,255,.06);
+    }
+    .nav{
+      max-width: var(--maxw);
+      margin: 0 auto;
+      padding: 12px var(--pad);
+      display:flex; align-items:center; justify-content:space-between;
+      gap:12px;
+    }
+
+    .tagline{
+      font-size: clamp(18px, 2.2vw, 24px);
+      font-weight: 600;
+      color: var(--wyw-text-dim);
+      margin-top: -10px;
+      margin-bottom: 12px;
+    }
+
+    .brand{
+      display:flex; align-items:baseline; gap:10px; text-decoration:none; color:inherit;
+    }
+    .brand__where{
+      font-weight: 700; letter-spacing:.4px; font-size: clamp(18px,2.2vw,24px);
+    }
+
+    .brand__where.y{
+      font-weight: 700; letter-spacing:.4px; font-size: clamp(18px,2.2vw,24px);
+      margin-right: -8px;
+    }
+
+    .brand__where.u{
+      font-weight: 700; letter-spacing:.4px; font-size: clamp(18px,2.2vw,24px);
+      margin-left: -8px;
+    }
+
+    .brand__watch{
+      font-weight: 900; color:var(--wyw-red);
+      font-size: clamp(22px,3vw,28px); letter-spacing:1px;
+    }
+
+    .container{
+      max-width: var(--maxw);
+      margin: 0 auto;
+      padding: clamp(28px, 6vw, 48px) var(--pad) 80px;
+      position:relative;
+    }
+
+    .hero{
+      position:relative;
+      display:grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap: clamp(18px, 3.6vw, 40px);
+      align-items:center;
+      min-height: min(82svh, 860px);
+    }
+    @media (max-width: 940px){
+      .hero{ grid-template-columns: 1fr; min-height: unset; }
+    }
+
+    .eyebrow{
+      font-weight:600; letter-spacing:.12em; text-transform:uppercase;
+      color:var(--wyw-text-dim); font-size:.85rem;
+    }
+
+    h1{
+      margin:.1rem 0 .6rem;
+      font-size: clamp(40px, 10vw, 120px);
+      line-height: .86;
+      font-weight: 900;
+      background: linear-gradient(180deg, #ff3b3b, var(--wyw-red-600));
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+      text-shadow: 0 10px 50px rgba(225,29,46,.25);
+      letter-spacing: .5px;
+    }
+    .sub{
+      color: var(--wyw-text-dim);
+      font-size: clamp(16px, 2.2vw, 20px);
+      line-height:1.5;
+      margin: 6px 0 26px;
+    }
+
+    .features{
+      display:grid; gap:12px; margin: 22px 0 34px;
+      color: var(--wyw-text);
+    }
+    .feat{ display:flex; align-items:flex-start; gap:10px; }
+    .dot{
+      width:10px; height:10px; border-radius:999px;
+      background: radial-gradient(circle at 30% 30%, #fff 0 20%, var(--wyw-red) 70%);
+      margin-top:.45rem; flex: 0 0 10px;
+    }
+
+    .cta{
+      display:inline-flex; align-items:center; gap:10px;
+      text-decoration:none; color:#fff; font-weight:800;
+      background: linear-gradient(180deg, var(--wyw-red) 0%, var(--wyw-red-600) 100%);
+      border-radius: 999px; padding: 16px 28px;
+      box-shadow: 0 10px 30px rgba(225, 29, 46, .35), inset 0 1px 0 rgba(255,255,255,.18);
+      transition: transform .15s ease, filter .15s ease, box-shadow .15s ease;
+    }
+    .cta:hover{ transform: translateY(-2px); filter: brightness(1.05); }
+    .cta:active{ transform: translateY(0); filter: brightness(.98); }
+    .cta .arrow{ transition: transform .15s ease; }
+    .cta:hover .arrow{ transform: translateX(4px); }
+
+    .card{
+      position:relative;
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: var(--radius-xl);
+      overflow:hidden;
+      box-shadow: 0 30px 100px rgba(0,0,0,.55);
+      isolation:isolate;
+    }
+    .card::before{
+      content:"";
+      position:absolute; inset:0;
+      background: radial-gradient(120% 80% at 80% 0%, rgba(225,29,46,.25) 0%, transparent 50%);
+      pointer-events:none;
+      z-index:1;
+    }
+    .poster{
+      display:block; width:100%; height:100%;
+      object-fit: cover;
+      aspect-ratio: 4 / 5; /* adapta no mobile */
+    }
+    @media (min-width: 941px){
+      .poster{ aspect-ratio: 5 / 6; }
+    }
+
+    /* footer simples */
+    footer{
+      border-top: 1px solid rgba(255,255,255,.08);
+      color: var(--wyw-text-dim);
+      padding: 22px var(--pad) 40px;
+      font-size: .95rem;
+    }
+    .footwrap{max-width: var(--maxw); margin: 0 auto; display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap;}
+    .links{display:flex; gap:18px; flex-wrap:wrap}
+    .links a{color:var(--wyw-text-dim); text-decoration:none}
+    .links a:hover{color:#fff}
+
+    /* acessibilidade, foco bonito */
+    :focus-visible{
+      outline: 3px solid #fff; outline-offset: 2px;
+      border-radius: 12px;
+    }
+
+    /* suporte light mode (se quiser testar) */
+    @media (prefers-color-scheme: light){
+      body{
+        color:#0b0b0c;
+        background:
+          radial-gradient(1100px 65% at 80% 15%, rgba(225,29,46,.10) 0%, rgba(0,0,0,0) 60%),
+          linear-gradient(180deg, #fff 0%, #f7f7f9 60%, #f1f2f5 100%);
+      }
+      .dots::after{background-image: radial-gradient(rgba(0,0,0,.06) 1px, transparent 1px);}
+      .sub{color:#222}
+      .cta{box-shadow: 0 10px 26px rgba(225,29,46,.28)}
+      footer{border-top: 1px solid rgba(0,0,0,.08)}
+      .links a{color:#444}
+      .links a:hover{color:#000}
+    }
+  </style>
+</head>
+<body class="dots">
+  <header>
+    <nav class="nav" aria-label="Navegação principal">
+      <a class="brand" href="/" aria-label="Where You Watch — ir para o início">
+        <span class="brand__where">where</span>
+        <span class="brand__where y"> y </span>
+        <img src="imagens/eye-icon2.svg" alt="o" class="brand__eye"/>
+        <span class="brand__where u">u</span>
+        <span class="brand__watch">WATCH</span>
+      </a>
+      <a class="cta" href="index.php" id="ctaTop">
+        <span>Saiba mais</span>
+        <svg class="arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M5 12h14M13 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="container hero" aria-labelledby="titulo">
+      <div>
+        <h2 class="logo">             
+          <span class="logo-font">where</span>
+          <span class="logo-font-y"> y </span>
+          <img src="imagens/eye-icon2.svg" alt="o" class="logo-eye"/>
+          <span class="logo-font">u</span>
+          <span class="logo-font2">WATCH</span>
+        </h2>
+        <p class="tagline" id="tagline">Seu novo guia de streamings, play no que você ama, sem perder tempo</p>
+        <p class="sub">Encontre seus filmes favoritos em segundos. Descubra trailers, elencos e muito mais.</p>
+
+        <div class="features" role="list">
+          <div class="feat" role="listitem"><span class="dot" aria-hidden="true"></span> Busca rápida por título, ator ou plataforma</div>
+          <div class="feat" role="listitem"><span class="dot" aria-hidden="true"></span> Links diretos para assistir nos provedores</div>
+          <div class="feat" role="listitem"><span class="dot" aria-hidden="true"></span> Trailers oficiais e ficha técnica</div>
+        </div>
+
+        <a class="cta" href="/index.html" id="ctaHero" aria-label="Ir para a página inicial do Where You Watch">
+          <span>Saiba mais</span>
+          <svg class="arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M5 12h14M13 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </a>
+      </div>
+
+      <figure class="card" aria-label="Prévia do aplicativo">
+        <img class="poster" src="imagens/couple_seated.png" alt="Casal assistindo a um filme no cinema, com balde de pipoca" />
+      </figure>
+    </section>
+  </main>
+
+  <footer>
+    <div class="footwrap">
+      <small>© <span id="year"></span> Where You Watch</small>
+      <nav class="links" aria-label="Links de rodapé">
+        <a href="/index.html">Início</a>
+        <a href="#titulo">Topo</a>
+        <a href="mailto:contato@whereuwatch.com">Contato</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script>
+    // Atualiza ano automático
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    // Efeito ripple sutil no CTA (puro CSS via custom property)
+    const ctas = document.querySelectorAll('.cta');
+    ctas.forEach(btn=>{
+      btn.addEventListener('pointermove', e=>{
+        const r = btn.getBoundingClientRect();
+        const x = e.clientX - r.left, y = e.clientY - r.top;
+        btn.style.setProperty('--mx', x+'px');
+        btn.style.setProperty('--my', y+'px');
+      });
+    });
+
+    // Melhor acessibilidade: se a pessoa pressionar Enter no body, foca CTA
+    document.addEventListener('keydown', (e)=>{
+      if(e.key === 'Enter' && document.activeElement === document.body){
+        document.getElementById('ctaHero').focus();
+      }
+    });
+
+    // Caso você prefira apontar para a raiz do domínio:
+    // ctas.forEach(a => a.setAttribute('href', '/index.html'));
+    // ou: a.setAttribute('href', 'https://whereuwatch.com/');
+  </script>
+</body>
+</html>

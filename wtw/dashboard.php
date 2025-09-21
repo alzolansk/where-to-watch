@@ -8,14 +8,12 @@ if (session_status() === PHP_SESSION_NONE) {
     <div class="faixa">
 
       <!-- <li><a href="index.php" class="logo"> <img src="imagens/Where-toWatch.png" alt="logo" style="width: 80px"></li></a> -->
-        <a href="index.php" class="home-header">
-            <h2 class="logo">             
-                <span class="logo-font">where</span>
-                <span class="logo-font-y"> y </span>
-                <img src="imagens/eye-icon2.svg" alt="o" class="logo-eye" />
-                <span class="logo-font">u</span>
-                <span class="logo-font2">WATCH</span>
-            </h2>
+                <a href="index.php" class="wyw-brand wyw-brand--sm dashboard-logo home-header" aria-label="Ir para a pÃƒÂ¡gina inicial">
+            <span class="wyw-brand__where">where</span>
+            <span class="wyw-brand__where wyw-brand__where--y">y</span>
+            <img src="imagens/eye-icon2.svg" alt="o" class="wyw-brand__eye" />
+            <span class="wyw-brand__where wyw-brand__where--u">u</span>
+            <span class="wyw-brand__watch">WATCH</span>
         </a>
 
         <nav id="menu-buttons" class="hidden-menu">
@@ -45,13 +43,13 @@ if (session_status() === PHP_SESSION_NONE) {
                         </style>
                     </defs>
                     <g id="Camada_1">
-                        <!-- Pálpebra (Eyelid) -->
+                        <!-- PÃƒÆ’Ã‚Â¡lpebra (Eyelid) -->
                         <g class="eyelid">
                             <path class="fil0" d="M532.42 0.03c-322.51,-0.12 -481.5,242.15 -531.95,492.2 347.34,-325.33 697.1,-320.9 1036.48,2.01 -30.69,-257.9 -229.35,-497.39 -504.53,-494.21z"/>
                         </g>
                         <!-- Parte inferior branca -->
                         <path class="fil1" d="M531.95 1068.61c-322.51,0.12 -481.5,-242.15 -531.95,-492.2 347.34,325.33 697.1,320.9 1036.49,-2.01 -30.69,257.9 -229.36,497.39 -504.53,494.21z"/>
-                        <!-- Íris -->
+                        <!-- ÃƒÆ’Ã‚Âris -->
                         <ellipse class="fil0" cx="512.12" cy="527.36" rx="191.4" ry="191.94"/>
                     </g>
                 </svg>
@@ -65,7 +63,7 @@ if (session_status() === PHP_SESSION_NONE) {
         <div id = "search-div">
 
             <div>
-                <input type="text" class="search-bar" id="searchmovie" placeholder="Pesquisar filme ou série" autocomplete="off" >
+                <input type="text" class="search-bar" id="searchmovie" placeholder="Pesquisar filme ou s&eacute;rie" autocomplete="off" >
                 <!-- <button id="botaoPesquisar">Pesquisar</button> -->
 
                 <div id="results" style="display: none;"></div>
@@ -88,7 +86,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
             } else if (isset($_SESSION['nome'])) {
                 echo '<div class="user-greeting">';
-                echo "<label>Olá, " . $_SESSION['nome'] . " ";
+                echo "<label>OlÃƒÆ’Ã‚Â¡, " . $_SESSION['nome'] . " ";
                 echo '<a href= logout.php class=btn-danger> Sair </a>';
                 echo '</div>';
                 echo '<div class="menu-trigger">';
@@ -111,22 +109,30 @@ if (session_status() === PHP_SESSION_NONE) {
 
 /* Main Menu */
 #menu{
-    max-width:100%;
-    height: 64px;
+    width: 100%;
+    margin: 0;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    min-height: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05)); /*Glass transparency*/
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.034);
+    isolation: isolate;
 }
 
 .faixa {
     display: flex;
-    top: 0; /* Define a posição no topo */
-    left: 0; /* Define a posição na borda esquerda */
-    max-width: 1400px; /* Faz o menu ocupar toda a largura da página */
-    z-index: 1000; /* Garante que o menu fique acima de outros elementos */
     flex-direction: row;
-    align-items: center; /* Centraliza verticalmente */
-    border: solid 1px black;
-    background-color: rgb(0, 0, 0);
+    align-items: center;
+    flex-wrap: wrap;
+    width: 100%;
+    max-width: 1200px;
     margin: 0 auto;
-    height: 60px;
+    padding: clamp(8px, 1.2vw, 14px) clamp(18px, 3vw, 36px);
+    gap: 16px;
+    row-gap: 8px;
     font-family: Nunito;
 }
 
@@ -146,8 +152,24 @@ if (session_status() === PHP_SESSION_NONE) {
     text-overflow: ellipsis;
 }
 
+.user-menu {
+    display: flex;
+    align-items: center;
+    margin-left: auto;
+}
+
+.user-menu ul{
+    display: flex;
+    align-items: center;
+    margin: 0;
+    padding: 0;
+}
+
 .user-menu ul li{
-    padding-left: 30px; /* espaço para a lupa */
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px 8px 36px; /* espaÃƒÆ’Ã‚Â§o para a lupa */
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='white'%3E%3Cpath d='M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM12.735 14c.618 0 1.093-.561.872-1.139a6.002 6.002 0 0 0-11.215 0c-.22.578.254 1.139.872 1.139h9.47Z'/%3E%3C/svg%3E");
     background-position: 8px center;
     background-size: 20px 20px; /* largura altura */
@@ -238,8 +260,9 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 @media screen and (max-width: 500px) {
-  .logo-font {
-    font-size: 24px;
+  .dashboard-logo {
+    --wyw-brand-size: clamp(1.1rem, 5vw, 1.4rem);
+    gap: 8px;
   }
 
 }
@@ -247,9 +270,10 @@ if (session_status() === PHP_SESSION_NONE) {
 /* Search Bar*/
 
 #search-div {
-    width: 100%;
-    max-width: 600px;
-    margin: 0px auto;
+    flex: 1 1 320px;
+    min-width: 220px;
+    max-width: 520px;
+    margin: 0 clamp(12px, 3vw, 28px);
     position: relative;
 }
 
@@ -280,8 +304,12 @@ input::placeholder {
 
 @media (max-width: 1000px) {
     #search-div {
-        display: none;
-    }
+    flex: 1 1 320px;
+    min-width: 220px;
+    max-width: 520px;
+    margin: 0 clamp(12px, 3vw, 28px);
+    position: relative;
+}
 }
 
 #results {
@@ -339,46 +367,16 @@ input::placeholder {
     left: 0;
 }
 
-.logo{
-  display: flex;
+.dashboard-logo {
+  --wyw-brand-size: clamp(1.35rem, 2.2vw, 1.8rem);
+  --wyw-brand-eye-scale: 0.5;
+  gap: 10px;
   align-items: center;
 }
 
-
-.logo-font,
-.logo-font2,
-.logo-font-y {
-  display: inline;
-  padding: 0;
-  margin: 0;
+.dashboard-logo .wyw-brand__watch {
+  text-shadow: none;
 }
-
-.logo-font, 
-.logo-font-y{
-    font-family: Quicksand;
-    font-weight: 600;
-    font-size: 30px;
-}
-
-.logo-font-y{
-    margin-left: 5px;
-}
-
-.logo-font2{
-    font-family: Bebas Neue;
-    font-size: 35px;
-    color: #D7171E;
-    margin-left: 5px;
-}
-
-.logo-eye {
-  display: inline;
-  height: 0.65em;
-  margin-top: 2.5px;
-  padding: 0;
-
-}
-
 .home-header,
 .home-header:hover,
 .home-header:focus,
@@ -387,3 +385,16 @@ input::placeholder {
 }
 
 </style>
+
+
+
+
+
+
+
+
+
+
+
+
+

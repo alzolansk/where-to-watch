@@ -1,9 +1,10 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    <link rel="stylesheet" href="css/brand.css">
     <link rel="stylesheet" href="css/person.css">
 
     <title id="name-person"></title>
@@ -16,7 +17,7 @@
                 <img id="person-img" src="" alt="Foto do ator" class="actor-photo">
                 
                 <div class="name-bio">
-                    <h1 id="person-name"><span id="heart-icon">♡</span></h1>
+                    <h1 id="person-name"><span id="heart-icon">â™¡</span></h1>
                     <h2 id="profession-label-1" style="display: none;"></h2>
                     <p id="person-profession-1" style="display: none;"></p>   
                     <h3 id="bio-h3" class="bio-label">Biografia</h3>
@@ -35,13 +36,13 @@
                 </div>
             </div>
             
-            <h2 id="profession-label-2">Profissão</h2>
-            <p id="person-profession-2" class="person-profession-2 label-2">Profissão</p>
+            <h2 id="profession-label-2">ProfissÃ£o</h2>
+            <p id="person-profession-2" class="person-profession-2 label-2">ProfissÃ£o</p>
 
-            <!-- SESSÃO: COLABOROU COM -->
+            <!-- SESSÃƒO: COLABOROU COM -->
             <h2 class="worked-title">Worked with</h2>
             <div class="worked-carousel" id="worked-with">
-                <!-- Os atores serão inseridos aqui via JS -->
+                <!-- Os atores serÃ£o inseridos aqui via JS -->
             </div>
         </div>
         

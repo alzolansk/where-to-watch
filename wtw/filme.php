@@ -1,8 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="css/brand.css">
     <link rel="stylesheet" href="css/movie.css">
     <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
@@ -50,12 +51,12 @@
                         <p id="movieOverview"></p>
                         
                         <li class="tools-section" style="display:none;">
-                            <a id="trailerLink" onclick="event.preventDefault(); showTrailer(this.dataset.trailerUrl || this.href); event.stopPropagation();" class="tools" href="#" target="_blank">▶ Assistir Trailer</a>
+                            <a id="trailerLink" onclick="event.preventDefault(); showTrailer(this.dataset.trailerUrl || this.href); event.stopPropagation();" class="tools" href="#" target="_blank">â–¶ Assistir Trailer</a>
                             <a href="#" class="tools">&#128278; Assistir mais tarde</a>
 
                             <div class="tools notify-dropdown">
                                 <span>&#128339; Avise-me se este <span id="media-type"></span> chegar em</span>
-                                <button class="dropbtn">Netflix ▾</button>
+                                <button class="dropbtn">Netflix â–¾</button>
                                 <div class="dropdown-content">
                                     <a href="#">Netflix</a>
                                     <a href="#">Amazon Prime</a>

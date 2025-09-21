@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
     <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    <link rel="stylesheet" href="css/brand.css">
     <link rel="stylesheet" href="css/style.css">
     <!--<link rel="stylesheet" href="css/searchmovie.css">-->
     <link rel="icon" href="imagens/wywatch-favicon-iris-nobackground.png">
@@ -17,117 +18,112 @@
 
 <body>    
 
-    <?php
-
-    include_once('dashboard.php');
-    include_once('config/config.php');
-
-    //$sql_consult_filmes = "SELECT * FROM tb_items WHERE type_item = 'Filme'";
-    //$result_filmes = $conexao->query($sql_consult_filmes);
-
-    //$sql_consult_serie = "SELECT * FROM tb_items WHERE type_item = 'Serie'";
-    //$result_serie = $conexao->query($sql_consult_serie);
-
+    <?php include_once('dashboard.php');
+        include_once('config/config.php');
     ?>
-
 
     <section id="interface" class="interface-section">
 
-            <!-- Modal para o trailer -->
-            <dialog id="dialog" class="dialog">
-                <iframe id="trailerFrame" src="" title="Trailer" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-                <button id="close-trailer" onclick="closeTrailer()">X</button>
-            </dialog>
+        <!-- Modal para o trailer -->
+        <dialog id="dialog" class="dialog">
+            <iframe id="trailerFrame" src="" title="Trailer" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            <button id="close-trailer" onclick="closeTrailer()">X</button>
+        </dialog>
 
-            <div class="wrap">
+        <div class="wrap">
 
-                <button id="btnLeft" class="prev" onclick="scrollLeftCustom()">&#10094;</button>
+            <button id="btnLeft" class="prev" onclick="scrollLeftCustom()">&#10094;</button>
 
-                <div id="container-wrap" class="container-wrap">
-                <!--Primeiro container com trailer e backdrop-->
-                </div>
-                <button id="btnRight" class="next" onclick="scrollRight()">&#10095;</button>
+            <div id="container-wrap" class="container-wrap">
+            <!--Primeiro container com trailer e backdrop-->
             </div>
+            <button id="btnRight" class="next" onclick="scrollRight()">&#10095;</button>
+        </div>
 
-            <div class="provider-btn-container">
-                <div class="provider-btn-div">
-                    <button><img src="https://image.tmdb.org/t/p/w300/97yvRBw1GzX7fXprcF80er19ot.jpg" alt="Disney+"></button>
-                    <button><img src="https://image.tmdb.org/t/p/w300/pbpMk2JmcoNnQwx5JGpXngfoWtp.jpg" alt="Netflix"></button>
-                    <button><img src="https://image.tmdb.org/t/p/w92/68MNrwlkpF7WnmNPXLah69CR5cb.jpg" alt="Prime Video"></button>
-                    <button><img src="https://image.tmdb.org/t/p/w300/2E03IAZsX4ZaUqM7tXlctEPMGWS.jpg" alt="Apple TV+"></button>
-                    <button><img src="https://image.tmdb.org/t/p/w300/jbe4gVSfRlbPTdESXhEKpornsfu.jpg" alt="Apple TV+"></button>
-                </div>
+        <div class="provider-btn-container">
+            <div class="provider-btn-div">
+                <button><img src="https://image.tmdb.org/t/p/w300/97yvRBw1GzX7fXprcF80er19ot.jpg" alt="Disney+"></button>
+                <button><img src="https://image.tmdb.org/t/p/w300/pbpMk2JmcoNnQwx5JGpXngfoWtp.jpg" alt="Netflix"></button>
+                <button><img src="https://image.tmdb.org/t/p/w92/68MNrwlkpF7WnmNPXLah69CR5cb.jpg" alt="Prime Video"></button>
+                <button><img src="https://image.tmdb.org/t/p/w300/2E03IAZsX4ZaUqM7tXlctEPMGWS.jpg" alt="Apple TV+"></button>
+                <button><img src="https://image.tmdb.org/t/p/w300/jbe4gVSfRlbPTdESXhEKpornsfu.jpg" alt="Apple TV+"></button>
             </div>
+        </div>
 
-            <div class="category-buttons">
-                <div class="style-buttons">
-                    <button id="showMovies" class="btn-category active">Filmes</button>
-                    <button id="showSeries" class="btn-category">Séries</button>
-                </div>
+        <div class="category-buttons">
+            <div class="style-buttons">
+                <button id="showMovies" class="btn-category active">Filmes</button>
+                <button id="showSeries" class="btn-category">S&eacute;rie</button>
             </div>
+        </div>
             
         <div class="media-section">
         <div class="container">
 
-            <h2 class="logo"><b>|</b>
-                <span class="maisPop">Mais populares no</span>
-
-                <span class="logo-font"> where</span>
-                <span class="logo-font-y"> y </span>
-                <img src="imagens/eye-icon2.svg" alt="o" class="logo-eye" />
-                <span class="logo-font">u</span>
-                <span class="logo-font2">WATCH</span>
+            <h2 class="section-heading">
+                <span class="section-heading__bar" aria-hidden="true">|</span>
+                <span class="section-heading__text">Mais populares no</span>
+                <span class="wyw-brand wyw-brand--sm section-heading__brand" aria-label="Where You Watch">
+                    <span class="wyw-brand__where">where</span>
+                    <span class="wyw-brand__where wyw-brand__where--y">y</span>
+                    <img src="imagens/eye-icon2.svg" alt="o" class="wyw-brand__eye" />
+                    <span class="wyw-brand__where wyw-brand__where--u">u</span>
+                    <span class="wyw-brand__watch">WATCH</span>
+                </span>
             </h2>
 
             <div class="carousel-container">
                 <button class="nav-arrow slider-prev" data-target="popular-movies-container">&#10094;</button>
                 <div class="row" id="popular-movies-container">
-                    <!-- Os filmes populares serão ecibidos aqui -->
+                    <!-- Os filmes populares serÃ£o ecibidos aqui -->
                 </div>
                 <button class="nav-arrow slider-next" data-target="popular-movies-container">&#10095;</button>
             </div>
 
-            <h2 class="logo"><b>|</b>
-                <span class="logo-font"> where</span>
-                <span class="logo-font-y"> y </span>
-                <img src="imagens/eye-icon2.svg" alt="o" class="logo-eye" />
-                <span class="logo-font">u</span>
-                <span class="logo-font2">WATCH</span>
-                <span class="indicaSpan">
-                    indica
+            <h2 class="section-heading">
+                <span class="section-heading__bar" aria-hidden="true">|</span>
+                <span class="wyw-brand wyw-brand--sm section-heading__brand" aria-label="Where You Watch">
+                    <span class="wyw-brand__where">where</span>
+                    <span class="wyw-brand__where wyw-brand__where--y">y</span>
+                    <img src="imagens/eye-icon2.svg" alt="o" class="wyw-brand__eye" />
+                    <span class="wyw-brand__where wyw-brand__where--u">u</span>
+                    <span class="wyw-brand__watch">WATCH</span>
                 </span>
+                <span class="section-heading__tag">indica</span>
             </h2>
 
             <div class="carousel-container">
                 <button class="nav-arrow slider-prev" data-target="top-movies-container">&#10094;</button>
                 <div class="row" id="top-movies-container">
-                    <!-- Os filmes com maiores notas serão ecibidos aqui -->
+                    <!-- Os filmes com maiores notas serÃ£o ecibidos aqui -->
                 </div>
                 <button class="nav-arrow slider-next" data-target="top-movies-container">&#10095;</button>
             </div>
 
-            <h2 class="logo"><b>|</b>
-                <span class="logo-font"> Bombando</span>
-                <span class="logo-font2">essa semana</span>
+            <h2 class="section-heading">
+                <span class="section-heading__bar" aria-hidden="true">|</span>
+                <span class="section-heading__text">Bombando</span>
+                <span class="section-heading__highlight">essa semana</span>
             </h2>
 
             <div class="carousel-container">
                 <button class="nav-arrow slider-prev" data-target="trending-movies-container">&#10094;</button>
                 <div class="row" id="trending-movies-container">
-                    <!-- Os filmes com maiores notas serão ecibidos aqui -->
+                    <!-- Os filmes com maiores notas serÃ£o ecibidos aqui -->
                 </div>
                 <button class="nav-arrow slider-next" data-target="trending-movies-container">&#10095;</button>
             </div>
 
-            <h2 class="logo"><b>|</b>
-                <span class="logo-font"> Para os amantes de </span>
-                <span class="logo-font2">musicais</span>
+            <h2 class="section-heading">
+                <span class="section-heading__bar" aria-hidden="true">|</span>
+                <span class="section-heading__text">Para os amantes de</span>
+                <span class="section-heading__highlight">musicais</span>
             </h2>
 
             <div class="carousel-container">
                 <button class="nav-arrow slider-prev" data-target="musical-movies-container">&#10094;</button>
                 <div class="row" id="musical-movies-container">
-                    <!-- Os filmes com maiores notas serão ecibidos aqui -->
+                    <!-- Os filmes com maiores notas serÃ£o ecibidos aqui -->
                 </div>
                 <button class="nav-arrow slider-next" data-target="musical-movies-container">&#10095;</button>
             </div>
@@ -138,7 +134,7 @@
 
                 echo ("<h2><b>|</b> Filmes perfeitos para " .($_SESSION['nome']) ."</h2>");
                 } else{
-                    echo "Filmes perfeitos para você";
+                    echo "Filmes perfeitos para vocÃª";
                 }
                 ?>
 
@@ -167,11 +163,11 @@
                     <?php endif; ?>
                 </div>
 
-                  <button class="next" onclick="scrollRight()">&#10095;</button> Seta próximo 
+                  <button class="next" onclick="scrollRight()">&#10095;</button> Seta prÃ³ximo 
 
             </div>
 
-                <h2><b>|</b>Séries do Momento</h2>
+                <h2><b>|</b>S&eacute;ries do Momento</h2>
 
                 <div class="carousel-container">
                 
@@ -218,3 +214,6 @@
 
 
 </html>
+
+
+

@@ -1,144 +1,228 @@
 <?php
-
 include_once('config/config.php');
 
-$error_message = "";
-$title_error = "";
+$error_message = '';
+$title_error = '';
+$name_value = '';
+$email_value = '';
+$phone_value = '';
 
-if (isset($_POST['submit'])){
+if (isset($_POST['submit'])) {
+    $name_value = trim($_POST['nome'] ?? '');
+    $email_value = trim($_POST['email'] ?? '');
+    $senha = $_POST['senha'] ?? '';
+    $confirm_senha = $_POST['confirmasenha'] ?? '';
+    $phone_value = trim($_POST['phone'] ?? '');
+    $phone_digits = preg_replace('/\D+/', '', $phone_value);
 
-  $nome = trim($_POST['nome']);
-  $email = filter_input(INPUT_POST, 'email', FILTER_VALIDATE_EMAIL);
-  $senha = $_POST['senha'];
-  $confirm_senha = $_POST['confirmasenha'];
-  $phonenumber = preg_replace('/\D+/', '', $_POST['phone']);
+    if ($name_value === '' || $email_value === '' || $senha === '' || $confirm_senha === '') {
+        $title_error = 'Campos obrigatorios';
+        $error_message = 'Preencha todos os campos obrigatorios para continuar.';
+    } else {
+        $email = filter_var($email_value, FILTER_VALIDATE_EMAIL);
 
-  $stmt = $conexao->prepare("SELECT id_user FROM tb_users WHERE email_user = ?");
-  $stmt->bind_param("s", $email);
-  $stmt->execute();
-  $stmt->store_result();
+        if (!$email) {
+            $title_error = 'Email invalido';
+            $error_message = 'Insira um endereco de email valido.';
+        } elseif ($senha !== $confirm_senha) {
+            $title_error = 'Senhas diferentes';
+            $error_message = 'A confirmacao de senha precisa corresponder a senha informada.';
+        } elseif ($phone_value !== '' && strlen($phone_digits) < 10) {
+            $title_error = 'Telefone invalido';
+            $error_message = 'Informe um numero de telefone com DDD.';
+        } else {
+            $stmt = $conexao->prepare('SELECT id_user FROM tb_users WHERE email_user = ?');
+            if ($stmt) {
+                $stmt->bind_param('s', $email);
+                $stmt->execute();
+                $stmt->store_result();
 
-  if ($stmt->num_rows > 0) {
-    $title_error = "Usuário existente";
-    $error_message = "Este e-mail já está cadastrado no where you Watch. Gostaria de realizar login? <a href=\"login.php\">Clique aqui</a>";
-  } else if(!$email){
-    $title_error = "Email inválido";
-    $error_message = "Digite um email válido.";
-  } else if($senha !== $confirm_senha){
-    $title_error = "Senhas diferentes";
-    $error_message = "Senhas diferentes, insira a confimação de senha exatamente como a que você inseriu no campo \"Senha\"";
-  } else{
+                $email_exists = $stmt->num_rows > 0;
+                $stmt->close();
 
-  $hashed_password = password_hash($senha, PASSWORD_DEFAULT);
-
-  $insert_stmt = $conexao->prepare("INSERT INTO tb_users (name_user, email_user, pswd_user, phone_number) VALUES (?, ?, ?, ?)");
-  $insert_stmt->bind_param("ssss", $nome, $email, $hashed_password, $phonenumber);
-    
-  if ($insert_stmt->execute()) {
-    echo "Usuário cadastrado com sucesso!";
-    header("Location: login.php");
-    exit();
-} else {
-    $error_message = "Erro ao cadastrar: " . $stmt->error;
+                if ($email_exists) {
+                    $title_error = 'Usuario existente';
+                    $error_message = 'Este email ja possui cadastro. Gostaria de entrar? <a href="login.php">Clique aqui</a>.';
+                } else {
+                    $hashed_password = password_hash($senha, PASSWORD_DEFAULT);
+                    $insert_stmt = $conexao->prepare('INSERT INTO tb_users (name_user, email_user, pswd_user, phone_number) VALUES (?, ?, ?, ?)');
+                    if ($insert_stmt) {
+                        $insert_stmt->bind_param('ssss', $name_value, $email, $hashed_password, $phone_digits);
+                        if ($insert_stmt->execute()) {
+                            header('Location: login.php');
+                            exit();
+                        } else {
+                            $title_error = 'Erro ao cadastrar';
+                            $error_message = 'Nao foi possivel concluir seu cadastro. Tente novamente.';
+                        }
+                        $insert_stmt->close();
+                    } else {
+                        $title_error = 'Erro ao cadastrar';
+                        $error_message = 'Nao foi possivel preparar o cadastro. Tente novamente mais tarde.';
+                    }
+                }
+            } else {
+                $title_error = 'Erro ao cadastrar';
+                $error_message = 'Nao foi possivel verificar o email informado.';
+            }
+        }
+    }
 }
-
-$stmt->close();
-$conexao->close();
-
-}  
-}
-
 ?>
-
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
-    <link rel="stylesheet" href="css/new-login.css">
-    <title>Sign in with IMDb</title>
+    <title>Criar conta - Where You Watch</title>
     <link rel="icon" href="imagens/wywatch-favicon-iris-nobackground.png">
-
+    <link rel="stylesheet" href="css/brand.css">
+    <link rel="stylesheet" href="css/login.css">
+    <link rel="stylesheet" href="css/new-login.css">
 </head>
-<body>  
-  <div class="login-container">
-    <div class="left-login">
-      <div class="logo-div">
-        <a href="index.php" class="home-header">
-            <h2 class="logo">             
-              <span class="logo-font">where</span>
-              <span class="logo-font-y"> y </span>
-              <img src="imagens/eye-icon2.svg" alt="o" class="logo-eye" />
-              <span class="logo-font">u</span>
-              <span class="logo-font2">WATCH</span>
-            </h2>
-        </a>
-      </div>
-    </div>
-
-    <dialog id="loginInvalid">
-      <p class="titleError"><?php echo $title_error; ?></p>
-      <div class="divider"></div>
-      <p id="errorMessage"><?php echo $error_message; ?></p>
-      <button id="closeDialog">Fechar</button>
+<body class="login-body login-body--register">
+    <dialog id="loginInvalid" class="alert-dialog">
+        <div class="dialog-content">
+            <p class="dialog-title"><?php echo $title_error; ?></p>
+            <div class="dialog-message"><?php echo $error_message; ?></div>
+            <button type="button" class="dialog-button" id="closeDialog">Fechar</button>
+        </div>
     </dialog>
 
-    <div class="right-login">
+    <div class="login-page">
+        <div class="login-shell login-shell--register">
+            <a href="index.php" class="wyw-brand wyw-brand--badge wyw-brand--lg login-logo" aria-label="Ir para a pagina inicial">
+                <span class="wyw-brand__where">where</span>
+                <span class="wyw-brand__where wyw-brand__where--y">y</span>
+                <img src="imagens/eye-icon2.svg" alt="o" class="wyw-brand__eye" />
+                <span class="wyw-brand__where wyw-brand__where--u">u</span>
+                <span class="wyw-brand__watch">WATCH</span>
+            </a>
 
-      <div class="form">
-        <form action="new-login.php" method="POST">
-          <hgroup>
-            <h3> Criar conta </h3>
-          </hgroup>
+            <div class="login-card register-card">
+                <div class="card-header">
+                    <h1 class="card-title">Criar conta</h1>
+                    <p class="card-subtitle">Cadastre-se para salvar favoritos e descobrir onde assistir seus filmes e series.</p>
+                </div>
 
-          <label for="name"> <b> Nome </b></label>
-          <input type="text" name="nome" id="nome">
+                <form action="new-login.php" method="POST" class="login-form register-form">
+                    <div class="input-group">
+                        <label for="nome">Nome</label>
+                        <input type="text" name="nome" id="nome" class="input-control" placeholder="Seu nome completo" value="<?php echo htmlspecialchars($name_value, ENT_QUOTES, 'UTF-8'); ?>" required>
+                    </div>
 
-          <label for="email"><b> Email </b></label>
-          <input type="text" name="email" id="email">
+                    <div class="input-group">
+                        <label for="email">Email</label>
+                        <input type="email" name="email" id="email" class="input-control" placeholder="usuario@gmail.com" value="<?php echo htmlspecialchars($email_value, ENT_QUOTES, 'UTF-8'); ?>" required>
+                    </div>
 
-          <label for="phoneNumber"><b> Número de telefone </b></label>
-          <input type="number" name="phone" id="phone">
+                    <div class="input-group">
+                        <label for="phone">Numero de telefone</label>
+                        <input type="tel" name="phone" id="phone" class="input-control" placeholder="11999999999" value="<?php echo htmlspecialchars($phone_value, ENT_QUOTES, 'UTF-8'); ?>">
+                    </div>
 
-          <label for="password"><b> Password </b></label>
-          <input type="password" name="senha" id="senha">
+                    <div class="input-group">
+                        <label for="senha">Senha</label>
+                        <div class="password-field">
+                            <input type="password" name="senha" id="senha" class="input-control" placeholder="Crie uma senha segura" required>
+                            <button type="button" class="password-toggle" data-target="senha" aria-label="Mostrar senha">
+                                <svg class="icon-eye icon-eye-show" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                                <svg class="icon-eye icon-eye-hide" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-7 0-11-7-11-7s4-7 11-7a10.94 10.94 0 0 1 5.94 1.94"></path>
+                                    <path d="M10.73 6.12A10.94 10.94 0 0 1 12 5c7 0 11 7 11 7a21.82 21.82 0 0 1-4.06 5.94"></path>
+                                    <line x1="1" y1="1" x2="23" y2="23"></line>
+                                    <path d="M9.53 9.53a3.5 3.5 0 0 0 4.94 4.94"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
 
-          <label for="password"><b> Confirme a senha </b></label>
-          <input type="password" name="confirmasenha" id="confirma_senha">
+                    <div class="input-group">
+                        <label for="confirma_senha">Confirme a senha</label>
+                        <div class="password-field">
+                            <input type="password" name="confirmasenha" id="confirma_senha" class="input-control" placeholder="Repita sua senha" required>
+                            <button type="button" class="password-toggle" data-target="confirma_senha" aria-label="Mostrar senha">
+                                <svg class="icon-eye icon-eye-show" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                                <svg class="icon-eye icon-eye-hide" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-7 0-11-7-11-7s4-7 11-7a10.94 10.94 0 0 1 5.94 1.94"></path>
+                                    <path d="M10.73 6.12A10.94 10.94 0 0 1 12 5c7 0 11 7 11 7a21.82 21.82 0 0 1-4.06 5.94"></path>
+                                    <line x1="1" y1="1" x2="23" y2="23"></line>
+                                    <path d="M9.53 9.53a3.5 3.5 0 0 0 4.94 4.94"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
 
-          <li class="accountExist">Ja tem uma conta?<a href="login.php"> Clique aqui</a></li></ul>
+                    <button type="submit" value="Sign in" name="submit" id="submit" class="login-primary">Cadastrar</button>
 
-          <input type="submit" value="Sign in" name="submit" id="submit">
-          
-        </form>
-      </div>
+                    <div class="create-account">
+                        <span>Ja tem uma conta?</span>
+                        <a href="login.php" class="link-accent">Entrar</a>
+                    </div>
+
+                    <p class="terms-note">
+                        Ao criar sua conta, voce concorda com os <a href="#">Termos de uso</a> e com a <a href="#">Politica de privacidade</a>.
+                    </p>
+                </form>
+            </div>
+        </div>
+
+        <footer class="login-footer">
+            <nav class="footer-links" aria-label="Links institucionais">
+                <a href="#">Termos</a>
+                <a href="#">Privacidade</a>
+                <a href="#">Suporte</a>
+            </nav>
+        </footer>
     </div>
-  </div>
+
+    <script>
+        const loginInvalidDialog = document.getElementById('loginInvalid');
+        const errorMessageElement = document.querySelector('.dialog-message');
+        const closeDialogButton = document.getElementById('closeDialog');
+
+        if (loginInvalidDialog && errorMessageElement && errorMessageElement.textContent.trim() !== '') {
+            loginInvalidDialog.showModal();
+        }
+
+        if (closeDialogButton) {
+            closeDialogButton.addEventListener('click', () => {
+                loginInvalidDialog.close();
+            });
+        }
+
+        if (loginInvalidDialog) {
+            loginInvalidDialog.addEventListener('cancel', (event) => {
+                event.preventDefault();
+                loginInvalidDialog.close();
+            });
+        }
+
+        document.querySelectorAll('.password-toggle').forEach((button) => {
+            const targetId = button.getAttribute('data-target');
+            const input = document.getElementById(targetId);
+
+            if (!input) {
+                return;
+            }
+
+            button.addEventListener('click', () => {
+                const shouldReveal = input.type === 'password';
+                input.type = shouldReveal ? 'text' : 'password';
+                button.classList.toggle('is-visible', shouldReveal);
+                button.setAttribute(
+                    'aria-label',
+                    shouldReveal ? 'Ocultar senha' : 'Mostrar senha'
+                );
+            });
+        });
+    </script>
 </body>
-
-<script>
-  
-//Erro de login
-
-const loginInvalidDialog = document.getElementById("loginInvalid");
-const titleErrorElement = document.getElementsByClassName("titleError");
-const createAccountElement = document.getElementById("createAccount");
-const errorMessageElement = document.getElementById("errorMessage");
-const closeDialogButton = document.getElementById("closeDialog");
-
-// Verifica se há mensagem de erro no elemento do modal
-if (errorMessageElement.innerText.trim() !== "") {
-   console.log("Erro de login");
-   loginInvalidDialog.showModal();
-}
-
-closeDialogButton.addEventListener("click", function() {
-   loginInvalidDialog.removeAttribute('open'); // Remove a classe para resetar o estado
-   loginInvalidDialog.remove(); 
-});
-
-</script>
-
 </html>
