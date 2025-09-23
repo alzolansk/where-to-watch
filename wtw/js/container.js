@@ -6,6 +6,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     let autoScrollInterval;
     let autoScrollSetupDone = false;
+    let carouselItems = [];
+    let currentIndex = 0;
+    let isUserInteracting = false;
+    let isManualScroll = false;
+    let manualScrollTimeout;
+    let isProgrammaticScroll = false;
+    let programmaticScrollTarget = null;
     // Cache para evitar duplicidade
     const fetchCache = {};
     const fetchJson = (url) => {
@@ -69,64 +76,47 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function activateBackdropContainer(element) {
-        const allContainers = document.querySelectorAll('.backdropContainer');
-        const containerWrap = document.querySelector('.container-wrap');
+        if (!element) {
+            return;
+        }
 
-        // Remove a classe 'active' de todos os contêineres
+        if (typeof window.__wtwSetActiveBackdrop === 'function') {
+            const items = carouselItems.length ? carouselItems : Array.from(document.querySelectorAll('.backdropContainer'));
+            const targetIndex = items.indexOf(element);
+            if (targetIndex !== -1) {
+                if (typeof window.__wtwStopAutoScroll === 'function') {
+                    window.__wtwStopAutoScroll();
+                }
+                window.__wtwSetActiveBackdrop(targetIndex);
+                return;
+            }
+        }
+
+        const allContainers = document.querySelectorAll('.backdropContainer');
+        const localContainerWrap = document.querySelector('.container-wrap');
+
         allContainers.forEach(container => {
             container.classList.remove('active');
         });
 
-        // Adiciona a classe 'active' ao contêiner clicado
         element.classList.add('active');
 
-        // Centraliza o item no contêiner
-        const itemOffset = element.offsetLeft;
-        const containerCenter = (containerWrap.clientWidth / 2) - (element.clientWidth / 2);
+        if (!localContainerWrap) {
+            return;
+        }
 
-        containerWrap.scrollTo({
+        const itemOffset = element.offsetLeft;
+        const containerCenter = (localContainerWrap.clientWidth / 2) - (element.clientWidth / 2);
+
+        localContainerWrap.scrollTo({
             left: itemOffset - containerCenter,
             behavior: 'smooth'
         });
     }
 
     function initAutoScroll() {
-        const items = document.querySelectorAll('.backdropContainer');
+        carouselItems = Array.from(document.querySelectorAll('.backdropContainer'));
         const containerWrap = document.querySelector('.container-wrap');
-
-        if (items.length === 0 || !containerWrap) return;
-
-        let currentIndex = 0;
-        let isUserInteracting = false;
-
-        function centerItem(index) {
-            const item = items[index];
-            if (!item) return;
-
-            items.forEach(el => el.classList.remove('active'));
-            item.classList.add('active');
-
-            const itemOffset = item.offsetLeft;
-            const itemWidth = item.offsetWidth;
-            const containerWidth = containerWrap.clientWidth;
-            const scrollLeft = itemOffset - (containerWidth / 2) + (itemWidth / 2);
-
-            containerWrap.scrollTo({
-                left: scrollLeft,
-                behavior: 'smooth'
-            });
-        }
-
-        function showNextItem() {
-            if (isUserInteracting) return;
-            currentIndex = (currentIndex + 1) % items.length;
-            centerItem(currentIndex);
-        }
-
-        function startAutoScroll() {
-            stopAutoScroll();
-            autoScrollInterval = setInterval(showNextItem, 2000);
-        }
 
         function stopAutoScroll() {
             if (autoScrollInterval) {
@@ -135,10 +125,112 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
-        centerItem(currentIndex);
+        if (!containerWrap || carouselItems.length === 0) {
+            stopAutoScroll();
+            return;
+        }
+
+        const ensureIndexInBounds = index => {
+            if (!carouselItems.length) {
+                return 0;
+            }
+            return Math.max(0, Math.min(index, carouselItems.length - 1));
+        };
+
+        const updateActive = index => {
+            const item = carouselItems[index];
+            if (!item) {
+                return;
+            }
+            carouselItems.forEach(el => el.classList.remove('active'));
+            item.classList.add('active');
+            currentIndex = index;
+            containerWrap.dataset.activeIndex = String(index);
+        };
+
+        const scrollToItem = (index, behavior = 'smooth') => {
+            const item = carouselItems[index];
+            if (!item) {
+                return;
+            }
+            const containerWidth = containerWrap.clientWidth;
+            const targetScroll = item.offsetLeft - (containerWidth / 2) + (item.offsetWidth / 2);
+            programmaticScrollTarget = targetScroll;
+            if (Math.abs(containerWrap.scrollLeft - targetScroll) <= 1) {
+                isProgrammaticScroll = false;
+                programmaticScrollTarget = null;
+                return;
+            }
+            isProgrammaticScroll = true;
+            containerWrap.scrollTo({
+                left: targetScroll,
+                behavior
+            });
+            const resetDelay = behavior === 'smooth' ? 600 : 0;
+            setTimeout(() => {
+                if (programmaticScrollTarget === targetScroll) {
+                    isProgrammaticScroll = false;
+                    programmaticScrollTarget = null;
+                }
+            }, resetDelay);
+        };
+
+        function centerItem(index, options = {}) {
+            if (!carouselItems.length) {
+                return;
+            }
+            const { syncScroll = true, behavior = 'smooth' } = options;
+            const targetIndex = ensureIndexInBounds(index);
+            const activeItem = carouselItems[targetIndex];
+            if (!activeItem) {
+                return;
+            }
+            if (targetIndex !== currentIndex || !activeItem.classList.contains('active')) {
+                updateActive(targetIndex);
+            }
+            if (syncScroll) {
+                scrollToItem(targetIndex, behavior);
+            }
+        }
+
+        function showNextItem() {
+            if (!carouselItems.length || isUserInteracting) {
+                return;
+            }
+            const nextIndex = (currentIndex + 1) % carouselItems.length;
+            centerItem(nextIndex);
+        }
+
+        function startAutoScroll() {
+            stopAutoScroll();
+            autoScrollInterval = setInterval(showNextItem, 2000);
+        }
+
+        window.__wtwSetActiveBackdrop = (index, options = {}) => {
+            stopAutoScroll();
+            isUserInteracting = true;
+            isManualScroll = false;
+            programmaticScrollTarget = null;
+            centerItem(index, options);
+        };
+        window.__wtwGetActiveBackdropIndex = () => currentIndex;
+        window.__wtwGetBackdropCount = () => carouselItems.length;
+        window.__wtwStopAutoScroll = stopAutoScroll;
+        window.__wtwStartAutoScroll = startAutoScroll;
+
+        currentIndex = ensureIndexInBounds(currentIndex);
+        centerItem(currentIndex, { behavior: 'auto' });
         startAutoScroll();
 
         if (!autoScrollSetupDone) {
+            const handleManualInteractionStart = () => {
+                isUserInteracting = true;
+                isManualScroll = true;
+                isProgrammaticScroll = false;
+                programmaticScrollTarget = null;
+                stopAutoScroll();
+            };
+
             containerWrap.addEventListener('mouseenter', () => {
                 isUserInteracting = true;
                 stopAutoScroll();
@@ -146,8 +238,67 @@ document.addEventListener('DOMContentLoaded', function() {
 
             containerWrap.addEventListener('mouseleave', () => {
                 isUserInteracting = false;
-                startAutoScroll();
+                if (!isManualScroll) {
+                    startAutoScroll();
+                }
             });
+
+            containerWrap.addEventListener('pointerdown', handleManualInteractionStart, { passive: true });
+            containerWrap.addEventListener('touchstart', handleManualInteractionStart, { passive: true });
+            containerWrap.addEventListener('wheel', handleManualInteractionStart, { passive: true });
+
+            const updateActiveFromScroll = () => {
+                if (!carouselItems.length) {
+                    return;
+                }
+                const containerCenter = containerWrap.scrollLeft + (containerWrap.clientWidth / 2);
+                let closestIndex = currentIndex;
+                let minDistance = Infinity;
+
+                carouselItems.forEach((item, index) => {
+                    const itemCenter = item.offsetLeft + (item.offsetWidth / 2);
+                    const distance = Math.abs(containerCenter - itemCenter);
+                    if (distance < minDistance) {
+                        minDistance = distance;
+                        closestIndex = index;
+                    }
+                });
+
+                centerItem(closestIndex, { syncScroll: false });
+
+                if (manualScrollTimeout) {
+                    clearTimeout(manualScrollTimeout);
+                }
+
+                manualScrollTimeout = setTimeout(() => {
+                    centerItem(closestIndex);
+                    isManualScroll = false;
+                    isUserInteracting = false;
+                    startAutoScroll();
+                }, 200);
+            };
+
+            containerWrap.addEventListener('scroll', () => {
+                if (isProgrammaticScroll) {
+                    if (programmaticScrollTarget !== null) {
+                        const distanceToTarget = Math.abs(containerWrap.scrollLeft - programmaticScrollTarget);
+                        if (distanceToTarget <= 1) {
+                            isProgrammaticScroll = false;
+                            programmaticScrollTarget = null;
+                        }
+                    }
+                    if (isProgrammaticScroll) {
+                        return;
+                    }
+                    return;
+                }
+                if (!isManualScroll) {
+                    isManualScroll = true;
+                    isUserInteracting = true;
+                    stopAutoScroll();
+                }
+                updateActiveFromScroll();
+            }, { passive: true });
 
             document.getElementById('btnRight').addEventListener('click', () => {
                 isUserInteracting = true;
@@ -159,14 +310,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 stopAutoScroll();
             });
 
-            containerWrap.addEventListener('wheel', () => {
-                isUserInteracting = true;
-                stopAutoScroll();
-            }, { passive: true });
-
             autoScrollSetupDone = true;
         }
     }
+
 
     function switchMedia(newType) {
         const outClass = newType === "tv" ? "fade-out-left" : "fade-out-right";
@@ -315,9 +462,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 });
                                 const detailsHref = `filme.php?${params.toString()}`;
                                 slideEl.innerHTML = `
-                                                                    <img src="${backdropUrl}" alt="Backdrop de ${movie.title || movie.name}" class="hero-card__backdrop">
-                                                                    ${productionLogos ? `<div class="hero-card__brand-row">${productionLogos}</div>` : ''}
-                                                                    <div class="hero-card__layout">
+                                                                    <img src="${backdropUrl}" alt="Backdrop de ${movie.title || movie.name}" class="hero-card__backdrop">                                                                    <div class="hero-card__layout">
                                                                         <div class="hero-card__content">
                                                                             <div class="hero-card__top">
                                                                                 ${primaryCompanyName ? `<span class="hero-card__eyebrow">${primaryCompanyName}</span>` : `<span class="hero-card__eyebrow">Nos cinemas</span>`}

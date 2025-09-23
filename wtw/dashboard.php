@@ -218,7 +218,7 @@ if (session_status() === PHP_SESSION_NONE) {
 #menu ul :hover{
     transition: 0.4s;
     background-color: rgba(77, 77, 77, 0.329);
-    border-radius: 20px;
+    border-radius: 10px;
     text-decoration: none;
 }
 
@@ -290,7 +290,6 @@ if (session_status() === PHP_SESSION_NONE) {
 
 .search-bar:focus {
     outline: none;
-    box-shadow: 0 0 10px rgba(255, 50, 50, 0.5);
 }
 
 input::placeholder {

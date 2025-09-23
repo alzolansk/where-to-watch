@@ -52,21 +52,38 @@ if (buttonClose) {
 //Função setinhas de navegação
 function scrollToNextItem(direction = 'right') {
     const items = document.querySelectorAll('.backdropContainer');
-    const wrap = document.querySelector('.container-wrap');
-    const activeIndex = Array.from(items).findIndex(item => item.classList.contains('active'));
+    if (!items.length) {
+        return;
+    }
+
+    const getState = typeof window.__wtwGetBackdropCount === 'function' && typeof window.__wtwGetActiveBackdropIndex === 'function'
+        ? { count: window.__wtwGetBackdropCount(), active: window.__wtwGetActiveBackdropIndex() }
+        : null;
+
+    let activeIndex = getState ? getState.active : Array.from(items).findIndex(item => item.classList.contains('active'));
+    if (activeIndex < 0) {
+        activeIndex = 0;
+    }
 
     let nextIndex = direction === 'right' ? activeIndex + 1 : activeIndex - 1;
 
-    // Garante que o índice fique no intervalo permitido
     if (nextIndex < 0) nextIndex = 0;
     if (nextIndex >= items.length) nextIndex = items.length - 1;
 
-    // Remove classe 'active' de todos e adiciona no novo item
+    if (typeof window.__wtwSetActiveBackdrop === 'function') {
+        window.__wtwSetActiveBackdrop(nextIndex);
+        return;
+    }
+
+    const wrap = document.querySelector('.container-wrap');
     items.forEach(item => item.classList.remove('active'));
     const targetItem = items[nextIndex];
     targetItem.classList.add('active');
 
-    // Centraliza o novo item no contêiner
+    if (!wrap) {
+        return;
+    }
+
     const itemOffset = targetItem.offsetLeft;
     const containerCenter = (wrap.clientWidth / 2) - (targetItem.clientWidth / 2);
     wrap.scrollTo({
