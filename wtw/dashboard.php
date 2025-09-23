@@ -111,7 +111,7 @@ if (session_status() === PHP_SESSION_NONE) {
     z-index: 1000;
     min-height: 0;
     background: linear-gradient(135deg, rgba(138, 138, 138, 0.15), rgba(255,255,255,0.05)); /*Glass transparency*/
-    backdrop-filter: blur(20px) saturate(180%);
+    backdrop-filter: blur(10px) saturate(180%);
     -webkit-backdrop-filter: blur(20px) saturate(180%);
     border-bottom: 1px solid rgba(255, 255, 255, 0.034);
     isolation: isolate;

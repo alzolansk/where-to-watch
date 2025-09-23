@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let mediaType = 'movie'; // Inicialmente filmes
     const contentSection = document.querySelector(".media-section");
     const sliderIndicator = document.querySelector('.style-buttons .slider-indicator');
+    const BUTTON_RESUME_DELAY = 3000;
 
     let autoScrollInterval;
     let autoScrollSetupDone = false;
@@ -11,6 +12,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let isUserInteracting = false;
     let isManualScroll = false;
     let manualScrollTimeout;
+    let buttonInteractionTimeout;
     let isProgrammaticScroll = false;
     let programmaticScrollTarget = null;
     // Cache para evitar duplicidade
@@ -118,6 +120,11 @@ document.addEventListener('DOMContentLoaded', function() {
         carouselItems = Array.from(document.querySelectorAll('.backdropContainer'));
         const containerWrap = document.querySelector('.container-wrap');
 
+        if (buttonInteractionTimeout) {
+            clearTimeout(buttonInteractionTimeout);
+            buttonInteractionTimeout = null;
+        }
+
         function stopAutoScroll() {
             if (autoScrollInterval) {
                 clearInterval(autoScrollInterval);
@@ -206,6 +213,24 @@ document.addEventListener('DOMContentLoaded', function() {
             autoScrollInterval = setInterval(showNextItem, 2000);
         }
 
+        const clearButtonInteractionTimeout = () => {
+            if (buttonInteractionTimeout) {
+                clearTimeout(buttonInteractionTimeout);
+                buttonInteractionTimeout = null;
+            }
+        };
+
+        const scheduleAutoScrollResume = (delay = BUTTON_RESUME_DELAY) => {
+            clearButtonInteractionTimeout();
+            buttonInteractionTimeout = setTimeout(() => {
+                if (!isManualScroll) {
+                    isUserInteracting = false;
+                    startAutoScroll();
+                }
+                buttonInteractionTimeout = null;
+            }, delay);
+        };
+
         window.__wtwSetActiveBackdrop = (index, options = {}) => {
             stopAutoScroll();
             isUserInteracting = true;
@@ -224,6 +249,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (!autoScrollSetupDone) {
             const handleManualInteractionStart = () => {
+                clearButtonInteractionTimeout();
                 isUserInteracting = true;
                 isManualScroll = true;
                 isProgrammaticScroll = false;
@@ -232,6 +258,7 @@ document.addEventListener('DOMContentLoaded', function() {
             };
 
             containerWrap.addEventListener('mouseenter', () => {
+                clearButtonInteractionTimeout();
                 isUserInteracting = true;
                 stopAutoScroll();
             });
@@ -300,15 +327,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 updateActiveFromScroll();
             }, { passive: true });
 
-            document.getElementById('btnRight').addEventListener('click', () => {
+            const handleButtonInteraction = () => {
                 isUserInteracting = true;
                 stopAutoScroll();
-            });
+                scheduleAutoScrollResume();
+            };
 
-            document.getElementById('btnLeft').addEventListener('click', () => {
-                isUserInteracting = true;
-                stopAutoScroll();
-            });
+            document.getElementById('btnRight').addEventListener('click', handleButtonInteraction);
+
+            document.getElementById('btnLeft').addEventListener('click', handleButtonInteraction);
 
             autoScrollSetupDone = true;
         }
@@ -462,48 +489,48 @@ document.addEventListener('DOMContentLoaded', function() {
                                 });
                                 const detailsHref = `filme.php?${params.toString()}`;
                                 slideEl.innerHTML = `
-                                                                    <img src="${backdropUrl}" alt="Backdrop de ${movie.title || movie.name}" class="hero-card__backdrop">                                                                    <div class="hero-card__layout">
-                                                                        <div class="hero-card__content">
-                                                                            <div class="hero-card__top">
-                                                                                ${primaryCompanyName ? `<span class="hero-card__eyebrow">${primaryCompanyName}</span>` : `<span class="hero-card__eyebrow">Nos cinemas</span>`}
-                                                                                <div class="hero-card__title-block">
-                                                                                    ${titleLogoUrl ? `<img src="${titleLogoUrl}" alt="${movie.title || movie.name}" class="hero-card__title-logo">` : ''}
-                                                                                    ${showTextTitle ? `<h2 class="hero-card__title">${movie.title || movie.name}</h2>` : ''}
-                                                                                    ${showOriginalSubtitle ? `<p class="hero-card__subtitle">${movie.original_title}</p>` : ''}
-                                                                                </div>
-                                                                                <div class="hero-card__meta">
-                                                                                    <span class="hero-card__badge">${mediaTypeTxt}</span>
-                                                                                    ${releaseYear ? `<span class="hero-card__meta-item">${releaseYear}</span>` : ''}
-                                                                                    ${runtime ? `<span class="hero-card__meta-item">${runtime}</span>` : ''}
-                                                                                    ${voteAverage ? `<span class="hero-card__meta-item hero-card__meta-item--rating"><img src="imagens/star-emoji.png" alt="" aria-hidden="true">${voteAverage}</span>` : ''}
-                                                                                </div>
-                                                                                ${genresNames ? `<p class="hero-card__genres">${genresNames}</p>` : ''}
-                                                                                ${tagline ? `<p class="hero-card__tagline">"${tagline}"</p>` : ''}
-                                                                                ${truncatedOverview ? `<p class="hero-card__overview">${truncatedOverview}</p>` : ''}
-                                                                            </div>
-                                                                            <div class="hero-card__bottom">
-                                                                                <div class="hero-card__actions">
-                                                                                    <button type="button" class="hero-card__action hero-card__action--primary js-open-trailer">
-                                                                                        <span class="hero-card__action-icon">&#9654;</span>
-                                                                                        Assistir trailer
-                                                                                    </button>
-                                                                                    <button type="button" class="hero-card__action hero-card__action--ghost js-open-details">
-                                                                                        <span class="hero-card__action-icon">+</span>
-                                                                                        Ver detalhes
-                                                                                    </button>
-                                                                                </div>
-                                                                                ${castNames ? `<div class="hero-card__cast">
-                                                                                    <span class="hero-card__cast-label">Elenco</span>
-                                                                                    <p class="hero-card__cast-names">${castNames}</p>
-                                                                                </div>` : ''}
-                                                                                ${releaseLabel ? `<p class="hero-card__release">Estreia ${releaseLabel}</p>` : ''}
-                                                                            </div>
-                                                                        </div>
-                                                                        <aside class="hero-card__poster">
-                                                                            <img src="${imgUrl}" alt="Poster de ${movie.title || movie.name}" class="hero-card__poster-img">
-                                                                        </aside>
-                                                                    </div>
-                                                                `;
+                                    <img src="${backdropUrl}" alt="Backdrop de ${movie.title || movie.name}" class="hero-card__backdrop">                                                                    <div class="hero-card__layout">
+                                        <div class="hero-card__content">
+                                            <div class="hero-card__top">
+                                                ${primaryCompanyName ? `<span class="hero-card__eyebrow">${primaryCompanyName}</span>` : `<span class="hero-card__eyebrow">Nos cinemas</span>`}
+                                                <div class="hero-card__title-block">
+                                                    ${titleLogoUrl ? `<img src="${titleLogoUrl}" alt="${movie.title || movie.name}" class="hero-card__title-logo">` : ''}
+                                                    ${showTextTitle ? `<h2 class="hero-card__title">${movie.title || movie.name}</h2>` : ''}
+                                                    ${showOriginalSubtitle ? `<p class="hero-card__subtitle">${movie.original_title}</p>` : ''}
+                                                </div>
+                                                <div class="hero-card__meta">
+                                                    <span class="hero-card__badge">${mediaTypeTxt}</span>
+                                                    ${releaseYear ? `<span class="hero-card__meta-item">${releaseYear}</span>` : ''}
+                                                    ${runtime ? `<span class="hero-card__meta-item">${runtime}</span>` : ''}
+                                                    ${voteAverage ? `<span class="hero-card__meta-item hero-card__meta-item--rating"><img src="imagens/star-emoji.png" alt="" aria-hidden="true">${voteAverage}</span>` : ''}
+                                                </div>
+                                                ${genresNames ? `<p class="hero-card__genres">${genresNames}</p>` : ''}
+                                                ${tagline ? `<p class="hero-card__tagline">"${tagline}"</p>` : ''}
+                                                ${truncatedOverview ? `<p class="hero-card__overview">${truncatedOverview}</p>` : ''}
+                                            </div>
+                                            <div class="hero-card__bottom">
+                                                <div class="hero-card__actions">
+                                                    <button type="button" class="hero-card__action hero-card__action--primary js-open-trailer">
+                                                        <span class="hero-card__action-icon">&#9654;</span>
+                                                        Assistir trailer
+                                                    </button>
+                                                    <button type="button" class="hero-card__action hero-card__action--ghost js-open-details">
+                                                        <span class="hero-card__action-icon">+</span>
+                                                        Ver detalhes
+                                                    </button>
+                                                </div>
+                                                ${castNames ? `<div class="hero-card__cast">
+                                                    <span class="hero-card__cast-label">Elenco</span>
+                                                    <p class="hero-card__cast-names">${castNames}</p>
+                                                </div>` : ''}
+                                                ${releaseLabel ? `<p class="hero-card__release">Estreia ${releaseLabel}</p>` : ''}
+                                            </div>
+                                        </div>
+                                        <aside class="hero-card__poster">
+                                            <img src="${imgUrl}" alt="Poster de ${movie.title || movie.name}" class="hero-card__poster-img">
+                                        </aside>
+                                    </div>
+                                `;
                                 const trailerCta = slideEl.querySelector('.js-open-trailer');
                                 if (trailerCta) {
                                     if (trailerYtUrl) {
