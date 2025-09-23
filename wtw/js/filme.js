@@ -1,447 +1,748 @@
-document.addEventListener('DOMContentLoaded', async () => {
+﻿const waitForImages = (container) => new Promise(resolve => {
+    const root = container || document;
+    const images = root ? root.querySelectorAll('img') : [];
+    if (!images || images.length === 0) {
+        resolve();
+        return;
+    }
 
+    let loaded = 0;
+    const check = () => {
+        loaded += 1;
+        if (loaded >= images.length) {
+            resolve();
+        }
+    };
+
+    images.forEach(img => {
+        if (img.complete) {
+            check();
+        } else {
+            img.addEventListener('load', check);
+            img.addEventListener('error', check);
+        }
+    });
+});
+
+document.addEventListener('DOMContentLoaded', async () => {
     showLoading();
 
-    const waitForImages = container => new Promise(resolve => {
-        const images = container ? container.querySelectorAll('img') : [];
-        if (images.length === 0) {
-            resolve();
-            return;
-        }
-        let loaded = 0;
-        const check = () => {
-            loaded++;
-            if (loaded === images.length) resolve();
-        };
-        images.forEach(img => {
-            if (img.complete) {
-                check();
-            } else {
-                img.addEventListener('load', check);
-                img.addEventListener('error', check);
-            }
-
-        });
-    });
-    // Obtém os parâmetros da URL
     const params = new URLSearchParams(window.location.search);
     const apiKey = 'dc3b4144ae24ddabacaeda024ff0585c';
-    const fetchJson = url => fetch(url).then(r => r.json());
+
     let mediaType = params.get('mediaTp') || params.get('type') || (params.has('tv') ? 'tv' : 'movie');
     if (mediaType !== 'tv' && mediaType !== 'movie') {
         mediaType = 'movie';
     }
-    const movieId = params.get('id');
-    const trailerFrameEl = document.getElementById('trailerFrame');
-    const trailerLinkEl = document.getElementById('trailerLink');
-    const releaseDateEl = document.getElementById('release-date');
-    const posterEl = document.getElementById('itemPoster');
-    const backdropEl = document.getElementById('backdropImage');
-    const titleEl = document.getElementById('title-movie');
-    const itemNameEl = document.getElementById('itemName');
-    const genreEl = document.getElementById('genreMovie');
-    const overviewEl = document.getElementById('movieOverview');
 
+    const movieId = params.get('id');
     if (!movieId) {
         console.error('Missing media identifier in filme.js');
         hideLoading();
         return;
     }
 
-    // Recupera os dados
-    let title = params.get('title');
-    let originalTitle = params.get('original_title');
-    let genres = params.get('genres');
-    let releaseDate = params.get('release_date');
-    let imgUrl = params.get('imgUrl');
-    let backdropUrl = params.get('backdropUrl');
-    let trailerUrl = params.get('trailerUrl');
-    let overview = params.get('overview');
-
-    const upcoming = params.get('itemFetch');
-    const ticketSite = params.get('ticketUrl');
-    const genresArray = params.get('genresJson')
-
-    const fetchDetailsById = async (id, type) => {
-        const url = `https://api.themoviedb.org/3/${type}/${id}?api_key=${apiKey}&language=pt-BR&append_to_response=videos`;
-        const response = await fetch(url);
-        const data = await response.json();
-        return { type, data, status: response.status };
+    const dom = {
+        titleTag: document.getElementById('title-movie'),
+        poster: document.getElementById('itemPoster'),
+        backdrop: document.getElementById('backdropImage'),
+        movieLogo: document.getElementById('movieLogo'),
+        itemName: document.getElementById('itemName'),
+        releaseDate: document.getElementById('release-date'),
+        runtime: document.getElementById('runtime'),
+        certification: document.getElementById('certificationBadge'),
+        mediaTypeBadge: document.getElementById('mediaTypeBadge'),
+        overview: document.getElementById('movieOverview'),
+        tagList: document.getElementById('tagList'),
+        trailerFrame: document.getElementById('trailerFrame'),
+        trailerLink: document.getElementById('trailerLink'),
+        homepageCta: document.getElementById('homepageCta'),
+        providersCta: document.getElementById('providersCta'),
+        highlightScore: document.getElementById('highlightScore'),
+        highlightPopularity: document.getElementById('highlightPopularity'),
+        highlightVotes: document.getElementById('highlightVotes'),
+        crewList: document.getElementById('crewList'),
+        providerBadges: document.getElementById('providerBadges'),
+        streamingProviders: document.getElementById('streamingProviders'),
+        rentalProviders: document.getElementById('rentalProviders'),
+        buyProviders: document.getElementById('buyProviders'),
+        streamingColumn: document.getElementById('streamingColumn'),
+        rentalColumn: document.getElementById('rentalColumn'),
+        buyColumn: document.getElementById('buyColumn'),
+        providersSection: document.getElementById('providersSection'),
+        seasonSection: document.getElementById('seasonSection'),
+        seasonsContainer: document.getElementById('seasons-container'),
+        castList: document.getElementById('cast-list'),
+        gallerySection: document.getElementById('gallerySection'),
+        galleryTrack: document.getElementById('gallery-track')
     };
 
-    if (!title || !mediaType) {
-        try {
-            const { type, data, status } = await fetchDetailsById(movieId, mediaType);
+    try {
+        const details = await fetchDetailsById(movieId, mediaType, apiKey);
+        if (!details || details.success === false) {
+            throw new Error('ID ou tipo inválido.');
+        }
 
-            if (status !== 200 || data.success === false) {
-                throw new Error('ID ou tipo inválido.');
-            }
+        if (details.media_type === 'movie' || details.media_type === 'tv') {
+            mediaType = details.media_type;
+        }
 
-            title = data.title || data.name || '';
-            originalTitle = data.original_title || data.original_name || '';
-            releaseDate = data.release_date || data.first_air_date || '';
-            genres = data.genres ? data.genres.map(g => g.name).join(', ') : '';
-            imgUrl = data.poster_path ? `https://image.tmdb.org/t/p/w500${data.poster_path}` : '';
-            backdropUrl = data.backdrop_path ? `https://image.tmdb.org/t/p/w1280${data.backdrop_path}` : '';
-            overview = data.overview || '';
-            const trailer = data.videos?.results?.find(v => v.type === 'Trailer' && v.site === 'YouTube');
-            trailerUrl = trailer ? `https://www.youtube.com/watch?v=${trailer.key}` : '#';
+        hydrateHero(details, params, dom, mediaType);
+        renderTags(details, dom);
+        renderHighlights(details, dom);
+        renderCrew(details, dom, mediaType);
 
-        } catch (error) {
-            console.error('Erro ao buscar detalhes do título:', error);
+        const providersBR = details['watch/providers']?.results?.BR || {};
+        renderProviderBadges(providersBR, dom);
+        renderProviders(providersBR, dom);
+
+        renderSeasons(details, dom, mediaType);
+        renderCast(details.credits?.cast || [], dom.castList);
+        renderGallery(details.images || {}, dom);
+    } catch (error) {
+        console.error('Erro ao carregar detalhes do título:', error);
+    } finally {
+        await waitForImages(document);
+        hideLoading();
+        window.history.replaceState({}, '', `filme.php?id=${movieId}&type=${mediaType}`);
+    }
+});
+
+function createImageUrl(path, size = 'w500') {
+    if (!path) {
+        return 'imagens/icon-cast.png';
+    }
+    return `https://image.tmdb.org/t/p/${size}${path}`;
+}
+
+async function fetchDetailsById(id, type, apiKey) {
+    const append = type === 'tv'
+        ? 'videos,images,keywords,watch/providers,content_ratings,credits'
+        : 'videos,images,keywords,watch/providers,release_dates,credits';
+    const url = `https://api.themoviedb.org/3/${type}/${id}?api_key=${apiKey}&language=pt-BR&append_to_response=${append}`;
+    const response = await fetch(url);
+    if (!response.ok) {
+        throw new Error(`HTTP ${response.status} ao buscar detalhes`);
+    }
+    return response.json();
+}
+
+function hydrateHero(details, params, dom, mediaType) {
+    if (!dom) {
+        return;
+    }
+
+    const fallbackTitle = params.get('title') || '';
+    const title = details.title || details.name || fallbackTitle;
+    const poster = details.poster_path ? createImageUrl(details.poster_path, 'w500') : (params.get('imgUrl') || '');
+    const backdrop = details.backdrop_path ? createImageUrl(details.backdrop_path, 'w1280') : (params.get('backdropUrl') || '');
+    const overview = details.overview || params.get('overview') || 'Sinopse indisponível no momento.';
+    const homepage = details.homepage || params.get('ticketUrl') || '';
+    const trailerUrl = resolveTrailerUrl(details, params);
+
+    const releaseDate = details.release_date || details.first_air_date || params.get('release_date') || '';
+    const runtimeText = formatRuntime(details, mediaType);
+    const certificationText = extractCertification(details, mediaType);
+
+    const titleSuffix = mediaType === 'tv' ? ' | Série' : ' | Filme';
+    if (dom.titleTag) {
+        dom.titleTag.textContent = title ? `${title}${titleSuffix}` : 'Where To Watch';
+    }
+    document.title = title ? `${title} · Where To Watch` : 'Where To Watch';
+
+    if (dom.itemName) {
+        dom.itemName.textContent = title;
+    }
+
+    if (dom.poster) {
+        dom.poster.src = poster || 'imagens/icon-cast.png';
+        dom.poster.alt = title ? `Poster de ${title}` : 'Poster do título';
+    }
+
+    if (dom.backdrop) {
+        dom.backdrop.src = backdrop || 'imagens/icon-cast.png';
+        dom.backdrop.alt = title ? `Backdrop de ${title}` : 'Imagem de fundo';
+    }
+    if (dom.movieLogo) {
+        const logoImage = selectBestLogo(details.images?.logos);
+        if (logoImage) {
+            dom.movieLogo.src = createImageUrl(logoImage.file_path, 'w500');
+            dom.movieLogo.alt = title ? `Logo de ${title}` : `Logo do titulo`;
+            dom.movieLogo.classList.add('is-visible');
+        } else {
+            dom.movieLogo.classList.remove('is-visible');
+            dom.movieLogo.removeAttribute('src');
         }
     }
 
-    const creditsUrl = `https://api.themoviedb.org/3/${mediaType}/${movieId}/credits?api_key=${apiKey}&language=pt-BR&page=1`;
-    const providerUrl = `https://api.themoviedb.org/3/${mediaType}/${movieId}/watch/providers?api_key=${apiKey}&language=pt-BR&page=1`;
 
-    // Define cores de fundo para cada provedor
-    const providerBgColors = {
-    'Netflix': '#000000',
-    'Amazon Prime Video': '#FFFFFF',
-    'Amazon Video': '#FFFFFF',
-    'HBO Max': '#0A0A0A',
-    'Max': '#0A0A0A',
-    'Paramount Plus': '#2766FB',
-    'Paramount+': '#2766FB',
-    'Claro video': '#ffffff',
-    'Claro tv+' : '#0F0F0F',
-    'YouTube': '#FF0000',
-    'Microsoft Store': '#0078D9',
-    'Google Play Movies': '#ffffff',
-    'Star Plus': '#141927',
-    'Star+': '#141927',
-    'Rakuten TV': '#E50914',
-    'MGM': '#D4AF37',
-    'Now': '#002776',
-    'Looke': '#333333',
-    'VIX': '#F28E1C',
-    'Telecine Play': '#FF1E1E',
-    'Pluto TV': '#662D91',
-    'Crunchyroll': '#FF5D01',
-    'Oldflix': '#ffffff',
-    'Apple TV+': '#000000'
-    };
+    if (dom.overview) {
+        dom.overview.textContent = overview;
+    }
 
-    const providersWithGradient = {
-        'Apple TV': 'linear-gradient(180deg, #323232, #141414)',
-        'Globoplay': 'linear-gradient(140deg, #FF0033 30%, #FF5D0D 90%, #FF7C00 100%)',
-        'Univer Video': 'linear-gradient(130deg, #40577A 10%, #101824 70%, #161E29)',
-        'Disney Plus': 'linear-gradient(180deg, #03202E 20%,#185563,  #4AD2DF);'
-    };
+    if (dom.releaseDate) {
+        const formatted = releaseDate ? `Estreia • ${formatDate(releaseDate)}` : '';
+        toggleText(dom.releaseDate, formatted);
+    }
 
-    const providerLogoFb = {
-        'apple tv': 'https://play-lh.googleusercontent.com/1XBAZjSOWaVM7UDFKvzuMR-WRoR5gCnsYrw17_ihHLcJKT9Qc7hXptHwWQ3Bf83mry4=w240-h480-rw'
-    };
+    if (dom.runtime) {
+        toggleText(dom.runtime, runtimeText ? `Duração • ${runtimeText}` : '');
+    }
 
-    //Verificação de upcoming
-    if(upcoming == "upcoming"){
-        document.getElementById('providers').innerHTML = `
-        <p> Cinemas mais próximos de você!
-        <a href="${ticketSite}" target="_blank" class="buy-tickets"> Compre aqui </a>
-        </p>
-        `;
-    } else {
-        try {
-            const providerData = await fetchJson(providerUrl);
-            const providers = providerData.results?.BR;
+    if (dom.certification) {
+        toggleText(dom.certification, certificationText ? `Classificação • ${certificationText}` : '');
+    }
 
-            const query = encodeURIComponent(title);
-            const streamingProviders = [];
-            const rentalProviders = [];
+    if (dom.mediaTypeBadge) {
+        toggleText(dom.mediaTypeBadge, mediaType === 'tv' ? 'Série' : 'Filme');
+    }
 
-            const providerSearchMap = {
-                "netflix": `https://www.netflix.com/search?q=${query}`,
-                "apple tv": `https://tv.apple.com/search?term=${query}`,
-                "amazon video": `https://www.primevideo.com/-/pt/search/ref=atv_nb_sug?ie=UTF8&phrase=${query}`,
-                "prime video": `https://www.primevideo.com/search?phrase=${query}`, 
-                "disney": `https://www.disneyplus.com/pt-br/browse/search?q=${query}`,
-                "max": `https://play.hbomax.com/search?q=${query}`,
-                "globoplay": `https://globoplay.globo.com/busca/?q=${query}`,
-                "paramount": `https://www.paramountplus.com/br/search/?keyword=${query}`,
-                "telecine": `https://globoplay.globo.com/busca/tudo/${query}/`,
-                "claro tv": `https://www.clarotvmais.com.br/busca?q=${query}`,
-                "oldflix": `https://oldflix.com.br/home/catalog?search=${query}`,
-                "crunchyroll": `https://www.crunchyroll.com/pt-br/search?q=${query}`,
-                "google":`https://www.youtube.com/results?search_query=${query}&sp=EgIQBA%253D%253D`
-            };
-
-            const ignoredProviders = [
-                'Amazon Channel',
-                'Paramount Channel',
-                'Standard with Ads',
-                'paramount plus apple tv channel',
-                'paramount plus premium',
-                'Belas Artes',
-                'With Ads'
-            ];
-
-            const processProviders = (providerArray, targetArray) => {
-                if (!providerArray) return;
-
-                providerArray.forEach(provider => {
-                    const name = provider.provider_name;
-                    if (ignoredProviders.some(p => name.toLowerCase().includes(p.toLowerCase()))) {
+    if (dom.trailerLink) {
+        const hasTrailer = Boolean(trailerUrl && trailerUrl !== '#');
+        if (hasTrailer) {
+            dom.trailerLink.href = trailerUrl;
+            dom.trailerLink.dataset.trailerUrl = trailerUrl;
+            dom.trailerLink.classList.remove('is-disabled');
+            dom.trailerLink.removeAttribute('aria-disabled');
+            dom.trailerLink.removeAttribute('target');
+            if (!dom.trailerLink.dataset.boundModal) {
+                dom.trailerLink.addEventListener('click', event => {
+                    const targetUrl = dom.trailerLink.dataset.trailerUrl;
+                    if (!targetUrl) {
                         return;
                     }
-
-                    const providerName = name.toLowerCase();
-
-                    let searchUrl = '';
-
-                    if (providerName.includes("netflix") || providerName.includes("apple")) {
-                        if (ticketSite && (ticketSite.includes("tv.apple") || ticketSite.includes(providerName))) {
-                            searchUrl = ticketSite;
-                        } else {
-                            searchUrl = providerSearchMap[providerName.includes("netflix") ? "netflix" : "apple tv"];
-                        }
-                    } else {
-                        for (const key in providerSearchMap) {
-                            if (providerName.includes(key)) {
-                                searchUrl = providerSearchMap[key];
-                                break;
-                            }
-                        }
-
-                        if (!searchUrl) {
-                            searchUrl = `https://www.google.com/search?q=${encodeURIComponent(name + ' ' + title)}`;
-                        }
-                    }
-
-                    const logoPath = provider.logo_path
-                        ? `https://image.tmdb.org/t/p/w300${provider.logo_path}`
-                        : 'imagens/icon-cast.png';
-
-                    targetArray.push({
-                        name,
-                        logo: logoPath,
-                        url: searchUrl
-                    });
-
+                    event.preventDefault();
+                    showTrailer(targetUrl);
                 });
-            };
-
-            // Processa flatrate (streaming) e rent (aluguel)
-            processProviders(providers?.flatrate, streamingProviders);
-            processProviders(providers?.rent, rentalProviders);
-
-            // Exibe no HTML
-            const providersContainer = document.getElementById("providers");
-
-            let html = '';
-
-            if (streamingProviders.length > 0) {
-                html += `
-                    <div class="provider-row">
-                        ${streamingProviders.map(p =>{                        
-                            const backgroundColor = providerBgColors[p.name] || '#1a1a1a';
-                            const gradient = providersWithGradient[p.name];
-                            const providerKey = p.name.trim().toLowerCase();
-                            const customLogo = providerLogoFb[providerKey]? providerKey:p.logo;
-                            const src = customLogo || p.logo;
-                            const style = gradient ? `background-image: ${gradient};` : `background-color: ${backgroundColor};`;
-                            return `
-                            <a href="${p.url}" target="_blank" class="provider-tag">
-                                <img src="${src}" alt="${p.name}" class="logo-provider" style="${style};" />
-                            </a>
-                        `;
-                        }).join('')}
-                        <span class="provider-type">Streaming</span>
-                    </div>
-                `;
+                dom.trailerLink.dataset.boundModal = 'true';
             }
-
-            if (rentalProviders.length > 0) {
-                html += `
-                    <div class="provider-row">
-                        ${rentalProviders.map(p =>{                        
-                            const backgroundColor = providerBgColors[p.name] || '#1a1a1a';
-                            const gradient = providersWithGradient[p.name];
-                            const providerKey = p.name.trim().toLowerCase();
-                            const customLogo = providerLogoFb[providerKey];
-                            const style = gradient ? `background-image: ${gradient};` : `background-color: ${backgroundColor};`;
-                            const src = customLogo || p.logo;
-
-                            return `
-                            <a href="${p.url}" target="_blank" class="provider-tag">
-                                <img src="${src}" alt="${p.name}" class="logo-provider" style="${style};" />
-                            </a>
-                        `;
-                        }).join('')}
-                        <span class="provider-type">Aluguel</span>
-                    </div>
-                `;
-            }
-
-            const allProviders = rentalProviders.length + streamingProviders.length;
-
-            if (html) {
-                providersContainer.innerHTML = html;
-            } else {
-                providersContainer.innerText = "Nenhum provedor encontrado.";
-            }
-        } catch (err) {
-            document.getElementById('providers').innerText = 'Nao encontrado em nenhum provedor';
+        } else {
+            dom.trailerLink.href = '#';
+            dom.trailerLink.dataset.trailerUrl = '';
+            dom.trailerLink.classList.add('is-disabled');
+            dom.trailerLink.setAttribute('aria-disabled', 'true');
         }
     }
-    //Formatação de data
-    const formatDate = (dateString = '') => {
-        if (!dateString) {
-            return null;
-        }
 
-        const parts = dateString.split('-');
-        if (parts.length !== 3) {
-            return dateString;
-        }
+    if (dom.trailerFrame) {
+        const safeUrl = trailerUrl && trailerUrl !== '#' ? trailerUrl : '';
+        dom.trailerFrame.dataset.trailerUrl = safeUrl;
+        dom.trailerFrame.removeAttribute('src');
+    }
 
-        const [year, month, day] = parts;
-        return `${day}/${month}/${year}`;
+    if (dom.homepageCta) {
+        if (homepage) {
+            dom.homepageCta.href = homepage;
+            dom.homepageCta.classList.remove('is-hidden');
+        } else {
+            dom.homepageCta.classList.add('is-hidden');
+        }
+    }
+}
+
+function resolveTrailerUrl(details, params) {
+    const trailerFromParams = params.get('trailerUrl');
+    if (trailerFromParams && trailerFromParams !== '#') {
+        return trailerFromParams;
+    }
+
+    const videos = details.videos?.results || [];
+    const trailer = videos.find(video => video.type === 'Trailer' && video.site === 'YouTube')
+        || videos.find(video => video.site === 'YouTube');
+    return trailer ? `https://www.youtube.com/watch?v=${trailer.key}` : '#';
+}
+
+function toggleText(element, text) {
+    if (!element) {
+        return;
+    }
+    const hasText = Boolean(text);
+    element.textContent = hasText ? text : '';
+    element.classList.toggle('is-hidden', !hasText);
+}
+
+function formatDate(dateString) {
+    try {
+        const date = new Date(dateString);
+        if (Number.isNaN(date.getTime())) {
+            return '';
+        }
+        return date.toLocaleDateString('pt-BR', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric'
+        }).replace('.', '');
+    } catch (err) {
+        return '';
+    }
+}
+
+function formatRuntime(details, mediaType) {
+    if (!details) {
+        return '';
+    }
+    if (mediaType === 'movie') {
+        const runtime = details.runtime || 0;
+        if (!runtime) {
+            return '';
+        }
+        const hours = Math.floor(runtime / 60);
+        const minutes = runtime % 60;
+        if (hours && minutes) {
+            return `${hours}h ${minutes}min`;
+        }
+        if (hours) {
+            return `${hours}h`;
+        }
+        return `${minutes}min`;
+    }
+
+    const totalSeasons = details.number_of_seasons;
+    const episodes = details.number_of_episodes;
+    const runtimeList = Array.isArray(details.episode_run_time) ? details.episode_run_time : [];
+    const runtimeEpisode = runtimeList.length ? runtimeList[0] : null;
+
+    const parts = [];
+    if (totalSeasons) {
+        parts.push(`${totalSeasons} ${totalSeasons === 1 ? 'temporada' : 'temporadas'}`);
+    }
+    if (episodes) {
+        parts.push(`${episodes} episódios`);
+    }
+    if (runtimeEpisode) {
+        parts.push(`episódios de ${runtimeEpisode} min`);
+    }
+    return parts.join(' • ');
+}
+
+function extractCertification(details, mediaType) {
+    if (!details) {
+        return '';
+    }
+
+    if (mediaType === 'movie') {
+        const releases = details.release_dates?.results || [];
+        const region = releases.find(r => r.iso_3166_1 === 'BR') || releases.find(r => r.iso_3166_1 === 'US');
+        const certification = region?.release_dates?.find(item => item.certification)?.certification;
+        return certification || '';
+    }
+
+    const ratings = details.content_ratings?.results || [];
+    const brRating = ratings.find(r => r.iso_3166_1 === 'BR')?.rating;
+    const usRating = ratings.find(r => r.iso_3166_1 === 'US')?.rating;
+    return brRating || usRating || '';
+}
+
+function renderTags(details, dom) {
+    if (!dom?.tagList) {
+        return;
+    }
+    const genres = Array.isArray(details.genres) ? details.genres.map(g => g.name) : [];
+    const keywordsSource = details.keywords || {};
+    const keywordList = Array.isArray(keywordsSource.keywords)
+        ? keywordsSource.keywords
+        : Array.isArray(keywordsSource.results)
+            ? keywordsSource.results
+            : [];
+    const keywords = keywordList.map(k => k.name).filter(Boolean);
+
+    const combined = [...genres];
+    keywords.forEach(keyword => {
+        if (!combined.includes(keyword)) {
+            combined.push(keyword);
+        }
+    });
+
+    const limited = combined.slice(0, 8);
+
+    dom.tagList.innerHTML = '';
+    if (!limited.length) {
+        dom.tagList.classList.add('is-hidden');
+        return;
+    }
+    dom.tagList.classList.remove('is-hidden');
+
+    limited.forEach(tag => {
+        const chip = document.createElement('span');
+        chip.className = 'tag-pill';
+        chip.textContent = tag;
+        dom.tagList.appendChild(chip);
+    });
+}
+
+function renderHighlights(details, dom) {
+    if (!dom) {
+        return;
+    }
+    const score = typeof details.vote_average === 'number' && details.vote_average > 0 ? details.vote_average.toFixed(1) : '—';
+    const popularity = typeof details.popularity === 'number' ? Math.round(details.popularity).toLocaleString('pt-BR') : '—';
+    const votes = typeof details.vote_count === 'number' && details.vote_count > 0 ? details.vote_count.toLocaleString('pt-BR') : '—';
+
+    if (dom.highlightScore) {
+        dom.highlightScore.textContent = score;
+    }
+    if (dom.highlightPopularity) {
+        dom.highlightPopularity.textContent = popularity;
+    }
+    if (dom.highlightVotes) {
+        dom.highlightVotes.textContent = votes;
+    }
+}
+
+function renderCrew(details, dom, mediaType) {
+    if (!dom?.crewList) {
+        return;
+    }
+
+    const crewList = details.credits?.crew || [];
+    const chips = [];
+
+    const findCrew = (jobs) => crewList.find(member => jobs.includes(member.job));
+
+    if (mediaType === 'tv' && Array.isArray(details.created_by) && details.created_by.length) {
+        const names = details.created_by.map(person => person.name).filter(Boolean).join(', ');
+        if (names) {
+            chips.push({ label: 'Criação', value: names });
+        }
+    }
+
+    const director = findCrew(['Director', 'Series Director']);
+    if (director) {
+        chips.push({ label: 'Direção', value: director.name });
+    }
+
+    const writer = findCrew(['Screenplay', 'Writer', 'Story', 'Teleplay']);
+    if (writer) {
+        chips.push({ label: 'Roteiro', value: writer.name });
+    }
+
+    const producer = findCrew(['Executive Producer', 'Producer', 'Co-Producer']);
+    if (producer) {
+        chips.push({ label: 'Produção', value: producer.name });
+    }
+
+    const photography = findCrew(['Director of Photography']);
+    if (photography) {
+        chips.push({ label: 'Fotografia', value: photography.name });
+    }
+
+    dom.crewList.innerHTML = '';
+    if (!chips.length) {
+        dom.crewList.classList.add('is-hidden');
+        return;
+    }
+    dom.crewList.classList.remove('is-hidden');
+
+    chips.forEach(({ label, value }) => {
+        const chip = document.createElement('span');
+        chip.className = 'crew-chip';
+        chip.textContent = `${label}: ${value}`;
+        dom.crewList.appendChild(chip);
+    });
+}
+
+
+function selectBestLogo(logos) {
+    if (!Array.isArray(logos) || !logos.length) {
+        return null;
+    }
+    const preferredLanguages = ['pt', 'pt-br', 'pt_br', 'en', 'es', ''];
+    const scoreFor = (logo) => {
+        const lang = (logo?.iso_639_1 || '').toLowerCase();
+        const index = preferredLanguages.findIndex(item => {
+            if (!item) {
+                return !lang;
+            }
+            return item.toLowerCase() === lang;
+        });
+        return index === -1 ? preferredLanguages.length : index;
     };
-    
-    // Formata a data de lancamento
-    const formattedReleaseDate = formatDate(releaseDate);
+    const sorted = [...logos].sort((a, b) => {
+        const langDiff = scoreFor(a) - scoreFor(b);
+        if (langDiff !== 0) {
+            return langDiff;
+        }
+        const voteDiff = (b.vote_average || 0) - (a.vote_average || 0);
+        if (voteDiff !== 0) {
+            return voteDiff;
+        }
+        return (b.vote_count || 0) - (a.vote_count || 0);
+    });
+    return sorted[0] || null;
+}
 
-    const pageTitle = title ? `${title} - Where you Watch` : 'Where you Watch';
-    if (titleEl) {
-        titleEl.innerText = pageTitle;
+const providerSearchMap = {
+    netflix: 'https://www.netflix.com/br',
+    'prime video': 'https://www.primevideo.com/',
+    'amazon prime video': 'https://www.primevideo.com/',
+    'amazon video': 'https://www.primevideo.com/',
+    'hbo max': 'https://www.max.com/',
+    'max': 'https://www.max.com/',
+    'paramount+': 'https://www.paramountplus.com/br/',
+    'paramount plus': 'https://www.paramountplus.com/br/',
+    'disney+': 'https://www.disneyplus.com/pt-br',
+    'star+': 'https://www.starplus.com/pt-br',
+    globoplay: 'https://globoplay.globo.com/',
+    'apple tv+': 'https://tv.apple.com/',
+    'apple tv': 'https://tv.apple.com/',
+    'google play movies': 'https://play.google.com/store/movies',
+    now: 'https://www.nowonline.com.br/',
+    looke: 'https://www.looke.com.br/',
+    telecine: 'https://www.telecineplay.com.br/',
+    crunchyroll: 'https://www.crunchyroll.com/pt-br',
+    'youtube premium': 'https://www.youtube.com/premium',
+    youtube: 'https://www.youtube.com/'
+};
+
+const ignoredProviders = ['itunes', 'skystore'];
+
+function buildProviderSearchUrl(name) {
+    if (!name) {
+        return '#';
     }
-
-    if (itemNameEl) {
-        itemNameEl.innerText = title || 'Titulo indisponivel';
-    }
-
-    if (genreEl) {
-        genreEl.innerText = genres ? `Genres: ${genres}` : 'Genres: Not available';
-    }
-
-    if (posterEl) {
-        posterEl.src = imgUrl || 'imagens/icon-cast.png';
-    }
-
-    if (backdropEl) {
-        backdropEl.src = backdropUrl || 'imagens/icon-cast.png';
-    }
-
-    if (trailerLinkEl) {
-        const safeUrl = trailerUrl && trailerUrl !== '#' ? trailerUrl : '#';
-        trailerLinkEl.href = safeUrl;
-        trailerLinkEl.dataset.trailerUrl = safeUrl !== '#' ? safeUrl : '';
-    }
-
-    if (trailerFrameEl) {
-        trailerFrameEl.dataset.trailerUrl = trailerUrl && trailerUrl !== '#' ? trailerUrl : '';
-        trailerFrameEl.removeAttribute('src');
-    }
-
-    if (overviewEl) {
-        overviewEl.innerText = overview || 'Overview unavailable.';
-    }
-
-    if (releaseDateEl) {
-        releaseDateEl.innerText = formattedReleaseDate ? `Release date: ${formattedReleaseDate}` : '';
-    }
-
-    // Atualiza a palavra no span
-    const backdropOverlay = document.getElementById('backdropOverlay');  
-
-    // Seasons
-    if (mediaType === 'tv') {
-        try {
-            const detailsData = await fetchJson(`https://api.themoviedb.org/3/tv/${movieId}?api_key=${apiKey}&language=pt-BR`);
-            const seasons = detailsData.seasons || [];
-            const seasonsContainer = document.getElementById('seasons-container');
-            seasonsContainer.innerHTML = '';
-            seasons.forEach(season => {
-                const poster = season.poster_path ? `https://image.tmdb.org/t/p/w300${season.poster_path}` : 'imagens/icon-cast.png';
-                const year = season.air_date ? season.air_date.slice(0, 4) : '';
-                const card = document.createElement('div');
-                card.classList.add('season-item');
-                card.innerHTML = `
-                    <div class="seasons-circle">
-                        <img src="${poster}" alt="${season.name}" class="season-poster" />
-                    </div>
-                    <div class="p-season">
-                        <p class="season-name">${season.name}</p>
-                        <span class="year-season">${year}</span>
-                    </div>
-                `;
-                seasonsContainer.appendChild(card);
-            });
-        } catch (err) {
-            console.error('Erro ao buscar temporadas:', err);
+    const normalized = name.toLowerCase();
+    for (const key in providerSearchMap) {
+        if (normalized.includes(key)) {
+            return providerSearchMap[key];
         }
     }
-
-    const creditsData = await fetchJson(creditsUrl);
-    const castArray = creditsData.cast.slice(0, 20);
-    const castListEl = document.getElementById('cast-list');
-    let castHtml = '';
-
-    if (castArray && castArray.length > 0) {
-        castArray.forEach(cast => {
-            const castName = cast.name;
-            const castRole = cast.character;
-            const castId = cast.id;
-            const profileImg = cast.profile_path ? `https://image.tmdb.org/t/p/w500/${cast.profile_path}` : 'imagens/icon-cast.png';
-
-            castHtml += `
-                <div id="actorCard" class="actor-card" data-cast-name="${castName}" data-profile-img="${profileImg}" data-cast-id="${castId}">
-                    <img src="${profileImg}" alt="${castName}" class="actor-img">
-                    <div class="p-div">
-                        <a href="https://www.google.com/search?q=${castName}" class="actor-name" target="_blank">${castName}</a>
-                        <p class="actor-role">${castRole}</p>
-                    </div>
-                </div>`;
-
-        });
-
-        castListEl.innerHTML = castHtml;
-        document.querySelectorAll('.actor-card').forEach(card => {
-            card.addEventListener('click', () => {
-                const castId = card.getAttribute('data-cast-id');
-                const params = new URLSearchParams({ personId: castId });
-                window.location.href = `person.php?${params.toString()}`;
-            });
-        });
-    }
-
-    await waitForImages(document);
-    hideLoading();
-    window.history.replaceState({}, '', `filme.php?id=${movieId}&type=${mediaType}`);
-});
-
-const castList = document.getElementById('cast-list');
-const castFade = document.getElementById('castFade');
-
-function updateFadeVisibility() {
-    const atEnd = castList.scrollLeft;
-
-    if (atEnd) {
-        castFade.classList.add('hidden');
-    } else {
-        castFade.classList.remove('hidden');
-    }
+    return `https://www.google.com/search?q=${encodeURIComponent(name + ' streaming')}`;
 }
 
-castList.addEventListener('scroll', updateFadeVisibility);
-
-window.addEventListener('load', updateFadeVisibility);
-
-function gerarSlug(title) {
-  if (!title || typeof title !== "string") return '';
-
-  return title
-    .replace(/&/g, "e")                     // troca & por e
-    .normalize("NFD")                       // remove acentos
-    .replace(/[\u0300-\u036f]/g, "")        // remove diacríticos
-    .toLowerCase()
-    .replace(/[^\w\s-]/g, "")               // remove símbolos restantes
-    .trim()
-    .replace(/\s+/g, "-");                  // espaços viram hífens
+function dedupeProviders(list) {
+    const result = [];
+    const seen = new Set();
+    (list || []).forEach(provider => {
+        const id = provider.provider_id || provider.providerId || provider.provider_name;
+        if (!id || seen.has(id)) {
+            return;
+        }
+        if (ignoredProviders.some(term => provider.provider_name?.toLowerCase().includes(term))) {
+            return;
+        }
+        seen.add(id);
+        result.push(provider);
+    });
+    return result.sort((a, b) => (a.display_priority || 1000) - (b.display_priority || 1000));
 }
 
-document.getElementById('closeItem').addEventListener('click', () => {
+function renderProviderBadges(providers, dom) {
+    if (!dom?.providerBadges) {
+        return;
+    }
+
+    const streaming = dedupeProviders(providers.flatrate).slice(0, 4);
+    dom.providerBadges.innerHTML = '';
+
+    if (!streaming.length) {
+        dom.providerBadges.classList.add('is-hidden');
+        return;
+    }
+
+    dom.providerBadges.classList.remove('is-hidden');
+
+    streaming.forEach(provider => {
+        const badge = document.createElement('a');
+        badge.className = 'provider-badge';
+        badge.href = buildProviderSearchUrl(provider.provider_name);
+        badge.target = '_blank';
+        badge.rel = 'noopener';
+
+        if (provider.logo_path) {
+            const img = document.createElement('img');
+            img.src = createImageUrl(provider.logo_path, 'w92');
+            img.alt = provider.provider_name;
+            badge.appendChild(img);
+        }
+
+        const span = document.createElement('span');
+        span.textContent = provider.provider_name;
+        badge.appendChild(span);
+
+        dom.providerBadges.appendChild(badge);
+    });
+}
+
+function renderProviders(providers, dom) {
+    if (!dom?.providersSection) {
+        return;
+    }
+
+    const streaming = dedupeProviders(providers.flatrate);
+    const rental = dedupeProviders(providers.rent);
+    const buy = dedupeProviders(providers.buy);
+
+    const total = streaming.length + rental.length + buy.length;
+
+    if (!total) {
+        dom.providersSection.classList.add('is-hidden');
+        if (dom.providersCta) {
+            dom.providersCta.classList.add('is-hidden');
+        }
+        return;
+    }
+
+    dom.providersSection.classList.remove('is-hidden');
+    if (dom.providersCta) {
+        dom.providersCta.classList.remove('is-hidden');
+    }
+
+    populateProviderColumn(dom.streamingColumn, dom.streamingProviders, streaming);
+    populateProviderColumn(dom.rentalColumn, dom.rentalProviders, rental);
+    populateProviderColumn(dom.buyColumn, dom.buyProviders, buy);
+}
+
+function populateProviderColumn(column, container, providers) {
+    if (!column || !container) {
+        return;
+    }
+    container.innerHTML = '';
+
+    if (!providers.length) {
+        column.classList.add('is-hidden');
+        return;
+    }
+
+    column.classList.remove('is-hidden');
+
+    providers.forEach(provider => {
+        const pill = document.createElement('a');
+        pill.className = 'provider-pill';
+        pill.href = buildProviderSearchUrl(provider.provider_name);
+        pill.target = '_blank';
+        pill.rel = 'noopener';
+
+        if (provider.logo_path) {
+            const img = document.createElement('img');
+            img.src = createImageUrl(provider.logo_path, 'w92');
+            img.alt = provider.provider_name;
+            pill.appendChild(img);
+        }
+
+        const span = document.createElement('span');
+        span.textContent = provider.provider_name;
+        pill.appendChild(span);
+
+        container.appendChild(pill);
+    });
+}
+
+function renderSeasons(details, dom, mediaType) {
+    if (mediaType !== 'tv' || !dom?.seasonSection || !dom.seasonsContainer) {
+        dom?.seasonSection?.classList.add('is-hidden');
+        return;
+    }
+
+    const seasons = Array.isArray(details.seasons) ? details.seasons.filter(Boolean) : [];
+    if (!seasons.length) {
+        dom.seasonSection.classList.add('is-hidden');
+        return;
+    }
+
+    dom.seasonSection.classList.remove('is-hidden');
+    dom.seasonsContainer.innerHTML = '';
+
+    seasons.forEach(season => {
+        const poster = season.poster_path ? createImageUrl(season.poster_path, 'w300') : 'imagens/icon-cast.png';
+        const year = season.air_date ? new Date(season.air_date).getFullYear() : '';
+        const card = document.createElement('article');
+        card.className = 'season-item';
+
+        card.innerHTML = `
+            <img src="${poster}" alt="${season.name || 'Temporada'}" loading="lazy">
+            <div class="season-details">
+                <p class="season-name">${season.name || 'Temporada'}</p>
+                <span class="year-season">${[year, `${season.episode_count || 0} episódios`].filter(Boolean).join(' • ')}</span>
+            </div>
+        `;
+
+        dom.seasonsContainer.appendChild(card);
+    });
+}
+
+function renderCast(castArray, castContainer) {
+    if (!castContainer) {
+        return;
+    }
+
+    const cast = Array.isArray(castArray) ? castArray.slice(0, 20) : [];
+    castContainer.innerHTML = '';
+
+    if (!cast.length) {
+        const message = document.createElement('p');
+        message.className = 'section-subtitle';
+        message.textContent = 'Não encontramos o elenco principal.';
+        castContainer.appendChild(message);
+        return;
+    }
+
+    cast.forEach(member => {
+        const profile = member.profile_path ? createImageUrl(member.profile_path, 'w300') : 'imagens/icon-cast.png';
+        const card = document.createElement('article');
+        card.className = 'actor-card';
+        card.dataset.castId = member.id;
+
+        card.innerHTML = `
+            <img src="${profile}" alt="${member.name}" class="actor-img" loading="lazy">
+            <div class="p-div">
+                <span class="actor-name">${member.name}</span>
+                <p class="actor-role">${member.character || ''}</p>
+            </div>
+        `;
+
+        card.addEventListener('click', () => {
+            if (!member.id) {
+                return;
+            }
+            const params = new URLSearchParams({ personId: member.id });
+            window.location.href = `person.php?${params.toString()}`;
+        });
+
+        castContainer.appendChild(card);
+    });
+}
+
+function renderGallery(images, dom) {
+    if (!dom?.gallerySection || !dom.galleryTrack) {
+        return;
+    }
+
+    const backdrops = Array.isArray(images.backdrops) ? images.backdrops.slice(0, 8) : [];
+    const posters = Array.isArray(images.posters) ? images.posters.slice(0, 4) : [];
+    const galleryItems = [...backdrops, ...posters];
+
+    dom.galleryTrack.innerHTML = '';
+
+    if (!galleryItems.length) {
+        dom.gallerySection.classList.add('is-hidden');
+        return;
+    }
+
+    dom.gallerySection.classList.remove('is-hidden');
+
+    galleryItems.forEach((item, index) => {
+        const isBackdrop = !item.iso_639_1 || item.aspect_ratio > 1;
+        const size = isBackdrop ? 'w780' : 'w500';
+        const card = document.createElement('figure');
+        card.className = 'gallery-card';
+
+        const img = document.createElement('img');
+        img.src = createImageUrl(item.file_path, size);
+        img.alt = isBackdrop ? `Backdrop ${index + 1}` : `Poster ${index + 1}`;
+        img.loading = 'lazy';
+        card.appendChild(img);
+
+        const caption = document.createElement('span');
+        caption.textContent = isBackdrop ? 'Backdrop oficial' : 'Poster oficial';
+        card.appendChild(caption);
+
+        dom.galleryTrack.appendChild(card);
+    });
+}
+
+document.getElementById('closeItem')?.addEventListener('click', () => {
     const modal = document.getElementById('actorDialog');
-    modal.close();
+    modal?.close?.();
 });
+
+

@@ -1,5 +1,5 @@
 ﻿<!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,103 +7,141 @@
     <link rel="stylesheet" href="css/movie.css">
     <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
-    
     <title id="title-movie"></title>
-
     <link rel="icon" href="imagens/wywatch-favicon-iris-nobackground.png">
-
 </head>
 <body>
 
     <?php include_once('dashboard.php'); ?>
 
-  <main class="interface-section">
+    <main class="interface-section movie-page">
+        <div class="page-shell">
+            <dialog id="dialog" class="dialog">
+                <iframe id="trailerFrame" src="" title="Trailer" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                <button id="close-trailer" onclick="closeTrailer()">X</button>
+            </dialog>
 
-    <!-- Container centralizado -->
-    <div class="page-container">
-        <!-- Modal para o trailer -->
-        <dialog id="dialog" class="dialog">
-            <iframe id="trailerFrame" src="" title="Trailer" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-            <button id="close-trailer" onclick="closeTrailer()">X</button>
-        </dialog>
-        
-        <div id="movie-div" class="movieDiv">
-            <div id="movie-info" class="movieInfo">
-                <div class="poster-title">
-                    <div class="poster-provider">
-                        <img id="itemPoster" class="posterItem" src="" alt="Poster do Filme">
-                        <h2 class="wtw-font">
-                            <span class="wtw-white">
-                                Onde
-                            </span>
-                        
-                            <span class="wtw-red">
-                            assistir?
-                            </span>
-                        </h2>
-                        <p id="providers" class="providersNames"></p>
+            <section class="movie-hero">
+                <div class="hero-backdrop">
+                    <img id="backdropImage" src="" alt="Imagem de fundo">
+                    <div class="hero-backdrop__gradient"></div>
+                </div>
+                <div class="hero-content">
+                    <div class="hero-poster-column">
+                        <div class="poster-frame">
+                            <img id="itemPoster" class="hero-poster" src="" alt="Poster do título">
+                        </div>
+                        <div id="providerBadges" class="provider-badges"></div>
                     </div>
-                    <div class="genre-title">
-                        <h2 id="itemName" class="animate__animated animate__backInLeft"></h2>
-                        <p id="genreMovie"></p>
-                        <p id="release-date"></p>
-                        <h4 id="overviewTitle"> Sinopse </h4>
-                        <p id="movieOverview"></p>
-                        
-                        <li class="tools-section" style="display:none;">
-                            <a id="trailerLink" onclick="event.preventDefault(); showTrailer(this.dataset.trailerUrl || this.href); event.stopPropagation();" class="tools" href="#" target="_blank">â–¶ Assistir Trailer</a>
-                            <a href="#" class="tools">&#128278; Assistir mais tarde</a>
-
-                            <div class="tools notify-dropdown">
-                                <span>&#128339; Avise-me se este <span id="media-type"></span> chegar em</span>
-                                <button class="dropbtn">Netflix â–¾</button>
-                                <div class="dropdown-content">
-                                    <a href="#">Netflix</a>
-                                    <a href="#">Amazon Prime</a>
-                                    <a href="#">Disney+</a>
-                                    <a href="#">Max</a>
-                                </div>
+                    <div class="hero-text-column">
+                        <div class="hero-heading">
+                            <img id="movieLogo" class="hero-logo" src="" alt="Logo do título">
+                            <h1 id="itemName" class="hero-title"></h1>
+                        </div>
+                        <div class="hero-meta">
+                            <span id="certificationBadge" class="meta-chip"></span>
+                            <span id="release-date" class="meta-chip"></span>
+                            <span id="runtime" class="meta-chip"></span>
+                            <span id="mediaTypeBadge" class="meta-chip"></span>
+                        </div>
+                        <p id="movieOverview" class="hero-overview"></p>
+                        <div id="tagList" class="tag-list"></div>
+                        <div class="hero-actions">
+                            <a id="trailerLink" class="action-btn action-btn--primary" href="#">▶ Ver trailer</a>
+                            <a id="providersCta" class="action-btn action-btn--glass" href="#providersSection">🍿 Onde assistir</a>
+                            <a id="homepageCta" class="action-btn action-btn--ghost" href="#">Site oficial</a>
+                        </div>
+                        <div class="hero-highlights">
+                            <div class="highlight-card">
+                                <span class="highlight-label">Pontuação TMDB</span>
+                                <span id="highlightScore" class="highlight-value">—</span>
                             </div>
-                        </li>
+                            <div class="highlight-card">
+                                <span class="highlight-label">Popularidade</span>
+                                <span id="highlightPopularity" class="highlight-value">—</span>
+                            </div>
+                            <div class="highlight-card">
+                                <span class="highlight-label">Votos</span>
+                                <span id="highlightVotes" class="highlight-value">—</span>
+                            </div>
+                        </div>
+                        <div class="hero-crew" id="crewList"></div>
+                    </div>
+                </div>
+            </section>
 
-                        <div id="seasons-section" class="seasons-section">
-                            <div class="seasons-container" id="seasons-container">
+            <section class="providers-section card-section" id="providersSection">
+                <div class="section-heading">
+                    <h2>Onde assistir</h2>
+                    <p class="section-subtitle">Provedores disponíveis no Brasil</p>
+                </div>
+                <div class="providers-grid">
+                    <article class="provider-column" id="streamingColumn">
+                        <h3>Streaming</h3>
+                        <div id="streamingProviders" class="provider-pills"></div>
+                    </article>
+                    <article class="provider-column" id="rentalColumn">
+                        <h3>Aluguel</h3>
+                        <div id="rentalProviders" class="provider-pills"></div>
+                    </article>
+                    <article class="provider-column" id="buyColumn">
+                        <h3>Compra</h3>
+                        <div id="buyProviders" class="provider-pills"></div>
+                    </article>
+                </div>
+            </section>
+
+            <section class="seasons-section card-section is-hidden" id="seasonSection">
+                <div class="section-heading">
+                    <h2>Temporadas</h2>
+                    <p class="section-subtitle">Explore cada capítulo da série</p>
+                </div>
+                <div class="carousel-container seasons-carousel">
+                    <button class="nav-arrow slider-prev" data-target="seasons-container">&#10094;</button>
+                    <div id="seasons-container" class="season-list"></div>
+                    <button class="nav-arrow slider-next" data-target="seasons-container">&#10095;</button>
+                </div>
+            </section>
+
+            <section class="cast-section card-section">
+                <div class="section-heading">
+                    <h2>Elenco</h2>
+                    <p class="section-subtitle">Principais talentos diante das câmeras</p>
+                </div>
+                <div class="carousel-container">
+                    <button class="nav-arrow slider-prev" data-target="cast-list">&#10094;</button>
+                    <div id="cast-list" class="cast-list"></div>
+                    <button class="nav-arrow slider-next" data-target="cast-list">&#10095;</button>
+                </div>
+            </section>
+
+            <section class="gallery-section card-section is-hidden" id="gallerySection">
+                <div class="section-heading">
+                    <h2>Galeria</h2>
+                    <p class="section-subtitle">Backdrops e fotos oficiais</p>
+                </div>
+                <div class="carousel-container">
+                    <button class="nav-arrow slider-prev" data-target="gallery-track">&#10094;</button>
+                    <div id="gallery-track" class="gallery-track"></div>
+                    <button class="nav-arrow slider-next" data-target="gallery-track">&#10095;</button>
+                </div>
+            </section>
+
+            <dialog id="actorDialog" class="actor-dialog">
+                <div id="actorContent" class="modal-class">
+                    <div class="poster-actor">
+                        <img src="" alt="Poster Ator" id="actorPoster" class="profileImg">
+                        <div class="actor-meta">
+                            <h2 id="actorName"></h2>
+                            <p id="actorOverview" class="bio"></p>
+                            <button id="closeItem" class="btn btn-danger">Fechar</button>
                         </div>
                     </div>
-                    </div>
                 </div>
-            </div>
-            <div class="backdrop-container"> 
-                <div id="leftGradient"></div>
-                <img id="backdropImage" src="" alt="Backdrop">
-            </div>
-            <div id="backdropOverlay" class="overlay"></div> <!-- Camada de fundo preto --> 
+                <div class="overlay-modal"></div>
+            </dialog>
         </div>
-        
-        <div class="castDiv">
-            <h3 class="cast-label">Elenco</h3>
-            <button class="nav-arrow slider-prev" data-target="cast-list">&#10094;</button>
-            <div id="cast-list"></div>
-            <button class="nav-arrow slider-next" data-target="cast-list">&#10095;</button>
-            <div class="cast-fade" id="castFade"></div> <!-- fade-out -->
-        </div>
-
-        <!-- Modal ATOR -->
-        <dialog id="actorDialog" class="actor-dialog">
-            <div id="actorContent" class="modal-class">
-                <div class="poster-actor">
-                    <img src="" alt="Poster Ator" id="actorPoster" class="profileImg">
-                    <div class="">
-                    <h2 id="actorName" class=""></h2>
-                </div>
-                <p id="actorOverview" class="bio"></p>
-                <img id="backdrop" src="" style="display: none;" alt="">
-                <button id="closeItem" class="btn btn-danger">Fechar</button>
-            </div>
-            <div class="overlay-modal"></div> <!-- Camada de fundo preto -->
-        </dialog>
-    </div>
-  </main>
+    </main>
 
     <script src="js/filme.js"></script>
     <script src="js/script.js"></script>
