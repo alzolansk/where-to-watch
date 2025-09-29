@@ -31,9 +31,7 @@
         </dialog>
 
         <div class="wrap">
-
             <button id="btnLeft" class="prev" onclick="scrollLeftCustom()">&#10094;</button>
-
             <div id="container-wrap" class="container-wrap">
             <!--Primeiro container com trailer e backdrop-->
             </div>

@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const BUTTON_RESUME_DELAY = 3000;
 
     let autoScrollInterval;
+    let autoScrollRefreshTimeout = null;
     let autoScrollSetupDone = false;
     let carouselItems = [];
     let currentIndex = 0;
@@ -34,24 +35,29 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function waitForImages(container) {
         return new Promise(resolve => {
-            const images = container ? container.querySelectorAll('img') : [];
-            if (images.length === 0) {
+            const node = container || document;
+            const allImages = node ? node.querySelectorAll('img') : [];
+            const images = Array.from(allImages).filter(img => !(img && img.loading === 'lazy' && !img.complete));
+            if (!images.length) {
                 resolve();
                 return;
             }
             let loaded = 0;
-            const check = () => {
+            const settle = () => {
                 loaded++;
-                if (loaded === images.length) resolve();
+                if (loaded >= images.length) {
+                    resolve();
+                }
             };
             images.forEach(img => {
                 if (img.complete) {
-                    check();
+                    settle();
                 } else {
-                    img.addEventListener('load', check);
-                    img.addEventListener('error', check);
+                    img.addEventListener('load', settle, { once: true });
+                    img.addEventListener('error', settle, { once: true });
                 }
             });
+            setTimeout(resolve, 4000);
         });
     }
 
@@ -116,6 +122,17 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+
+    function scheduleAutoScrollRefresh(delay = 180) {
+        if (autoScrollRefreshTimeout) {
+            clearTimeout(autoScrollRefreshTimeout);
+        }
+        autoScrollRefreshTimeout = setTimeout(() => {
+            autoScrollRefreshTimeout = null;
+            initAutoScroll();
+        }, delay);
+    }
+
     function initAutoScroll() {
         carouselItems = Array.from(document.querySelectorAll('.backdropContainer'));
         const containerWrap = document.querySelector('.container-wrap');
@@ -142,7 +159,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 return 0;
             }
             return Math.max(0, Math.min(index, carouselItems.length - 1));
-        };
+        }
 
         const updateActive = index => {
             const item = carouselItems[index];
@@ -153,7 +170,7 @@ document.addEventListener('DOMContentLoaded', function() {
             item.classList.add('active');
             currentIndex = index;
             containerWrap.dataset.activeIndex = String(index);
-        };
+        }
 
         const scrollToItem = (index, behavior = 'smooth') => {
             const item = carouselItems[index];
@@ -356,7 +373,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function loadContent(){
-        showLoading(); // Mostra o spinner ao começar
+        showLoading(); // Mostra o spinner ao comecar
 
         const upcomingCaption = document.getElementById('cinemaContainer');
         
@@ -375,6 +392,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     return;
                 }
                 containerNew.innerHTML = '';
+                currentIndex = 0;
+                scheduleAutoScrollRefresh();
 
                 wrapMovies.forEach(movie => {
                     const slideEl = document.createElement('article');
@@ -558,6 +577,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 }
                                 if (!slideEl.isConnected) {
                                     containerNew.appendChild(slideEl);
+                                    scheduleAutoScrollRefresh();
                                 }
                                 return null;
                             });
@@ -577,7 +597,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 movies.forEach(movie => {
                     const movieDiv = document.createElement('div');
                     movieDiv.classList.add('col-md-3', 'movies');
-                    const mediaTypeTxt = movie.media_type === 'movie' ? 'Filme' : 'Série';
+                    const mediaTypeTxt = movie.media_type === 'movie' ? 'Filme' : 'Serie';
 
                     const { imgUrl, trailerUrl, rating, backdropUrl, providerUrl, detailsUrl} = defineMovieConstants(movie, mediaType, apiKey);
                     
@@ -627,7 +647,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             const genresArray = data.genres;
                             let genresNames = '';
                             if (genresArray && genresArray.length > 0) {
-                                genresNames = genresArray.map(genres => genres.name).join(", "); //String "join" separa os diversos gêneros
+                                genresNames = genresArray.map(genres => genres.name).join(", "); //String "join" separa os diversos generos
                             }
     
                         fetchJson(trailerUrl || `https://api.themoviedb.org/3/${mediaType}/${movie.id}/videos?api_key=${apiKey}&language=pt-BR&page=1`)
@@ -660,7 +680,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 
                                     <li class="watch-trailer">
                                         <a href="#" onclick="event.preventDefault(); showTrailer('${trailerYtUrl}'); event.stopPropagation();">
-                                            ▶ Trailer
+                                            <img src="imagens/video-start.png" alt=""> Trailer
                                         </a>
                                     </li>
                                     </div>
@@ -722,7 +742,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             const genresArray = data.genres;
                             let genresNames = '';
                             if (genresArray && genresArray.length > 0) {
-                                genresNames = genresArray.map(genres => genres.name).join(", "); //String "join" separa os diversos gêneros
+                                genresNames = genresArray.map(genres => genres.name).join(", "); //String "join" separa os diversos generos
                             }
 
                     fetchJson(providerUrl)
@@ -829,7 +849,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             if (providerNames.toLowerCase().includes('netflix')) {  // Verifica se inclui "Netflix"
                                 providerLogo.style.fontFamily = "Bebas Neue"; 
                                 providerLogo.style.fontWeight = "bold";
-                                //console.log(`Provider é ${providerNames}`);
+                                //console.log(`Provider e ${providerNames}`);
                             } else if(providerNames.toLocaleLowerCase().includes('max')){
                                 providerLogo.style.fontFamily = "HBO Max"; 
                             }*/
@@ -862,7 +882,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             const genresArray = data.genres;
                             let genresNames = '';
                             if (genresArray && genresArray.length > 0) {
-                                genresNames = genresArray.map(genres => genres.name).join(", "); //String "join" separa os diversos gêneros
+                                genresNames = genresArray.map(genres => genres.name).join(", "); //String "join" separa os diversos generos
                             }
 
                     fetchJson(providerUrl)
@@ -933,7 +953,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     </li>
                                     <li class="watch-trailer">
                                         <a href="#" onclick="event.preventDefault(); showTrailer('${trailerYtUrl}'); event.stopPropagation();">
-                                            <img src="imagens/video-start.png" alt=""> Trailer
+                                            <img src="imagens/video-start.png" alt="">Trailer
                                         </a>
                                     </li>
                                     </div>
@@ -991,7 +1011,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             const genresArray = data.genres;
                             let genresNames = '';
                             if (genresArray && genresArray.length > 0) {
-                                genresNames = genresArray.map(genres => genres.name).join(", "); //String "join" separa os diversos gêneros
+                                genresNames = genresArray.map(genres => genres.name).join(", "); //String "join" separa os diversos generos
                             }
 
                     fetchJson(providerUrl)
@@ -1062,7 +1082,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     </li>
                                     <li class="watch-trailer">
                                         <a href="#" onclick="event.preventDefault(); showTrailer('${trailerYtUrl}'); event.stopPropagation();">
-                                            <img src="imagens/video-start.png" alt=""> Trailer
+                                            <img src="imagens/video-start.png" alt="">Trailer
                                         </a>
                                     </li>
                                     </div>
@@ -1099,25 +1119,33 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         })
 
-        .catch(error => console.error('Erro ao carregar conteúdo:', error))
+        .catch(error => console.error('Erro ao carregar conteudo:', error))
         .finally(() => {
             const containers = [
                 document.getElementById('container-wrap'),
                 document.getElementById('popular-movies-container'),
-                document.getElementById('top-movies-container')
+                document.getElementById('top-movies-container'),
+                document.getElementById('trending-movies-container'),
+                document.getElementById('musical-movies-container')
             ];
-            Promise.all(containers.map(c => waitForImages(c))).then(hideLoading);
+            Promise.all(containers.map(c => waitForImages(c))).then(() => {
+                hideLoading();
+                scheduleAutoScrollRefresh();
+                if (typeof window.updateCarouselNav === 'function') {
+                    ['popular-movies-container','top-movies-container','trending-movies-container','musical-movies-container'].forEach(id => window.updateCarouselNav(id));
+                }
+            });
         });
-        }
+    }
 
-     // Botões para alternar entre filmes e séries
+     // Botoes para alternar entre filmes e series
     document.getElementById('showMovies').addEventListener('click', function() {
         this.classList.add('active');
         document.getElementById('showSeries').classList.remove('active')
         switchMedia("movie");
 
         
-        // Mova o slider para o botão de filmes
+        // Mova o slider para o botao de filmes
         if (sliderIndicator) {
             sliderIndicator.style.transform = 'translateX(0)';
         }
@@ -1129,13 +1157,13 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById("showMovies").classList.remove("active");
         switchMedia("tv");
 
-        // Mova o slider para o botão de séries
-        const buttonWidth = this.offsetWidth; // Largura do botão
+        // Mova o slider para o botao de series
+        const buttonWidth = this.offsetWidth; // Largura do botao
         if (sliderIndicator) {
             sliderIndicator.style.transform = `translateX(${buttonWidth}px)`;
         } // Move para a direita
     });
 
-    loadContent();        // Carregar conteúdo de filmes
+    loadContent();        // Carregar conteudo de filmes
 
 });

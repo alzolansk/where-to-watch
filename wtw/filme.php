@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -10,7 +10,7 @@
     <title id="title-movie"></title>
     <link rel="icon" href="imagens/wywatch-favicon-iris-nobackground.png">
 </head>
-<body>
+<body class="has-fixed-header">
 
     <?php include_once('dashboard.php'); ?>
 

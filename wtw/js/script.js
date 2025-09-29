@@ -18,7 +18,7 @@ function senhaError (senha){
    }
 }
 
-//Funções dos Trailers
+//Funcoes dos Trailers
 function showTrailer(trailerUrl) {
     if (!trailerDialog || !trailerFrame) {
         return;
@@ -49,7 +49,7 @@ if (buttonClose) {
     buttonClose.addEventListener('click', closeTrailer);
 }
 
-//Função setinhas de navegação
+//Funcao setinhas de navegacao
 function scrollToNextItem(direction = 'right') {
     const items = document.querySelectorAll('.backdropContainer');
     if (!items.length) {
@@ -92,7 +92,7 @@ function scrollToNextItem(direction = 'right') {
     });
 }
 
-// Atalhos para usar nos botões de seta
+// Atalhos para usar nos botoes de seta
 function scrollLeftCustom() {
     scrollToNextItem('left');
 }
@@ -131,13 +131,50 @@ function toggleMenu() {
 }
 
 //Carregando...
+function getLoadingOverlay() {
+    return document.getElementById('loadingOverlay') || document.getElementById('loading');
+}
+
+function toggleLoadingOverlay(isVisible) {
+    const overlay = getLoadingOverlay();
+    if (!overlay) {
+        return;
+    }
+    overlay.classList.toggle('is-hidden', !isVisible);
+    overlay.setAttribute('aria-hidden', String(!isVisible));
+}
+
 function showLoading() {
-   document.getElementById('loading').style.display = 'flex';
+    toggleLoadingOverlay(true);
 }
 
 function hideLoading() {
-   document.getElementById('loading').style.display = 'none';
+    toggleLoadingOverlay(false);
 }
+
+function updateCarouselNav(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) {
+        return;
+    }
+    const prevBtn = document.querySelector('.slider-prev[data-target="' + containerId + '"]');
+    const nextBtn = document.querySelector('.slider-next[data-target="' + containerId + '"]');
+    if (!prevBtn && !nextBtn) {
+        return;
+    }
+    const maxScroll = Math.max(0, container.scrollWidth - container.clientWidth - 1);
+    if (maxScroll <= 0) {
+        if (prevBtn) prevBtn.classList.add('is-hidden');
+        if (nextBtn) nextBtn.classList.add('is-hidden');
+        return;
+    }
+    const atStart = container.scrollLeft <= 0;
+    const atEnd = container.scrollLeft >= maxScroll;
+    if (prevBtn) prevBtn.classList.toggle('is-hidden', atStart);
+    if (nextBtn) nextBtn.classList.toggle('is-hidden', atEnd);
+}
+
+window.updateCarouselNav = updateCarouselNav;
 
 function scrollRow(containerId, direction = 'right') {
     const row = document.getElementById(containerId);
@@ -145,18 +182,42 @@ function scrollRow(containerId, direction = 'right') {
     const distance = row.clientWidth;
     const offset = direction === 'right' ? distance : -distance;
     row.scrollBy({ left: offset, behavior: 'smooth' });
+    setTimeout(() => updateCarouselNav(containerId), 320);
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    const trackedContainers = new Set();
+
     document.querySelectorAll('.slider-prev').forEach(btn => {
+        const target = btn.dataset.target;
         btn.addEventListener('click', () => {
-            scrollRow(btn.dataset.target, 'left');
+            scrollRow(target, 'left');
         });
+        if (target) {
+            trackedContainers.add(target);
+        }
     });
+
     document.querySelectorAll('.slider-next').forEach(btn => {
+        const target = btn.dataset.target;
         btn.addEventListener('click', () => {
-            scrollRow(btn.dataset.target, 'right');
+            scrollRow(target, 'right');
         });
+        if (target) {
+            trackedContainers.add(target);
+        }
+    });
+
+    trackedContainers.forEach(id => {
+        const container = document.getElementById(id);
+        if (!container) {
+            return;
+        }
+        const update = () => updateCarouselNav(id);
+        container.addEventListener('scroll', update, { passive: true });
+        window.addEventListener('resize', update);
+        requestAnimationFrame(update);
     });
 });
+
 

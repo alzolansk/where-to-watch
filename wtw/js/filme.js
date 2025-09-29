@@ -1,13 +1,15 @@
-﻿const waitForImages = (container) => new Promise(resolve => {
+const waitForImages = (container) => new Promise(resolve => {
     const root = container || document;
-    const images = root ? root.querySelectorAll('img') : [];
-    if (!images || images.length === 0) {
+    const allImages = root ? root.querySelectorAll('img') : [];
+    const images = Array.from(allImages).filter(img => !(img && img.loading === 'lazy' && !img.complete));
+
+    if (!images.length) {
         resolve();
         return;
     }
 
     let loaded = 0;
-    const check = () => {
+    const settle = () => {
         loaded += 1;
         if (loaded >= images.length) {
             resolve();
@@ -16,18 +18,35 @@
 
     images.forEach(img => {
         if (img.complete) {
-            check();
+            settle();
         } else {
-            img.addEventListener('load', check);
-            img.addEventListener('error', check);
+            img.addEventListener('load', settle, { once: true });
+            img.addEventListener('error', settle, { once: true });
         }
     });
+
+    setTimeout(resolve, 4000);
 });
+
+let currentProviderQuery = '';
+
+const refreshCarouselNav = (id) => {
+    if (typeof window.updateCarouselNav === 'function') {
+        window.updateCarouselNav(id);
+    }
+};
+
+function normalizeProviderName(value) {
+    return value
+        ? value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        : '';
+}
 
 document.addEventListener('DOMContentLoaded', async () => {
     showLoading();
 
     const params = new URLSearchParams(window.location.search);
+    currentProviderQuery = (params.get('title') || params.get('original_title') || params.get('original_name') || '').trim();
     const apiKey = 'dc3b4144ae24ddabacaeda024ff0585c';
 
     let mediaType = params.get('mediaTp') || params.get('type') || (params.has('tv') ? 'tv' : 'movie');
@@ -80,7 +99,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
         const details = await fetchDetailsById(movieId, mediaType, apiKey);
         if (!details || details.success === false) {
-            throw new Error('ID ou tipo inválido.');
+            throw new Error('ID ou tipo invalido.');
         }
 
         if (details.media_type === 'movie' || details.media_type === 'tv') {
@@ -100,7 +119,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         renderCast(details.credits?.cast || [], dom.castList);
         renderGallery(details.images || {}, dom);
     } catch (error) {
-        console.error('Erro ao carregar detalhes do título:', error);
+        console.error('Erro ao carregar detalhes do titulo:', error);
     } finally {
         await waitForImages(document);
         hideLoading();
@@ -134,9 +153,10 @@ function hydrateHero(details, params, dom, mediaType) {
 
     const fallbackTitle = params.get('title') || '';
     const title = details.title || details.name || fallbackTitle;
+    currentProviderQuery = (title || params.get('original_title') || params.get('original_name') || fallbackTitle || currentProviderQuery || '').trim();
     const poster = details.poster_path ? createImageUrl(details.poster_path, 'w500') : (params.get('imgUrl') || '');
     const backdrop = details.backdrop_path ? createImageUrl(details.backdrop_path, 'w1280') : (params.get('backdropUrl') || '');
-    const overview = details.overview || params.get('overview') || 'Sinopse indisponível no momento.';
+    const overview = details.overview || params.get('overview') || 'Sinopse indisponivel no momento.';
     const homepage = details.homepage || params.get('ticketUrl') || '';
     const trailerUrl = resolveTrailerUrl(details, params);
 
@@ -144,11 +164,11 @@ function hydrateHero(details, params, dom, mediaType) {
     const runtimeText = formatRuntime(details, mediaType);
     const certificationText = extractCertification(details, mediaType);
 
-    const titleSuffix = mediaType === 'tv' ? ' | Série' : ' | Filme';
+    const titleSuffix = mediaType === 'tv' ? ' | Serie' : ' | Filme';
     if (dom.titleTag) {
         dom.titleTag.textContent = title ? `${title}${titleSuffix}` : 'Where To Watch';
     }
-    document.title = title ? `${title} · Where To Watch` : 'Where To Watch';
+    document.title = title ? `${title} - Where To Watch` : 'Where To Watch';
 
     if (dom.itemName) {
         dom.itemName.textContent = title;
@@ -156,7 +176,7 @@ function hydrateHero(details, params, dom, mediaType) {
 
     if (dom.poster) {
         dom.poster.src = poster || 'imagens/icon-cast.png';
-        dom.poster.alt = title ? `Poster de ${title}` : 'Poster do título';
+        dom.poster.alt = title ? `Poster de ${title}` : 'Poster do titulo';
     }
 
     if (dom.backdrop) {
@@ -181,20 +201,20 @@ function hydrateHero(details, params, dom, mediaType) {
     }
 
     if (dom.releaseDate) {
-        const formatted = releaseDate ? `Estreia • ${formatDate(releaseDate)}` : '';
+        const formatted = releaseDate ? `Estreia - ${formatDate(releaseDate)}` : '';
         toggleText(dom.releaseDate, formatted);
     }
 
     if (dom.runtime) {
-        toggleText(dom.runtime, runtimeText ? `Duração • ${runtimeText}` : '');
+        toggleText(dom.runtime, runtimeText ? `Duracao - ${runtimeText}` : '');
     }
 
     if (dom.certification) {
-        toggleText(dom.certification, certificationText ? `Classificação • ${certificationText}` : '');
+        toggleText(dom.certification, certificationText ? `Classificacao - ${certificationText}` : '');
     }
 
     if (dom.mediaTypeBadge) {
-        toggleText(dom.mediaTypeBadge, mediaType === 'tv' ? 'Série' : 'Filme');
+        toggleText(dom.mediaTypeBadge, mediaType === 'tv' ? 'Serie' : 'Filme');
     }
 
     if (dom.trailerLink) {
@@ -307,12 +327,12 @@ function formatRuntime(details, mediaType) {
         parts.push(`${totalSeasons} ${totalSeasons === 1 ? 'temporada' : 'temporadas'}`);
     }
     if (episodes) {
-        parts.push(`${episodes} episódios`);
+        parts.push(`${episodes} episodios`);
     }
     if (runtimeEpisode) {
-        parts.push(`episódios de ${runtimeEpisode} min`);
+        parts.push(`episodios de ${runtimeEpisode} min`);
     }
-    return parts.join(' • ');
+    return parts.join(' - ');
 }
 
 function extractCertification(details, mediaType) {
@@ -368,15 +388,16 @@ function renderTags(details, dom) {
         chip.textContent = tag;
         dom.tagList.appendChild(chip);
     });
+    refreshCarouselNav('gallery-track');
 }
 
 function renderHighlights(details, dom) {
     if (!dom) {
         return;
     }
-    const score = typeof details.vote_average === 'number' && details.vote_average > 0 ? details.vote_average.toFixed(1) : '—';
-    const popularity = typeof details.popularity === 'number' ? Math.round(details.popularity).toLocaleString('pt-BR') : '—';
-    const votes = typeof details.vote_count === 'number' && details.vote_count > 0 ? details.vote_count.toLocaleString('pt-BR') : '—';
+    const score = typeof details.vote_average === 'number' && details.vote_average > 0 ? details.vote_average.toFixed(1) : '-';
+    const popularity = typeof details.popularity === 'number' ? Math.round(details.popularity).toLocaleString('pt-BR') : '-';
+    const votes = typeof details.vote_count === 'number' && details.vote_count > 0 ? details.vote_count.toLocaleString('pt-BR') : '-';
 
     if (dom.highlightScore) {
         dom.highlightScore.textContent = score;
@@ -402,13 +423,13 @@ function renderCrew(details, dom, mediaType) {
     if (mediaType === 'tv' && Array.isArray(details.created_by) && details.created_by.length) {
         const names = details.created_by.map(person => person.name).filter(Boolean).join(', ');
         if (names) {
-            chips.push({ label: 'Criação', value: names });
+            chips.push({ label: 'Criacao', value: names });
         }
     }
 
     const director = findCrew(['Director', 'Series Director']);
     if (director) {
-        chips.push({ label: 'Direção', value: director.name });
+        chips.push({ label: 'Direcao', value: director.name });
     }
 
     const writer = findCrew(['Screenplay', 'Writer', 'Story', 'Teleplay']);
@@ -418,7 +439,7 @@ function renderCrew(details, dom, mediaType) {
 
     const producer = findCrew(['Executive Producer', 'Producer', 'Co-Producer']);
     if (producer) {
-        chips.push({ label: 'Produção', value: producer.name });
+        chips.push({ label: 'Producao', value: producer.name });
     }
 
     const photography = findCrew(['Director of Photography']);
@@ -472,42 +493,77 @@ function selectBestLogo(logos) {
 }
 
 const providerSearchMap = {
-    netflix: 'https://www.netflix.com/br',
-    'prime video': 'https://www.primevideo.com/',
-    'amazon prime video': 'https://www.primevideo.com/',
-    'amazon video': 'https://www.primevideo.com/',
-    'hbo max': 'https://www.max.com/',
-    'max': 'https://www.max.com/',
-    'paramount+': 'https://www.paramountplus.com/br/',
-    'paramount plus': 'https://www.paramountplus.com/br/',
-    'disney+': 'https://www.disneyplus.com/pt-br',
-    'star+': 'https://www.starplus.com/pt-br',
-    globoplay: 'https://globoplay.globo.com/',
-    'apple tv+': 'https://tv.apple.com/',
-    'apple tv': 'https://tv.apple.com/',
-    'google play movies': 'https://play.google.com/store/movies',
-    now: 'https://www.nowonline.com.br/',
-    looke: 'https://www.looke.com.br/',
-    telecine: 'https://www.telecineplay.com.br/',
-    crunchyroll: 'https://www.crunchyroll.com/pt-br',
-    'youtube premium': 'https://www.youtube.com/premium',
-    youtube: 'https://www.youtube.com/'
+    'netflix': 'https://www.netflix.com/search?q=${query}',
+    'prime video': 'https://www.primevideo.com/search?phrase=${query}',
+    'amazon prime video': 'https://www.primevideo.com/search?phrase=${query}',
+    'amazon video': 'https://www.primevideo.com/-/pt/search/ref=atv_nb_sug?ie=UTF8&phrase=${query}',
+    'hbo max': 'https://play.hbomax.com/search/result?q=${query}',
+    'max': 'https://play.hbomax.com/search?q=${query}',
+    'paramount+': 'https://www.paramountplus.com/br/search/?keyword=${query}',
+    'paramount plus': 'https://www.paramountplus.com/br/search/?keyword=${query}',
+    'disney+': 'https://www.disneyplus.com/pt-br/browse/search?q=${query}',
+    'disney plus': 'https://www.disneyplus.com/pt-br/browse/search?q=${query}',
+    'star+': 'https://www.starplus.com/pt-br/search?q=${query}',
+    'star plus': 'https://www.starplus.com/pt-br/search?q=${query}',
+    'globoplay': 'https://globoplay.globo.com/busca/?q=${query}',
+    'telecine': 'https://globoplay.globo.com/busca/tudo/${query}/',
+    'claro tv': 'https://www.clarotvmais.com.br/busca?q=${query}',
+    'claro video': 'https://www.clarovideo.com/brasil/busca?keyword=${query}',
+    'oldflix': 'https://oldflix.com.br/home/catalogo?search=${query}',
+    'apple tv+': 'https://tv.apple.com/search?term=${query}',
+    'apple tv': 'https://tv.apple.com/search?term=${query}',
+    'google play movies': 'https://play.google.com/store/search?q=${query}&c=movies',
+    'google play': 'https://play.google.com/store/search?q=${query}&c=movies',
+    'now': 'https://www.nowonline.com.br/busca?q=${query}',
+    'looke': 'https://www.looke.com.br/busca?q=${query}',
+    'crunchyroll': 'https://www.crunchyroll.com/pt-br/search?q=${query}',
+    'youtube premium': 'https://www.youtube.com/results?search_query=${query}&sp=EgIQAg%253D%253D',
+    'youtube': 'https://www.youtube.com/results?search_query=${query}',
+    'google': 'https://www.youtube.com/results?search_query=${query}&sp=EgIQBA%253D%253D'
 };
 
-const ignoredProviders = ['itunes', 'skystore'];
+const ignoredProviders = [
+    'amazon channel',
+    'amazon prime video channel',
+    'paramount channel',
+    'paramount plus apple tv channel',
+    'paramount+ apple tv channel',
+    'paramount plus premium',
+    'paramount+ premium',
+    'amazon plus premium',
+    'amazon prime premium',
+    'belas artes',
+    'standard with ads',
+    'with ads',
+    'ads plan',
+    'itunes',
+    'skystore'
+];
 
 function buildProviderSearchUrl(name) {
     if (!name) {
         return '#';
     }
-    const normalized = name.toLowerCase();
-    for (const key in providerSearchMap) {
-        if (normalized.includes(key)) {
-            return providerSearchMap[key];
+
+    const normalized = normalizeProviderName(name);
+    const titleCandidate = (currentProviderQuery || '').trim();
+    const rawQuery = titleCandidate || name;
+    const encodedQuery = encodeURIComponent(rawQuery);
+
+    for (const [key, template] of Object.entries(providerSearchMap)) {
+        const normalizedKey = normalizeProviderName(key);
+        if (normalizedKey && normalized.includes(normalizedKey)) {
+            if (typeof template === 'string' && template.includes('${query}')) {
+                return template.replace(/\$\{query}/g, encodedQuery);
+            }
+            return template;
         }
     }
-    return `https://www.google.com/search?q=${encodeURIComponent(name + ' streaming')}`;
+
+    const fallback = `${rawQuery} streaming`;
+    return `https://www.google.com/search?q=${encodeURIComponent(fallback)}`;
 }
+
 
 function dedupeProviders(list) {
     const result = [];
@@ -517,7 +573,8 @@ function dedupeProviders(list) {
         if (!id || seen.has(id)) {
             return;
         }
-        if (ignoredProviders.some(term => provider.provider_name?.toLowerCase().includes(term))) {
+        const normalizedName = normalizeProviderName(provider.provider_name);
+        if (!normalizedName || ignoredProviders.some(term => normalizedName.includes(term))) {
             return;
         }
         seen.add(id);
@@ -525,6 +582,7 @@ function dedupeProviders(list) {
     });
     return result.sort((a, b) => (a.display_priority || 1000) - (b.display_priority || 1000));
 }
+
 
 function renderProviderBadges(providers, dom) {
     if (!dom?.providerBadges) {
@@ -630,12 +688,14 @@ function populateProviderColumn(column, container, providers) {
 function renderSeasons(details, dom, mediaType) {
     if (mediaType !== 'tv' || !dom?.seasonSection || !dom.seasonsContainer) {
         dom?.seasonSection?.classList.add('is-hidden');
+        refreshCarouselNav('seasons-container');
         return;
     }
 
     const seasons = Array.isArray(details.seasons) ? details.seasons.filter(Boolean) : [];
     if (!seasons.length) {
         dom.seasonSection.classList.add('is-hidden');
+        refreshCarouselNav('seasons-container');
         return;
     }
 
@@ -652,12 +712,13 @@ function renderSeasons(details, dom, mediaType) {
             <img src="${poster}" alt="${season.name || 'Temporada'}" loading="lazy">
             <div class="season-details">
                 <p class="season-name">${season.name || 'Temporada'}</p>
-                <span class="year-season">${[year, `${season.episode_count || 0} episódios`].filter(Boolean).join(' • ')}</span>
+                <span class="year-season">${[year, `${season.episode_count || 0} episodios`].filter(Boolean).join(' - ')}</span>
             </div>
         `;
 
         dom.seasonsContainer.appendChild(card);
     });
+    refreshCarouselNav('seasons-container');
 }
 
 function renderCast(castArray, castContainer) {
@@ -671,8 +732,9 @@ function renderCast(castArray, castContainer) {
     if (!cast.length) {
         const message = document.createElement('p');
         message.className = 'section-subtitle';
-        message.textContent = 'Não encontramos o elenco principal.';
+        message.textContent = 'Nao encontramos o elenco principal.';
         castContainer.appendChild(message);
+        refreshCarouselNav('cast-list');
         return;
     }
 
@@ -700,10 +762,12 @@ function renderCast(castArray, castContainer) {
 
         castContainer.appendChild(card);
     });
+    refreshCarouselNav('cast-list');
 }
 
 function renderGallery(images, dom) {
     if (!dom?.gallerySection || !dom.galleryTrack) {
+        refreshCarouselNav('gallery-track');
         return;
     }
 
@@ -715,6 +779,7 @@ function renderGallery(images, dom) {
 
     if (!galleryItems.length) {
         dom.gallerySection.classList.add('is-hidden');
+        refreshCarouselNav('gallery-track');
         return;
     }
 
@@ -738,11 +803,17 @@ function renderGallery(images, dom) {
 
         dom.galleryTrack.appendChild(card);
     });
+    refreshCarouselNav('gallery-track');
 }
 
 document.getElementById('closeItem')?.addEventListener('click', () => {
     const modal = document.getElementById('actorDialog');
     modal?.close?.();
 });
+
+
+
+
+
 
 
