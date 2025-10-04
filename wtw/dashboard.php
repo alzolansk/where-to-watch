@@ -341,13 +341,17 @@ if (session_status() === PHP_SESSION_NONE) {
     .menu-trigger {
         display: inline-flex;
         order: 1;
+        margin-right: auto;
     }
 
     .dashboard-logo {
         order: 2;
-        margin: 0 auto;
         padding: 0;
         --wyw-brand-size: clamp(1.2rem, 6vw, 1.6rem);
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
     }
 
     .dashboard-logo .wyw-brand__where,
@@ -363,7 +367,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
     .user-menu {
         order: 3;
-        margin-left: 0;
+        margin-left: auto;
     }
 
     .user-menu__link {
