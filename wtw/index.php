@@ -32,7 +32,7 @@
 
         <div class="wrap">
             <button id="btnLeft" class="prev" onclick="scrollLeftCustom()">&#10094;</button>
-            <div id="container-wrap" class="container-wrap">
+            <div id="container-wrap">
             <!--Primeiro container com trailer e backdrop-->
             </div>
             <button id="btnRight" class="next" onclick="scrollRight()">&#10095;</button>
@@ -100,8 +100,8 @@
 
             <h2 class="section-heading">
                 <span class="section-heading__bar" aria-hidden="true">|</span>
-                <span class="section-heading__text">Bombando</span>
-                <span class="section-heading__highlight">essa semana</span>
+                <span class="section-heading__text">Queridinhos do</span>
+                <span class="section-heading__highlight">streaming</span>
             </h2>
 
             <div class="carousel-container">

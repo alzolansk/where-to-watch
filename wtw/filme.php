@@ -35,7 +35,6 @@
                     </div>
                     <div class="hero-text-column">
                         <div class="hero-heading">
-                            <img id="movieLogo" class="hero-logo" src="" alt="Logo do título">
                             <h1 id="itemName" class="hero-title"></h1>
                         </div>
                         <div class="hero-meta">

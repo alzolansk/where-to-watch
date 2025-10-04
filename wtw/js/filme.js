@@ -42,6 +42,30 @@ function normalizeProviderName(value) {
         : '';
 }
 
+function resolveHomepageProvider(homepage) {
+    if (!homepage || typeof homepage !== 'string') {
+        return null;
+    }
+
+    const trimmed = homepage.trim();
+    if (!trimmed) {
+        return null;
+    }
+
+    const normalized = trimmed.toLowerCase();
+    if (normalized.includes('netflix.com')) {
+        return {
+            provider_id: 8,
+            provider_name: 'Netflix',
+            logo_path: '/t2yyOv40HZeVlLjYsCsPHnWLk4W.jpg',
+            direct_url: trimmed,
+            display_priority: 1
+        };
+    }
+
+    return null;
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
     showLoading();
 
@@ -106,14 +130,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             mediaType = details.media_type;
         }
 
-        hydrateHero(details, params, dom, mediaType);
+        const heroMeta = hydrateHero(details, params, dom, mediaType);
         renderTags(details, dom);
         renderHighlights(details, dom);
         renderCrew(details, dom, mediaType);
 
         const providersBR = details['watch/providers']?.results?.BR || {};
-        renderProviderBadges(providersBR, dom);
-        renderProviders(providersBR, dom);
+        const { homepageProvider } = heroMeta || {};
+        renderProviderBadges(providersBR, dom, homepageProvider);
+        renderProviders(providersBR, dom, homepageProvider);
 
         renderSeasons(details, dom, mediaType);
         renderCast(details.credits?.cast || [], dom.castList);
@@ -158,6 +183,7 @@ function hydrateHero(details, params, dom, mediaType) {
     const backdrop = details.backdrop_path ? createImageUrl(details.backdrop_path, 'w1280') : (params.get('backdropUrl') || '');
     const overview = details.overview || params.get('overview') || 'Sinopse indisponivel no momento.';
     const homepage = details.homepage || params.get('ticketUrl') || '';
+    const homepageProvider = resolveHomepageProvider(homepage);
     const trailerUrl = resolveTrailerUrl(details, params);
 
     const releaseDate = details.release_date || details.first_air_date || params.get('release_date') || '';
@@ -251,13 +277,16 @@ function hydrateHero(details, params, dom, mediaType) {
     }
 
     if (dom.homepageCta) {
-        if (homepage) {
+        if (homepage && !homepageProvider) {
             dom.homepageCta.href = homepage;
             dom.homepageCta.classList.remove('is-hidden');
         } else {
             dom.homepageCta.classList.add('is-hidden');
+            dom.homepageCta.removeAttribute('href');
         }
     }
+
+    return { homepage, homepageProvider };
 }
 
 function resolveTrailerUrl(details, params) {
@@ -565,6 +594,50 @@ function buildProviderSearchUrl(name) {
 }
 
 
+function resolveProviderUrl(provider) {
+    if (!provider) {
+        return '#';
+    }
+
+    if (provider.direct_url) {
+        return provider.direct_url;
+    }
+
+    return buildProviderSearchUrl(provider.provider_name);
+}
+
+
+function prepareStreamingProviders(originalList, homepageProvider) {
+    const list = Array.isArray(originalList) ? originalList.map(item => ({ ...item })) : [];
+
+    if (!homepageProvider) {
+        return list;
+    }
+
+    const targetId = homepageProvider.provider_id;
+    const targetName = normalizeProviderName(homepageProvider.provider_name);
+
+    const matchIndex = list.findIndex(provider => {
+        const providerId = provider?.provider_id ?? provider?.providerId;
+        const providerName = normalizeProviderName(provider?.provider_name);
+        const idMatches = providerId !== undefined && providerId === targetId;
+        const nameMatches = providerName && targetName && providerName === targetName;
+        return idMatches || nameMatches;
+    });
+
+    if (matchIndex >= 0) {
+        const existing = list[matchIndex];
+        if (!existing.direct_url) {
+            list[matchIndex] = { ...existing, direct_url: homepageProvider.direct_url };
+        }
+        return list;
+    }
+
+    list.push(homepageProvider);
+    return list;
+}
+
+
 function dedupeProviders(list) {
     const result = [];
     const seen = new Set();
@@ -584,12 +657,13 @@ function dedupeProviders(list) {
 }
 
 
-function renderProviderBadges(providers, dom) {
+function renderProviderBadges(providers, dom, homepageProvider) {
     if (!dom?.providerBadges) {
         return;
     }
 
-    const streaming = dedupeProviders(providers.flatrate).slice(0, 4);
+    const streamingSource = prepareStreamingProviders(providers?.flatrate, homepageProvider);
+    const streaming = dedupeProviders(streamingSource).slice(0, 4);
     dom.providerBadges.innerHTML = '';
 
     if (!streaming.length) {
@@ -602,7 +676,7 @@ function renderProviderBadges(providers, dom) {
     streaming.forEach(provider => {
         const badge = document.createElement('a');
         badge.className = 'provider-badge';
-        badge.href = buildProviderSearchUrl(provider.provider_name);
+        badge.href = resolveProviderUrl(provider);
         badge.target = '_blank';
         badge.rel = 'noopener';
 
@@ -621,14 +695,15 @@ function renderProviderBadges(providers, dom) {
     });
 }
 
-function renderProviders(providers, dom) {
+function renderProviders(providers, dom, homepageProvider) {
     if (!dom?.providersSection) {
         return;
     }
 
-    const streaming = dedupeProviders(providers.flatrate);
-    const rental = dedupeProviders(providers.rent);
-    const buy = dedupeProviders(providers.buy);
+    const streamingList = prepareStreamingProviders(providers?.flatrate, homepageProvider);
+    const streaming = dedupeProviders(streamingList);
+    const rental = dedupeProviders(providers?.rent);
+    const buy = dedupeProviders(providers?.buy);
 
     const total = streaming.length + rental.length + buy.length;
 
@@ -666,7 +741,7 @@ function populateProviderColumn(column, container, providers) {
     providers.forEach(provider => {
         const pill = document.createElement('a');
         pill.className = 'provider-pill';
-        pill.href = buildProviderSearchUrl(provider.provider_name);
+        pill.href = resolveProviderUrl(provider);
         pill.target = '_blank';
         pill.rel = 'noopener';
 

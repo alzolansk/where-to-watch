@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', () => {
+﻿document.addEventListener('DOMContentLoaded', () => {
     const apiKey = 'dc3b4144ae24ddabacaeda024ff0585c';
     const searchInput = document.getElementById('searchmovie');
     const resultsContainer = document.getElementById('results');
@@ -10,33 +10,33 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const genreMap = {
-        28: 'Ação',
+        28: 'AÃ§Ã£o',
         12: 'Aventura',
-        16: 'Animação',
-        35: 'Comédia',
+        16: 'AnimaÃ§Ã£o',
+        35: 'ComÃ©dia',
         80: 'Crime',
-        99: 'Documentário',
+        99: 'DocumentÃ¡rio',
         18: 'Drama',
-        10751: 'Família',
+        10751: 'FamÃ­lia',
         14: 'Fantasia',
-        36: 'História',
+        36: 'HistÃ³ria',
         27: 'Terror',
-        10402: 'Música',
-        9648: 'Mistério',
+        10402: 'MÃºsica',
+        9648: 'MistÃ©rio',
         10749: 'Romance',
-        878: 'Ficção Científica',
+        878: 'FicÃ§Ã£o CientÃ­fica',
         10770: 'Filme de TV',
         53: 'Suspense',
         10752: 'Guerra',
         37: 'Faroeste',
-        10759: 'Ação e Aventura',
+        10759: 'AÃ§Ã£o e Aventura',
         10762: 'Infantil',
-        10763: 'Notícias',
+        10763: 'NotÃ­cias',
         10764: 'Reality',
         10765: 'Sci-Fi & Fantasia',
         10766: 'Novela',
         10767: 'Talk Show',
-        10768: 'Guerra & Política'
+        10768: 'Guerra & PolÃ­tica'
     };
 
     const fetchJson = (url) => fetch(url).then((response) => response.json());
@@ -61,8 +61,8 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const createResultCard = (item) => {
-        const title = item.title || item.name || 'Sem título';
-        const mediaType = item.media_type === 'movie' ? 'Filme' : 'Série';
+        const title = item.title || item.name || 'Sem tÃ­tulo';
+        const mediaType = item.media_type === 'movie' ? 'Filme' : 'SÃ©rie';
         const poster = item.poster_path
             ? `https://image.tmdb.org/t/p/w342${item.poster_path}`
             : 'imagens/icon-cast.png';
@@ -147,7 +147,9 @@ document.addEventListener('DOMContentLoaded', () => {
         fetchJson(url)
             .then((data) => {
                 resultsContainer.innerHTML = '';
-                const items = (data.results || []).filter((item) => item.media_type === 'movie' || item.media_type === 'tv');
+                const items = (data.results || [])
+                    .filter((item) => item.media_type === 'movie' || item.media_type === 'tv')
+                    .sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
 
                 if (!items.length) {
                     showEmptyState('Nenhum resultado encontrado.');
@@ -162,9 +164,10 @@ document.addEventListener('DOMContentLoaded', () => {
             })
             .catch((error) => {
                 console.error('Erro:', error);
-                showEmptyState('Não foi possível carregar os resultados agora.');
+                showEmptyState('NÃ£o foi possÃ­vel carregar os resultados agora.');
             });
     });
 
     toggleClearState();
 });
+

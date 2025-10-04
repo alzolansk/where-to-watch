@@ -109,17 +109,12 @@ if (isset($_POST['submit'])) {
                 <form action="new-login.php" method="POST" class="login-form register-form">
                     <div class="input-group">
                         <label for="nome">Nome</label>
-                        <input type="text" name="nome" id="nome" class="input-control" placeholder="Seu nome completo" value="<?php echo htmlspecialchars($name_value, ENT_QUOTES, 'UTF-8'); ?>" required>
+                        <input type="text" name="nome" id="nome" class="input-control" placeholder="Seu nome de usuário" value="<?php echo htmlspecialchars($name_value, ENT_QUOTES, 'UTF-8'); ?>" required>
                     </div>
 
                     <div class="input-group">
                         <label for="email">Email</label>
-                        <input type="email" name="email" id="email" class="input-control" placeholder="usuario@gmail.com" value="<?php echo htmlspecialchars($email_value, ENT_QUOTES, 'UTF-8'); ?>" required>
-                    </div>
-
-                    <div class="input-group">
-                        <label for="phone">Numero de telefone</label>
-                        <input type="tel" name="phone" id="phone" class="input-control" placeholder="11999999999" value="<?php echo htmlspecialchars($phone_value, ENT_QUOTES, 'UTF-8'); ?>">
+                        <input type="email" name="email" id="email" class="input-control" placeholder="usuario@email.com" value="<?php echo htmlspecialchars($email_value, ENT_QUOTES, 'UTF-8'); ?>" required>
                     </div>
 
                     <div class="input-group">

@@ -103,33 +103,87 @@ function scrollRight() {
 
 
 /* Menu */
-document.getElementById('menuIcon').addEventListener('click', function(){
-   const menu = document.getElementById('menu-buttons');
-
-   if(menu.classList.contains('hidden-menu')) {
-      menu.classList.remove('hidden-menu');
-      menu.classList.add('active-menu');
-   } else {
-      menu.classList.remove('active-menu');
-      menu.classList.add('hidden-menu')
-   }
-})
-
+const menuTrigger = document.querySelector('.menu-trigger');
+const menuPanel = document.getElementById('menu-buttons');
+const menuIcon = document.getElementById('menuIcon');
+const menuViewportQuery = window.matchMedia('(max-width: 760px)');
 let isMenuOpen = false;
 
-function toggleMenu() {
-    const menuIcon = document.getElementById('menuIcon');
-    
-    if (isMenuOpen) {
-        menuIcon.src = 'imagens/menu-icon.png';
-    } else {
-        menuIcon.src = 'imagens/close-menu.png';
+function syncMenuState() {
+    if (!menuPanel || !menuTrigger || !menuIcon) {
+        return;
     }
 
-    // Alterna o estado do menu
-    isMenuOpen = !isMenuOpen;
+    if (!menuViewportQuery.matches) {
+        menuPanel.classList.remove('hidden-menu');
+        menuPanel.classList.remove('active-menu');
+        menuPanel.removeAttribute('aria-hidden');
+        menuTrigger.setAttribute('aria-expanded', 'false');
+        menuIcon.src = 'imagens/menu-icon.png';
+        isMenuOpen = false;
+        return;
+    }
+
+    menuPanel.classList.toggle('active-menu', isMenuOpen);
+    menuPanel.classList.toggle('hidden-menu', !isMenuOpen);
+    menuPanel.setAttribute('aria-hidden', isMenuOpen ? 'false' : 'true');
+    menuTrigger.setAttribute('aria-expanded', isMenuOpen ? 'true' : 'false');
+    menuIcon.src = isMenuOpen ? 'imagens/close-menu.png' : 'imagens/menu-icon.png';
 }
 
+function toggleMenu(forceState) {
+    if (!menuPanel || !menuTrigger || !menuIcon) {
+        return;
+    }
+
+    if (!menuViewportQuery.matches) {
+        return;
+    }
+
+    if (typeof forceState === 'boolean') {
+        isMenuOpen = forceState;
+    } else {
+        isMenuOpen = !isMenuOpen;
+    }
+
+    syncMenuState();
+}
+
+if (menuTrigger && menuPanel && menuIcon) {
+    syncMenuState();
+
+    const handleViewportChange = () => {
+        syncMenuState();
+    };
+
+    if (typeof menuViewportQuery.addEventListener === 'function') {
+        menuViewportQuery.addEventListener('change', handleViewportChange);
+    } else if (typeof menuViewportQuery.addListener === 'function') {
+        menuViewportQuery.addListener(handleViewportChange);
+    }
+
+    menuTrigger.addEventListener('click', (event) => {
+        event.preventDefault();
+        toggleMenu();
+    });
+
+    menuTrigger.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            toggleMenu();
+        }
+    });
+
+    document.addEventListener('click', (event) => {
+        if (!menuViewportQuery.matches) {
+            return;
+        }
+
+        if (!menuPanel.contains(event.target) && !menuTrigger.contains(event.target) && isMenuOpen) {
+            toggleMenu(false);
+        }
+    });
+}
 //Carregando...
 function getLoadingOverlay() {
     return document.getElementById('loadingOverlay') || document.getElementById('loading');
@@ -219,5 +273,3 @@ document.addEventListener('DOMContentLoaded', () => {
         requestAnimationFrame(update);
     });
 });
-
-

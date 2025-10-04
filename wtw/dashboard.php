@@ -4,11 +4,12 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 ?>
 <nav id="menu">
-    
     <div class="faixa">
+        <button class="menu-trigger" type="button" aria-label="Abrir menu" aria-expanded="false" aria-controls="menu-buttons">
+            <img src="imagens/menu-icon.png" alt="Menu" id="menuIcon" width="30px">
+        </button>
 
-      <!-- <li><a href="index.php" class="logo"> <img src="imagens/Where-toWatch.png" alt="logo" style="width: 80px"></li></a> -->
-                <a href="index.php" class="wyw-brand wyw-brand--sm dashboard-logo home-header" aria-label="Ir para a pÃƒÂ¡gina inicial">
+        <a href="index.php" class="wyw-brand wyw-brand--sm dashboard-logo home-header" aria-label="Ir para a pagina inicial">
             <span class="wyw-brand__where">where</span>
             <span class="wyw-brand__where wyw-brand__where--y">y</span>
             <img src="imagens/eye-icon2.svg" alt="o" class="wyw-brand__eye" />
@@ -16,62 +17,52 @@ if (session_status() === PHP_SESSION_NONE) {
             <span class="wyw-brand__watch">WATCH</span>
         </a>
 
-        <nav id="menu-buttons" class="hidden-menu">
+        <nav id="menu-buttons" class="menu-panel hidden-menu" aria-hidden="true">
             <ul id="ulBotoes">
-                
                 <li><a href="index.php">Pagina Inicial </a></li>
             </ul>
+            <div id="search-div" class="menu-panel__search">
+                <div class="search-panel">
+                    <div class="search-input-wrapper" id="searchInputWrapper">
+                        <span class="search-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="11" cy="11" r="7"></circle>
+                                <line x1="20" y1="20" x2="16.65" y2="16.65"></line>
+                            </svg>
+                        </span>
+                        <input type="text" class="search-bar" id="searchmovie" placeholder="Pesquisar filme ou s&eacute;rie" autocomplete="off">
+                        <button type="button" id="clearSearch" class="clear-search" aria-label="Limpar busca">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div id="results" class="search-results" style="display: none;"></div>
+            </div>
         </nav>
 
-
-
-        <div id="search-div">
-            <div class="search-panel">
-                <div class="search-input-wrapper" id="searchInputWrapper">
-                    <span class="search-icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="11" cy="11" r="7"></circle>
-                            <line x1="20" y1="20" x2="16.65" y2="16.65"></line>
-                        </svg>
-                    </span>
-                    <input type="text" class="search-bar" id="searchmovie" placeholder="Pesquisar filme ou s&eacute;rie" autocomplete="off">
-                    <button type="button" id="clearSearch" class="clear-search" aria-label="Limpar busca">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <line x1="18" y1="6" x2="6" y2="18"></line>
-                            <line x1="6" y1="6" x2="18" y2="18"></line>
-                        </svg>
-                    </button>
-                </div>
-            </div>
-            <div id="results" class="search-results" style="display: none;"></div>
-        </div>
-
-        <div id="searchResults" style="display: none;"></div>
-
-            <?php
-
-            if(!isset($_SESSION['nome']) || !isset($_SESSION['id'])) {
-
+        <?php
+        if (!isset($_SESSION['nome']) || !isset($_SESSION['id'])) {
             echo '<div class="user-menu">';
-            echo "<ul><li><a href=login.php> Fazer login </a></li></ul>";
+            echo '<a href="login.php" class="user-menu__link" aria-label="Fazer login">';
+            echo '<svg class="user-menu__icon" viewBox="0 0 24 24" aria-hidden="true">';
+            echo '<path d="M12 12.75c2.071 0 3.75-1.679 3.75-3.75S14.071 5.25 12 5.25 8.25 6.929 8.25 9s1.679 3.75 3.75 3.75Zm0 1.5c-2.824 0-8.25 1.418-8.25 4.242V21h16.5v-2.508c0-2.824-5.426-4.242-8.25-4.242Z" fill="currentColor"/>';
+            echo '</svg>';
+            echo '</a>';
             echo '</div>';
-            echo '<div class="menu-trigger">';
-            echo '<img onclick="toggleMenu()" src="imagens/menu-icon.png" alt="Menu Icon" id="menuIcon" width="30px">';
+        } else if (isset($_SESSION['nome'])) {
+            echo '<div class="user-greeting">';
+            echo "<label>Ola, " . $_SESSION['nome'] . " ";
+            echo '<a href= logout.php class=btn-danger> Sair </a>';
             echo '</div>';
-
-            } else if (isset($_SESSION['nome'])) {
-                echo '<div class="user-greeting">';
-                echo "<label>OlÃƒÆ’Ã‚Â¡, " . $_SESSION['nome'] . " ";
-                echo '<a href= logout.php class=btn-danger> Sair </a>';
-                echo '</div>';
-                echo '<div class="menu-trigger">';
-                echo '<img onclick="toggleMenu()" src="imagens/menu-icon.png" alt="Menu Icon" id="menuIcon" width="30px">';
-                echo '</div>';
-            }
-            ?>  
+        }
+        ?>
     </div>
 </nav>
 
+<div id="searchResults" style="display: none;"></div>
 
 <div id="loadingOverlay" class="loading-overlay is-hidden" role="status" aria-live="polite" aria-hidden="true">
     <div class="loading-content">
@@ -161,25 +152,53 @@ if (session_status() === PHP_SESSION_NONE) {
     display: flex;
     align-items: center;
     margin-left: auto;
+    gap: 12px;
 }
 
-.user-menu ul{
-    display: flex;
+.user-menu__link {
+    display: inline-flex;
     align-items: center;
-    margin: 0;
-    padding: 0;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    text-decoration: none;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.04));
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.88);
+    transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease, border 0.2s ease;
 }
 
-.user-menu ul li{
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 16px 8px 36px; /* espaÃƒÆ’Ã‚Â§o para a lupa */
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='white'%3E%3Cpath d='M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM12.735 14c.618 0 1.093-.561.872-1.139a6.002 6.002 0 0 0-11.215 0c-.22.578.254 1.139.872 1.139h9.47Z'/%3E%3C/svg%3E");
-    background-position: 8px center;
-    background-size: 20px 20px; /* largura altura */
-    background-repeat: no-repeat;
+.user-menu__link:hover,
+.user-menu__link:focus {
+    background: linear-gradient(135deg, rgba(255, 83, 112, 0.25), rgba(255, 255, 255, 0.1));
+    border-color: rgba(255, 83, 112, 0.45);
+    color: #fff;
+    transform: translateY(-1px);
 }
+
+.user-menu__icon {
+    width: 22px;
+    height: 22px;
+}
+
+.user-menu__label {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.88);
+    text-decoration: none;
+    letter-spacing: 0.01em;
+    transition: color 0.2s ease;
+}
+
+.user-menu__label:hover,
+.user-menu__label:focus {
+    color: #fff;
+    text-decoration: none;
+}
+
 
 .user-greeting {
     background-color: #1a1a1a;
@@ -189,6 +208,7 @@ if (session_status() === PHP_SESSION_NONE) {
     font-size: 16px;
     font-family: 'Nunito', sans-serif;
     display: inline-block;
+    margin-left: auto;
     animation: fadeInDown 0.6s ease;
     height: 60%; /* se estiver dentro de um nav fixo */
 }
@@ -232,38 +252,195 @@ if (session_status() === PHP_SESSION_NONE) {
     text-decoration: none;
 }
 
-.menu-trigger{
+.menu-trigger {
     display: none;
-    padding: 5px;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: 12px;
+    background: transparent;
+    cursor: pointer;
+    transition: background 0.2s ease, border 0.2s ease, transform 0.2s ease;
 }
 
-.menu-trigger:hover {
-    background-color: rgba(77, 77, 77, 0.329);
-    border-radius: 5px;
-    transition: 0.4s;
+.menu-trigger img {
+    width: 22px;
+    height: 22px;
+    display: block;
 }
 
-@media (max-width: 440px){
+.menu-trigger:hover,
+.menu-trigger:focus {
+    background-color: rgba(77, 77, 77, 0.32);
+    border-color: rgba(255, 255, 255, 0.08);
+    transform: translateY(-1px);
+}
 
-    .menu-trigger{
-        display: flex;
-        cursor: pointer;
+.menu-trigger:focus-visible {
+    outline: 2px solid rgba(255, 83, 112, 0.6);
+    outline-offset: 3px;
+}
+
+.menu-panel {
+    display: flex;
+    align-items: center;
+    gap: clamp(18px, 2vw, 26px);
+    flex: 1 1 auto;
+}
+
+.menu-panel.hidden-menu,
+.menu-panel.active-menu {
+    opacity: 1;
+    max-height: none;
+    overflow: visible;
+    pointer-events: auto;
+    transform: none;
+}
+
+.menu-panel ul {
+    display: flex;
+    align-items: center;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    gap: clamp(10px, 1.6vw, 18px);
+}
+
+.menu-panel ul li {
+    padding: 0;
+}
+
+.menu-panel ul li a {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 16px;
+    border-radius: 999px;
+    color: inherit;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.menu-panel ul li a:hover,
+.menu-panel ul li a:focus {
+    background-color: rgba(77, 77, 77, 0.32);
+    text-decoration: none;
+    color: #fff;
+}
+
+@media (max-width: 760px) {
+    .faixa {
+        position: relative;
+        flex-wrap: nowrap;
+        gap: 12px;
+        justify-content: space-between;
+        align-items: center;
     }
 
-    .hidden-menu {
+    .menu-trigger {
+        display: inline-flex;
+        order: 1;
+    }
+
+    .dashboard-logo {
+        order: 2;
+        margin: 0 auto;
+        padding: 0;
+        --wyw-brand-size: clamp(1.2rem, 6vw, 1.6rem);
+    }
+
+    .dashboard-logo .wyw-brand__where,
+    .dashboard-logo .wyw-brand__watch {
+        display: none;
+    }
+
+    .dashboard-logo .wyw-brand__eye {
+        width: 32px;
+        height: auto;
+        transform: scale(1.05);
+    }
+
+    .user-menu {
+        order: 3;
+        margin-left: 0;
+    }
+
+    .user-menu__link {
+        width: 36px;
+        height: 36px;
+    }
+
+    .user-menu__label {
+        display: none;
+    }
+
+    .user-greeting {
+        order: 3;
+        margin-left: auto;
+    }
+
+    .menu-panel {
+        order: 4;
+        position: absolute;
+        top: calc(100% + 10px);
+        left: clamp(12px, 5vw, 24px);
+        right: clamp(12px, 5vw, 24px);
+        flex-direction: column;
+        align-items: stretch;
+        gap: 18px;
+        padding: 18px clamp(16px, 6vw, 22px);
+        border-radius: 22px;
+        background: linear-gradient(135deg, rgba(26, 28, 48, 0.96), rgba(18, 18, 32, 0.94));
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+        transition: opacity 0.3s ease, max-height 0.3s ease, transform 0.3s ease;
+        z-index: 20;
+    }
+
+    .menu-panel.hidden-menu {
         opacity: 0;
         max-height: 0;
         overflow: hidden;
-        transition: opacity 0.4s ease, max-height 0.4s ease;
+        pointer-events: none;
+        transform: translateY(-6px);
     }
 
-    .active-menu {
+    .menu-panel.active-menu {
         opacity: 1;
-        max-height: 500px; 
-        transition: opacity 0.4s ease, max-height 0.4s ease;
+        max-height: 600px;
+        pointer-events: auto;
+        transform: translateY(0);
+    }
+
+    .menu-panel ul {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+
+    .menu-panel ul li a {
+        justify-content: center;
+        padding: 12px;
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.04);
+    }
+
+    .menu-panel ul li a:hover,
+    .menu-panel ul li a:focus {
+        background: rgba(255, 83, 112, 0.25);
+    }
+
+    #search-div {
+        flex: 1 1 auto;
+        margin: 0;
+        max-width: none;
+    }
+
+    .search-results {
+        position: static;
     }
 }
-
 @media screen and (max-width: 500px) {
   .dashboard-logo {
     --wyw-brand-size: clamp(1.1rem, 5vw, 1.4rem);
@@ -362,6 +539,7 @@ if (session_status() === PHP_SESSION_NONE) {
     align-items: center;
     justify-content: center;
     color: rgba(255, 255, 255, 0.7);
+    background: rgba(255, 255, 255, 0.1);
     cursor: pointer;
     opacity: 0;
     pointer-events: none;
@@ -442,7 +620,7 @@ if (session_status() === PHP_SESSION_NONE) {
     position: absolute;
     inset: auto -30px -50px;
     height: 120px;
-    background: radial-gradient(circle, rgba(255, 83, 112, 0.28) 0%, rgba(255, 83, 112, 0) 60%);
+    background: radial-gradient(circle, rgba(0, 0, 0, 0.28) 0%, rgba(255, 83, 112, 0) 60%);
     opacity: 0;
     transition: opacity 0.25s ease;
 }
@@ -538,8 +716,8 @@ if (session_status() === PHP_SESSION_NONE) {
 
 @media (max-width: 1000px) {
     #search-div {
-        order: 3;
-        margin-top: 16px;
+        flex: 1 1 100%;
+        margin: 0;
         max-width: none;
     }
 
@@ -566,4 +744,3 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 </style>
-

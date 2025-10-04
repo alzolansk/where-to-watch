@@ -26,17 +26,53 @@
     }
 
     /* Resetzinho */
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0;
-      font-family: "Outfit", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
-      color:var(--wyw-text);
-      background:
-        radial-gradient(1200px 70% at 80% 20%, rgba(225,29,46,.18) 0%, rgba(0,0,0,0) 60%),
-        linear-gradient(180deg, #1c0000 0%, #0c0b0e 70%, #070709 100%),
-        #000;
+
+    @import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap');
+
+    @media (max-width: 1200px) {
+        body {
+            font-size: 90%;
+            font-family: Nunito;
+        }
     }
+
+    :root{
+        --bg0:#0a0b11; --bg1:#07070d; --bg2:#14070b;
+        --red: #e11d48; /* rosa/vermelho WYWatch */
+        --blue: #3b82f6;
+        --glass: 16,18,28;      /* base rgb for glass panels */
+        --muted: 210 6% 78%;
+        --text: #f7f7fb;
+        --text-dim: #c7c9d3;
+        --card: rgba(var(--glass),.55);
+        --stroke: rgba(255,255,255,.08);
+        --shadow: 0 10px 30px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.03);
+        --radius-xl: 22px; --radius-lg: 18px; --radius-md: 14px;
+    }
+
+    *{
+        margin: 0;
+        padding: 0;
+        border:none;
+        text-decoration: none;
+        list-style: none;
+        box-sizing: border-box;
+        font-family: Nunito;  
+        color: white;
+    }
+
+    body{
+        /* Animated background (suave) */
+        --g1: radial-gradient(120% 120% at 19% 25%, rgba(225, 29, 72, 0.26) 0%, rgba(15, 16, 24, 0) 55%);
+        --g2: radial-gradient(120% 120% at 85% 200%, rgba(59, 130, 246, 0.12) 0%, rgba(6, 7, 13, 0) 50%);
+        --g3: linear-gradient(160deg, var(--bg0) 0%, var(--bg1) 40%, var(--bg2) 100%);
+        background-image: var(--g1), var(--g2), var(--g3);
+        background-repeat:no-repeat; background-size: 160% 160%, 160% 160%, cover;
+        animation: pan1 28s ease-in-out infinite alternate, pan2 36s ease-in-out infinite alternate;
+    }
+    @keyframes pan1{ from{ background-position: 18% 24%, 85% 200%, center; } to{ background-position: 22% 28%, 80% 210%, center; } }
+    @keyframes pan2{ from{ background-size: 160% 160%, 160% 160%, cover; } to{ background-size: 175% 175%, 150% 150%, cover; } }
+
 
     
     .logo-div {
