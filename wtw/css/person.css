@@ -186,7 +186,8 @@ body {
 }
 
 .timeline-item:hover {
-  transform: translateY(-3px);
+  transform: scale(1.05); /* mover a descricao para cima */
+  bottom: -100px;
 }
 
 .timeline-circle {
@@ -195,8 +196,6 @@ body {
   height: 130px;
   border-radius: 50%;
   background: radial-gradient(circle, #ffffff0a 40%, #ef44441a 75%, #ef444433 100%);
-  border: 1px solid #ef444466;
-  box-shadow: 0 0 0 6px #ef44440a, 0 8px 24px #0009;
   overflow: hidden;
 }
 

@@ -61,7 +61,7 @@
             <h2 class="section-heading">
                 <span class="section-heading__bar" aria-hidden="true">|</span>
                 <span class="section-heading__text">Mais populares no</span>
-                <span class="wyw-brand wyw-brand--sm section-heading__brand" aria-label="Where You Watch">
+                <span class="wyw-brand wyw-brand--compact section-heading__brand" aria-label="Where You Watch">
                     <span class="wyw-brand__where">where</span>
                     <span class="wyw-brand__where wyw-brand__where--y">y</span>
                     <img src="imagens/eye-icon2.svg" alt="o" class="wyw-brand__eye" />
@@ -80,7 +80,7 @@
 
             <h2 class="section-heading">
                 <span class="section-heading__bar" aria-hidden="true">|</span>
-                <span class="wyw-brand wyw-brand--sm section-heading__brand" aria-label="Where You Watch">
+                <span class="wyw-brand wyw-brand--compact section-heading__brand" aria-label="Where You Watch">
                     <span class="wyw-brand__where">where</span>
                     <span class="wyw-brand__where wyw-brand__where--y">y</span>
                     <img src="imagens/eye-icon2.svg" alt="o" class="wyw-brand__eye" />

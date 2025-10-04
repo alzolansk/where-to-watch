@@ -1,53 +1,66 @@
 ﻿/* Shared brand logo component */
 .wyw-brand {
-    --wyw-brand-size: clamp(1.25rem, 2vw, 1.75rem);
+    --wyw-brand-size: clamp(1.28rem, 2.2vw, 1.82rem);
     --wyw-brand-eye-scale: 0.55;
     display: inline-flex;
     align-items: baseline;
-    gap: clamp(0.12em, 0.6vw, 0.28em);
+    gap: clamp(0.14em, 0.6vw, 0.3em);
     color: inherit;
     text-decoration: none;
     font-family: "Outfit", "Nunito", sans-serif;
+    line-height: 1;
+    white-space: nowrap;
 }
 
 .wyw-brand__where {
     font-size: var(--wyw-brand-size);
     font-weight: 700;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.045em;
 }
 
 .wyw-brand__where--y {
-    margin-right: -0.30em;
+    margin-right: -0.28em;
 }
 
 .wyw-brand__where--u {
-    margin-left: -0.30em;
-    margin-bottom: 0.10em;
+    margin-left: -0.28em;
+    margin-bottom: 0.08em;
 }
 
 .wyw-brand__eye {
     display: inline-block;
     width: calc(var(--wyw-brand-size) * var(--wyw-brand-eye-scale));
-    margin-top: -0.12em;
+    margin-top: -0.1em;
     margin-left: -0.04em;
     margin-right: -0.02em;
 }
 
 .wyw-brand__watch {
-    font-size: calc(var(--wyw-brand-size) * 1.15);
+    font-size: calc(var(--wyw-brand-size) * 1.14);
     font-weight: 900;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
     background: linear-gradient(180deg, #ff3b3b, #c41022);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
-    text-shadow: 0 8px 32px rgba(225, 29, 46, 0.25);
+    text-shadow: 0 8px 28px rgba(225, 29, 46, 0.28);
 }
 
 .wyw-brand--sm {
     --wyw-brand-size: clamp(1.05rem, 1.6vw, 1.35rem);
     --wyw-brand-eye-scale: 0.48;
+}
+
+.wyw-brand--compact {
+    --wyw-brand-size: clamp(1rem, 1.6vw, 1.3rem);
+    --wyw-brand-eye-scale: 0.48;
+    gap: clamp(0.12em, 0.5vw, 0.24em);
+    color: rgba(248, 250, 252, 0.88);
+}
+
+.wyw-brand--compact .wyw-brand__watch {
+    text-shadow: 0 8px 24px rgba(225, 29, 46, 0.26);
 }
 
 .wyw-brand--lg {
@@ -79,4 +92,20 @@ a.wyw-brand:focus {
     justify-content: center;
 }
 
+.wyw-brand--menu {
+    --wyw-brand-size: clamp(1.45rem, 2.5vw, 2.05rem);
+    --wyw-brand-eye-scale: 0.5;
+    align-items: center;
+    gap: clamp(0.2em, 0.9vw, 0.48em);
+    color: #f8fafc;
+    text-shadow: 0 12px 36px rgba(16, 18, 29, 0.55);
+}
+
+.wyw-brand--menu .wyw-brand__where {
+    color: rgba(248, 250, 252, 0.96);
+}
+
+.wyw-brand--menu .wyw-brand__watch {
+    text-shadow: none;
+}
 
