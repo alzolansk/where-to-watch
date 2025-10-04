@@ -246,6 +246,7 @@ function hydrateHero(details, params, dom, mediaType) {
     if (dom.trailerLink) {
         const hasTrailer = Boolean(trailerUrl && trailerUrl !== '#');
         if (hasTrailer) {
+            dom.trailerLink.classList.remove('is-hidden');
             dom.trailerLink.href = trailerUrl;
             dom.trailerLink.dataset.trailerUrl = trailerUrl;
             dom.trailerLink.classList.remove('is-disabled');
@@ -263,10 +264,11 @@ function hydrateHero(details, params, dom, mediaType) {
                 dom.trailerLink.dataset.boundModal = 'true';
             }
         } else {
-            dom.trailerLink.href = '#';
+            dom.trailerLink.classList.add('is-hidden');
+            dom.trailerLink.removeAttribute('href');
             dom.trailerLink.dataset.trailerUrl = '';
-            dom.trailerLink.classList.add('is-disabled');
-            dom.trailerLink.setAttribute('aria-disabled', 'true');
+            dom.trailerLink.classList.remove('is-disabled');
+            dom.trailerLink.removeAttribute('aria-disabled');
         }
     }
 
