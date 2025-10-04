@@ -337,7 +337,7 @@ body {
 }
 
 .card-section {
-    background: var(--color-panel-strong);
+    background: var(--color-panel);
     border-radius: 28px;
     padding: 36px clamp(26px, 4vw, 44px);
     border: 1px solid var(--glass-border);
@@ -626,6 +626,165 @@ body {
     color: #fff;
     box-shadow: 0 50px 120px rgba(0, 0, 0, 0.6);
     padding: 40px;
+}
+
+.season-dialog {
+    width: min(680px, 92vw);
+    margin: 0 auto;
+    border-radius: 28px 0px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: radial-gradient(140% 140% at 100% 0%, rgba(79, 70, 229, 0.18) 0%, rgba(10, 12, 20, 0.94) 46%),
+        linear-gradient(160deg, rgba(9, 11, 18, 0.96) 0%, rgba(12, 14, 22, 0.96) 100%);
+    color: var(--color-text);
+    box-shadow: 0 42px 96px rgba(8, 10, 18, 0.72);
+    padding: 0;
+    overflow: hidden;
+}
+
+.season-dialog::backdrop {
+    background: rgba(4, 6, 12, 0.7);
+    backdrop-filter: blur(6px);
+}
+
+.season-dialog__content {
+    position: relative;
+    padding: 40px clamp(28px, 4vw, 44px) 44px;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+}
+
+.season-dialog__close {
+    position: absolute;
+    top: 20px;
+    right: 22px;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: rgba(15, 17, 26, 0.82);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: var(--color-text);
+    font-size: 1.4rem;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    transition: transform 0.25s ease, background 0.25s ease;
+}
+
+.season-dialog__close:hover {
+    transform: translateY(-2px);
+    background: rgba(215, 23, 30, 0.22);
+}
+
+.season-dialog__header {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.season-dialog__badge {
+    align-self: flex-start;
+    padding: 6px 16px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    font-size: 0.85rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.season-dialog__title {
+    font-size: clamp(1.4rem, 2.4vw, 1.8rem);
+    font-family: var(--font-display);
+}
+
+.season-dialog__subtitle {
+    color: var(--color-muted);
+    font-size: 0.95rem;
+}
+
+.season-dialog__body {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.season-dialog__meta {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    color: rgba(226, 232, 240, 0.86);
+    font-size: 0.95rem;
+}
+
+.season-dialog__meta p.is-hidden {
+    display: none;
+}
+
+.season-dialog__overview {
+    line-height: 1.6;
+}
+
+.season-dialog__overview.is-muted {
+    color: rgba(226, 232, 240, 0.6);
+}
+
+.season-dialog__providers {
+    display: grid;
+    gap: 14px;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.season-provider {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 14px 28px rgba(8, 10, 18, 0.32);
+    transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+}
+
+.season-provider img {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    object-fit: cover;
+}
+
+.season-provider span {
+    font-weight: 600;
+    letter-spacing: 0.01em;
+}
+
+.season-provider:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 22px 44px rgba(8, 10, 18, 0.46);
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.season-dialog__empty {
+    text-align: center;
+    color: rgba(226, 232, 240, 0.74);
+    font-size: 0.95rem;
+    padding: 12px 0;
+}
+
+.season-dialog.is-open {
+    animation: dialogFade 0.3s ease;
+}
+
+@keyframes dialogFade {
+    from {
+        opacity: 0;
+        transform: translateY(12px) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
 }
 
 .modal-class {

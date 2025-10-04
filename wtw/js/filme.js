@@ -29,6 +29,7 @@ const waitForImages = (container) => new Promise(resolve => {
 });
 
 let currentProviderQuery = '';
+let availableStreamingProviders = [];
 
 const refreshCarouselNav = (id) => {
     if (typeof window.updateCarouselNav === 'function') {
@@ -115,6 +116,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         providersSection: document.getElementById('providersSection'),
         seasonSection: document.getElementById('seasonSection'),
         seasonsContainer: document.getElementById('seasons-container'),
+        seasonDialog: document.getElementById('seasonDialog'),
+        seasonDialogBadge: document.getElementById('seasonDialogBadge'),
+        seasonDialogMeta: document.getElementById('seasonDialogMeta'),
+        seasonDialogOverview: document.getElementById('seasonDialogOverview'),
+        seasonStreamingList: document.getElementById('seasonStreamingList'),
+        seasonStreamingEmpty: document.getElementById('seasonStreamingEmpty'),
+        seasonDialogClose: document.getElementById('closeSeasonDialog'),
         castList: document.getElementById('cast-list'),
         gallerySection: document.getElementById('gallerySection'),
         galleryTrack: document.getElementById('gallery-track')
@@ -704,6 +712,7 @@ function renderProviders(providers, dom, homepageProvider) {
 
     const streamingList = prepareStreamingProviders(providers?.flatrate, homepageProvider);
     const streaming = dedupeProviders(streamingList);
+    availableStreamingProviders = streaming;
     const rental = dedupeProviders(providers?.rent);
     const buy = dedupeProviders(providers?.buy);
 
@@ -793,9 +802,106 @@ function renderSeasons(details, dom, mediaType) {
             </div>
         `;
 
+        card.addEventListener('click', () => openSeasonDialog(season, dom));
+
         dom.seasonsContainer.appendChild(card);
     });
     refreshCarouselNav('seasons-container');
+}
+
+function openSeasonDialog(season, dom) {
+    if (!dom?.seasonDialog) {
+        return;
+    }
+
+    const dialog = dom.seasonDialog;
+    const badge = dom.seasonDialogBadge;
+    const meta = dom.seasonDialogMeta;
+    const overview = dom.seasonDialogOverview;
+    const providerList = dom.seasonStreamingList;
+    const emptyState = dom.seasonStreamingEmpty;
+
+    const seasonLabel = season?.name || (typeof season?.season_number === 'number' ? `Temporada ${season.season_number}` : 'Temporada');
+    const year = season?.air_date ? new Date(season.air_date).getFullYear() : '';
+    const episodesText = season?.episode_count ? `${season.episode_count} ${season.episode_count === 1 ? 'episódio' : 'episódios'}` : '';
+
+    if (badge) {
+        badge.textContent = seasonLabel;
+    }
+
+    if (meta) {
+        const fragments = [year, episodesText].filter(Boolean);
+        meta.textContent = fragments.length ? fragments.join(' • ') : '';
+        meta.classList.toggle('is-hidden', !fragments.length);
+    }
+
+    if (overview) {
+        const text = season?.overview?.trim();
+        overview.textContent = text || 'Ainda não temos uma sinopse detalhada para esta temporada.';
+        overview.classList.toggle('is-muted', !text);
+    }
+
+    if (providerList) {
+        providerList.innerHTML = '';
+    }
+
+    const hasProviders = Array.isArray(availableStreamingProviders) && availableStreamingProviders.length > 0;
+
+    if (emptyState) {
+        emptyState.classList.toggle('is-hidden', hasProviders);
+    }
+
+    if (hasProviders && providerList) {
+        availableStreamingProviders.forEach(provider => {
+            const link = document.createElement('a');
+            link.className = 'season-provider';
+            link.href = resolveProviderUrl(provider);
+            link.target = '_blank';
+            link.rel = 'noopener';
+
+            if (provider.logo_path) {
+                const img = document.createElement('img');
+                img.src = createImageUrl(provider.logo_path, 'w92');
+                img.alt = provider.provider_name;
+                link.appendChild(img);
+            }
+
+            const info = document.createElement('span');
+            info.textContent = provider.provider_name;
+            link.appendChild(info);
+
+            providerList.appendChild(link);
+        });
+    }
+
+    if (typeof dialog.showModal === 'function') {
+        dialog.showModal();
+        dialog.classList.add('is-open');
+    }
+
+    if (dom.seasonDialogClose && !dom.seasonDialogClose.__hasListener) {
+        dom.seasonDialogClose.addEventListener('click', () => closeSeasonDialog(dialog));
+        dom.seasonDialogClose.__hasListener = true;
+    }
+
+    if (!dialog.__outsideClickListener) {
+        dialog.addEventListener('click', event => {
+            if (event.target === dialog) {
+                closeSeasonDialog(dialog);
+            }
+        });
+        dialog.__outsideClickListener = true;
+    }
+}
+
+function closeSeasonDialog(dialog) {
+    if (!dialog) {
+        return;
+    }
+    dialog.classList.remove('is-open');
+    if (dialog.open) {
+        dialog.close();
+    }
 }
 
 function renderCast(castArray, castContainer) {

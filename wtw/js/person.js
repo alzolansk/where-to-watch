@@ -69,9 +69,11 @@ document.addEventListener('DOMContentLoaded', () => {
     coworkersGrid: document.getElementById('coworkersGrid'),
     coworkersSection: document.getElementById('coworkersSection'),
     modalTitle: document.getElementById('moviesModalTitle'),
-    filmographySearch: document.getElementById('filmographySearch'),
-    filmographyClear: document.getElementById('filmographyClear'),
-    filmographyResults: document.getElementById('filmographyResults')
+    modalSearch: document.getElementById('modalFilmographySearch'),
+    modalClear: document.getElementById('modalFilmographyClear'),
+    modalResultCount: document.getElementById('modalResultCount'),
+    modalActorPhoto: document.getElementById('modalActorPhoto'),
+    modalEmptyState: document.getElementById('modalEmptyState')
   };
 
   dom.timelineSection = dom.timeline ? dom.timeline.closest('.card-section') : null;
@@ -126,7 +128,6 @@ document.addEventListener('DOMContentLoaded', () => {
       const { highlights, allSorted } = await renderTimeline(person, credits);
       renderInfo(person);
       renderExternal(person.external_ids, person.homepage);
-      dom.modalTitle.textContent = `Todos os trabalhos (${allSorted.length})`;
 
       // colegas com base nos destaques
       const coworkDetails = await fetchCoworkersFromHighlights(highlights.slice(0,6));
@@ -141,9 +142,10 @@ document.addEventListener('DOMContentLoaded', () => {
       if (dom.timelineSection) dom.timelineSection.classList.add('is-hidden');
       if (dom.showAllWrapper) dom.showAllWrapper.classList.add('is-hidden');
       if (dom.coworkersSection) dom.coworkersSection.classList.add('is-hidden');
-      if (dom.filmographyResults) {
-        dom.filmographyResults.innerHTML = '';
-        dom.filmographyResults.classList.add('is-hidden');
+      if (dom.allGrid) dom.allGrid.innerHTML = '';
+      if (dom.modalEmptyState) {
+        dom.modalEmptyState.textContent = 'Filmografia indisponível no momento.';
+        dom.modalEmptyState.classList.remove('is-hidden');
       }
     }finally{
       await waitForImages(document);
@@ -154,10 +156,17 @@ document.addEventListener('DOMContentLoaded', () => {
   // ========= render hero =========
   function renderHero(p){
     dom.name.textContent = p.name || '-';
+    if (dom.modalTitle) {
+      dom.modalTitle.textContent = p.name ? `Filmografia de ${p.name}` : 'Todos os trabalhos';
+    }
     const prof = p.known_for_department || 'Profissional';
     dom.prof1.textContent = prof;
     dom.prof2.textContent = prof;
     dom.photo.src = img(p.profile_path,'w500') || 'imagens/icon-cast.png';
+    if (dom.modalActorPhoto) {
+      dom.modalActorPhoto.src = img(p.profile_path,'w185') || 'imagens/icon-cast.png';
+      dom.modalActorPhoto.alt = p.name ? `Foto de ${p.name}` : 'Foto do(a) artista';
+    }
 
     const biography = (p.biography || '').trim();
     if(!biography){
@@ -222,19 +231,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    dom.allGrid.innerHTML = '';
-    if (allSorted.length) {
-      allSorted.forEach(item=>{
-        const a = document.createElement('a');
-        a.href = `filme.php?${new URLSearchParams({ id:item.id, mediaType:'movie' }).toString()}`;
-        const im = document.createElement('img');
-        im.src = img(item.poster_path,'w342') || 'imagens/icon-cast.png';
-        im.alt = item.title || item.name || '';
-        a.appendChild(im);
-        dom.allGrid.appendChild(a);
-      });
-    }
-
     if (showAllWrapper) {
       showAllWrapper.classList.toggle('is-hidden', !allSorted.length);
     }
@@ -243,7 +239,21 @@ document.addEventListener('DOMContentLoaded', () => {
       if (allSorted.length) {
         dom.allBtn.removeAttribute('disabled');
         dom.allBtn.setAttribute('aria-hidden', 'false');
-        dom.allBtn.onclick = () => dom.allModal && dom.allModal.showModal();
+        dom.allBtn.onclick = () => {
+          if (!dom.allModal) return;
+          dom.allModal.showModal();
+          document.body.classList.add('modal-is-open');
+          if (dom.modalSearch && typeof dom.modalSearch._runFilter === 'function') {
+            dom.modalSearch._runFilter();
+          } else {
+            renderModalGrid(filmographyState.all);
+          }
+          setTimeout(() => {
+            if (dom.modalSearch) {
+              dom.modalSearch.focus();
+            }
+          }, 120);
+        };
       } else {
         dom.allBtn.setAttribute('disabled', 'disabled');
         dom.allBtn.setAttribute('aria-hidden', 'true');
@@ -252,8 +262,22 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (dom.closeAll) {
-      dom.closeAll.onclick = () => dom.allModal && dom.allModal.close();
+      dom.closeAll.onclick = () => {
+        if (!dom.allModal) return;
+        dom.allModal.close();
+      };
     }
+
+    if (dom.allModal) {
+      dom.allModal.addEventListener('close', () => {
+        document.body.classList.remove('modal-is-open');
+      });
+      dom.allModal.addEventListener('cancel', () => {
+        document.body.classList.remove('modal-is-open');
+      });
+    }
+
+    setupModalFilmographySearch();
 
     return { highlights: top, allSorted };
   }
@@ -352,109 +376,105 @@ function renderCoworkers(list){
     dom.coworkersGrid.appendChild(a);
   });
 }
+  function renderModalGrid(list = []){
+    if (!dom.allGrid) return;
 
+    const total = filmographyState.all.length;
+    dom.allGrid.innerHTML = '';
 
+    if (!list.length) {
+      dom.allGrid.classList.add('is-hidden');
+      if (dom.modalEmptyState) {
+        const hasQuery = dom.modalSearch && dom.modalSearch.value.trim();
+        dom.modalEmptyState.textContent = hasQuery ? 'Nenhum título corresponde à sua busca.' : 'Nenhum trabalho encontrado.';
+        dom.modalEmptyState.classList.remove('is-hidden');
+      }
+    } else {
+      dom.allGrid.classList.remove('is-hidden');
+      if (dom.modalEmptyState) {
+        dom.modalEmptyState.classList.add('is-hidden');
+      }
 
-  function bindFilmographySearch(){
-    const input = dom.filmographySearch;
-    const results = dom.filmographyResults;
-    if (!input || !results) {
-      return;
+      list.forEach(item => {
+        const link = document.createElement('a');
+        link.href = `filme.php?${new URLSearchParams({ id:item.id, mediaType:'movie' }).toString()}`;
+
+        const poster = document.createElement('img');
+        poster.src = img(item.poster_path, 'w342') || 'imagens/icon-cast.png';
+        poster.alt = item.title || item.name || '';
+        poster.loading = 'lazy';
+        link.appendChild(poster);
+
+        dom.allGrid.appendChild(link);
+      });
     }
-    if (input.dataset.bound === 'true') {
-      return;
-    }
 
-    const clearButton = dom.filmographyClear;
+    if (dom.modalResultCount) {
+      const totalLabel = total === 1 ? 'trabalho' : 'trabalhos';
+      if (!total) {
+        dom.modalResultCount.textContent = 'Nenhum trabalho cadastrado';
+      } else if (!list.length) {
+        dom.modalResultCount.textContent = `Nenhum trabalho encontrado para sua busca (0 de ${total} ${totalLabel})`;
+      } else if (list.length === total) {
+        dom.modalResultCount.textContent = `${total} ${totalLabel} no total`;
+      } else {
+        const filteredLabel = list.length === 1 ? 'trabalho' : 'trabalhos';
+        dom.modalResultCount.textContent = `Mostrando ${list.length} ${filteredLabel} de ${total} ${totalLabel}`;
+      }
+    }
+  }
+
+  function setupModalFilmographySearch(){
+    const input = dom.modalSearch;
+    const clearButton = dom.modalClear;
+
     const normalize = (value = '') => value
       .toString()
       .toLowerCase()
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '');
 
-    const renderMatches = (matches) => {
-      results.innerHTML = '';
-      if (!matches.length) {
-        const empty = document.createElement('p');
-        empty.className = 'filmography-results__empty';
-        empty.textContent = 'Nenhum titulo encontrado.';
-        results.appendChild(empty);
-        results.classList.remove('is-hidden');
-        return;
+    const runFilter = () => {
+      const normalizedQuery = input ? normalize(input.value.trim()) : '';
+      const matches = normalizedQuery
+        ? filmographyState.all.filter(item => normalize(item.title || item.name || '').includes(normalizedQuery))
+        : filmographyState.all;
+      renderModalGrid(matches);
+    };
+
+    if (!input) {
+      renderModalGrid(filmographyState.all);
+      return;
+    }
+
+    if (input.dataset.bound === 'true') {
+      if (typeof input._runFilter === 'function') {
+        input._runFilter();
+      } else {
+        runFilter();
       }
+      return;
+    }
 
-      matches.slice(0, 12).forEach(item => {
-        const link = document.createElement('a');
-        link.className = 'filmography-results__item';
-        const mediaType = item.media_type === 'tv' ? 'tv' : 'movie';
-        const params = new URLSearchParams({ id: item.id, mediaTp: mediaType });
-        link.href = `filme.php?${params.toString()}`;
+    input.addEventListener('input', runFilter);
+    input.addEventListener('search', runFilter);
 
-        const poster = document.createElement('img');
-        poster.src = img(item.poster_path, 'w185') || 'imagens/icon-cast.png';
-        poster.alt = item.title || item.name || 'Titulo';
-        poster.loading = 'lazy';
-        link.appendChild(poster);
-
-        const meta = document.createElement('div');
-        meta.className = 'filmography-results__meta';
-        const titleSpan = document.createElement('span');
-        titleSpan.className = 'filmography-results__title';
-        titleSpan.textContent = item.title || item.name || 'Titulo';
-        meta.appendChild(titleSpan);
-
-        const year = (item.release_date || item.first_air_date || '').slice(0,4);
-        if (year) {
-          const yearSpan = document.createElement('span');
-          yearSpan.className = 'filmography-results__year';
-          yearSpan.textContent = year;
-          meta.appendChild(yearSpan);
+    if (clearButton) {
+      clearButton.addEventListener('click', () => {
+        if (!input.value) {
+          runFilter();
+          input.focus();
+          return;
         }
-
-        const chevron = document.createElement('span');
-        chevron.className = 'filmography-results__chevron';
-        chevron.textContent = '>';
-
-        meta.appendChild(chevron);
-
-        link.appendChild(meta);
-        results.appendChild(link);
+        input.value = '';
+        runFilter();
+        input.focus();
       });
-      results.classList.remove('is-hidden');
-    };
-
-    const handleInput = () => {
-      const query = input.value.trim();
-      const normalizedQuery = normalize(query);
-      if (!normalizedQuery) {
-        results.innerHTML = '';
-        results.classList.add('is-hidden');
-        return;
-      }
-
-      const matches = filmographyState.all.filter(item => {
-        const title = normalize(item.title || item.name || '');
-        return title.includes(normalizedQuery);
-      });
-
-      renderMatches(matches);
-    };
-
-    input.addEventListener('input', handleInput);
-    input.addEventListener('focus', handleInput);
-    if (clearButton) clearButton.addEventListener('click', () => {
-      if (!input.value) {
-        results.innerHTML = '';
-        results.classList.add('is-hidden');
-        return;
-      }
-      input.value = '';
-      results.innerHTML = '';
-      results.classList.add('is-hidden');
-      input.focus();
-    });
+    }
 
     input.dataset.bound = 'true';
+    input._runFilter = runFilter;
+    runFilter();
   }
 
   // ========= info / externos =========

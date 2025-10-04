@@ -126,6 +126,27 @@
                 </div>
             </section>
 
+            <dialog id="seasonDialog" class="season-dialog">
+                <div class="season-dialog__content">
+                    <button type="button" id="closeSeasonDialog" class="season-dialog__close" aria-label="Fechar modal">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <header class="season-dialog__header">
+                        <span id="seasonDialogBadge" class="season-dialog__badge"></span>
+                        <h3 class="season-dialog__title">Em qual streaming deseja assistir?</h3>
+                        <p class="season-dialog__subtitle">Escolha uma plataforma disponível para o Brasil</p>
+                    </header>
+                    <section class="season-dialog__body">
+                        <div class="season-dialog__meta">
+                            <p id="seasonDialogMeta"></p>
+                            <p id="seasonDialogOverview" class="season-dialog__overview"></p>
+                        </div>
+                        <div class="season-dialog__providers" id="seasonStreamingList"></div>
+                        <p id="seasonStreamingEmpty" class="season-dialog__empty is-hidden">Nenhum streaming disponível para esta temporada no momento.</p>
+                    </section>
+                </div>
+            </dialog>
+
             <dialog id="actorDialog" class="actor-dialog">
                 <div id="actorContent" class="modal-class">
                     <div class="poster-actor">

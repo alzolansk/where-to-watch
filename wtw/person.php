@@ -50,13 +50,6 @@ include_once("dashboard.php")
         <p class="section-subtitle">Ordenamos por popularidade e ano.</p>
       </div>
 
-      <div class="filmography-search">
-        <input type="search" id="filmographySearch" placeholder="Buscar na filmografia" autocomplete="off" aria-label="Buscar filmes na filmografia">
-        <button type="button" id="filmographyClear" class="filmography-search__clear" aria-label="Limpar busca">&times;</button>
-      </div>
-
-      <div class="filmography-results is-hidden" id="filmographyResults"></div>
-
       <div class="timeline-container" id="timeline-container"></div>
 
       <div class="show-movies">
@@ -97,13 +90,27 @@ include_once("dashboard.php")
 
   <!-- ========== MODAL: TODOS OS TRABALHOS ========== -->
   <dialog id="moviesModal" class="movie-dialog">
-    <div class="overlay-modal"></div>
     <div class="modal-inner">
-      <div class="modal-head">
-        <h3 id="moviesModalTitle">Todos os trabalhos</h3>
-        <button id="closeMoviesModal" class="btn btn-danger">Fechar</button>
+      <header class="modal-head">
+        <div class="modal-identity">
+          <img id="modalActorPhoto" class="modal-actor-photo" src="" alt="Foto do(a) artista" loading="lazy">
+          <div class="modal-titles">
+            <h3 id="moviesModalTitle">Todos os trabalhos</h3>
+            <p id="modalResultCount" class="modal-result-count">&nbsp;</p>
+          </div>
+        </div>
+        <button id="closeMoviesModal" class="modal-close-btn" type="button">Fechar</button>
+      </header>
+
+      <div class="modal-body wyw-scroll">
+        <div class="modal-search">
+          <input type="search" id="modalFilmographySearch" placeholder="Buscar na filmografia" autocomplete="off" aria-label="Buscar filmes na filmografia">
+        </div>
+
+        <p id="modalEmptyState" class="modal-empty is-hidden">Nenhum título encontrado.</p>
+
+        <div class="all-grid" id="all-movies-list"></div>
       </div>
-      <div class="all-grid" id="all-movies-list"></div>
     </div>
   </dialog>
 
