@@ -553,8 +553,10 @@ document.addEventListener('DOMContentLoaded', function() {
                                 ? imageData.logos.find(logo => logo.file_path)?.file_path
                                 : null;
                             const titleLogoUrl = titleLogoPath ? `https://image.tmdb.org/t/p/w500${titleLogoPath}` : '';
-                            const showTextTitle = !titleLogoUrl;
-                            const showOriginalSubtitle = showTextTitle && originalTitle && originalTitle !== titleSource;
+                            const hasReadableTitle = Boolean(titleSource && titleSource.trim());
+                            const shouldRenderFallbackTitle = !titleLogoUrl && hasReadableTitle;
+                            const shouldRenderMobileTitle = Boolean(titleLogoUrl && hasReadableTitle);
+                            const showOriginalSubtitle = shouldRenderFallbackTitle && originalTitle && originalTitle !== titleSource;
 
                             let runtime = '';
                             if (itemMediaType === 'movie' && data.runtime) {
@@ -597,13 +599,14 @@ document.addEventListener('DOMContentLoaded', function() {
                                             ${primaryCompanyName ? `<span class="hero-card__eyebrow">${primaryCompanyName}</span>` : `<span class="hero-card__eyebrow">Bombando agora</span>`}
                                             <div class="hero-card__title-block">
                                                 ${titleLogoUrl ? `<img src="${titleLogoUrl}" alt="${titleSource}" class="hero-card__title-logo">` : ''}
-                                                ${showTextTitle ? `<h2 class="hero-card__title">${titleSource}</h2>` : ''}
+                                                ${shouldRenderFallbackTitle ? `<h2 class="hero-card__title">${titleSource}</h2>` : ''}
+                                                ${shouldRenderMobileTitle ? `<h2 class="hero-card__title hero-card__title--mobile">${titleSource}</h2>` : ''}
                                                 ${showOriginalSubtitle ? `<p class="hero-card__subtitle">${originalTitle}</p>` : ''}
                                             </div>
                                             <div class="hero-card__meta">
                                                 <span class="hero-card__badge">${mediaTypeTxt}</span>
                                                 ${releaseYear ? `<span class="hero-card__meta-item">${releaseYear}</span>` : ''}
-                                                ${runtime ? `<span class="hero-card__meta-item">${runtime}</span>` : ''}
+                                                ${runtime ? `<span class="hero-card__meta-item hero-card__meta-item--runtime">${runtime}</span>` : ''}
                                                 ${voteAverage ? `<span class="hero-card__meta-item hero-card__meta-item--rating"><img src="imagens/star-emoji.png" alt="" aria-hidden="true">${voteAverage}</span>` : ''}
                                             </div>
                                             ${''}
