@@ -1,6 +1,10 @@
 ﻿/* Shared brand logo component */
+.wyw-brand * {
+    font-family: "Outfit", "Nunito", sans-serif;
+}
+
 .wyw-brand {
-    --wyw-brand-size: clamp(1.28rem, 2.2vw, 1.82rem);
+    --wyw-brand-size: clamp(20px, 2.2vw, 29px);
     --wyw-brand-eye-scale: 0.55;
     display: inline-flex;
     align-items: baseline;
@@ -48,12 +52,12 @@
 }
 
 .wyw-brand--sm {
-    --wyw-brand-size: clamp(1.05rem, 1.6vw, 1.35rem);
+    --wyw-brand-size: clamp(17px, 1.6vw, 22px);
     --wyw-brand-eye-scale: 0.48;
 }
 
 .wyw-brand--compact {
-    --wyw-brand-size: clamp(1rem, 1.6vw, 1.3rem);
+    --wyw-brand-size: clamp(16px, 1.6vw, 21px);
     --wyw-brand-eye-scale: 0.48;
     gap: clamp(0.12em, 0.5vw, 0.24em);
     color: rgba(248, 250, 252, 0.88);
@@ -64,11 +68,11 @@
 }
 
 .wyw-brand--lg {
-    --wyw-brand-size: clamp(1.6rem, 3vw, 2.3rem);
+    --wyw-brand-size: clamp(26px, 3vw, 37px);
 }
 
 .wyw-brand--xl {
-    --wyw-brand-size: clamp(2.2rem, 5vw, 3.6rem);
+    --wyw-brand-size: clamp(35px, 5vw, 58px);
     --wyw-brand-eye-scale: 0.6;
 }
 
@@ -93,7 +97,7 @@ a.wyw-brand:focus {
 }
 
 .wyw-brand--menu {
-    --wyw-brand-size: clamp(1.45rem, 2.5vw, 2.05rem);
+    --wyw-brand-size: clamp(23px, 2.5vw, 33px);
     --wyw-brand-eye-scale: 0.5;
     align-items: center;
     gap: clamp(0.2em, 0.9vw, 0.48em);

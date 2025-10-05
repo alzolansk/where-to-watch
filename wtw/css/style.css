@@ -244,6 +244,8 @@ body{
                 linear-gradient(160deg, #0a0a0f 0%, #120510 50%, #1a0b16 100%);
     background-size: 200% 200%;
     animation: moveGradient 7s ease-in-out infinite;
+    display: grid;
+    place-items: center;
     align-items: center;
     justify-content: center;
     text-align: center;
@@ -699,24 +701,61 @@ body{
 }
 
 @media (max-width: 1100px) {
+    #container-wrap {
+        max-height: 750px;
+        align-items: stretch;
+    }
+
     .backdropContainer {
         height: auto;
-        min-height: clamp(380px, 62vh, 560px);
-        max-height: none;
+        max-height: 100%;
+        min-height: clamp(420px, 68vh, 750px);
+        flex-direction: column;
+        align-items: stretch;
+        justify-content: flex-start;
+        gap: clamp(18px, 3vw, 28px);
+        padding: clamp(24px, 4vw, 38px);
     }
 
     .hero-card__layout {
         grid-template-columns: 1fr;
-        gap: clamp(18px, 4vw, 28px);
+        grid-template-areas:
+            "content"
+            "poster";
+        gap: clamp(18px, 3vw, 28px);
+    }
+
+    .hero-card__content {
+        grid-area: content;
+        align-items: center;
+        text-align: center;
+        gap: clamp(16px, 2.6vw, 24px);
+    }
+
+    .hero-card__top,
+    .hero-card__bottom {
+        align-items: center;
+        text-align: center;
+    }
+
+    .hero-card__meta {
+        justify-content: center;
     }
 
     .hero-card__poster {
-        justify-content: flex-start;
-        padding-top: clamp(12px, 3vw, 20px);
+        grid-area: poster;
+        justify-content: center;
+        padding-top: 0;
     }
 
     .hero-card__poster-img {
-        width: clamp(200px, 40vw, 260px);
+        width: clamp(220px, 38vw, 300px);
+        margin: 0 auto;
+    }
+
+    .hero-card__actions {
+        justify-content: center;
+        width: 100%;
     }
 }
 

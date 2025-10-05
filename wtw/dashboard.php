@@ -48,14 +48,38 @@ if (session_status() === PHP_SESSION_NONE) {
             echo '<div class="user-menu">';
             echo '<a href="login.php" class="user-menu__link" aria-label="Fazer login">';
             echo '<svg class="user-menu__icon" viewBox="0 0 24 24" aria-hidden="true">';
-            echo '<path d="M12 12.75c2.071 0 3.75-1.679 3.75-3.75S14.071 5.25 12 5.25 8.25 6.929 8.25 9s1.679 3.75 3.75 3.75Zm0 1.5c-2.824 0-8.25 1.418-8.25 4.242V21h16.5v-2.508c0-2.824-5.426-4.242-8.25-4.242Z" fill="currentColor"/>';
+            echo '<path d="M12 12.75c2.071 0 3.75-1.679 3.75-3.75S14.071 5.25 12 5.25 8.25 6.929 8.25 9s1.679 3.75 3.75 3.75Zm0" fill="currentColor"/>';
+            echo '<path d="M12 14.25c-2.824 0-8.25 1.418-8.25 4.242V21h16.5v-2.508c0-2.824-5.426-4.242-8.25-4.242Z" fill="currentColor" />';
             echo '</svg>';
             echo '</a>';
             echo '</div>';
         } else if (isset($_SESSION['nome'])) {
-            echo '<div class="user-greeting">';
-            echo "<label>Ola, " . $_SESSION['nome'] . " ";
-            echo '<a href= logout.php class=btn-danger> Sair </a>';
+            $userName = htmlspecialchars($_SESSION['nome'], ENT_QUOTES, 'UTF-8');
+            echo '<div class="user-account" data-user-menu>';
+            echo '    <button type="button" class="user-account__trigger" aria-haspopup="true" aria-expanded="false">';
+            echo '        <span class="user-account__avatar" aria-hidden="true">';
+            echo '            <svg viewBox="0 0 24 24" aria-hidden="true">';
+            echo '                <path d="M12 12.75c2.071 0 3.75-1.679 3.75-3.75S14.071 5.25 12 5.25 8.25 6.929 8.25 9s1.679 3.75 3.75 3.75Zm0" fill="currentColor"/>';
+            echo '                <path d="M12 14.25c-2.824 0-8.25 1.418-8.25 4.242V21h16.5v-2.508c0-2.824-5.426-4.242-8.25-4.242Z" fill="currentColor" />';
+            echo '            </svg>';
+            echo '        </span>';
+            echo '        <span class="user-account__label">Olá, ' . $userName . '</span>';
+            echo '        <span class="user-account__chevron" aria-hidden="true">';
+            echo '            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">';
+            echo '                <polyline points="6 9 12 15 18 9" />';
+            echo '            </svg>';
+            echo '        </span>';
+            echo '    </button>';
+            echo '    <div class="user-account__dropdown" role="menu" aria-hidden="true">';
+            echo '        <button type="button" class="user-account__profile" role="menuitem">';
+            echo '            <span>Meu perfil</span>';
+            echo '            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">';
+            echo '                <polyline points="9 6 15 12 9 18" />';
+            echo '            </svg>';
+            echo '        </button>';
+            echo '        <span class="user-account__divider" aria-hidden="true"></span>';
+            echo '        <a href="logout.php" class="user-account__logout" role="menuitem">Sair</a>';
+            echo '    </div>';
             echo '</div>';
         }
         ?>
@@ -101,6 +125,16 @@ if (session_status() === PHP_SESSION_NONE) {
     border:none;
     text-decoration: none;
     list-style: none;
+}
+
+:root{
+  --glass-bg-1: rgba(255,255,255,.14);
+  --glass-bg-2: rgba(255,255,255,.08);
+  --glass-stroke: rgba(255,255,255,.22);
+  --glass-inner: rgba(255,255,255,.25);
+  --glass-divider: rgba(255,255,255,.12);
+  --text-strong: #fff;
+  --text-soft: rgba(255,255,255,.85);
 }
 
 /* Main Menu */
@@ -200,42 +234,220 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 
-.user-greeting {
-    background-color: #1a1a1a;
-    color: white;
-    padding: 5px 20px;
-    border-radius: 15px;
-    font-size: 16px;
-    font-family: 'Nunito', sans-serif;
-    display: inline-block;
+
+.user-account {
     margin-left: auto;
-    animation: fadeInDown 0.6s ease;
-    height: 60%; /* se estiver dentro de um nav fixo */
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    color: rgba(255, 255, 255, 0.92);
 }
 
-.user-greeting strong {
-    color: #D7171E;
+.user-account--open {
+    z-index: 10;
 }
 
-.user-greeting a {
-    background-color: #D7171E;
-    color: white;
-    padding: 2px 6px;
-    border-radius: 10px;
-    font-size: 13px;
+.user-account__trigger {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 6px 18px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.05));
+    border: 0.3px solid rgba(255, 255, 255, 0.18);
+    border-radius: 999px;
+    backdrop-filter: blur(18px) saturate(180%);
+    -webkit-backdrop-filter: blur(18px) saturate(180%);
+    color: inherit;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: left;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border 0.2s ease;
+}
+
+.user-account__trigger:focus-visible {
+    outline: none
+}
+
+.user-account__trigger:focus {
+    outline: none
+}
+
+
+.user-account__trigger:hover,
+.user-account__trigger:focus {
+    border-color: rgba(255, 255, 255, 0.28);
+    box-shadow: 0 12px 28px rgba(7, 12, 32, 0.32);
+    transform: translateY(-1px);
+}
+
+.user-account__avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    color: #fff;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.user-account__avatar svg {
+    width: 20px;
+    height: 20px;
+}
+
+.user-account__label {
+    white-space: nowrap;
+    font-size: 0.95rem;
+}
+
+.user-account__chevron {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: auto;
+    color: rgba(255, 255, 255, 0.7);
+    transition: transform 0.25s ease;
+}
+
+.user-account__chevron svg {
+    width: 18px;
+    height: 18px;
+}
+
+.user-account--open .user-account__chevron {
+    transform: rotate(180deg);
+}
+
+
+.user-account__dropdown {
+    position: absolute;
+    top: calc(100% + 12px);
+    right: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    width: clamp(240px, 28vw, 280px);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateY(-10px);
+    z-index: 20;
+    background:
+    radial-gradient(circle at -12% -10%, rgba(225, 29, 72, 0.35), transparent 62%),
+    radial-gradient(circle at 112% 10%, rgba(99, 102, 241, 0.28), transparent 60%),
+    radial-gradient(circle at 50% 120%, rgba(34, 211, 238, 0.18), transparent 58%),
+    linear-gradient(160deg, rgba(12, 15, 26, 0.94) 0%, rgba(9, 11, 18, 0.85) 45%, rgba(13, 15, 24, 0.96) 100%);
+    backdrop-filter: blur(26px) saturate(160%) contrast(108%);
+    -webkit-backdrop-filter: blur(26px) saturate(160%) contrast(108%);
+    box-shadow:
+    0 18px 40px rgba(0,0,0,.5),
+    inset 0 1px 0 rgba(255,255,255,.18);
+    border-radius: 20px;
+    padding: 10px;
+    color: #fff;
+    transition: all 0.25s ease;
+
+}
+
+#user-dropdown::after{
+  content:"";
+  position:absolute; inset:0;
+  border-radius: inherit;
+  background:
+    radial-gradient(120% 90% at 12% -10%, rgba(255,255,255,.22), transparent 58%),
+    rgba(255,255,255,.06);         
+  pointer-events:none;
+  mix-blend-mode: screen;
+}
+
+.user-account__dropdown:before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(120% 120% at 10% -10%, rgba(255,255,255,.25), transparent 60%);
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+
+.user-account--open .user-account__dropdown {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateY(0);
+}
+
+
+.user-account__name {
+    font-weight: 700;
+    font-size: 0.98rem;
+    color: rgba(22, 24, 38, 0.85);
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+.user-account__profile {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 12px 14px;
+    color: rgba(12, 16, 36, 0.8);
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, border 0.2s ease;
+    border-radius: 12px;
+    background: linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,.08));
+    border: 1px solid rgba(255,255,255,.18);
+    color: rgba(255,255,255,.92);
+    box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.18),
+    0 .5px 0 rgba(0,0,0,.35);
+    text-decoration:none;
+    transition: transform .15s ease, background .15s ease, border-color .15s ease;
+}
+
+.user-account__profile svg {
+    width: 18px;
+    height: 18px;
+}
+
+.user-account__profile:hover,
+.user-account__profile:focus-visible {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.12));
+    border-color: rgba(255, 255, 255, 0.35);
+    transform: translateY(-1px);
+    box-shadow: 0 16px 30px rgba(8, 12, 32, 0.25);
+}
+
+.user-account__divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.35);
+    margin: 2px 0 0;
+}
+
+.user-account__logout {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 12px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, rgba(215, 23, 30, 0.95), rgba(120, 12, 18, 0.9));
+    color: #fff;
+    font-weight: 700;
     text-decoration: none;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-@keyframes fadeInDown {
-    from {
-        opacity: 0;
-        transform: translateY(-15px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+.user-account__logout:hover,
+.user-account__logout:focus-visible {
+    transform: translateY(-1px);
+    box-shadow: 0 12px 24px rgba(215, 23, 30, 0.35);
 }
+
+
+
 
 #menu a{
     color: rgb(247, 247, 247);
@@ -341,13 +553,17 @@ if (session_status() === PHP_SESSION_NONE) {
     .menu-trigger {
         display: inline-flex;
         order: 1;
+        margin-right: auto;
     }
 
     .dashboard-logo {
         order: 2;
-        margin: 0 auto;
         padding: 0;
         --wyw-brand-size: clamp(1.2rem, 6vw, 1.6rem);
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
     }
 
     .dashboard-logo .wyw-brand__where,
@@ -364,6 +580,7 @@ if (session_status() === PHP_SESSION_NONE) {
     .user-menu {
         order: 3;
         margin-left: 0;
+        margin-left: auto;
     }
 
     .user-menu__link {
@@ -375,9 +592,28 @@ if (session_status() === PHP_SESSION_NONE) {
         display: none;
     }
 
-    .user-greeting {
+    .user-account {
         order: 3;
         margin-left: auto;
+    }
+
+    .user-account__label {
+        display: none;
+    }
+
+    .user-account__chevron {
+        display: none;
+    }
+
+    .user-account__trigger {
+        gap: 0;
+        padding: 6px 10px;
+    }
+
+    .user-account__dropdown {
+        left: auto;
+        right: 0;
+        width: clamp(220px, 72vw, 280px);
     }
 
     .menu-panel {

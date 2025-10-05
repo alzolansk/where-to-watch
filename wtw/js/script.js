@@ -184,6 +184,61 @@ if (menuTrigger && menuPanel && menuIcon) {
         }
     });
 }
+
+/* User account menu */
+const userAccountMenu = document.querySelector('[data-user-menu]');
+if (userAccountMenu) {
+    const userAccountTrigger = userAccountMenu.querySelector('.user-account__trigger');
+    const userAccountDropdown = userAccountMenu.querySelector('.user-account__dropdown');
+    let isUserAccountOpen = false;
+
+    const setAccountMenuState = (state) => {
+        isUserAccountOpen = state;
+        userAccountMenu.classList.toggle('user-account--open', isUserAccountOpen);
+
+        if (userAccountTrigger) {
+            userAccountTrigger.setAttribute('aria-expanded', isUserAccountOpen ? 'true' : 'false');
+        }
+
+        if (userAccountDropdown) {
+            userAccountDropdown.setAttribute('aria-hidden', isUserAccountOpen ? 'false' : 'true');
+        }
+    };
+
+    const toggleAccountMenu = (forceState) => {
+        const nextState = typeof forceState === 'boolean' ? forceState : !isUserAccountOpen;
+        setAccountMenuState(nextState);
+    };
+
+    if (userAccountTrigger) {
+        userAccountTrigger.addEventListener('click', (event) => {
+            event.preventDefault();
+            toggleAccountMenu();
+        });
+
+        userAccountTrigger.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                toggleAccountMenu();
+            }
+        });
+    }
+
+    document.addEventListener('click', (event) => {
+        if (!userAccountMenu.contains(event.target) && isUserAccountOpen) {
+            toggleAccountMenu(false);
+        }
+    });
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && isUserAccountOpen) {
+            toggleAccountMenu(false);
+            if (userAccountTrigger) {
+                userAccountTrigger.focus();
+            }
+        }
+    });
+}
 //Carregando...
 function getLoadingOverlay() {
     return document.getElementById('loadingOverlay') || document.getElementById('loading');
