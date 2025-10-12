@@ -105,7 +105,7 @@
     const dropdownKeys = Object.keys(dropdowns).filter((key) => dropdowns[key]);
     let openDropdownKey = null;
 
-\nconst getSelectedProviders = () => Array.from(state.selected)
+const getSelectedProviders = () => Array.from(state.selected)
     .map((id) => state.providers.get(id))
     .filter(Boolean);
 
