@@ -1,19 +1,35 @@
 <?php
 include_once('config/config.php');
 
+if (!function_exists('wywEnsureOnboardingColumn')) {
+    function wywEnsureOnboardingColumn(mysqli $connection): void
+    {
+        try {
+            $result = $connection->query("SHOW COLUMNS FROM tb_users LIKE 'onboarding_completed_at'");
+            $exists = $result instanceof mysqli_result && $result->num_rows > 0;
+            if ($result instanceof mysqli_result) {
+                $result->free();
+            }
+            if (!$exists) {
+                $connection->query("ALTER TABLE tb_users ADD COLUMN onboarding_completed_at DATETIME NULL DEFAULT NULL AFTER email_user");
+            }
+        } catch (Throwable $schemaError) {
+            error_log('wyw_onboarding_column_error: ' . $schemaError->getMessage());
+        }
+    }
+}
+
+wywEnsureOnboardingColumn($conexao);
+
 $error_message = '';
 $title_error = '';
 $name_value = '';
 $email_value = '';
-$phone_value = '';
-
 if (isset($_POST['submit'])) {
     $name_value = trim($_POST['nome'] ?? '');
     $email_value = trim($_POST['email'] ?? '');
     $senha = $_POST['senha'] ?? '';
     $confirm_senha = $_POST['confirmasenha'] ?? '';
-    $phone_value = trim($_POST['phone'] ?? '');
-    $phone_digits = preg_replace('/\D+/', '', $phone_value);
 
     if ($name_value === '' || $email_value === '' || $senha === '' || $confirm_senha === '') {
         $title_error = 'Campos obrigatorios';
@@ -27,9 +43,6 @@ if (isset($_POST['submit'])) {
         } elseif ($senha !== $confirm_senha) {
             $title_error = 'Senhas diferentes';
             $error_message = 'A confirmacao de senha precisa corresponder a senha informada.';
-        } elseif ($phone_value !== '' && strlen($phone_digits) < 10) {
-            $title_error = 'Telefone invalido';
-            $error_message = 'Informe um numero de telefone com DDD.';
         } else {
             $stmt = $conexao->prepare('SELECT id_user FROM tb_users WHERE email_user = ?');
             if ($stmt) {
@@ -45,9 +58,9 @@ if (isset($_POST['submit'])) {
                     $error_message = 'Este email ja possui cadastro. Gostaria de entrar? <a href="login.php">Clique aqui</a>.';
                 } else {
                     $hashed_password = password_hash($senha, PASSWORD_DEFAULT);
-                    $insert_stmt = $conexao->prepare('INSERT INTO tb_users (name_user, email_user, pswd_user, phone_number) VALUES (?, ?, ?, ?)');
+                    $insert_stmt = $conexao->prepare('INSERT INTO tb_users (name_user, email_user, pswd_user) VALUES (?, ?, ?)');
                     if ($insert_stmt) {
-                        $insert_stmt->bind_param('ssss', $name_value, $email, $hashed_password, $phone_digits);
+                        $insert_stmt->bind_param('sss', $name_value, $email, $hashed_password);
                         if ($insert_stmt->execute()) {
                             header('Location: login.php');
                             exit();

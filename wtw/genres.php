@@ -89,7 +89,10 @@ if (session_status() === PHP_SESSION_NONE) {
                 <h2 class="providers-results__title" id="genreResultsTitle">Destaques da categoria</h2>
                 <p class="providers-results__caption" id="genreResultsCaption">Selecione uma categoria para começar.</p>
             </div>
-            <span class="providers-results__count" id="genreResultsCount"></span>
+            <div class="providers-results__meta">
+                <span class="providers-results__status" id="genreResultsStatus" hidden aria-live="polite"></span>
+                <span class="providers-results__count" id="genreResultsCount"></span>
+            </div>
         </div>
         <div class="providers-empty" id="genreEmptyState" hidden>
             <div class="providers-empty__card">
@@ -100,11 +103,6 @@ if (session_status() === PHP_SESSION_NONE) {
         <div class="providers-grid" id="genreResultsGrid"></div>
     </section>
 </main>
-
-<div class="providers-loading" id="genreLoading" hidden aria-live="assertive" aria-busy="true">
-    <div class="providers-loading__spinner"></div>
-    <p>Carregando títulos por categoria...</p>
-</div>
 
 <script src="js/script.js"></script>
 <script src="js/genres.js"></script>

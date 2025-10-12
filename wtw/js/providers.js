@@ -75,7 +75,8 @@
         genreId: '',
         year: '',
         sortBy: DEFAULT_SORT,
-        fetchToken: 0
+        fetchToken: 0,
+        availability: new Map()
     };
 
     const createDropdownRef = (key) => {
@@ -104,11 +105,6 @@
 
     const dropdownKeys = Object.keys(dropdowns).filter((key) => dropdowns[key]);
     let openDropdownKey = null;
-
-const getSelectedProviders = () => Array.from(state.selected)
-    .map((id) => state.providers.get(id))
-    .filter(Boolean);
-
 
 const scrollProviderRail = (direction = 'next') => {
     const rail = elements.rail;
@@ -610,6 +606,73 @@ const updateResultsCaption = (count) => {
         updateProviderRailNav();
     };
 
+    const renderWatchCtaMarkup = (provider) => {
+        if (!provider) {
+            return '';
+        }
+
+        const providerLogo = provider.logo || '';
+        const providerName = provider.name || 'provedor selecionado';
+        const providerWatchUrl = resolveProviderWatchUrl(provider);
+
+        return `
+            <button type="button" class="media-card__watch-link" data-watch-url="${escapeHtml(providerWatchUrl)}" data-provider-name="${escapeHtml(providerName)}">
+                <span>Assistir em</span>
+                ${providerLogo ? `<img src="${escapeHtml(providerLogo)}" alt="${escapeHtml(providerName)}" loading="lazy">` : `<strong>${escapeHtml(providerName)}</strong>`}
+            </button>
+        `;
+    };
+
+    const selectProviderForAvailability = (availabilityMap, availabilityKey) => {
+        const providerIds = availabilityMap.get(availabilityKey) || [];
+        if (!providerIds.length) {
+            return null;
+        }
+
+        const providers = providerIds
+            .map((providerId) => state.providers.get(providerId))
+            .filter(Boolean);
+
+        if (!providers.length) {
+            return null;
+        }
+
+        return providers.find((provider) => state.selected.has(provider.id))
+            || providers[0]
+            || null;
+    };
+
+    const applyAvailabilityToCard = (card, availabilityMap) => {
+        if (!card) {
+            return;
+        }
+
+        const availabilityKey = card.dataset.availabilityKey;
+        const watchSlot = card.querySelector('[data-watch-slot]');
+        if (!availabilityKey || !watchSlot) {
+            return;
+        }
+
+        const providerForCta = selectProviderForAvailability(availabilityMap, availabilityKey);
+        if (providerForCta) {
+            watchSlot.innerHTML = renderWatchCtaMarkup(providerForCta);
+            watchSlot.hidden = false;
+        } else {
+            watchSlot.innerHTML = '';
+            watchSlot.hidden = true;
+        }
+    };
+
+    const applyAvailabilityToRenderedTitles = (availabilityMap) => {
+        if (!elements.grid) {
+            return;
+        }
+
+        elements.grid.querySelectorAll('[data-availability-key]').forEach((card) => {
+            applyAvailabilityToCard(card, availabilityMap);
+        });
+    };
+
     const renderTitles = (items) => {
         if (!elements.grid) {
             return;
@@ -631,8 +694,6 @@ const updateResultsCaption = (count) => {
             elements.resultsCount.textContent = `${items.length} resultado${items.length === 1 ? '' : 's'}`;
         }
 
-        const selectedProviders = getSelectedProviders();
-
         const fragment = document.createDocumentFragment();
 
         items.forEach((item) => {
@@ -645,21 +706,13 @@ const updateResultsCaption = (count) => {
             detailUrl.searchParams.set('type', item.media_type === 'tv' ? 'tv' : 'movie');
             const detailHref = detailUrl.pathname + detailUrl.search;
 
-        const providerForCta = selectedProviders.length ? selectedProviders[0] : null;
-        const providerLogo = providerForCta?.logo || '';
-        const providerName = providerForCta?.name || 'provedor selecionado';
-            const providerWatchUrl = resolveProviderWatchUrl(providerForCta);
-            const watchCtaMarkup = providerForCta ? `
-                        <button type="button" class="media-card__watch-link" data-watch-url="${escapeHtml(providerWatchUrl)}" data-provider-name="${escapeHtml(providerName)}">
-                            <span>Assistir em</span>
-                            ${providerLogo ? `<img src="${escapeHtml(providerLogo)}" alt="${escapeHtml(providerName)}" loading="lazy">` : `<strong>${escapeHtml(providerName)}</strong>`}
-                        </button>
-                    ` : '';
+            const availabilityKey = `${item.media_type}-${item.id}`;
 
             const card = document.createElement('article');
             card.className = 'media-card';
             card.dataset.mediaType = item.media_type;
             card.dataset.detailUrl = detailHref;
+            card.dataset.availabilityKey = availabilityKey;
             card.setAttribute('tabindex', '0');
             card.innerHTML = `
                 <figure class="media-card__poster">
@@ -668,11 +721,13 @@ const updateResultsCaption = (count) => {
                         <span class="media-card__badge">${escapeHtml(typeLabel)}</span>
                         <h3 class="media-card__title">${escapeHtml(title)}</h3>
                         <span class="media-card__year">${escapeHtml(year)}</span>
-                        ${watchCtaMarkup}
+                        <div class="media-card__watch-slot" data-watch-slot></div>
                         <span class="media-card__detail-hint">Ver detalhes</span>
                     </figcaption>
                 </figure>
             `;
+
+            applyAvailabilityToCard(card, state.availability);
 
             card.addEventListener('click', (event) => {
                 if (event.target.closest('[data-watch-url]')) {
@@ -691,7 +746,9 @@ const updateResultsCaption = (count) => {
 
         elements.grid.innerHTML = '';
         elements.grid.appendChild(fragment);
-    };    const mapSortForMedia = (sort, mediaType) => {
+    };
+
+    const mapSortForMedia = (sort, mediaType) => {
         if (mediaType === 'tv' && sort === 'primary_release_date.desc') {
             return 'first_air_date.desc';
         }
@@ -817,9 +874,19 @@ const updateResultsCaption = (count) => {
                 .sort(compareTitles)
                 .slice(0, MAX_RESULTS);
 
+            state.availability = new Map();
             renderTitles(combined);
+
+            const availability = await fetchAvailabilityForItems(combined);
+            if (token !== state.fetchToken) {
+                return;
+            }
+
+            state.availability = availability;
+            applyAvailabilityToRenderedTitles(state.availability);
         } catch (error) {
             console.error(error);
+            state.availability = new Map();
             renderTitles([]);
             updateResultsCaption(0);
             setEmptyState('no-results');
@@ -927,6 +994,65 @@ const updateResultsCaption = (count) => {
                 displayPriority: provider.display_priority ?? provider.displayPriority ?? 1000
             });
         });
+    };
+
+    const fetchAvailabilityForItems = async (items) => {
+        const availability = new Map();
+        if (!items.length) {
+            return availability;
+        }
+
+        const collectProviders = (payload) => {
+            const providers = new Set();
+            if (!payload) {
+                return providers;
+            }
+            ['flatrate', 'ads', 'free', 'rent', 'buy'].forEach((category) => {
+                (payload[category] || []).forEach((entry) => {
+                    if (entry && Number.isInteger(entry.provider_id)) {
+                        providers.add(entry.provider_id);
+                    }
+                });
+            });
+            return providers;
+        };
+
+        const tasks = items.map((item) => ({
+            key: `${item.media_type}-${item.id}`,
+            id: item.id,
+            mediaType: item.media_type === 'tv' ? 'tv' : 'movie'
+        }));
+
+        const MAX_CONCURRENT = 8;
+        let index = 0;
+
+        const runWorker = async () => {
+            while (index < tasks.length) {
+                const currentIndex = index;
+                index += 1;
+                const { key, id, mediaType } = tasks[currentIndex];
+                try {
+                    const url = new URL(`https://api.themoviedb.org/3/${mediaType}/${id}/watch/providers`);
+                    url.search = new URLSearchParams({ api_key: API_KEY });
+                    const response = await fetch(url.toString());
+                    if (!response.ok) {
+                        throw new Error(`Falha ao carregar provedores para ${mediaType} ${id} (${response.status})`);
+                    }
+                    const payload = await response.json();
+                    const regionData = payload?.results?.[REGION];
+                    const providers = collectProviders(regionData);
+                    if (providers.size) {
+                        availability.set(key, Array.from(providers));
+                    }
+                } catch (error) {
+                    console.error(error);
+                }
+            }
+        };
+
+        const workers = Array.from({ length: Math.min(MAX_CONCURRENT, tasks.length) }, runWorker);
+        await Promise.all(workers);
+        return availability;
     };
 
     const fetchGenres = async () => {

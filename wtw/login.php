@@ -2,6 +2,25 @@
 session_start();
 include_once('config/config.php');
 
+if (!function_exists('wywEnsureOnboardingColumn')) {
+  function wywEnsureOnboardingColumn(mysqli $connection): void {
+    try {
+      $result = $connection->query("SHOW COLUMNS FROM tb_users LIKE 'onboarding_completed_at'");
+      $exists = $result instanceof mysqli_result && $result->num_rows > 0;
+      if ($result instanceof mysqli_result) {
+        $result->free();
+      }
+      if (!$exists) {
+        $connection->query("ALTER TABLE tb_users ADD COLUMN onboarding_completed_at DATETIME NULL DEFAULT NULL AFTER email_user");
+      }
+    } catch (Throwable $schemaError) {
+      error_log('wyw_onboarding_column_error: ' . $schemaError->getMessage());
+    }
+  }
+}
+
+wywEnsureOnboardingColumn($conexao);
+
 $error_message = "";
 $user_not_found = false;
 $title_error = "";
@@ -13,18 +32,25 @@ if (isset($_POST['submit'])) {
   if (!$email) {
     $error_message = "Email inválido.";
   } else {
-    $stmt = $conexao->prepare("SELECT id_user, name_user, pswd_user FROM tb_users WHERE email_user = ?");
+    $stmt = $conexao->prepare("SELECT id_user, name_user, pswd_user, onboarding_completed_at FROM tb_users WHERE email_user = ?");
     $stmt->bind_param("s", $email);
     $stmt->execute();
     $stmt->store_result();
 
     if ($stmt->num_rows > 0) {
-      $stmt->bind_result($id, $nome, $senha_hash);
+      $stmt->bind_result($id, $nome, $senha_hash, $onboarding_completed_at);
       $stmt->fetch();
 
       if (password_verify($senha_digitada, $senha_hash)) {
         $_SESSION['id'] = $id;
+        $_SESSION['id_user'] = $id;
         $_SESSION['nome'] = $nome;
+        $_SESSION['onboarding_pending'] = empty($onboarding_completed_at);
+        if (!empty($onboarding_completed_at)) {
+          $_SESSION['onboarding_completed_at'] = $onboarding_completed_at;
+        } else {
+          unset($_SESSION['onboarding_completed_at']);
+        }
 
         header("Location: index.php");
         exit();

@@ -7,6 +7,8 @@
     const WATCH_PRIORITIES = ['flatrate', 'ads', 'free', 'rent', 'buy'];
     const POPULARITY_PAGES = 5;
     const MAX_RESULTS = 100;
+    const CACHE_TTL = 5 * 60 * 1000;
+    const MAX_CACHE_ENTRIES = 20;
     const DEFAULT_SORT = 'popularity.desc';
     const SORT_OPTIONS = [
         { value: 'popularity.desc', label: 'Popularidade' },
@@ -35,8 +37,8 @@
         grid: document.getElementById('genreResultsGrid'),
         resultsCaption: document.getElementById('genreResultsCaption'),
         resultsCount: document.getElementById('genreResultsCount'),
-        emptyState: document.getElementById('genreEmptyState'),
-        loading: document.getElementById('genreLoading')
+        resultsStatus: document.getElementById('genreResultsStatus'),
+        emptyState: document.getElementById('genreEmptyState')
     };
 
     if (!elements.root) {
@@ -105,7 +107,9 @@
         initialLabels: new Map(),
         initialKeywordLabels: new Map(),
         providerCache: new Map(),
-        providerToken: 0
+        providerToken: 0,
+        resultsCache: new Map(),
+        currentFetchController: null
     };
 
     const params = new URLSearchParams(window.location.search);
@@ -356,15 +360,31 @@
         updateDropdownLabel('sort');
     };
 
-    const setLoading = (isLoading) => {
-        if (!elements.loading) {
-            return;
+    const setLoading = (isLoading, options = {}) => {
+        const { mode = 'loading' } = options;
+        if (elements.resultsStatus) {
+            if (isLoading) {
+                const message = mode === 'updating'
+                    ? 'Atualizando resultados...'
+                    : 'Buscando resultados...';
+                elements.resultsStatus.hidden = false;
+                elements.resultsStatus.textContent = message;
+            } else {
+                elements.resultsStatus.hidden = true;
+                elements.resultsStatus.textContent = '';
+            }
         }
-        elements.loading.hidden = !isLoading;
-        if (isLoading) {
-            elements.loading.setAttribute('aria-busy', 'true');
-        } else {
-            elements.loading.removeAttribute('aria-busy');
+        if (elements.grid) {
+            if (isLoading && mode === 'updating') {
+                elements.grid.classList.add('is-updating');
+            } else {
+                elements.grid.classList.remove('is-updating');
+            }
+            if (isLoading) {
+                elements.grid.setAttribute('aria-busy', 'true');
+            } else {
+                elements.grid.removeAttribute('aria-busy');
+            }
         }
     };
 
@@ -433,6 +453,89 @@
         const genres = getSelectedGenreEntries().sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
         const keywords = getSelectedKeywordEntries().sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
         return [...genres, ...keywords];
+    };
+
+    const buildCacheKey = () => {
+        const media = state.mediaType || 'both';
+        const sort = state.sortBy || DEFAULT_SORT;
+        const year = state.year || 'all';
+        const genres = Array.from(state.selectedGenres).sort((a, b) => a - b).join(',') || 'none';
+        const keywords = Array.from(state.selectedKeywords).sort((a, b) => a - b).join(',') || 'none';
+        return [media, sort, year, genres, keywords].join('|');
+    };
+
+    const cloneProvider = (provider) => {
+        if (!provider) {
+            return null;
+        }
+        return {
+            id: provider.id,
+            name: provider.name,
+            logo: provider.logo,
+            type: provider.type,
+            link: provider.link
+        };
+    };
+
+    const cloneItemForCache = (item) => {
+        if (!item || typeof item !== 'object') {
+            return item;
+        }
+        return {
+            ...item,
+            genre_ids: Array.isArray(item.genre_ids) ? [...item.genre_ids] : item.genre_ids,
+            origin_country: Array.isArray(item.origin_country) ? [...item.origin_country] : item.origin_country,
+            primaryWatchProvider: cloneProvider(item.primaryWatchProvider)
+        };
+    };
+
+    const cloneItemsForRender = (items) => Array.isArray(items)
+        ? items.map((item) => cloneItemForCache(item))
+        : [];
+
+    const cloneSuggestions = (suggestions) => Array.isArray(suggestions)
+        ? suggestions
+            .filter((entry) => entry && Number.isInteger(entry.id) && entry.id > 0 && entry.name)
+            .map((entry) => ({ id: entry.id, name: entry.name }))
+        : [];
+
+    const applyCacheEntry = (entry) => {
+        if (!entry) {
+            return;
+        }
+        const items = cloneItemsForRender(entry.items);
+        renderTitles(items);
+        const suggestions = cloneSuggestions(entry.suggestions);
+        state.suggestedKeywords = suggestions;
+        suggestions.forEach((suggestion) => {
+            state.keywordData.set(suggestion.id, { id: suggestion.id, name: suggestion.name });
+        });
+        renderHeroChips();
+    };
+
+    const commitCacheEntry = (key, items, suggestions) => {
+        if (!key) {
+            return;
+        }
+        const entry = {
+            timestamp: Date.now(),
+            items: cloneItemsForRender(items),
+            suggestions: cloneSuggestions(suggestions)
+        };
+        state.resultsCache.set(key, entry);
+        if (state.resultsCache.size > MAX_CACHE_ENTRIES) {
+            let oldestKey = null;
+            let oldestTimestamp = Number.POSITIVE_INFINITY;
+            state.resultsCache.forEach((value, cacheKey) => {
+                if (value.timestamp < oldestTimestamp) {
+                    oldestTimestamp = value.timestamp;
+                    oldestKey = cacheKey;
+                }
+            });
+            if (oldestKey) {
+                state.resultsCache.delete(oldestKey);
+            }
+        }
     };
 
     const ensureKeywordDetails = async (ids) => {
@@ -577,7 +680,7 @@
         return `${mediaType}-${item.id}`;
     };
 
-    const fetchPrimaryProviderForItem = async (item) => {
+    const fetchPrimaryProviderForItem = async (item, signal) => {
         const cacheKey = getProviderCacheKey(item);
         if (!cacheKey) {
             return null;
@@ -590,7 +693,7 @@
         const url = new URL(endpoint);
         url.search = new URLSearchParams({ api_key: API_KEY });
         try {
-            const response = await fetch(url.toString());
+            const response = await fetch(url.toString(), { signal });
             if (!response.ok) {
                 throw new Error(`Erro ao carregar provedores de ${mediaType} ${item.id} (HTTP ${response.status})`);
             }
@@ -600,6 +703,9 @@
             state.providerCache.set(cacheKey, provider);
             return provider;
         } catch (error) {
+            if (error.name === 'AbortError') {
+                throw error;
+            }
             console.error(error);
             state.providerCache.set(cacheKey, null);
             return null;
@@ -608,14 +714,14 @@
 
     const PROVIDER_BATCH_SIZE = 6;
 
-    const enrichWithProviders = async (items, token) => {
+    const enrichWithProviders = async (items, token, signal) => {
         const enriched = [];
         for (let index = 0; index < items.length; index += PROVIDER_BATCH_SIZE) {
             if (token !== state.providerToken) {
                 return [];
             }
             const batch = items.slice(index, index + PROVIDER_BATCH_SIZE);
-            const providers = await Promise.all(batch.map((item) => fetchPrimaryProviderForItem(item)));
+            const providers = await Promise.all(batch.map((item) => fetchPrimaryProviderForItem(item, signal)));
             batch.forEach((item, position) => {
                 // eslint-disable-next-line no-param-reassign
                 item.primaryWatchProvider = providers[position] || null;
@@ -769,7 +875,7 @@
     const KEYWORD_SAMPLE_SIZE = 8;
     const KEYWORD_SUGGESTION_LIMIT = 20;
 
-    const fetchKeywordsForTitle = async (item) => {
+    const fetchKeywordsForTitle = async (item, signal) => {
         if (!item || !item.id) {
             return [];
         }
@@ -783,7 +889,7 @@
             : `https://api.themoviedb.org/3/movie/${item.id}/keywords`;
         const url = `${endpoint}?api_key=${API_KEY}`;
         try {
-            const response = await fetch(url);
+            const response = await fetch(url, { signal });
             if (!response.ok) {
                 throw new Error(`Erro ao carregar palavras-chave de ${mediaType} ${item.id} (HTTP ${response.status})`);
             }
@@ -797,26 +903,27 @@
             state.titleKeywordCache.set(cacheKey, keywords);
             return keywords;
         } catch (error) {
+            if (error.name === 'AbortError') {
+                throw error;
+            }
             console.error(error);
             state.titleKeywordCache.set(cacheKey, []);
             return [];
         }
     };
 
-    const updateKeywordSuggestionsFromResults = async (items, token) => {
+    const loadKeywordSuggestions = async (items, token, signal) => {
         if (token !== state.keywordToken) {
-            return;
+            return state.suggestedKeywords.slice();
         }
         if (!items.length) {
-            state.suggestedKeywords = [];
-            renderHeroChips();
-            return;
+            return [];
         }
         const sample = items.slice(0, KEYWORD_SAMPLE_SIZE);
         try {
-            const keywordLists = await Promise.all(sample.map((item) => fetchKeywordsForTitle(item)));
+            const keywordLists = await Promise.all(sample.map((item) => fetchKeywordsForTitle(item, signal)));
             if (token !== state.keywordToken) {
-                return;
+                return state.suggestedKeywords.slice();
             }
             const counts = new Map();
             keywordLists.forEach((list) => {
@@ -830,7 +937,7 @@
                     counts.set(keyword.id, entry);
                 });
             });
-            const suggestions = Array.from(counts.values())
+            return Array.from(counts.values())
                 .filter((entry) => !state.selectedKeywords.has(entry.id))
                 .sort((a, b) => {
                     if (b.count !== a.count) {
@@ -840,14 +947,15 @@
                 })
                 .slice(0, KEYWORD_SUGGESTION_LIMIT)
                 .map((entry) => ({ id: entry.id, name: entry.name }));
-            state.suggestedKeywords = suggestions;
-            renderHeroChips();
         } catch (error) {
+            if (error.name === 'AbortError') {
+                throw error;
+            }
             console.error(error);
             if (token === state.keywordToken) {
-                state.suggestedKeywords = [];
-                renderHeroChips();
+                return [];
             }
+            return state.suggestedKeywords.slice();
         }
     };
 
@@ -914,12 +1022,12 @@
         return params;
     };
 
-    const fetchDiscover = async (mediaType) => {
+    const fetchDiscover = async (mediaType, signal) => {
         const requests = Array.from({ length: POPULARITY_PAGES }, (_, index) => {
             const params = buildDiscoverParams(mediaType, index + 1);
             const endpoint = mediaType === 'tv' ? 'discover/tv' : 'discover/movie';
             const url = `https://api.themoviedb.org/3/${endpoint}?${params.toString()}`;
-            return fetch(url).then((response) => {
+            return fetch(url, { signal }).then((response) => {
                 if (!response.ok) {
                     throw new Error(`Erro ao carregar ${mediaType} (HTTP ${response.status})`);
                 }
@@ -1077,27 +1185,54 @@
     };
 
     const fetchTitles = async () => {
+        const token = ++state.fetchToken;
+        const keywordToken = ++state.keywordToken;
+        const providerToken = ++state.providerToken;
+
+        if (state.currentFetchController) {
+            state.currentFetchController.abort();
+        }
+        const controller = typeof AbortController === 'function' ? new AbortController() : null;
+        if (controller) {
+            state.currentFetchController = controller;
+        }
+
         if (!hasAnySelection()) {
-            state.fetchToken += 1;
-            state.keywordToken += 1;
-            state.providerToken += 1;
             state.suggestedKeywords = [];
             renderHeroChips();
             setLoading(false);
             renderTitles([]);
+            if (controller && state.currentFetchController === controller) {
+                state.currentFetchController = null;
+            }
             return;
         }
-        const token = ++state.fetchToken;
-        const keywordToken = ++state.keywordToken;
-        const providerToken = ++state.providerToken;
-        setLoading(true);
+
+        const cacheKey = buildCacheKey();
+        const cachedEntry = cacheKey ? state.resultsCache.get(cacheKey) : null;
+        const cacheIsFresh = cachedEntry ? (Date.now() - cachedEntry.timestamp) < CACHE_TTL : false;
+
+        if (cachedEntry) {
+            applyCacheEntry(cachedEntry);
+        }
+
+        if (cacheIsFresh) {
+            setLoading(false);
+            if (controller && state.currentFetchController === controller) {
+                state.currentFetchController = null;
+            }
+            return;
+        }
+
+        setLoading(true, { mode: cachedEntry ? 'updating' : 'loading' });
+
         try {
             const requests = [];
             if (state.mediaType === 'movie' || state.mediaType === 'both') {
-                requests.push(fetchDiscover('movie'));
+                requests.push(fetchDiscover('movie', controller?.signal));
             }
             if (state.mediaType === 'tv' || state.mediaType === 'both') {
-                requests.push(fetchDiscover('tv'));
+                requests.push(fetchDiscover('tv', controller?.signal));
             }
             const results = await Promise.all(requests);
             if (token !== state.fetchToken) {
@@ -1116,17 +1251,30 @@
                 .sort(compareTitles)
                 .slice(0, MAX_RESULTS);
             const withPoster = combined.filter((item) => item.poster_path);
-            const enriched = await enrichWithProviders(withPoster, providerToken);
+            const enriched = await enrichWithProviders(withPoster, providerToken, controller?.signal);
             if (token !== state.fetchToken || providerToken !== state.providerToken) {
                 return;
             }
             renderTitles(enriched);
             const availableForKeywords = enriched.filter((item) => item.primaryWatchProvider);
-            updateKeywordSuggestionsFromResults(availableForKeywords, keywordToken)
-                .catch((error) => console.error(error));
+            const suggestions = await loadKeywordSuggestions(availableForKeywords, keywordToken, controller?.signal);
+            if (token !== state.fetchToken || keywordToken !== state.keywordToken) {
+                return;
+            }
+            state.suggestedKeywords = Array.isArray(suggestions) ? suggestions : [];
+            state.suggestedKeywords.forEach((entry) => {
+                state.keywordData.set(entry.id, { id: entry.id, name: entry.name });
+            });
+            renderHeroChips();
+            if (cacheKey) {
+                commitCacheEntry(cacheKey, enriched, state.suggestedKeywords);
+            }
         } catch (error) {
+            if (error.name === 'AbortError') {
+                return;
+            }
             console.error(error);
-            if (token === state.fetchToken) {
+            if (token === state.fetchToken && !cachedEntry) {
                 renderTitles([]);
                 setEmptyState('error');
                 state.suggestedKeywords = [];
@@ -1135,6 +1283,9 @@
         } finally {
             if (token === state.fetchToken) {
                 setLoading(false);
+            }
+            if (controller && state.currentFetchController === controller) {
+                state.currentFetchController = null;
             }
         }
     };

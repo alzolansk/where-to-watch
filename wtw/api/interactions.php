@@ -14,15 +14,15 @@ $body = json_decode(file_get_contents('php://input'), true) ?? [];
 $userId     = (int)$_SESSION['id'];
 $tmdbId     = (int)($body['tmdb_id'] ?? 0);
 $mediaType  = in_array(($body['media_type'] ?? 'movie'), ['movie','tv']) ? $body['media_type'] : 'movie';
-$type       = $body['type'] ?? null;
-$weight     = isset($body['weight']) ? (float)$body['weight'] : 1.0; // opcional
+  $type       = $body['type'] ?? null;
+  $weight     = isset($body['weight']) ? (float)$body['weight'] : 1.0; // opcional
 
-$allowed = ['view','click_trailer','add_watchlist','like','dislike','seen','watchlist','skip'];
-if ($tmdbId<=0 || !in_array($type,$allowed, true)) {
-  http_response_code(400);
-  echo json_encode(['error'=>'bad_request']);
-  exit;
-}
+  $allowed = ['view','click_trailer','add_watchlist','like','dislike','seen','watchlist','skip'];
+  if ($tmdbId<=0 || !in_array($type,$allowed, true)) {
+    http_response_code(400);
+    echo json_encode(['error'=>'bad_request']);
+    exit;
+  }
 
 $pdo = get_pdo();
 $isState = in_array($type, ['like','dislike','seen','watchlist'], true);

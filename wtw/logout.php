@@ -3,7 +3,7 @@
 include_once('config/config.php');
 
 session_start();
-unset($_SESSION['nome']);
+$_SESSION = [];
 session_destroy();
 
 header("Location: index.php");

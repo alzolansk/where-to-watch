@@ -1,0 +1,426 @@
+.onboarding-backdrop {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: clamp(16px, 5vw, 48px);
+    background: radial-gradient(120% 120% at 50% 0%, rgba(18, 27, 75, 0.92) 0%, rgba(7, 8, 26, 0.95) 42%, rgba(2, 3, 10, 0.98) 100%);
+    backdrop-filter: blur(12px) saturate(120%);
+    -webkit-backdrop-filter: blur(12px) saturate(120%);
+    z-index: 2000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 250ms ease, visibility 250ms ease;
+}
+
+.onboarding-backdrop[hidden] {
+    display: none !important;
+}
+
+.onboarding-backdrop.is-visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+body.onboarding-open {
+    overflow: hidden;
+}
+
+.onboarding-modal {
+    width: min(960px, 100%);
+    background: linear-gradient(145deg, rgba(21, 26, 66, 0.92) 0%, rgba(15, 18, 48, 0.88) 50%, rgba(7, 9, 28, 0.92) 100%);
+    border-radius: 28px;
+    padding: clamp(24px, 4vw, 44px);
+    box-shadow: 0 32px 64px -24px rgba(0, 0, 0, 0.55), inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+    color: #f5f7ff;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(24px, 4vw, 40px);
+    position: relative;
+    overflow: hidden;
+}
+
+.onboarding-header {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    text-align: center;
+}
+
+.onboarding-title {
+    font-family: "Nunito", "Segoe UI", sans-serif;
+    font-weight: 700;
+    font-size: clamp(1.9rem, 3vw, 2.4rem);
+    letter-spacing: -0.01em;
+}
+
+.onboarding-subtitle {
+    font-family: "Nunito", "Segoe UI", sans-serif;
+    font-size: clamp(1rem, 2vw, 1.1rem);
+    color: rgba(245, 247, 255, 0.78);
+}
+
+.onboarding-steps {
+    display: grid;
+}
+
+.onboarding-step {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(20px, 4vw, 32px);
+    animation: onboardingFade 250ms ease;
+}
+
+.onboarding-step[hidden] {
+    display: none;
+}
+
+.onboarding-step__header h3 {
+    font-size: clamp(1.4rem, 2.6vw, 1.8rem);
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.onboarding-step__header p {
+    margin: 0;
+    font-size: clamp(0.95rem, 1.8vw, 1.05rem);
+    color: rgba(245, 247, 255, 0.75);
+}
+
+.onboarding-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.onboarding-section__title {
+    font-size: 0.95rem;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: rgba(245, 247, 255, 0.64);
+}
+
+.onboarding-chip-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.onboarding-keyword-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+}
+
+.onboarding-input {
+    flex: 1 1 220px;
+    min-width: 0;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: rgba(6, 9, 24, 0.65);
+    padding: 10px 18px;
+    color: #f5f7ff;
+    font-family: "Nunito", "Segoe UI", sans-serif;
+    font-size: 0.95rem;
+    transition: border-color 160ms ease, background 160ms ease;
+}
+
+.onboarding-input:focus {
+    outline: none;
+    border-color: rgba(255, 108, 171, 0.6);
+    background: rgba(12, 16, 40, 0.85);
+    box-shadow: 0 0 0 3px rgba(255, 108, 171, 0.18);
+}
+
+.onboarding-button--inline {
+    flex: 0 0 auto;
+    padding: 10px 20px;
+    font-size: 0.9rem;
+}
+
+.onboarding-search {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+}
+
+.onboarding-helper-text {
+    margin: 0;
+    font-family: "Nunito", "Segoe UI", sans-serif;
+    font-size: 0.85rem;
+    color: rgba(245, 247, 255, 0.62);
+}
+
+.onboarding-chip {
+    border: none;
+    padding: 10px 18px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    color: #fdfdff;
+    font-family: "Nunito", "Segoe UI", sans-serif;
+    font-weight: 600;
+    font-size: 0.95rem;
+    letter-spacing: 0.01em;
+    cursor: pointer;
+    transition: background 180ms ease, transform 180ms ease, box-shadow 180ms ease;
+}
+
+.onboarding-chip:hover {
+    background: rgba(255, 255, 255, 0.14);
+    transform: translateY(-1px);
+}
+
+.onboarding-chip.is-selected {
+    background: linear-gradient(135deg, #ff6cab 0%, #7366ff 100%);
+    box-shadow: 0 10px 26px -12px rgba(115, 102, 255, 0.65);
+}
+
+.onboarding-grid {
+    display: grid;
+    gap: 18px;
+}
+
+.onboarding-grid--providers {
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+.onboarding-grid--favorites {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.onboarding-grid.is-loading {
+    position: relative;
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.onboarding-grid.is-loading::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 24px;
+    background: rgba(7, 9, 28, 0.35);
+}
+
+.onboarding-card {
+    border: none;
+    border-radius: 20px;
+    padding: 12px 8px;
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
+    position: relative;
+    isolation: isolate;
+}
+
+.onboarding-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 18px 38px -22px rgba(0, 0, 0, 0.65);
+}
+
+.onboarding-card:focus {
+    outline: none;
+}
+
+.onboarding-card.is-selected {
+    background: linear-gradient(135deg, rgba(255, 108, 140, 0.35) 0%, rgba(117, 102, 255, 0.35) 100%);
+    box-shadow: 0 20px 34px -18px rgba(115, 102, 255, 0.6);
+}
+
+.onboarding-card__media {
+    width: 200px;
+    height: 90px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border-radius: 24px;
+}
+
+.onboarding-card__media img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border-radius: 24px;
+}
+
+.onboarding-card__media--logo img {
+    max-width: 90%;
+    max-height: 90%;
+    border-radius: none;
+}
+
+.onboarding-card__fallback {
+    font-family: "Nunito", "Segoe UI", sans-serif;
+    font-size: 2rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.onboarding-card__label {
+    font-family: "Nunito", "Segoe UI", sans-serif;
+    font-weight: 700;
+    font-size: 1rem;
+    text-align: center;
+    color: #fdfdff;
+}
+
+.onboarding-footer {
+    display: grid;
+    grid-template-columns: auto 1fr auto auto;
+    gap: 18px;
+    align-items: center;
+}
+
+.onboarding-footer .onboarding-button[data-onboarding-action="next"] {
+    justify-self: stretch;
+}
+
+.onboarding-footer .onboarding-button--finish {
+    justify-self: stretch;
+    grid-column: 4;
+}
+
+.onboarding-footer [data-onboarding-action="skip"] {
+    justify-self: center;
+}
+
+.onboarding-progress {
+    display: inline-flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+.onboarding-progress__dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.25);
+    transition: transform 200ms ease, background 200ms ease;
+}
+
+.onboarding-progress__dot.is-active {
+    background: linear-gradient(135deg, #ff6cab 0%, #7366ff 100%);
+    transform: scale(1.4);
+}
+
+.onboarding-button {
+    border: none;
+    border-radius: 999px;
+    padding: 12px 26px;
+    font-family: "Nunito", "Segoe UI", sans-serif;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: transform 150ms ease, box-shadow 150ms ease, background 150ms ease;
+}
+
+.onboarding-button:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.onboarding-button--ghost {
+    background: transparent;
+    color: rgba(245, 247, 255, 0.8);
+}
+
+.onboarding-button--ghost:hover:not(:disabled) {
+    color: #ffffff;
+}
+
+.onboarding-button--primary {
+    background: linear-gradient(135deg, #ff6cab 0%, #7366ff 100%);
+    color: #0c1020;
+    box-shadow: 0 20px 32px -18px rgba(255, 108, 171, 0.65);
+}
+
+.onboarding-button--primary:hover:not(:disabled) {
+    transform: translateY(-1px);
+}
+
+.onboarding-button--finish {
+    display: none;
+}
+
+.onboarding-button--finish[hidden] {
+    display: none;
+}
+
+.onboarding-button--finish.is-visible {
+    display: inline-flex;
+}
+
+.onboarding-error {
+    grid-column: 1 / -1;
+    margin: 0;
+    font-family: "Nunito", "Segoe UI", sans-serif;
+    font-size: 0.85rem;
+    color: #ff9fb7;
+    text-align: center;
+    min-height: 1.2em;
+}
+
+.onboarding-error[hidden] {
+    display: none;
+}
+
+@keyframes onboardingFade {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 720px) {
+    .onboarding-modal {
+        border-radius: 20px;
+        padding: 24px;
+        gap: 24px;
+    }
+
+    .onboarding-footer {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .onboarding-button--ghost {
+        order: 2;
+        justify-self: flex-start;
+    }
+
+    .onboarding-footer [data-onboarding-action="skip"] {
+        order: 3;
+        width: 100%;
+        justify-content: center;
+    }
+
+    .onboarding-progress {
+        order: 1;
+    }
+
+    .onboarding-button--primary,
+    .onboarding-button--finish {
+        width: 100%;
+        justify-content: center;
+        grid-column: 1;
+    }
+
+    .onboarding-error {
+        order: 3;
+        min-height: auto;
+    }
+}
