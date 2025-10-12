@@ -43,7 +43,66 @@ function normalizeProviderName(value) {
         : '';
 }
 
-function resolveHomepageProvider(homepage) {
+const HOMEPAGE_DOMAIN_MAP = [
+    { domain: 'netflix.com', providers: ['netflix'] },
+    { domain: 'netflix.app.link', providers: ['netflix'] },
+    { domain: 'primevideo.com', providers: ['prime video', 'amazon prime video', 'amazon video'] },
+    { domain: 'amazon.com', providers: ['prime video', 'amazon prime video', 'amazon video'] },
+    { domain: 'disneyplus.com', providers: ['disney+', 'disney plus'] },
+    { domain: 'starplus.com', providers: ['star+', 'star plus'] },
+    { domain: 'hbomax.com', providers: ['hbo max', 'max'] },
+    { domain: 'play.hbomax.com', providers: ['hbo max', 'max'] },
+    { domain: 'max.com', providers: ['max'] },
+    { domain: 'paramountplus.com', providers: ['paramount+', 'paramount plus'] },
+    { domain: 'paramountplus.com.br', providers: ['paramount+', 'paramount plus'] },
+    { domain: 'globoplay.globo.com', providers: ['globoplay'] },
+    { domain: 'clarotvmais.com.br', providers: ['claro tv', 'claro video'] },
+    { domain: 'clarovideo.com', providers: ['claro video'] },
+    { domain: 'oldflix.com.br', providers: ['oldflix'] },
+    { domain: 'tv.apple.com', providers: ['apple tv', 'apple tv+'] },
+    { domain: 'play.google.com', providers: ['google play', 'google play movies'] },
+    { domain: 'youtube.com', providers: ['youtube', 'youtube premium'] },
+    { domain: 'looke.com.br', providers: ['looke'] },
+    { domain: 'nowonline.com.br', providers: ['now'] },
+    { domain: 'crunchyroll.com', providers: ['crunchyroll'] }
+];
+
+const HOMEPAGE_PROVIDER_FALLBACK = {
+    netflix: {
+        provider_id: 8,
+        provider_name: 'Netflix',
+        logo_path: '/t2yyOv40HZeVlLjYsCsPHnWLk4W.jpg',
+        display_priority: 1
+    },
+    'prime video': { provider_name: 'Prime Video' },
+    'amazon prime video': { provider_name: 'Amazon Prime Video' },
+    'amazon video': { provider_name: 'Amazon Prime Video' },
+    'disney+': { provider_name: 'Disney+' },
+    'disney plus': { provider_name: 'Disney+' },
+    'star+': { provider_name: 'Star+' },
+    'star plus': { provider_name: 'Star+' },
+    'hbo max': { provider_name: 'HBO Max' },
+    max: { provider_name: 'Max' },
+    'paramount+': { provider_name: 'Paramount+' },
+    'paramount plus': { provider_name: 'Paramount+' },
+    globoplay: { provider_name: 'Globoplay' },
+    'claro tv': { provider_name: 'Claro tv+' },
+    'claro video': { provider_name: 'Claro Video' },
+    oldflix: { provider_name: 'Oldflix' },
+    'apple tv': { provider_name: 'Apple TV' },
+    'apple tv+': { provider_name: 'Apple TV+' },
+    'google play movies': { provider_name: 'Google Play Movies' },
+    'google play': { provider_name: 'Google Play' },
+    youtube: { provider_name: 'YouTube' },
+    'youtube premium': { provider_name: 'YouTube Premium' },
+    looke: { provider_name: 'Looke' },
+    now: { provider_name: 'NOW' },
+    crunchyroll: { provider_name: 'Crunchyroll' }
+};
+
+const PROVIDER_LIST_KEYS = ['flatrate', 'rent', 'buy', 'ads', 'free'];
+
+function resolveHomepageProvider(homepage, providersData) {
     if (!homepage || typeof homepage !== 'string') {
         return null;
     }
@@ -53,15 +112,63 @@ function resolveHomepageProvider(homepage) {
         return null;
     }
 
-    const normalized = trimmed.toLowerCase();
-    if (normalized.includes('netflix.com')) {
+    let hostname = '';
+    try {
+        hostname = new URL(trimmed).hostname.toLowerCase();
+    } catch (error) {
+        const match = trimmed.match(/^https?:\/\/([^/]+)/i);
+        hostname = match ? match[1].toLowerCase() : '';
+    }
+
+    if (!hostname) {
+        return null;
+    }
+
+    const domainEntry = HOMEPAGE_DOMAIN_MAP.find(entry => hostname.includes(entry.domain));
+    if (!domainEntry) {
+        return null;
+    }
+
+    const candidates = domainEntry.providers
+        .map(name => normalizeProviderName(name))
+        .filter(Boolean);
+
+    if (!candidates.length) {
+        return null;
+    }
+
+    const providerList = [];
+    if (providersData && typeof providersData === 'object') {
+        PROVIDER_LIST_KEYS.forEach(key => {
+            if (Array.isArray(providersData[key])) {
+                providersData[key].forEach(provider => {
+                    providerList.push(provider);
+                });
+            }
+        });
+    }
+
+    const matchedProvider = providerList.find(provider => {
+        const normalizedName = normalizeProviderName(provider?.provider_name);
+        return normalizedName && candidates.includes(normalizedName);
+    });
+
+    if (matchedProvider) {
         return {
-            provider_id: 8,
-            provider_name: 'Netflix',
-            logo_path: '/t2yyOv40HZeVlLjYsCsPHnWLk4W.jpg',
-            direct_url: trimmed,
-            display_priority: 1
+            ...matchedProvider,
+            direct_url: trimmed
         };
+    }
+
+    for (const candidate of candidates) {
+        const fallback = HOMEPAGE_PROVIDER_FALLBACK[candidate];
+        if (fallback) {
+            return {
+                ...fallback,
+                direct_url: trimmed,
+                display_priority: fallback.display_priority ?? 1
+            };
+        }
     }
 
     return null;
@@ -100,7 +207,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         tagList: document.getElementById('tagList'),
         trailerFrame: document.getElementById('trailerFrame'),
         trailerLink: document.getElementById('trailerLink'),
-        homepageCta: document.getElementById('homepageCta'),
         providersCta: document.getElementById('providersCta'),
         highlightScore: document.getElementById('highlightScore'),
         highlightPopularity: document.getElementById('highlightPopularity'),
@@ -191,7 +297,8 @@ function hydrateHero(details, params, dom, mediaType) {
     const backdrop = details.backdrop_path ? createImageUrl(details.backdrop_path, 'w1280') : (params.get('backdropUrl') || '');
     const overview = details.overview || params.get('overview') || 'Sinopse indisponivel no momento.';
     const homepage = details.homepage || params.get('ticketUrl') || '';
-    const homepageProvider = resolveHomepageProvider(homepage);
+    const providersForRegion = details['watch/providers']?.results?.BR;
+    const homepageProvider = resolveHomepageProvider(homepage, providersForRegion);
     const trailerUrl = resolveTrailerUrl(details, params);
 
     const releaseDate = details.release_date || details.first_air_date || params.get('release_date') || '';
@@ -284,16 +391,6 @@ function hydrateHero(details, params, dom, mediaType) {
         const safeUrl = trailerUrl && trailerUrl !== '#' ? trailerUrl : '';
         dom.trailerFrame.dataset.trailerUrl = safeUrl;
         dom.trailerFrame.removeAttribute('src');
-    }
-
-    if (dom.homepageCta) {
-        if (homepage && !homepageProvider) {
-            dom.homepageCta.href = homepage;
-            dom.homepageCta.classList.remove('is-hidden');
-        } else {
-            dom.homepageCta.classList.add('is-hidden');
-            dom.homepageCta.removeAttribute('href');
-        }
     }
 
     return { homepage, homepageProvider };

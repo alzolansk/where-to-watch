@@ -39,12 +39,22 @@
         </div>
 
         <div class="provider-btn-container">
-            <div class="provider-btn-div">
-                <button><img src="https://image.tmdb.org/t/p/w300/97yvRBw1GzX7fXprcF80er19ot.jpg" alt="Disney+"></button>
-                <button><img src="https://image.tmdb.org/t/p/w300/pbpMk2JmcoNnQwx5JGpXngfoWtp.jpg" alt="Netflix"></button>
-                <button><img src="https://image.tmdb.org/t/p/w92/68MNrwlkpF7WnmNPXLah69CR5cb.jpg" alt="Prime Video"></button>
-                <button><img src="https://image.tmdb.org/t/p/w300/2E03IAZsX4ZaUqM7tXlctEPMGWS.jpg" alt="Apple TV+"></button>
-                <button><img src="https://image.tmdb.org/t/p/w300/jbe4gVSfRlbPTdESXhEKpornsfu.jpg" alt="Apple TV+"></button>
+            <div class="provider-btn-div" data-provider-picker data-catalog-url="providers.php">
+                <button type="button" class="provider-btn" data-provider-id="337" data-provider-name="Disney+" aria-label="Disney+">
+                    <img src="https://image.tmdb.org/t/p/w300/97yvRBw1GzX7fXprcF80er19ot.jpg" alt="Disney+">
+                </button>
+                <button type="button" class="provider-btn" data-provider-id="8" data-provider-name="Netflix" aria-label="Netflix">
+                    <img src="https://image.tmdb.org/t/p/w300/pbpMk2JmcoNnQwx5JGpXngfoWtp.jpg" alt="Netflix">
+                </button>
+                <button type="button" class="provider-btn" data-provider-id="9" data-provider-name="Prime Video" aria-label="Prime Video">
+                    <img src="https://image.tmdb.org/t/p/w92/68MNrwlkpF7WnmNPXLah69CR5cb.jpg" alt="Prime Video">
+                </button>
+                <button type="button" class="provider-btn" data-provider-id="350" data-provider-name="Apple TV+" aria-label="Apple TV+">
+                    <img src="https://image.tmdb.org/t/p/w300/2E03IAZsX4ZaUqM7tXlctEPMGWS.jpg" alt="Apple TV+">
+                </button>
+                <button type="button" class="provider-btn" data-provider-id="384" data-provider-name="HBO Max" aria-label="HBO Max">
+                    <img src="https://image.tmdb.org/t/p/w300/jbe4gVSfRlbPTdESXhEKpornsfu.jpg" alt="HBO Max">
+                </button>
             </div>
         </div>
 
@@ -54,155 +64,18 @@
                 <button id="showSeries" class="btn-category">S&eacute;rie</button>
             </div>
         </div>
-            
         <div class="media-section">
-        <div class="container">
-
-            <h2 class="section-heading">
-                <span class="section-heading__bar" aria-hidden="true">|</span>
-                <span class="section-heading__text">Mais populares no</span>
-                <span class="wyw-brand wyw-brand--compact section-heading__brand" aria-label="Where You Watch">
-                    <span class="wyw-brand__where">where</span>
-                    <span class="wyw-brand__where wyw-brand__where--y">y</span>
-                    <img src="imagens/eye-icon2.svg" alt="o" class="wyw-brand__eye" />
-                    <span class="wyw-brand__where wyw-brand__where--u">u</span>
-                    <span class="wyw-brand__watch">WATCH</span>
-                </span>
-            </h2>
-
-            <div class="carousel-container">
-                <button class="nav-arrow slider-prev" data-target="popular-movies-container">&#10094;</button>
-                <div class="row" id="popular-movies-container">
-                    <!-- Os filmes populares serÃ£o ecibidos aqui -->
-                </div>
-                <button class="nav-arrow slider-next" data-target="popular-movies-container">&#10095;</button>
+            <div class="container">
+                <div id="media-sections-root" class="media-sections-root" data-section-root></div>
             </div>
-
-            <h2 class="section-heading">
-                <span class="section-heading__bar" aria-hidden="true">|</span>
-                <span class="wyw-brand wyw-brand--compact section-heading__brand" aria-label="Where You Watch">
-                    <span class="wyw-brand__where">where</span>
-                    <span class="wyw-brand__where wyw-brand__where--y">y</span>
-                    <img src="imagens/eye-icon2.svg" alt="o" class="wyw-brand__eye" />
-                    <span class="wyw-brand__where wyw-brand__where--u">u</span>
-                    <span class="wyw-brand__watch">WATCH</span>
-                </span>
-                <span class="section-heading__tag">indica</span>
-            </h2>
-
-            <div class="carousel-container">
-                <button class="nav-arrow slider-prev" data-target="top-movies-container">&#10094;</button>
-                <div class="row" id="top-movies-container">
-                    <!-- Os filmes com maiores notas serÃ£o ecibidos aqui -->
-                </div>
-                <button class="nav-arrow slider-next" data-target="top-movies-container">&#10095;</button>
-            </div>
-
-            <h2 class="section-heading">
-                <span class="section-heading__bar" aria-hidden="true">|</span>
-                <span class="section-heading__text">Queridinhos do</span>
-                <span class="section-heading__highlight">streaming</span>
-            </h2>
-
-            <div class="carousel-container">
-                <button class="nav-arrow slider-prev" data-target="trending-movies-container">&#10094;</button>
-                <div class="row" id="trending-movies-container">
-                    <!-- Os filmes com maiores notas serÃ£o ecibidos aqui -->
-                </div>
-                <button class="nav-arrow slider-next" data-target="trending-movies-container">&#10095;</button>
-            </div>
-
-            <h2 class="section-heading">
-                <span class="section-heading__bar" aria-hidden="true">|</span>
-                <span class="section-heading__text">Para os amantes de</span>
-                <span class="section-heading__highlight">musicais</span>
-            </h2>
-
-            <div class="carousel-container">
-                <button class="nav-arrow slider-prev" data-target="musical-movies-container">&#10094;</button>
-                <div class="row" id="musical-movies-container">
-                    <!-- Os filmes com maiores notas serÃ£o ecibidos aqui -->
-                </div>
-                <button class="nav-arrow slider-next" data-target="musical-movies-container">&#10095;</button>
-            </div>
-            <!--            
-                <?php 
-
-                if(isset($_SESSION['nome'])){
-
-                echo ("<h2><b>|</b> Filmes perfeitos para " .($_SESSION['nome']) ."</h2>");
-                } else{
-                    echo "Filmes perfeitos para vocÃª";
-                }
-                ?>
-
-            <div class="carousel-container">
-
-                    <button class="prev" onclick="scrollLeftCustom()">&#10094;</button>  Seta anterior 
-                <div class="row" id="popular-movies-container">
-                        <?php if ($result_filmes->num_rows > 0): ?>
-                        <?php while($row = $result_filmes->fetch_assoc()): ?>
-                                <div class="description">
-                                    <li id="movie-li-link">
-                                        <img src="<?= $row['img_url'] ?>" alt="" class="img-fluid">
-                                    </li>
-                                    <img src="imagens/star-emoji.png" alt="" class="rating">
-                                    <p class="rating-value"><?= $row['rate_item'] ?></p>
-                                    <li class="movie-name"><a href="#"><?= $row['title_item'] ?></a></li>
-                                    <li class="watch-trailer">
-                                        <a href="#" onclick="showTrailer('<?= $row['trailer_url'] ?>')">
-                                            <img src="imagens/video-start.png" alt=""> Trailer
-                                        </a>
-                                    </li>
-                                </div>
-                        <?php endwhile; ?>
-                    <?php else: ?>
-                        <p>Nenhum filme encontrado.</p>
-                    <?php endif; ?>
-                </div>
-
-                  <button class="next" onclick="scrollRight()">&#10095;</button> Seta prÃ³ximo 
-
-            </div>
-
-                <h2><b>|</b>S&eacute;ries do Momento</h2>
-
-                <div class="carousel-container">
-                
-                    <div class="row">
-                            <?php if ($result_serie->num_rows > 0): ?>
-                            <?php while($row = $result_serie->fetch_assoc()): ?>
-                                <div class="col-md-3 movies">
-                                    <div class="description">
-                                        <li id="movie-li-link">
-                                            <img src="<?= $row['img_url'] ?>" alt="" class="img-fluid">
-                                        </li>
-                                        <img src="imagens/star-emoji.png" alt="" class="rating">
-                                        <p class="rating-value"><?= $row['rate_item'] ?></p>
-                                        <li class="movie-name"><a href="#"><?= $row['title_item'] ?></a></li>
-                                        <li class="watch-trailer">
-                                            <a href="#" onclick="event.preventDefault(); showTrailer('<?= $row['trailer_url'] ?>')">
-                                                <img src="imagens/video-start.png" alt=""> Trailer
-                                            </a>
-                                        </li>
-                                    </div>
-                                </div>
-                            <?php endwhile; ?>
-                        <?php else: ?>
-                            <p>Nenhum filme encontrado.</p>
-                        <?php endif; ?>
-                    </div>
-            </div>
-                                            -->
-
-        </div>        
-        <footer>
-            <p class="justwatch-attr">
-                Dados de provedores fornecidos por 
-                <a href="https://www.justwatch.com" target="_blank" rel="noopener noreferrer">JustWatch</a>
-            </p>
-        </footer>
+            <footer>
+                <p class="justwatch-attr">
+                    Dados de provedores fornecidos por 
+                    <a href="https://www.justwatch.com" target="_blank" rel="noopener noreferrer">JustWatch</a>
+                </p>
+            </footer>
         </div> <!-- end media-section -->
+
     </section>
 </body>
 

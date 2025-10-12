@@ -70,6 +70,7 @@
         background-repeat:no-repeat; background-size: 160% 160%, 160% 160%, cover;
         animation: pan1 28s ease-in-out infinite alternate, pan2 36s ease-in-out infinite alternate;
     }
+
     @keyframes pan1{ from{ background-position: 18% 24%, 85% 200%, center; } to{ background-position: 22% 28%, 80% 210%, center; } }
     @keyframes pan2{ from{ background-size: 160% 160%, 160% 160%, cover; } to{ background-size: 175% 175%, 150% 150%, cover; } }
 
@@ -328,12 +329,7 @@
         <p class="tagline" id="tagline">Seu novo guia de streamings, play no que você ama, sem perder tempo</p>
         <p class="sub">Encontre seus filmes favoritos em segundos. Descubra trailers, elencos e muito mais.</p>
 
-        <div class="features" role="list">
-          <div class="feat" role="listitem"><span class="dot" aria-hidden="true"></span> Todos os seus serviços de streamings integrados em um só lugar</div>
-          <div class="feat" role="listitem"><span class="dot" aria-hidden="true"></span> Busca rápida por título, ator ou plataforma</div>
-          <div class="feat" role="listitem"><span class="dot" aria-hidden="true"></span> Links diretos para assistir nos provedores</div>
-          <div class="feat" role="listitem"><span class="dot" aria-hidden="true"></span> Trailers oficiais e ficha técnica</div>
-        </div>
+        <div class="features" role="list" data-features-root></div>
 
         <a class="cta" href="/index.html" id="ctaHero" aria-label="Ir para a página inicial do Where You Watch">
           <span>Saiba mais</span>
@@ -360,31 +356,6 @@
     </div>
   </footer>
 
-  <script>
-    // Atualiza ano automático
-    document.getElementById('year').textContent = new Date().getFullYear();
-
-    // Efeito ripple sutil no CTA (puro CSS via custom property)
-    const ctas = document.querySelectorAll('.cta');
-    ctas.forEach(btn=>{
-      btn.addEventListener('pointermove', e=>{
-        const r = btn.getBoundingClientRect();
-        const x = e.clientX - r.left, y = e.clientY - r.top;
-        btn.style.setProperty('--mx', x+'px');
-        btn.style.setProperty('--my', y+'px');
-      });
-    });
-
-    // Melhor acessibilidade: se a pessoa pressionar Enter no body, foca CTA
-    document.addEventListener('keydown', (e)=>{
-      if(e.key === 'Enter' && document.activeElement === document.body){
-        document.getElementById('ctaHero').focus();
-      }
-    });
-
-    // Caso você prefira apontar para a raiz do domínio:
-    // ctas.forEach(a => a.setAttribute('href', '/index.html'));
-    // ou: a.setAttribute('href', 'https://whereuwatch.com/');
-  </script>
+  <script src="js/landing.js"></script>
 </body>
 </html>

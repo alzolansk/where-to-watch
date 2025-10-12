@@ -240,8 +240,58 @@ if (userAccountMenu) {
     });
 }
 //Carregando...
+const loadingOverlayPlacement = {
+    originalParent: null,
+    originalNextSibling: null,
+    isMountedInSection: false
+};
+
 function getLoadingOverlay() {
     return document.getElementById('loadingOverlay') || document.getElementById('loading');
+}
+
+function getMediaSectionHost() {
+    return document.querySelector('.media-section .container') || document.querySelector('.media-section');
+}
+
+function mountOverlayInMediaSection(overlay) {
+    if (!overlay) {
+        return;
+    }
+
+    const host = getMediaSectionHost();
+    if (!host) {
+        return;
+    }
+
+    if (!loadingOverlayPlacement.originalParent) {
+        loadingOverlayPlacement.originalParent = overlay.parentNode;
+        loadingOverlayPlacement.originalNextSibling = overlay.nextSibling;
+    }
+
+    if (overlay.parentNode !== host) {
+        host.appendChild(overlay);
+    }
+
+    overlay.classList.add('loading-overlay--section');
+    loadingOverlayPlacement.isMountedInSection = true;
+}
+
+function restoreOverlayPlacement(overlay) {
+    if (!overlay || !loadingOverlayPlacement.isMountedInSection) {
+        return;
+    }
+
+    overlay.classList.remove('loading-overlay--section');
+
+    const { originalParent, originalNextSibling } = loadingOverlayPlacement;
+    const targetParent = (originalParent && originalParent.isConnected) ? originalParent : document.body;
+    if (targetParent) {
+        const referenceNode = targetParent === originalParent ? (originalNextSibling || null) : null;
+        targetParent.insertBefore(overlay, referenceNode);
+    }
+
+    loadingOverlayPlacement.isMountedInSection = false;
 }
 
 function toggleLoadingOverlay(isVisible) {
@@ -254,11 +304,19 @@ function toggleLoadingOverlay(isVisible) {
 }
 
 function showLoading() {
+    const overlay = getLoadingOverlay();
+    if (overlay) {
+        mountOverlayInMediaSection(overlay);
+    }
     toggleLoadingOverlay(true);
 }
 
 function hideLoading() {
+    const overlay = getLoadingOverlay();
     toggleLoadingOverlay(false);
+    if (overlay) {
+        restoreOverlayPlacement(overlay);
+    }
 }
 
 function updateCarouselNav(containerId) {
@@ -285,46 +343,101 @@ function updateCarouselNav(containerId) {
 
 window.updateCarouselNav = updateCarouselNav;
 
+const carouselRegistry = new Map();
+
+function registerCarouselContainer(containerId) {
+    if (!containerId) {
+        return;
+    }
+    const container = document.getElementById(containerId);
+    if (!container) {
+        return;
+    }
+
+    if (!carouselRegistry.has(containerId)) {
+        const handler = () => updateCarouselNav(containerId);
+        container.addEventListener('scroll', handler, { passive: true });
+        window.addEventListener('resize', handler);
+        carouselRegistry.set(containerId, handler);
+    }
+
+    requestAnimationFrame(() => updateCarouselNav(containerId));
+}
+
+function initializeCarouselNav() {
+    const targets = new Set();
+    document.querySelectorAll('.slider-prev, .slider-next').forEach(btn => {
+        if (btn.dataset && btn.dataset.target) {
+            targets.add(btn.dataset.target);
+        }
+    });
+    targets.forEach(registerCarouselContainer);
+}
+
+window.registerCarouselContainer = registerCarouselContainer;
+window.initializeCarouselNav = initializeCarouselNav;
+
 function scrollRow(containerId, direction = 'right') {
     const row = document.getElementById(containerId);
     if (!row) return;
+    registerCarouselContainer(containerId);
     const distance = row.clientWidth;
     const offset = direction === 'right' ? distance : -distance;
     row.scrollBy({ left: offset, behavior: 'smooth' });
     setTimeout(() => updateCarouselNav(containerId), 320);
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    const trackedContainers = new Set();
+document.addEventListener('click', event => {
+    const button = event.target.closest('.slider-prev, .slider-next');
+    if (!button) {
+        return;
+    }
+    const target = button.dataset ? button.dataset.target : null;
+    if (!target) {
+        return;
+    }
+    event.preventDefault();
+    const direction = button.classList.contains('slider-prev') ? 'left' : 'right';
+    scrollRow(target, direction === 'left' ? 'left' : 'right');
+});
 
-    document.querySelectorAll('.slider-prev').forEach(btn => {
-        const target = btn.dataset.target;
-        btn.addEventListener('click', () => {
-            scrollRow(target, 'left');
-        });
-        if (target) {
-            trackedContainers.add(target);
-        }
-    });
+function initProviderShortcut() {
+    const picker = document.querySelector('[data-provider-picker]');
+    if (!picker) {
+        return;
+    }
 
-    document.querySelectorAll('.slider-next').forEach(btn => {
-        const target = btn.dataset.target;
-        btn.addEventListener('click', () => {
-            scrollRow(target, 'right');
-        });
-        if (target) {
-            trackedContainers.add(target);
-        }
-    });
+    const catalogPath = picker.dataset.catalogUrl || 'providers.php';
 
-    trackedContainers.forEach(id => {
-        const container = document.getElementById(id);
-        if (!container) {
+    picker.addEventListener('click', (event) => {
+        const button = event.target.closest('button[data-provider-id]');
+        if (!button) {
             return;
         }
-        const update = () => updateCarouselNav(id);
-        container.addEventListener('scroll', update, { passive: true });
-        window.addEventListener('resize', update);
-        requestAnimationFrame(update);
+
+        event.preventDefault();
+
+        const providerId = button.dataset.providerId;
+        if (!providerId) {
+            return;
+        }
+        const providerName = (button.dataset.providerName || '').trim();
+
+        const pathname = window.location.pathname || '/';
+        const baseDir = pathname.replace(/[^/]*$/, '');
+        const normalizedPath = catalogPath.startsWith('/')
+            ? catalogPath
+            : `${baseDir}${catalogPath.replace(/^\//, '')}`;
+        const url = new URL(normalizedPath, window.location.origin);
+        url.searchParams.set('providers', providerId);
+        if (providerName) {
+            url.searchParams.set('label', providerName);
+        }
+        window.location.assign(url.toString());
     });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    initializeCarouselNav();
+    initProviderShortcut();
 });

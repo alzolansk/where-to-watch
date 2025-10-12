@@ -48,7 +48,6 @@
                         <div class="hero-actions">
                             <a id="trailerLink" class="action-btn action-btn--primary" href="#">▶ Ver trailer</a>
                             <a id="providersCta" class="action-btn action-btn--glass" href="#providersSection">🍿 Onde assistir</a>
-                            <a id="homepageCta" class="action-btn action-btn--ghost" href="#">Site oficial</a>
                         </div>
                         <div class="hero-highlights">
                             <div class="highlight-card">
@@ -70,6 +69,7 @@
             </section>
 
             <section class="providers-section card-section" id="providersSection">
+                  <span class="liquid-sheen" aria-hidden="true"></span>
                 <div class="section-heading">
                     <h2>Onde assistir</h2>
                     <p class="section-subtitle">Provedores disponíveis no Brasil</p>

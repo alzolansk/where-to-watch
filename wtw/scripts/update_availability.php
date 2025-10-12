@@ -63,7 +63,43 @@ foreach ($ids as $mediaType => $tmdbIds) {
                     'id' => (int)$provider['provider_id'],
                     'monetization' => $bucket,
                 ];
-            }
+
+                $upProvider = $pdo->prepare("
+                INSERT INTO providers (provider_id, name, kind, logo_path, last_seen_at)
+                VALUES (:id, :name, 'streaming', :logo, NOW())
+                ON DUPLICATE KEY UPDATE
+                    name = VALUES(name),
+                    logo_path = VALUES(logo_path),
+                    last_seen_at = NOW()
+                ");
+
+                $insAvail = $pdo->prepare("
+                INSERT INTO title_availability
+                    (tmdb_id, media_type, provider_id, region, monetization, last_checked_at)
+                VALUES (:tmdb, :media, :prov, :region, :mono, NOW())
+                ON DUPLICATE KEY UPDATE last_checked_at = VALUES(last_checked_at)
+                ");
+
+                foreach (['flatrate','rent','buy','ads','free'] as $kind) {
+                foreach ($br[$kind] ?? [] as $p) {
+                    $pid  = (int)$p['provider_id'];
+                    $pname= (string)($p['provider_name'] ?? '');
+                    $plogo= $p['logo_path'] ?? null;
+
+                    // 1) garante existência do provider (evita FK)
+                    $upProvider->execute([':id'=>$pid, ':name'=>$pname, ':logo'=>$plogo]);
+
+                    // 2) grava disponibilidade
+                    $insAvail->execute([
+                    ':tmdb' => $tmdbId,
+                    ':media'=> $mediaType,     // 'movie' ou 'tv' conforme seu loop
+                    ':prov' => $pid,
+                    ':region'=> $region,       // 'BR'
+                    ':mono' => $kind,
+                    ]);
+                }'  '
+                }
+            }   
         }
 
         if (!$providers) {

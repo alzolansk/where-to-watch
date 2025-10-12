@@ -1,77 +1,124 @@
 <?php
+declare(strict_types=1);
 session_start();
-if (!isset($_SESSION['id_user'])) { http_response_code(401); exit(json_encode(['error'=>'unauth'])); }
-header('Content-Type: application/json');
 require __DIR__.'/../includes/db.php';
 require __DIR__.'/../includes/tmdb.php';
 
-$userId = (int)$_SESSION['id_user'];
-$limit  = max(10, min(60, (int)($_GET['limit'] ?? 40)));
-$region = 'BR'; // pode vir de tb_users.country se quiser
+header('Content-Type: application/json; charset=utf-8');
+
+$pdo = get_pdo();
+$userId = (int)($_SESSION['id'] ?? 0);
+if ($userId<=0) { http_response_code(401); echo json_encode(['error'=>'unauthorized']); exit; }
+
+$limit = max(1, min(50, (int)($_GET['limit'] ?? 20)));
+$media = ($_GET['media_type'] ?? 'movie') === 'tv' ? 'tv' : 'movie';
+$region = 'BR';
 
 // 1) prefs
-$providers = $pdo->prepare("SELECT provider_id FROM user_providers WHERE user_id=? AND enabled=1");
-$providers->execute([$userId]);
-$providers = array_column($providers->fetchAll(),'provider_id');
+$genres = $pdo->prepare("SELECT genre_id, weight FROM user_genres WHERE user_id=:u");
+$genres->execute([':u'=>$userId]);
+$genres = $genres->fetchAll(PDO::FETCH_KEY_PAIR); // [genre_id => weight]
 
-$genresW = $pdo->prepare("SELECT genre_id, weight FROM user_genres WHERE user_id=?");
-$genresW->execute([$userId]);
-$genreWeights = [];
-foreach ($genresW as $g) $genreWeights[(int)$g['genre_id']] = (float)$g['weight'];
+$people = $pdo->prepare("SELECT person_id, weight FROM user_people WHERE user_id=:u");
+$people->execute([':u'=>$userId]);
+$people = $people->fetchAll(PDO::FETCH_KEY_PAIR); // [person_id => weight]
 
-// 2) pool (popular + trending) — pode aumentar com now_playing/top_rated
-$pool = [];
-$pop = tmdb_get('/movie/popular',['page'=>1]);
-$trd = tmdb_get('/trending/movie/week');
-foreach ([$pop['results']??[], $trd['results']??[]] as $arr) {
-  foreach ($arr as $t) $pool[$t['id']] = $t; // dedupe por id
+$providers = $pdo->prepare("SELECT provider_id FROM user_providers WHERE user_id=:u AND enabled=1");
+$providers->execute([':u'=>$userId]);
+$providers = array_map('intval', array_column($providers->fetchAll(PDO::FETCH_ASSOC), 'provider_id'));
+
+$seenOrDislike = $pdo->prepare("SELECT tmdb_id, media_type FROM interactions WHERE user_id=:u AND interaction IN ('seen','dislike')");
+$seenOrDislike->execute([':u'=>$userId]);
+$ban = [];
+foreach ($seenOrDislike as $r) { $ban["{$r['media_type']}:{$r['tmdb_id']}"]=true; }
+
+// 2) candidatos TMDB (lotes simples)
+$candidates = [];
+
+// a) por gêneros (pega top N gêneros por peso)
+if (!empty($genres)) {
+  arsort($genres);
+  $top = array_slice(array_keys($genres), 0, 3);
+  $data = tmdb_get("/discover/{$media}", [
+    'with_genres' => implode(',', $top),
+    'sort_by'     => 'popularity.desc',
+    'include_adult' => false,
+    'page' => 1
+  ]);
+  foreach (($data['results'] ?? []) as $it) { $candidates[$it['id']] = $it; }
 }
-$pool = array_values($pool);
 
-// 3) disponibilidade por provedor (cache rápido por título)
-$checkProv = $pdo->prepare("SELECT provider_id FROM title_availability WHERE tmdb_id=? AND media_type='movie' AND region=?");
-function availability_for($pdo,$tmdbId,$region){
-  global $checkProv;
-  $checkProv->execute([$tmdbId,$region]);
-  return array_column($checkProv->fetchAll(),'provider_id');
+// b) por pessoas favoritas
+if (!empty($people)) {
+  $topP = array_slice(array_keys($people), 0, 3);
+  $data = tmdb_get("/discover/{$media}", [
+    'with_people' => implode(',', $topP),
+    'sort_by'     => 'popularity.desc',
+    'include_adult' => false,
+    'page' => 1
+  ]);
+  foreach (($data['results'] ?? []) as $it) { $candidates[$it['id']] = $it; }
 }
 
-// 4) scoring simples
-$scored = [];
-foreach ($pool as $t) {
-  $gMatch = 0.0;
-  foreach ($t['genre_ids'] ?? [] as $gid) {
-    if (isset($genreWeights[$gid])) $gMatch += $genreWeights[$gid];
+// c) um pouco de trending para diversidade
+$trend = tmdb_get("/trending/{$media}/week", ['page'=>1]);
+foreach (($trend['results'] ?? []) as $it) { $candidates[$it['id']] = $it; }
+
+// 3) score + disponibilidade
+$out = [];
+if (!empty($candidates)) {
+  // disponibilidade cacheada
+  $in = implode(',', array_fill(0, count($providers), '?'));
+  $availStmt = $pdo->prepare("
+    SELECT tmdb_id, monetization FROM title_availability
+    WHERE media_type=? AND region=? AND provider_id IN ($in)
+  ");
+
+  foreach ($candidates as $it) {
+    $keyBan = "{$media}:{$it['id']}";
+    if (isset($ban[$keyBan])) continue;
+
+    $score = 0;
+
+    // gêneros
+    if (!empty($it['genre_ids'] ?? [])) {
+      $gScore = 0;
+      foreach ($it['genre_ids'] as $gid) { if (isset($genres[$gid])) { $gScore += 2 * (int)$genres[$gid]; } }
+      $score += min($gScore, 8); // cap
+    }
+
+    // pessoas (precisa de outra chamada para credits se quiser fino; v1 usa with_people acima)
+    // bonus base por trending/vote
+    if (($trend['results'] ?? null) && in_array($it, $trend['results'], true)) { $score += 1; }
+    if ((float)($it['vote_average'] ?? 0) >= 7.0) { $score += 1; }
+
+    // disponibilidade
+    $avail = [];
+    if ($providers) {
+      $params = array_merge([$media, $region], $providers);
+      $availStmt->execute($params);
+      foreach ($availStmt->fetchAll(PDO::FETCH_ASSOC) as $r) {
+        if ((int)$r['tmdb_id'] === (int)$it['id']) { $avail[] = $r['monetization']; }
+      }
+      if ($avail) { $score += 2; }
+    }
+
+    $out[] = [
+      'tmdb_id' => (int)$it['id'],
+      'title'   => $media==='movie' ? ($it['title'] ?? $it['name'] ?? '') : ($it['name'] ?? $it['title'] ?? ''),
+      'score'   => $score,
+      'providers' => $avail,
+    ];
   }
-  $gMatch = min(1.0, $gMatch / 3.0); // normaliza: até 3 gêneros fortes = 1.0
-
-  $prov = availability_for($pdo, $t['id'], $region);
-  $hasProvider = count(array_intersect($prov, $providers)) > 0 ? 1.0 : 0.0;
-
-  $fresh = 0.5;
-  if (!empty($t['release_date'])) {
-    $y = (int)substr($t['release_date'],0,4);
-    $fresh = max(0.2, min(1.0, 1 - max(0, (date('Y')-$y))/10)); // mais novo → maior
-  }
-
-  $popN = isset($t['popularity']) ? max(0.0, min(1.0, $t['popularity']/100.0)) : 0.3;
-
-  $score = 0.45*$gMatch + 0.35*$hasProvider + 0.10*$fresh + 0.10*$popN;
-
-  $scored[] = [
-    'tmdb_id' => $t['id'],
-    'title'   => $t['title'] ?? $t['name'] ?? '',
-    'poster'  => $t['poster_path'] ?? null,
-    'match'   => round($score,2),
-    'why'     => [
-      'genres' => $t['genre_ids'] ?? [],
-      'providers' => $prov,
-    ],
-  ];
 }
 
-// 5) ordenar e limitar
-usort($scored, fn($a,$b)=> $b['match'] <=> $a['match']);
-$scored = array_slice($scored, 0, $limit);
+// 4) ordenar + cortar
+usort($out, fn($a,$b) => $b['score'] <=> $a['score']);
+$out = array_slice($out, 0, $limit);
 
-echo json_encode(['items'=>$scored]);
+echo json_encode([
+  'user_id' => $userId,
+  'media_type' => $media,
+  'generated_at' => date('c'),
+  'items' => $out
+]);
