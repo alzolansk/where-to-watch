@@ -38,6 +38,11 @@
             <button id="btnRight" class="next" onclick="scrollRight()">&#10095;</button>
         </div>
 
+        <div class="hero-progress" data-hero-progress hidden>
+            <div class="hero-progress__track" data-hero-progress-track></div>
+            <span class="sr-only" data-hero-progress-label aria-live="polite" role="status"></span>
+        </div>
+
         <div class="provider-btn-container">
             <div class="provider-btn-div" data-provider-picker data-catalog-url="providers.php">
                 <button type="button" class="provider-btn" data-provider-id="337" data-provider-name="Disney+" aria-label="Disney+">
@@ -46,13 +51,13 @@
                 <button type="button" class="provider-btn" data-provider-id="8" data-provider-name="Netflix" aria-label="Netflix">
                     <img src="https://image.tmdb.org/t/p/w300/pbpMk2JmcoNnQwx5JGpXngfoWtp.jpg" alt="Netflix">
                 </button>
-                <button type="button" class="provider-btn" data-provider-id="9" data-provider-name="Prime Video" aria-label="Prime Video">
+                <button type="button" class="provider-btn" data-provider-id="119" data-provider-name="Prime Video" aria-label="Prime Video">
                     <img src="https://image.tmdb.org/t/p/w92/68MNrwlkpF7WnmNPXLah69CR5cb.jpg" alt="Prime Video">
                 </button>
                 <button type="button" class="provider-btn" data-provider-id="350" data-provider-name="Apple TV+" aria-label="Apple TV+">
                     <img src="https://image.tmdb.org/t/p/w300/2E03IAZsX4ZaUqM7tXlctEPMGWS.jpg" alt="Apple TV+">
                 </button>
-                <button type="button" class="provider-btn" data-provider-id="384" data-provider-name="HBO Max" aria-label="HBO Max">
+                <button type="button" class="provider-btn" data-provider-id="1899" data-provider-name="HBO Max" aria-label="HBO Max">
                     <img src="https://image.tmdb.org/t/p/w300/jbe4gVSfRlbPTdESXhEKpornsfu.jpg" alt="HBO Max">
                 </button>
             </div>

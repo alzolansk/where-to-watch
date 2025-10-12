@@ -236,6 +236,59 @@ body{
     display: none;
 }
 
+.hero-progress {
+    width: min(100%, 200px);
+    margin: calc(1px - clamp(14px, 2.3vw, 24px)) auto 0;
+    margin-bottom: 20px;
+    padding: 0;
+}
+
+.hero-progress[hidden] {
+    display: none !important;
+}
+
+.hero-progress__track {
+    display: flex;
+    align-items: center;
+    gap: clamp(4px, 1.4vw, 8px);
+    padding: 0;
+    background: none;
+    border: 0;
+}
+
+.hero-progress__segment {
+    flex: 1 1 auto;
+    height: 2px;
+    border: 0;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.8);
+    opacity: 0.75;
+    transition: opacity 0.25s ease, border-color 0.25s ease, transform 0.25s ease;
+}
+
+.hero-progress__segment.is-active {
+    border-bottom-color: #d7171e;
+    opacity: 1;
+    transform: scaleY(1.2);
+}
+
+@media (max-width: 720px) {
+    .hero-progress {
+        margin-bottom: clamp(8px, 4vw, 18px);
+    }
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
 .backdropContainer {
     position: relative;
     flex: 0 0 clamp(88%, 82vw, 1280px);
@@ -689,37 +742,49 @@ body{
 }
 
 
-/* Badge do provedor de streaming, no rodapé central do poster */
+/* Badge do provedor de streaming, fixada no canto superior do poster */
 .hero-card__streaming-badge {
     position: absolute;
-    left: 50%;
-    bottom: 8px;
-    transform: translateX(-50%);
-    z-index: 3;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 14px;
-    border-radius: 999px;
-    background: rgba(0, 0, 0, 0.72);
-    backdrop-filter: blur(8px);
+    top: clamp(5px, 1vw, 15px);
+    right: clamp(12px, 2.4vw, 24px);
+    width: clamp(32px, 5vw, 52px);
+    height: clamp(32px, 5vw, 52px);
+    padding: clamp(1px, 1.5px, 4px);
+    border-radius: clamp(14px, 2.4vw, 20px);
+    display: grid;
+    place-items: center;
+    backdrop-filter: blur(12px);
+    background: radial-gradient(120% 120% at 24% 22%, rgba(255, 255, 255, 0.24), rgba(34, 38, 58, 0.1)) rgba(10, 13, 26, 0.72);
     border: 1px solid rgba(255, 255, 255, 0.12);
-    color: #fff;
-    font-weight: 800;
-    letter-spacing: 0.04em;
+    box-shadow: 0 18px 36px rgba(6, 8, 20, 0.5);
+    z-index: 4;
+    overflow: hidden;
+    pointer-events: none;
 }
 
 .hero-card__streaming-logo {
-    height: 20px;
-    width: auto;
-    display: block;
-    filter: brightness(1) contrast(1.05) saturate(1.05);
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: clamp(10px, 2vw, 16px);
+    box-shadow: 0 12px 24px rgba(5, 6, 12, 0.5);
 }
 
-.hero-card__streaming-name {
-    font-size: clamp(0.78rem, 1.6vw, 0.95rem);
+.hero-card__streaming-badge--text {
+    padding: clamp(8px, 2vw, 14px);
+    background: rgba(12, 14, 24, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.16);
 }
 
+.hero-card__streaming-text {
+    font-size: clamp(0.68rem, 1.8vw, 0.82rem);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-align: center;
+    color: rgba(248, 249, 255, 0.9);
+    line-height: 1.1;
+}
 .backdropContainer.active .hero-card__poster-img {
     transform: translateY(0) scale(1);
     box-shadow: 0 30px 62px rgba(0, 0, 0, 0.6);

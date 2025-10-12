@@ -3,7 +3,12 @@ document.addEventListener('DOMContentLoaded', function() {
     let mediaType = 'movie'; // Inicialmente filmes
     const contentSection = document.querySelector(".media-section");
     const sliderIndicator = document.querySelector('.style-buttons .slider-indicator');
+    const heroProgressElement = document.querySelector('[data-hero-progress]');
+    const heroProgressTrack = heroProgressElement ? heroProgressElement.querySelector('[data-hero-progress-track]') : null;
+    const heroProgressLabel = heroProgressElement ? heroProgressElement.querySelector('[data-hero-progress-label]') : null;
     const BUTTON_RESUME_DELAY = 3000;
+    let heroProgressSegments = [];
+    let heroProgressCount = 0;
 
     if (contentSection) {
         contentSection.classList.add('is-loading-rows');
@@ -35,6 +40,64 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
         return fetchCache[url];
+    };
+
+    const resetHeroProgress = () => {
+        if (!heroProgressElement || !heroProgressTrack) {
+            return;
+        }
+        heroProgressElement.hidden = true;
+        heroProgressTrack.innerHTML = '';
+        heroProgressSegments = [];
+        heroProgressCount = 0;
+        if (heroProgressLabel) {
+            heroProgressLabel.textContent = '';
+        }
+    };
+
+    const ensureHeroProgress = (count) => {
+        if (!heroProgressElement || !heroProgressTrack) {
+            return;
+        }
+        if (count <= 0) {
+            resetHeroProgress();
+            return;
+        }
+        if (heroProgressCount !== count) {
+            heroProgressTrack.innerHTML = '';
+            const fragment = document.createDocumentFragment();
+            for (let index = 0; index < count; index += 1) {
+                const segment = document.createElement('span');
+                segment.className = 'hero-progress__segment';
+                segment.dataset.progressIndex = String(index);
+                fragment.appendChild(segment);
+            }
+            heroProgressTrack.appendChild(fragment);
+            heroProgressSegments = Array.from(heroProgressTrack.children);
+            heroProgressCount = count;
+        } else if (!heroProgressSegments.length) {
+            heroProgressSegments = Array.from(heroProgressTrack.children);
+        }
+        heroProgressElement.hidden = false;
+    };
+
+    const setActiveHeroProgress = (index) => {
+        if (!heroProgressSegments.length) {
+            if (heroProgressLabel) {
+                heroProgressLabel.textContent = '';
+            }
+            return;
+        }
+        const safeIndex = Math.max(0, Math.min(index, heroProgressSegments.length - 1));
+        heroProgressSegments.forEach((segment, segmentIndex) => {
+            if (!segment) {
+                return;
+            }
+            segment.classList.toggle('is-active', segmentIndex === safeIndex);
+        });
+        if (heroProgressLabel) {
+            heroProgressLabel.textContent = `Destaque ${safeIndex + 1} de ${heroProgressSegments.length}`;
+        }
     };
 
     function waitForImages(container) {
@@ -154,6 +217,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         if (!containerWrap || carouselItems.length === 0) {
+            resetHeroProgress();
             stopAutoScroll();
             return;
         }
@@ -174,6 +238,8 @@ document.addEventListener('DOMContentLoaded', function() {
             item.classList.add('active');
             currentIndex = index;
             containerWrap.dataset.activeIndex = String(index);
+            ensureHeroProgress(carouselItems.length);
+            setActiveHeroProgress(index);
         }
 
         const scrollToItem = (index, behavior = 'smooth') => {
@@ -788,6 +854,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (typeof showLoading === 'function') {
             showLoading();
         } // Mostra o spinner ao comecar
+        resetHeroProgress();
 
         const heroUrl = `https://api.themoviedb.org/3/trending/all/week?api_key=${apiKey}&language=pt-BR&page=1`;
         const heroPromise = fetchJson(heroUrl)
@@ -822,6 +889,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 `;
                 highlightSlide.addEventListener('click', () => activateBackdropContainer(highlightSlide));
                 containerNew.appendChild(highlightSlide);
+
+                ensureHeroProgress(document.querySelectorAll('.backdropContainer').length);
+                setActiveHeroProgress(0);
 
                 activateBackdropContainer(highlightSlide);
 
@@ -888,6 +958,11 @@ document.addEventListener('DOMContentLoaded', function() {
                                 return null;
                             }
                             const providerNames = flatrate.slice(0, 3).map(provider => provider.provider_name).join(', ');
+                            const primaryProviderName = primaryProvider?.provider_name || '';
+                            const primaryProviderLogoUrl = primaryProvider?.logo_path ? `${providerLogoBaseUrl}${primaryProvider.logo_path}` : '';
+                            const primaryProviderBadgeTitle = primaryProviderName
+                                ? `Dispon\u00edvel em ${primaryProviderName}`
+                                : 'Dispon\u00edvel para streaming';
 
                             const slug = slugify(titleSource);
                             const hasHomepage = data.homepage && data.homepage.trim() !== '';
@@ -1021,10 +1096,11 @@ document.addEventListener('DOMContentLoaded', function() {
                                     <aside class="hero-card__poster">
                                         <img src="${imgUrl}" alt="Poster de ${titleSource}" class="hero-card__poster-img">
                                         ${primaryProvider ? `
-                                            <div class="hero-card__streaming-badge" title="Disponível em">
-                                                ${primaryProvider.logo_path ? `<img class="hero-card__streaming-logo" src="${providerLogoBaseUrl}${primaryProvider.logo_path}" alt="${primaryProvider.provider_name}">` : ''}
-                                                <span class="hero-card__streaming-name">${primaryProvider.provider_name}</span>
-                                            </div>
+                                            <span class="hero-card__streaming-badge${primaryProviderLogoUrl ? '' : ' hero-card__streaming-badge--text'}" title="${primaryProviderBadgeTitle}" aria-label="${primaryProviderBadgeTitle}">
+                                                ${primaryProviderLogoUrl
+                                                    ? `<img class="hero-card__streaming-logo" src="${primaryProviderLogoUrl}" alt="">`
+                                                    : `<span class="hero-card__streaming-text">${primaryProviderName}</span>`}
+                                            </span>
                                         ` : ''}
                                     </aside>
                                 </div>

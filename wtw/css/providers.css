@@ -138,7 +138,7 @@
     display: block;
     border-radius: 10px;
     object-fit: cover;
-    opacity: 0.56;
+    opacity: 0.36;
     transition: filter 0.3s ease, opacity 0.3s ease, transform 0.3s ease;
 }
 
@@ -410,7 +410,7 @@
 }
 
 .filter-option.is-selected .filter-option__check::after {
-    content: "?";
+    content: "✓";
 }
 
 .providers-results {
@@ -551,7 +551,6 @@
     letter-spacing: 0.04em;
     background: rgba(215, 23, 46, 0.85);
 }
-
 .media-card__title {
     font-size: 1.05rem;
     font-weight: 700;

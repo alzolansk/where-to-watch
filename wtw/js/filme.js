@@ -245,7 +245,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         const heroMeta = hydrateHero(details, params, dom, mediaType);
-        renderTags(details, dom);
+        renderTags(details, dom, mediaType);
         renderHighlights(details, dom);
         renderCrew(details, dom, mediaType);
 
@@ -489,23 +489,43 @@ function extractCertification(details, mediaType) {
     return brRating || usRating || '';
 }
 
-function renderTags(details, dom) {
+function renderTags(details, dom, mediaType) {
     if (!dom?.tagList) {
         return;
     }
-    const genres = Array.isArray(details.genres) ? details.genres.map(g => g.name) : [];
+    const genres = Array.isArray(details.genres) ? details.genres : [];
     const keywordsSource = details.keywords || {};
     const keywordList = Array.isArray(keywordsSource.keywords)
         ? keywordsSource.keywords
         : Array.isArray(keywordsSource.results)
             ? keywordsSource.results
             : [];
-    const keywords = keywordList.map(k => k.name).filter(Boolean);
+    const keywords = keywordList
+        .map(keyword => ({ id: keyword?.id, name: keyword?.name }))
+        .filter(keyword => Boolean(keyword?.name));
 
-    const combined = [...genres];
+    const combined = [];
+    const seen = new Set();
+
+    genres.forEach((genre) => {
+        if (genre && genre.name && !seen.has(genre.name)) {
+            combined.push({
+                name: genre.name,
+                id: genre.id,
+                type: 'genre'
+            });
+            seen.add(genre.name);
+        }
+    });
+
     keywords.forEach(keyword => {
-        if (!combined.includes(keyword)) {
-            combined.push(keyword);
+        if (keyword?.name && !seen.has(keyword.name)) {
+            combined.push({
+                name: keyword.name,
+                id: keyword.id ?? null,
+                type: 'keyword'
+            });
+            seen.add(keyword.name);
         }
     });
 
@@ -519,10 +539,33 @@ function renderTags(details, dom) {
     dom.tagList.classList.remove('is-hidden');
 
     limited.forEach(tag => {
-        const chip = document.createElement('span');
-        chip.className = 'tag-pill';
-        chip.textContent = tag;
-        dom.tagList.appendChild(chip);
+        if ((tag.type === 'genre' || tag.type === 'keyword') && tag.id) {
+            const link = document.createElement('a');
+            link.className = 'tag-pill tag-pill--link';
+            const targetUrl = new URL('genres.php', window.location.href);
+            if (tag.type === 'genre') {
+                targetUrl.searchParams.set('genres', tag.id);
+                targetUrl.searchParams.set('labels', tag.name);
+                link.dataset.genreId = String(tag.id);
+            } else {
+                targetUrl.searchParams.set('keywords', tag.id);
+                targetUrl.searchParams.set('keywordLabels', tag.name);
+                link.dataset.keywordId = String(tag.id);
+            }
+            if (mediaType === 'movie' || mediaType === 'tv') {
+                targetUrl.searchParams.set('mediaType', mediaType);
+            }
+            link.href = `${targetUrl.pathname}${targetUrl.search}`;
+            link.textContent = tag.name;
+            link.dataset.categoryType = tag.type;
+            link.setAttribute('aria-label', `Ver títulos em ${tag.name}`);
+            dom.tagList.appendChild(link);
+        } else {
+            const chip = document.createElement('span');
+            chip.className = 'tag-pill';
+            chip.textContent = tag.name;
+            dom.tagList.appendChild(chip);
+        }
     });
     refreshCarouselNav('gallery-track');
 }

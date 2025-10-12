@@ -229,6 +229,18 @@ body {
     transition: 0.5s transform 0.05s ease, box-shadow 0.25s ease;
 }
 
+.tag-pill--link {
+    display: inline-flex;
+    align-items: center;
+    text-decoration: none;
+    color: inherit;
+}
+
+.tag-pill--link:focus-visible {
+    outline: 2px solid rgba(255, 180, 150, 0.9);
+    outline-offset: 2px;
+}
+
 .tag-pill:hover {
     box-shadow: 0 12px 24px rgba(215, 23, 30, 0.28);
     transform: translateY(-2px);
