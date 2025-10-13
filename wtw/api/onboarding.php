@@ -193,11 +193,43 @@ function ensure_onboarding_schema(PDO $pdo): void
                 media_type ENUM('movie','tv') NOT NULL DEFAULT 'movie',
                 title VARCHAR(180) NOT NULL,
                 logo_path VARCHAR(255) DEFAULT NULL,
+                favorited_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                genres VARCHAR(100) DEFAULT NULL,
+                keywords VARCHAR(100) DEFAULT NULL,
                 created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 PRIMARY KEY (user_id, tmdb_id, media_type),
                 CONSTRAINT fk_user_favorite_titles_user FOREIGN KEY (user_id) REFERENCES tb_users(id_user) ON DELETE CASCADE ON UPDATE CASCADE
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
         );
+    } catch (Throwable $e) {
+        error_log('onboarding_schema_favorites_error: ' . $e->getMessage());
+    }
+
+    try {
+        $column = $pdo->query("SHOW COLUMNS FROM user_favorite_titles LIKE 'favorited_at'")->fetch(PDO::FETCH_ASSOC);
+        if ($column === false) {
+            $pdo->exec("ALTER TABLE user_favorite_titles ADD COLUMN favorited_at TIMESTAMP NULL DEFAULT NULL AFTER logo_path");
+            $pdo->exec("UPDATE user_favorite_titles SET favorited_at = created_at WHERE favorited_at IS NULL");
+            $pdo->exec("ALTER TABLE user_favorite_titles MODIFY COLUMN favorited_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP");
+        }
+    } catch (Throwable $e) {
+        error_log('onboarding_schema_favorites_error: ' . $e->getMessage());
+    }
+
+    try {
+        $column = $pdo->query("SHOW COLUMNS FROM user_favorite_titles LIKE 'genres'")->fetch(PDO::FETCH_ASSOC);
+        if ($column === false) {
+            $pdo->exec("ALTER TABLE user_favorite_titles ADD COLUMN genres VARCHAR(100) DEFAULT NULL AFTER favorited_at");
+        }
+    } catch (Throwable $e) {
+        error_log('onboarding_schema_favorites_error: ' . $e->getMessage());
+    }
+
+    try {
+        $column = $pdo->query("SHOW COLUMNS FROM user_favorite_titles LIKE 'keywords'")->fetch(PDO::FETCH_ASSOC);
+        if ($column === false) {
+            $pdo->exec("ALTER TABLE user_favorite_titles ADD COLUMN keywords VARCHAR(100) DEFAULT NULL AFTER genres");
+        }
     } catch (Throwable $e) {
         error_log('onboarding_schema_favorites_error: ' . $e->getMessage());
     }
@@ -239,7 +271,7 @@ function fetchPreferences(PDO $pdo, int $userId): array
     $stmt->execute([$userId]);
     $response['providers'] = array_map('intval', array_column($stmt->fetchAll(), 'provider_id'));
 
-    $stmt = $pdo->prepare('SELECT tmdb_id, media_type, title, logo_path FROM user_favorite_titles WHERE user_id = ? ORDER BY created_at DESC');
+    $stmt = $pdo->prepare('SELECT tmdb_id, media_type, title, logo_path, favorited_at, genres, keywords FROM user_favorite_titles WHERE user_id = ? ORDER BY favorited_at DESC, created_at DESC');
     $stmt->execute([$userId]);
     $response['favorites'] = array_map(static function (array $row) {
         $logoPath = $row['logo_path'] ?? null;
@@ -249,6 +281,9 @@ function fetchPreferences(PDO $pdo, int $userId): array
             'title' => $row['title'],
             'logo_path' => $logoPath,
             'logo_url' => tmdb_image_url($logoPath),
+            'favorited_at' => $row['favorited_at'] ?? null,
+            'genres' => parse_favorite_terms($row['genres'] ?? null),
+            'keywords' => parse_favorite_terms($row['keywords'] ?? null),
         ];
     }, $stmt->fetchAll());
 
@@ -297,9 +332,9 @@ function persistPreferences(PDO $pdo, int $userId, array $payload): array
         }
     }
 
-        $favorites = [];
-        foreach ($favoritesInput as $favorite) {
-            if (!is_array($favorite)) {
+    $favorites = [];
+    foreach ($favoritesInput as $favorite) {
+        if (!is_array($favorite)) {
             continue;
         }
         $id = (int) ($favorite['tmdb_id'] ?? $favorite['id'] ?? 0);
@@ -311,17 +346,20 @@ function persistPreferences(PDO $pdo, int $userId, array $payload): array
             $mediaType = 'movie';
         }
         $title = normalise_label((string) ($favorite['title'] ?? $favorite['label'] ?? $favorite['name'] ?? ''));
-        if ($title === '') {
-            continue;
-        }
         $logoPath = normalise_logo_path($favorite['logo_path'] ?? null, $favorite['logo_url'] ?? $favorite['logo'] ?? null);
         $key = $id . ':' . $mediaType;
         $favorites[$key] = [
             'tmdb_id' => $id,
             'media_type' => $mediaType,
-            'title' => mb_limit($title, 180),
+            'title' => $title !== '' ? mb_limit($title, 180) : '',
             'logo_path' => $logoPath,
+            'genres' => [],
+            'keywords' => [],
         ];
+    }
+
+    if (!empty($favorites)) {
+        $favorites = enrich_favorite_selections($favorites, $genres, $keywords);
     }
 
     $pdo->beginTransaction();
@@ -352,9 +390,24 @@ function persistPreferences(PDO $pdo, int $userId, array $payload): array
 
     $pdo->prepare('DELETE FROM user_favorite_titles WHERE user_id = ?')->execute([$userId]);
     if (!empty($favorites)) {
-        $stmt = $pdo->prepare('INSERT INTO user_favorite_titles (user_id, tmdb_id, media_type, title, logo_path) VALUES (?, ?, ?, ?, ?)');
+        $stmt = $pdo->prepare('INSERT INTO user_favorite_titles (user_id, tmdb_id, media_type, title, logo_path, favorited_at, genres, keywords) VALUES (?, ?, ?, ?, ?, NOW(), ?, ?)');
         foreach ($favorites as $favorite) {
-            $stmt->execute([$userId, $favorite['tmdb_id'], $favorite['media_type'], $favorite['title'], $favorite['logo_path']]);
+            if (($favorite['title'] ?? '') === '') {
+                continue;
+            }
+            $genresText = format_favorite_terms_for_storage(array_values($favorite['genres'] ?? []));
+            $keywordsText = format_favorite_terms_for_storage(array_map(static function (array $keyword) {
+                return $keyword['label'] ?? '';
+            }, $favorite['keywords'] ?? []));
+            $stmt->execute([
+                $userId,
+                $favorite['tmdb_id'],
+                $favorite['media_type'],
+                mb_limit($favorite['title'], 180),
+                $favorite['logo_path'],
+                $genresText,
+                $keywordsText,
+            ]);
         }
     }
 
@@ -380,6 +433,171 @@ function markOnboardingSessionComplete(): void
 {
     $_SESSION['onboarding_pending'] = false;
     $_SESSION['onboarding_completed_at'] = date('c');
+}
+
+function enrich_favorite_selections(array $favorites, array &$genres, array &$keywords): array
+{
+    foreach ($favorites as $key => &$favorite) {
+        $details = load_favorite_details($favorite['media_type'], $favorite['tmdb_id']);
+
+        if (!empty($details['title']) && ($favorite['title'] ?? '') === '') {
+            $favorite['title'] = mb_limit(normalise_label((string) $details['title']), 180);
+        }
+
+        if (!empty($details['genres']) && is_array($details['genres'])) {
+            $favorite['genres'] = $details['genres'];
+            foreach ($details['genres'] as $genreId => $genreName) {
+                $genreId = (int) $genreId;
+                if ($genreId > 0) {
+                    $genres[$genreId] = 1.0;
+                }
+            }
+        }
+
+        if (!empty($details['keywords']) && is_array($details['keywords'])) {
+            $favorite['keywords'] = $details['keywords'];
+            foreach ($details['keywords'] as $keyword) {
+                if (!is_array($keyword)) {
+                    continue;
+                }
+                $label = normalise_label((string) ($keyword['label'] ?? $keyword['name'] ?? ''));
+                if ($label === '') {
+                    continue;
+                }
+                $keywordId = isset($keyword['id']) && (int) $keyword['id'] > 0 ? (int) $keyword['id'] : null;
+                $keywordKey = ($keywordId !== null ? (string) $keywordId : 'tmdb') . ':' . mb_lower($label);
+                $keywords[$keywordKey] = [
+                    'id' => $keywordId,
+                    'label' => mb_limit($label, 120),
+                ];
+            }
+        }
+
+        if (($favorite['title'] ?? '') === '') {
+            unset($favorites[$key]);
+        }
+    }
+    unset($favorite);
+
+    return $favorites;
+}
+
+function load_favorite_details(string $mediaType, int $tmdbId): array
+{
+    static $cache = [];
+    $cacheKey = $mediaType . ':' . $tmdbId;
+    if (array_key_exists($cacheKey, $cache)) {
+        return $cache[$cacheKey];
+    }
+
+    require_once __DIR__ . '/../includes/tmdb.php';
+
+    try {
+        $response = tmdb_get(sprintf('/%s/%d', $mediaType, $tmdbId), [
+            'append_to_response' => 'keywords',
+            'language' => 'pt-BR',
+        ]);
+    } catch (Throwable $e) {
+        error_log('onboarding_favorite_metadata_error: ' . $e->getMessage());
+        return $cache[$cacheKey] = [];
+    }
+
+    if (!is_array($response)) {
+        return $cache[$cacheKey] = [];
+    }
+
+    $title = normalise_label((string) ($response['title'] ?? $response['name'] ?? ''));
+
+    $genres = [];
+    if (!empty($response['genres']) && is_array($response['genres'])) {
+        foreach ($response['genres'] as $genre) {
+            if (!is_array($genre)) {
+                continue;
+            }
+            $genreId = (int) ($genre['id'] ?? 0);
+            $genreName = normalise_label((string) ($genre['name'] ?? ''));
+            if ($genreId > 0 && $genreName !== '') {
+                $genres[$genreId] = mb_limit($genreName, 80);
+            }
+        }
+    }
+
+    $keywords = [];
+    $keywordSource = $response['keywords'] ?? [];
+    if (isset($keywordSource['keywords']) && is_array($keywordSource['keywords'])) {
+        $keywordSource = $keywordSource['keywords'];
+    } elseif (isset($keywordSource['results']) && is_array($keywordSource['results'])) {
+        $keywordSource = $keywordSource['results'];
+    }
+
+    if (is_array($keywordSource)) {
+        foreach ($keywordSource as $keyword) {
+            if (!is_array($keyword)) {
+                continue;
+            }
+            $label = normalise_label((string) ($keyword['name'] ?? $keyword['label'] ?? ''));
+            if ($label === '') {
+                continue;
+            }
+            $keywords[] = [
+                'id' => isset($keyword['id']) && (int) $keyword['id'] > 0 ? (int) $keyword['id'] : null,
+                'label' => mb_limit($label, 120),
+            ];
+        }
+    }
+
+    return $cache[$cacheKey] = [
+        'title' => $title,
+        'genres' => $genres,
+        'keywords' => $keywords,
+    ];
+}
+
+function format_favorite_terms_for_storage(array $terms, int $limit = 100): ?string
+{
+    if (empty($terms)) {
+        return null;
+    }
+
+    $labels = [];
+    foreach ($terms as $term) {
+        if (is_array($term)) {
+            $label = normalise_label((string) ($term['label'] ?? $term['name'] ?? ''));
+        } else {
+            $label = normalise_label((string) $term);
+        }
+        if ($label === '') {
+            continue;
+        }
+        $labels[$label] = true;
+    }
+
+    if (empty($labels)) {
+        return null;
+    }
+
+    $text = implode(', ', array_keys($labels));
+    $text = mb_limit($text, $limit);
+
+    return $text !== '' ? $text : null;
+}
+
+function parse_favorite_terms($value): array
+{
+    if (!is_string($value) || $value === '') {
+        return [];
+    }
+
+    $parts = preg_split('/\s*,\s*/u', $value) ?: [];
+    $results = [];
+    foreach ($parts as $part) {
+        $label = normalise_label((string) $part);
+        if ($label !== '') {
+            $results[] = $label;
+        }
+    }
+
+    return $results;
 }
 
 function normalise_label(string $value): string
@@ -460,6 +678,7 @@ function onboardingTitleSuggestions(array $queryParams): array
 
     $items = array_slice($items, 0, 15);
 
+    $prepared = [];
     foreach ($items as $row) {
         $id = (int)($row['id'] ?? 0);
         if ($id <= 0) {
@@ -469,15 +688,26 @@ function onboardingTitleSuggestions(array $queryParams): array
         if ($title === '') {
             continue;
         }
-        $logo = resolveTitleLogo('movie', $id);
-        $results[] = [
-            'tmdb_id' => $id,
-            'media_type' => 'movie',
+        $prepared[] = [
+            'id' => $id,
             'title' => $title,
-            'logo_path' => $logo['path'] ?? null,
-            'logo_url' => $logo['url'] ?? null,
             'release_year' => isset($row['release_date']) && $row['release_date'] !== '' ? substr($row['release_date'], 0, 4) : null,
         ];
+    }
+
+    if (!empty($prepared)) {
+        $logos = resolveTitleLogosBulk('movie', array_column($prepared, 'id'));
+        foreach ($prepared as $item) {
+            $logo = $logos[$item['id']] ?? null;
+            $results[] = [
+                'tmdb_id' => $item['id'],
+                'media_type' => 'movie',
+                'title' => $item['title'],
+                'logo_path' => $logo['path'] ?? null,
+                'logo_url' => $logo['url'] ?? null,
+                'release_year' => $item['release_year'],
+            ];
+        }
     }
 
     return [
@@ -486,43 +716,76 @@ function onboardingTitleSuggestions(array $queryParams): array
     ];
 }
 
-function resolveTitleLogo(string $mediaType, int $id): array
+function resolveTitleLogosBulk(string $mediaType, array $ids): array
 {
     static $cache = [];
-    $key = $mediaType . ':' . $id;
-    if (array_key_exists($key, $cache)) {
-        return $cache[$key];
+
+    $resolved = [];
+    $toFetch = [];
+
+    foreach ($ids as $id) {
+        $id = (int) $id;
+        if ($id <= 0) {
+            continue;
+        }
+        $key = $mediaType . ':' . $id;
+        if (array_key_exists($key, $cache)) {
+            $resolved[$id] = $cache[$key];
+        } else {
+            $toFetch[$id] = [
+                'path' => sprintf('/%s/%d/images', $mediaType, $id),
+                'params' => [
+                    'include_image_language' => 'pt,null,en',
+                    'language' => null,
+                ],
+            ];
+        }
     }
 
-    $path = null;
-    try {
-        $images = tmdb_get(sprintf('/%s/%d/images', $mediaType, $id), [
-            'include_image_language' => 'pt,null,en',
-        ]);
-        if (!empty($images['logos'])) {
-            foreach ($images['logos'] as $logo) {
-                if (!empty($logo['file_path'])) {
-                    $path = $logo['file_path'];
-                    break;
+    if (!empty($toFetch)) {
+        try {
+            $responses = tmdb_get_bulk($toFetch);
+        } catch (Throwable $e) {
+            $responses = [];
+            error_log('onboarding_logo_fetch_error: ' . $e->getMessage());
+        }
+
+        foreach ($toFetch as $id => $_) {
+            $key = $mediaType . ':' . $id;
+            $data = $responses[$id] ?? null;
+            $path = null;
+            if (is_array($data)) {
+                if (!empty($data['logos'])) {
+                    foreach ($data['logos'] as $logo) {
+                        if (!empty($logo['file_path'])) {
+                            $path = $logo['file_path'];
+                            break;
+                        }
+                    }
+                }
+                if ($path === null && !empty($data['posters'])) {
+                    foreach ($data['posters'] as $poster) {
+                        if (!empty($poster['file_path'])) {
+                            $path = $poster['file_path'];
+                            break;
+                        }
+                    }
                 }
             }
+            $value = [
+                'path' => $path,
+                'url' => tmdb_image_url($path),
+            ];
+            $cache[$key] = $value;
+            $resolved[$id] = $value;
         }
-        if ($path === null && !empty($images['posters'])) {
-            foreach ($images['posters'] as $poster) {
-                if (!empty($poster['file_path'])) {
-                    $path = $poster['file_path'];
-                    break;
-                }
-            }
-        }
-    } catch (Throwable $e) {
-        error_log('onboarding_logo_fetch_error: ' . $e->getMessage());
     }
 
-    $cache[$key] = [
-        'path' => $path,
-        'url' => tmdb_image_url($path),
-    ];
+    return $resolved;
+}
 
-    return $cache[$key];
+function resolveTitleLogo(string $mediaType, int $id): array
+{
+    $logos = resolveTitleLogosBulk($mediaType, [$id]);
+    return $logos[(int) $id] ?? ['path' => null, 'url' => null];
 }

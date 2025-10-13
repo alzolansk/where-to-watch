@@ -91,12 +91,63 @@ DELIMITER ;
 CALL migrate_user_keywords();
 DROP PROCEDURE migrate_user_keywords;
 
+DELIMITER $$
+CREATE PROCEDURE migrate_user_favorite_titles()
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM INFORMATION_SCHEMA.TABLES
+        WHERE TABLE_SCHEMA = DATABASE()
+          AND TABLE_NAME = 'user_favorite_titles'
+    ) THEN
+        IF NOT EXISTS (
+            SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+            WHERE TABLE_SCHEMA = DATABASE()
+              AND TABLE_NAME = 'user_favorite_titles'
+              AND COLUMN_NAME = 'favorited_at'
+        ) THEN
+            ALTER TABLE user_favorite_titles
+                ADD COLUMN favorited_at TIMESTAMP NULL DEFAULT NULL AFTER logo_path;
+            UPDATE user_favorite_titles
+                SET favorited_at = created_at
+                WHERE favorited_at IS NULL;
+            ALTER TABLE user_favorite_titles
+                MODIFY COLUMN favorited_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
+        END IF;
+
+        IF NOT EXISTS (
+            SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+            WHERE TABLE_SCHEMA = DATABASE()
+              AND TABLE_NAME = 'user_favorite_titles'
+              AND COLUMN_NAME = 'genres'
+        ) THEN
+            ALTER TABLE user_favorite_titles
+                ADD COLUMN genres VARCHAR(100) DEFAULT NULL AFTER favorited_at;
+        END IF;
+
+        IF NOT EXISTS (
+            SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+            WHERE TABLE_SCHEMA = DATABASE()
+              AND TABLE_NAME = 'user_favorite_titles'
+              AND COLUMN_NAME = 'keywords'
+        ) THEN
+            ALTER TABLE user_favorite_titles
+                ADD COLUMN keywords VARCHAR(100) DEFAULT NULL AFTER genres;
+        END IF;
+    END IF;
+END $$
+DELIMITER ;
+CALL migrate_user_favorite_titles();
+DROP PROCEDURE migrate_user_favorite_titles;
+
 CREATE TABLE IF NOT EXISTS user_favorite_titles (
     user_id     INT UNSIGNED    NOT NULL,
     tmdb_id     INT UNSIGNED    NOT NULL,
     media_type  ENUM('movie','tv') NOT NULL DEFAULT 'movie',
     title       VARCHAR(180)    NOT NULL,
     logo_path   VARCHAR(255)    DEFAULT NULL,
+    favorited_at TIMESTAMP      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    genres      VARCHAR(100)    DEFAULT NULL,
+    keywords    VARCHAR(100)    DEFAULT NULL,
     created_at  TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (user_id, tmdb_id, media_type),
     CONSTRAINT fk_user_favorite_titles_user

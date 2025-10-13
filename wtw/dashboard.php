@@ -71,12 +71,12 @@ if (session_status() === PHP_SESSION_NONE) {
             echo '        </span>';
             echo '    </button>';
             echo '    <div class="user-account__dropdown" role="menu" aria-hidden="true">';
-            echo '        <button type="button" class="user-account__profile" role="menuitem">';
+            echo '        <a href="profile.php" class="user-account__profile" role="menuitem">';
             echo '            <span>Meu perfil</span>';
             echo '            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">';
             echo '                <polyline points="9 6 15 12 9 18" />';
             echo '            </svg>';
-            echo '        </button>';
+            echo '        </a>';
             echo '        <span class="user-account__divider" aria-hidden="true"></span>';
             echo '        <a href="logout.php" class="user-account__logout" role="menuitem">Sair</a>';
             echo '    </div>';

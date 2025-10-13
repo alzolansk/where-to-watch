@@ -620,6 +620,7 @@
       favorites: Array.from(state.favorites.values()).map((item) => ({
         tmdb_id: item.id,
         media_type: item.mediaType,
+        title: normaliseLabel(item.label || ''),
         logo_path: item.logoPath || null,
         logo_url: item.logo || null,
       })),
