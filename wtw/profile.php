@@ -64,6 +64,390 @@ $providerOptions = [
     ['id' => 350, 'label' => 'Apple TV+', 'logo' => 'https://image.tmdb.org/t/p/w154/2E03IAZsX4ZaUqM7tXlctEPMGWS.jpg'],
 ];
 
+$userId = (int)($_SESSION['id'] ?? $_SESSION['id_user'] ?? 0);
+
+if (!function_exists('wyw_tmdb_image_url')) {
+    function wyw_tmdb_image_url(?string $path): ?string
+    {
+        if ($path === null || $path === '') {
+            return null;
+        }
+        if (preg_match('/^https?:/i', $path)) {
+            return $path;
+        }
+        return 'https://image.tmdb.org/t/p/w300' . ($path[0] === '/' ? $path : '/' . $path);
+    }
+}
+
+if (!function_exists('wyw_table_has_column')) {
+    function wyw_table_has_column(PDO $pdo, string $table, string $column): bool
+    {
+        static $cache = [];
+        $tableKey = strtolower($table);
+        $columnKey = strtolower($column);
+        $cacheKey = $tableKey . ':' . $columnKey;
+        if (array_key_exists($cacheKey, $cache)) {
+            return $cache[$cacheKey];
+        }
+
+        try {
+            $tableSql = '`' . str_replace('`', '``', $table) . '`';
+            $stmt = $pdo->prepare('SHOW COLUMNS FROM ' . $tableSql . ' LIKE ?');
+            $stmt->execute([$column]);
+            $exists = $stmt->fetch(PDO::FETCH_ASSOC) !== false;
+        } catch (Throwable $e) {
+            $exists = false;
+        }
+
+        $cache[$cacheKey] = $exists;
+        return $exists;
+    }
+}
+
+if (!function_exists('wyw_fetch_favorite_posters')) {
+    function wyw_fetch_favorite_posters(array $favorites): array
+    {
+        $requests = [];
+        foreach ($favorites as $favorite) {
+            $posterPath = is_string($favorite['poster_path'] ?? null) ? trim((string) $favorite['poster_path']) : '';
+            $posterUrl = is_string($favorite['poster_url'] ?? null) ? trim((string) $favorite['poster_url']) : '';
+            if ($posterPath !== '' || $posterUrl !== '') {
+                continue;
+            }
+            $tmdbId = isset($favorite['tmdb_id']) ? (int) $favorite['tmdb_id'] : 0;
+            if ($tmdbId <= 0) {
+                continue;
+            }
+            $mediaType = strtolower((string) ($favorite['media_type'] ?? 'movie'));
+            if ($mediaType !== 'tv') {
+                $mediaType = 'movie';
+            }
+            $key = $mediaType . ':' . $tmdbId;
+            if (isset($requests[$key])) {
+                continue;
+            }
+            $requests[$key] = [
+                'path' => sprintf('/%s/%d', $mediaType, $tmdbId),
+                'params' => [
+                    'language' => 'pt-BR',
+                ],
+            ];
+        }
+
+        if (empty($requests)) {
+            return [];
+        }
+
+        try {
+            require_once __DIR__ . '/includes/tmdb.php';
+        } catch (Throwable $e) {
+            return [];
+        }
+
+        if (!function_exists('tmdb_get_bulk')) {
+            return [];
+        }
+
+        try {
+            $responses = tmdb_get_bulk($requests);
+        } catch (Throwable $e) {
+            error_log('profile_fetch_posters_error: ' . $e->getMessage());
+            $responses = [];
+        }
+
+        $resolved = [];
+        foreach ($requests as $key => $_request) {
+            $data = $responses[$key] ?? null;
+            if (!is_array($data)) {
+                continue;
+            }
+            $posterPath = is_string($data['poster_path'] ?? null) ? trim((string) $data['poster_path']) : '';
+            $backdropPath = is_string($data['backdrop_path'] ?? null) ? trim((string) $data['backdrop_path']) : '';
+            $path = $posterPath !== '' ? $posterPath : ($backdropPath !== '' ? $backdropPath : null);
+            if ($path === null) {
+                continue;
+            }
+            $resolved[$key] = [
+                'poster_path' => $path,
+                'poster_url' => wyw_tmdb_image_url($path),
+            ];
+        }
+
+        return $resolved;
+    }
+}
+
+if (!function_exists('wyw_parse_terms')) {
+    function wyw_parse_terms($value): array
+    {
+        if (!is_string($value) || $value === '') {
+            return [];
+        }
+        $parts = preg_split('/\s*,\s*/u', $value) ?: [];
+        $results = [];
+        foreach ($parts as $part) {
+            $label = trim($part);
+            if ($label !== '') {
+                $results[] = $label;
+            }
+        }
+        return $results;
+    }
+}
+
+if (!function_exists('wyw_initial_letter')) {
+    function wyw_initial_letter(string $label): string
+    {
+        $trimmed = trim($label);
+        if ($trimmed === '') {
+            return '#';
+        }
+        if (function_exists('mb_substr')) {
+            $initial = mb_substr($trimmed, 0, 1, 'UTF-8');
+            return mb_strtoupper($initial, 'UTF-8');
+        }
+        return strtoupper(substr($trimmed, 0, 1));
+    }
+}
+
+$initialState = [
+    'genres' => [],
+    'keywords' => [],
+    'providers' => [],
+    'favorites' => [],
+    'completed' => is_string($onboardingCompletedAt) && $onboardingCompletedAt !== '' ? $onboardingCompletedAt : null,
+];
+
+$initialFeedbackMessage = null;
+$initialFeedbackTone = null;
+
+if ($isAuthenticated && $userId > 0) {
+    $pdo = null;
+    $pdoCandidates = [
+        __DIR__ . '/includes/db.php',
+        __DIR__ . '/../includes/db.php',
+    ];
+
+    foreach ($pdoCandidates as $candidate) {
+        if (!is_file($candidate)) {
+            continue;
+        }
+        $pdoAttempt = (static function (string $file) {
+            $pdo = null;
+            require $file;
+            return $pdo instanceof PDO ? $pdo : null;
+        })($candidate);
+        if ($pdoAttempt instanceof PDO) {
+            $pdo = $pdoAttempt;
+            break;
+        }
+    }
+
+    if (!($pdo instanceof PDO)) {
+        $configCandidates = [
+            __DIR__ . '/config/config.php',
+            __DIR__ . '/../config/config.php',
+        ];
+        foreach ($configCandidates as $config) {
+            if (!is_file($config)) {
+                continue;
+            }
+            $credentials = (static function (string $file) {
+                $host = $database = $usuario = $senha = null;
+                require $file;
+                return [
+                    'host' => $host ?? ($GLOBALS['host'] ?? null),
+                    'database' => $database ?? ($GLOBALS['database'] ?? null),
+                    'usuario' => $usuario ?? ($GLOBALS['usuario'] ?? null),
+                    'senha' => $senha ?? ($GLOBALS['senha'] ?? null),
+                ];
+            })($config);
+
+            if (!empty($credentials['host']) && !empty($credentials['database']) && isset($credentials['usuario'])) {
+                try {
+                    $pdo = new PDO(
+                        sprintf('mysql:host=%s;dbname=%s;charset=utf8mb4', $credentials['host'], $credentials['database']),
+                        $credentials['usuario'],
+                        $credentials['senha'] ?? '',
+                        [
+                            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                        ]
+                    );
+                } catch (Throwable $e) {
+                    $pdo = null;
+                }
+            }
+
+            if ($pdo instanceof PDO) {
+                break;
+            }
+        }
+    }
+
+    if ($pdo instanceof PDO) {
+        try {
+            $stmt = $pdo->prepare('SELECT onboarding_completed_at FROM tb_users WHERE id_user = ? LIMIT 1');
+            $stmt->execute([$userId]);
+            $completedAt = $stmt->fetchColumn();
+            if (is_string($completedAt) && $completedAt !== '') {
+                $initialState['completed'] = $completedAt;
+                try {
+                    $date = new DateTime($completedAt);
+                    $date->setTimezone(new DateTimeZone('America/Sao_Paulo'));
+                    $formattedCompletion = $date->format('d \\d\\e F \\d\\e Y');
+                } catch (Throwable $e) {
+                    // ignore formatting errors
+                }
+            }
+
+            $stmt = $pdo->prepare('SELECT genre_id, weight FROM user_genres WHERE user_id = ? ORDER BY genre_id');
+            $stmt->execute([$userId]);
+            $initialState['genres'] = array_map(static function (array $row) {
+                return (int) $row['genre_id'];
+            }, $stmt->fetchAll());
+
+            $stmt = $pdo->prepare('SELECT keyword_id, label, weight FROM user_keywords WHERE user_id = ? ORDER BY label');
+            $stmt->execute([$userId]);
+            $initialState['keywords'] = array_map(static function (array $row) {
+                return [
+                    'id' => $row['keyword_id'] !== null ? (int) $row['keyword_id'] : null,
+                    'label' => $row['label'],
+                    'weight' => (float) $row['weight'],
+                ];
+            }, $stmt->fetchAll());
+
+            $stmt = $pdo->prepare('SELECT provider_id FROM user_providers WHERE user_id = ? AND enabled = 1 ORDER BY provider_id');
+            $stmt->execute([$userId]);
+            $initialState['providers'] = array_map('intval', array_column($stmt->fetchAll(), 'provider_id'));
+
+            $orderParts = [];
+            if (wyw_table_has_column($pdo, 'user_favorite_titles', 'favorited_at')) {
+                $orderParts[] = 'favorited_at DESC';
+            }
+            if (wyw_table_has_column($pdo, 'user_favorite_titles', 'created_at')) {
+                $orderParts[] = 'created_at DESC';
+            }
+            if (empty($orderParts)) {
+                $orderParts[] = 'tmdb_id DESC';
+            }
+            $orderClause = implode(', ', $orderParts);
+            $favoriteColumns = ['tmdb_id', 'media_type', 'title', 'logo_path', 'favorited_at', 'genres', 'keywords'];
+            $favoriteHasPosterPath = wyw_table_has_column($pdo, 'user_favorite_titles', 'poster_path');
+            $favoriteHasPosterUrl = wyw_table_has_column($pdo, 'user_favorite_titles', 'poster_url');
+            $favoriteHasBackdrop = wyw_table_has_column($pdo, 'user_favorite_titles', 'backdrop_path');
+            if ($favoriteHasPosterPath) {
+                $favoriteColumns[] = 'poster_path';
+            }
+            if ($favoriteHasPosterUrl) {
+                $favoriteColumns[] = 'poster_url';
+            }
+            if ($favoriteHasBackdrop) {
+                $favoriteColumns[] = 'backdrop_path';
+            }
+            $favoritesSelect = implode(', ', array_unique($favoriteColumns));
+            $stmt = $pdo->prepare("SELECT {$favoritesSelect} FROM user_favorite_titles WHERE user_id = ? ORDER BY {$orderClause}");
+            $stmt->execute([$userId]);
+            $favoritesRows = $stmt->fetchAll();
+
+            $postersLookup = wyw_fetch_favorite_posters($favoritesRows);
+
+            foreach ($favoritesRows as $row) {
+                $tmdbId = (int) $row['tmdb_id'];
+                if ($tmdbId <= 0) {
+                    continue;
+                }
+                $mediaType = strtolower((string) ($row['media_type'] ?? 'movie'));
+                if ($mediaType !== 'tv') {
+                    $mediaType = 'movie';
+                }
+                $title = is_string($row['title']) ? trim($row['title']) : '';
+                if ($title === '') {
+                    continue;
+                }
+                $logoPath = $row['logo_path'] ?? null;
+                $logoUrl = $logoPath ? wyw_tmdb_image_url($logoPath) : null;
+
+                $posterPath = $favoriteHasPosterPath ? ($row['poster_path'] ?? null) : null;
+                $posterUrl = $favoriteHasPosterUrl ? ($row['poster_url'] ?? null) : null;
+                if (!is_string($posterPath)) {
+                    $posterPath = null;
+                }
+                if (!is_string($posterUrl)) {
+                    $posterUrl = null;
+                }
+                $posterPath = $posterPath !== null ? trim($posterPath) : null;
+                $posterUrl = $posterUrl !== null ? trim($posterUrl) : null;
+                if ($posterPath === '') {
+                    $posterPath = null;
+                }
+                if ($posterUrl === '') {
+                    $posterUrl = null;
+                }
+
+                $lookupKey = $mediaType . ':' . $tmdbId;
+                if (($posterPath === null && $posterUrl === null) && isset($postersLookup[$lookupKey])) {
+                    $posterInfo = $postersLookup[$lookupKey];
+                    if ($posterPath === null && isset($posterInfo['poster_path'])) {
+                        $posterPath = $posterInfo['poster_path'];
+                    }
+                    if ($posterUrl === null && isset($posterInfo['poster_url'])) {
+                        $posterUrl = $posterInfo['poster_url'];
+                    }
+                }
+
+                if ($posterUrl === null && $posterPath !== null) {
+                    $posterUrl = wyw_tmdb_image_url($posterPath);
+                }
+
+                $backdropPath = $favoriteHasBackdrop ? ($row['backdrop_path'] ?? null) : null;
+
+                $initialState['favorites'][] = [
+                    'tmdb_id' => $tmdbId,
+                    'media_type' => $mediaType,
+                    'title' => $title,
+                    'logo_path' => $logoPath,
+                    'logo_url' => $logoUrl,
+                    'poster_path' => $posterPath,
+                    'poster_url' => $posterUrl,
+                    'backdrop_path' => $backdropPath,
+                    'favorited_at' => $row['favorited_at'] ?? null,
+                    'genres' => wyw_parse_terms($row['genres'] ?? null),
+                    'keywords' => wyw_parse_terms($row['keywords'] ?? null),
+                ];
+            }
+        } catch (Throwable $e) {
+            $initialFeedbackMessage = 'Não foi possível carregar suas preferências agora.';
+            $initialFeedbackTone = 'error';
+        }
+    } else {
+        $initialFeedbackMessage = 'Não foi possível conectar ao banco de dados.';
+        $initialFeedbackTone = 'error';
+    }
+}
+
+$favorites = $initialState['favorites'];
+$favoritesCount = count($favorites);
+$preferencesCount = count($initialState['genres']) + count($initialState['keywords']) + count($initialState['providers']);
+
+$favoritesBadgeLabel = $favoritesCount . ' ' . ($favoritesCount === 1 ? 'título' : 'títulos');
+$favoritesTotalLabel = $favoritesBadgeLabel;
+$preferencesBadgeLabel = $preferencesCount . ' ' . ($preferencesCount === 1 ? 'item' : 'itens');
+
+$favoritesSummaryData = array_slice($favorites, 0, 4);
+$favoritesOverflow = max(0, $favoritesCount - count($favoritesSummaryData));
+$showFavoritesSummaryEmpty = $favoritesCount === 0 || $initialFeedbackMessage !== null;
+$showFavoritesListEmpty = $showFavoritesSummaryEmpty;
+
+$favoritesEmptyMessage = $initialFeedbackMessage ?? ($isAuthenticated ? 'Você ainda não selecionou nenhum favorito.' : 'Entre na sua conta para visualizar seus favoritos.');
+$modalFavoritesEmptyMessage = $initialFeedbackMessage ?? ($isAuthenticated ? 'Você ainda não selecionou nenhum favorito. Adicione alguns títulos para receber recomendações mais certeiras.' : 'Entre na sua conta para visualizar seus favoritos.');
+
+$initialStateJson = json_encode($initialState, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+if (!is_string($initialStateJson)) {
+    $initialStateJson = '{}';
+}
+
+$favoritesList = $favorites;
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -80,7 +464,7 @@ $providerOptions = [
 <body class="profile-page has-fixed-header">
 <?php include_once('dashboard.php'); ?>
 
-<main class="profile-shell" data-profile-root data-authenticated="<?php echo $isAuthenticated ? 'true' : 'false'; ?>" data-api-url="api/onboarding.php">
+<main class="profile-shell" data-profile-root data-authenticated="<?php echo $isAuthenticated ? 'true' : 'false'; ?>" data-api-url="api/onboarding.php" data-profile-initial="<?php echo htmlspecialchars($initialStateJson, ENT_QUOTES, 'UTF-8'); ?>">
     <section class="profile-hero" aria-labelledby="profileTitle">
         <div class="profile-hero__backdrop" aria-hidden="true"></div>
         <div class="profile-hero__content">
@@ -100,20 +484,6 @@ $providerOptions = [
                     </p>
                 </div>
             </div>
-            <dl class="profile-stats" aria-label="Resumo do perfil">
-                <div class="profile-stat">
-                    <dt>Favoritos</dt>
-                    <dd data-profile-stat="favorites">0</dd>
-                </div>
-                <div class="profile-stat">
-                    <dt>Preferências salvas</dt>
-                    <dd data-profile-stat="preferences">0</dd>
-                </div>
-                <div class="profile-stat">
-                    <dt>Atualizado</dt>
-                    <dd data-profile-stat="updated"><?php echo $formattedCompletion ? htmlspecialchars($formattedCompletion, ENT_QUOTES, 'UTF-8') : '—'; ?></dd>
-                </div>
-            </dl>
         </div>
     </section>
 
@@ -145,7 +515,7 @@ $providerOptions = [
                     </div>
                 </dl>
                 <div class="profile-option__actions">
-                    <span class="profile-chip-counter" data-profile-preferences-count>0 itens</span>
+                    <span class="profile-chip-counter" data-profile-preferences-count><?php echo htmlspecialchars($preferencesBadgeLabel, ENT_QUOTES, 'UTF-8'); ?></span>
                     <button type="button" class="profile-button profile-button--primary" data-profile-open-modal="preferences" <?php echo $isAuthenticated ? '' : 'disabled'; ?>>Gerenciar preferências</button>
                     <a href="index.php" class="profile-button profile-button--ghost">Explorar recomendações</a>
                 </div>
@@ -158,12 +528,42 @@ $providerOptions = [
                         <p class="profile-card__subtitle">Um painel rápido com alguns dos títulos que você marcou como indispensáveis.</p>
                     </div>
                     <div class="profile-card__actions">
-                        <span class="profile-badge" data-profile-favorites-count>0 títulos</span>
+                        <span class="profile-badge" data-profile-favorites-count><?php echo htmlspecialchars($favoritesBadgeLabel, ENT_QUOTES, 'UTF-8'); ?></span>
                         <button type="button" class="profile-button profile-button--primary" data-profile-open-modal="favorites" <?php echo $isAuthenticated ? '' : 'disabled'; ?>>Gerenciar favoritos</button>
                     </div>
                 </header>
-                <ul class="profile-favorite-rail" data-profile-favorites-summary role="list"></ul>
-                <p class="profile-empty profile-empty--rail" data-profile-favorites-summary-empty hidden>Você ainda não selecionou nenhum favorito.</p>
+                <ul class="profile-favorite-rail" data-profile-favorites-summary role="list">
+                    <?php foreach ($favoritesSummaryData as $favorite): ?>
+                        <?php
+                        $summaryPoster = $favorite['poster_url'] ?? null;
+                        if (!$summaryPoster && !empty($favorite['poster_path'])) {
+                            $summaryPoster = wyw_tmdb_image_url((string) $favorite['poster_path']);
+                        }
+                        if (!$summaryPoster && !empty($favorite['backdrop_path'])) {
+                            $summaryPoster = wyw_tmdb_image_url((string) $favorite['backdrop_path']);
+                        }
+                        $summaryTitle = $favorite['title'] ?? '';
+                        ?>
+                        <li class="favorite-tile favorite-tile--poster">
+                            <figure class="favorite-tile__poster" aria-hidden="true">
+                                <?php if ($summaryPoster): ?>
+                                    <img src="<?php echo htmlspecialchars($summaryPoster, ENT_QUOTES, 'UTF-8'); ?>" alt="" loading="lazy" class="favorite-tile__image">
+                                <?php else: ?>
+                                    <span class="favorite-tile__fallback"><?php echo htmlspecialchars(wyw_initial_letter($summaryTitle), ENT_QUOTES, 'UTF-8'); ?></span>
+                                <?php endif; ?>
+                            </figure>
+                        </li>
+                    <?php endforeach; ?>
+                    <?php if ($favoritesOverflow > 0): ?>
+                        <li class="favorite-tile favorite-tile--poster favorite-tile--poster-more">
+                            <span class="favorite-tile__more-value">+<?php echo (int) $favoritesOverflow; ?></span>
+                            <small class="favorite-tile__more-label"><?php echo $favoritesOverflow === 1 ? 'título' : 'títulos'; ?></small>
+                        </li>
+                    <?php endif; ?>
+                </ul>
+                <p class="profile-empty profile-empty--rail" data-profile-favorites-summary-empty <?php echo $showFavoritesSummaryEmpty ? '' : 'hidden'; ?>>
+                    <?php echo htmlspecialchars($favoritesEmptyMessage, ENT_QUOTES, 'UTF-8'); ?>
+                </p>
             </section>
         </div>
     </section>
@@ -174,25 +574,47 @@ $providerOptions = [
             <header class="profile-modal__header">
                 <div>
                     <h2 class="profile-modal__title" id="favoritesModalTitle">Gerenciar favoritos</h2>
-                    <span class="profile-modal__badge" data-profile-favorites-total>0 títulos</span>
+                    <span class="profile-modal__badge" data-profile-favorites-total><?php echo htmlspecialchars($favoritesTotalLabel, ENT_QUOTES, 'UTF-8'); ?></span>
                 </div>
                 <button type="button" class="profile-modal__close" data-profile-modal-close aria-label="Fechar">&times;</button>
             </header>
             <div class="profile-modal__body">
-                <div class="profile-favorites" data-profile-favorites-list role="list"></div>
-                <p class="profile-empty" data-profile-favorites-empty hidden>Você ainda não selecionou nenhum favorito. Adicione alguns títulos para receber recomendações mais certeiras.</p>
-                <div class="profile-favorites__search" aria-labelledby="favoritesSearchLabel">
-                    <div class="profile-favorites__search-header">
-                        <h3 class="profile-favorites__title" id="favoritesSearchLabel">Adicionar novo favorito</h3>
-                        <p class="profile-favorites__caption">Busque por filmes e séries que você ama e mantenha sua lista sempre atualizada.</p>
+                <section class="favorites-section" aria-labelledby="favoritesDeckTitle" data-profile-modal-focus tabindex="-1">
+                    <header class="favorites-section__header">
+                        <div>
+                            <h3 class="favorites-section__title" id="favoritesDeckTitle">Coleção de favoritos</h3>
+                            <p class="favorites-section__caption">Remova com "-" ou toque em um novo pôster para adicioná-lo imediatamente.</p>
+                        </div>
+                    </header>
+                    <div class="favorite-poster-grid" data-profile-favorites-list role="list">
+                        <?php foreach ($favoritesList as $favorite): ?>
+                            <?php
+                            $posterUrl = $favorite['poster_url'] ?? null;
+                            if (!$posterUrl && !empty($favorite['poster_path'])) {
+                                $posterUrl = wyw_tmdb_image_url((string) $favorite['poster_path']);
+                            }
+                            if (!$posterUrl && !empty($favorite['backdrop_path'])) {
+                                $posterUrl = wyw_tmdb_image_url((string) $favorite['backdrop_path']);
+                            }
+                            $favoriteTitle = $favorite['title'] ?? '';
+                            $favoriteKey = $favorite['tmdb_id'] . ':' . ($favorite['media_type'] ?? 'movie');
+                            ?>
+                            <article class="favorite-poster-card favorite-poster-card--selected" role="listitem" data-key="<?php echo htmlspecialchars($favoriteKey, ENT_QUOTES, 'UTF-8'); ?>">
+                                <figure class="favorite-poster-card__media" aria-hidden="true">
+                                    <?php if ($posterUrl): ?>
+                                        <img src="<?php echo htmlspecialchars($posterUrl, ENT_QUOTES, 'UTF-8'); ?>" alt="" loading="lazy">
+                                    <?php else: ?>
+                                        <span class="favorite-poster-card__fallback"><?php echo htmlspecialchars(wyw_initial_letter($favoriteTitle), ENT_QUOTES, 'UTF-8'); ?></span>
+                                    <?php endif; ?>
+                                </figure>
+                                <button type="button" class="favorite-poster-card__remove" aria-label="Remover dos favoritos" <?php echo $isAuthenticated ? '' : 'disabled'; ?>>-</button>
+                            </article>
+                        <?php endforeach; ?>
                     </div>
-                    <form class="profile-search-form" data-profile-favorites-form>
-                        <label for="profileFavoriteSearch" class="sr-only">Buscar título favorito</label>
-                        <input type="search" id="profileFavoriteSearch" name="favorite" placeholder="Buscar por título" autocomplete="off" data-profile-favorites-search data-profile-modal-focus <?php echo $isAuthenticated ? '' : 'disabled'; ?>>
-                        <button type="submit" class="profile-button profile-button--primary" data-profile-favorites-submit <?php echo $isAuthenticated ? '' : 'disabled'; ?>>Buscar</button>
-                    </form>
-                    <div class="profile-search-results" data-profile-favorites-results aria-live="polite"></div>
-                </div>
+                    <p class="profile-empty favorite-poster-grid__empty" data-profile-favorites-empty <?php echo $showFavoritesListEmpty ? '' : 'hidden'; ?>>
+                        <?php echo htmlspecialchars($modalFavoritesEmptyMessage, ENT_QUOTES, 'UTF-8'); ?>
+                    </p>
+                </section>
             </div>
             <footer class="profile-modal__footer">
                 <button type="button" class="profile-button profile-button--ghost" data-profile-modal-close>Fechar</button>
@@ -260,7 +682,11 @@ $providerOptions = [
                 </div>
             </div>
             <footer class="profile-modal__footer">
-                <div class="profile-feedback" data-profile-feedback role="status" aria-live="polite"></div>
+                <div class="profile-feedback" data-profile-feedback role="status" aria-live="polite"<?php echo $initialFeedbackTone ? ' data-feedback-tone="' . htmlspecialchars($initialFeedbackTone, ENT_QUOTES, 'UTF-8') . '"' : ''; ?>>
+                    <?php if ($initialFeedbackMessage !== null): ?>
+                        <?php echo htmlspecialchars($initialFeedbackMessage, ENT_QUOTES, 'UTF-8'); ?>
+                    <?php endif; ?>
+                </div>
                 <button type="button" class="profile-button profile-button--ghost" data-profile-modal-close>Cancelar</button>
                 <button type="button" class="profile-button profile-button--primary" data-profile-save <?php echo $isAuthenticated ? '' : 'disabled'; ?>>Salvar alterações</button>
             </footer>

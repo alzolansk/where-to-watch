@@ -1,4 +1,4 @@
-(function () {
+﻿(function () {
   const root = document.querySelector('[data-profile-root]');
   if (!root) {
     return;
@@ -6,6 +6,18 @@
 
   const isAuthenticated = root.dataset.authenticated === 'true';
   const apiUrl = root.dataset.apiUrl || 'api/onboarding.php';
+
+  let initialPayload = null;
+  const initialStateRaw = root.dataset.profileInitial;
+  if (initialStateRaw) {
+    try {
+      initialPayload = JSON.parse(initialStateRaw);
+    } catch (error) {
+      console.error('profile_initial_parse_error', error);
+      initialPayload = null;
+    }
+  }
+  const hasInitialData = !!(initialPayload && typeof initialPayload === 'object');
 
   const stats = {
     favorites: root.querySelector('[data-profile-stat="favorites"]'),
@@ -16,9 +28,6 @@
   const favoritesList = root.querySelector('[data-profile-favorites-list]');
   const favoritesEmpty = root.querySelector('[data-profile-favorites-empty]');
   const favoritesCountBadge = root.querySelector('[data-profile-favorites-count]');
-  const favoritesSearchForm = root.querySelector('[data-profile-favorites-form]');
-  const favoritesSearchInput = root.querySelector('[data-profile-favorites-search]');
-  const favoritesResultsContainer = root.querySelector('[data-profile-favorites-results]');
   const favoritesSummaryList = root.querySelector('[data-profile-favorites-summary]');
   const favoritesSummaryEmpty = root.querySelector('[data-profile-favorites-summary-empty]');
   const favoritesTotalIndicator = root.querySelector('[data-profile-favorites-total]');
@@ -65,8 +74,15 @@
     keywords: [],
     providers: new Set(),
     favorites: [],
+    recommendations: [],
     updatedAt: null,
   };
+
+  let recommendationsLoaded = false;
+  let recommendationsLoading = false;
+  let recommendationsReloadTimeout = null;
+  let favoritesSyncTimeout = null;
+  let favoritesSyncController = null;
 
   const activeModal = {
     element: null,
@@ -92,9 +108,6 @@
     }
     if (favorite.backdrop_path) {
       return buildTmdbImage(favorite.backdrop_path, size);
-    }
-    if (favorite.logo_url) {
-      return favorite.logo_url;
     }
     return null;
   };
@@ -197,157 +210,41 @@
     }
   };
 
-  const renderFavoritesSummary = () => {
-    if (!favoritesSummaryList) {
-      return;
-    }
-
-    favoritesSummaryList.innerHTML = '';
-    if (!state.favorites || state.favorites.length === 0) {
-      if (favoritesSummaryEmpty) {
-        favoritesSummaryEmpty.hidden = false;
-      }
-      return;
-    }
-
-    if (favoritesSummaryEmpty) {
-      favoritesSummaryEmpty.hidden = true;
-    }
-
-    const visibleFavorites = state.favorites.slice(0, 4);
-    visibleFavorites.forEach((favorite) => {
-      const item = document.createElement('li');
-      item.className = 'favorite-tile';
-
-      const posterWrapper = document.createElement('figure');
-      posterWrapper.className = 'favorite-tile__poster';
-      posterWrapper.setAttribute('aria-hidden', 'true');
-
-      const posterUrl = resolvePosterUrl(favorite, 'w342');
-      if (posterUrl) {
-        const image = document.createElement('img');
-        image.src = posterUrl;
-        image.alt = '';
-        image.loading = 'lazy';
-        image.className = 'favorite-tile__image';
-        posterWrapper.appendChild(image);
-      } else {
-        const fallback = document.createElement('span');
-        fallback.className = 'favorite-tile__fallback';
-        fallback.textContent = favorite.title.slice(0, 1).toUpperCase();
-        posterWrapper.appendChild(fallback);
-      }
-
-      const scrim = document.createElement('div');
-      scrim.className = 'favorite-tile__scrim';
-      posterWrapper.appendChild(scrim);
-
-      const meta = document.createElement('div');
-      meta.className = 'favorite-tile__meta';
-
-      const title = document.createElement('span');
-      title.className = 'favorite-tile__title';
-      title.textContent = favorite.title;
-
-      const type = document.createElement('span');
-      type.className = 'favorite-tile__type';
-      type.textContent = favorite.media_type === 'tv' ? 'Série' : 'Filme';
-
-      meta.appendChild(title);
-      meta.appendChild(type);
-
-      item.appendChild(posterWrapper);
-      item.appendChild(meta);
-      favoritesSummaryList.appendChild(item);
-    });
-
-    if (state.favorites.length > visibleFavorites.length) {
-      const remainder = document.createElement('li');
-      remainder.className = 'favorite-tile favorite-tile--more';
-      const total = state.favorites.length - visibleFavorites.length;
-      const value = document.createElement('span');
-      value.textContent = `+${total}`;
-      const label = document.createElement('small');
-      label.textContent = total === 1 ? 'título' : 'títulos';
-      remainder.appendChild(value);
-      remainder.appendChild(label);
-      favoritesSummaryList.appendChild(remainder);
-    }
-  };
-
-  const renderPreferencesSummary = () => {
-    const genreItems = Array.from(state.genres.values()).map((id) => genreLabels.get(id) || `#${id}`);
-    const keywordItems = state.keywords.map((keyword) => keyword.label);
-    const providerItems = Array.from(state.providers.values()).map((id) => providerLabels.get(id) || `#${id}`);
-
-    renderSummaryChips(genresSummaryContainer, genreItems, 'Nenhum gênero selecionado');
-    renderSummaryChips(keywordsSummaryContainer, keywordItems, 'Sem temas definidos');
-    renderSummaryChips(providersSummaryContainer, providerItems, 'Nenhum provedor selecionado');
-  };
-
-  renderFavoritesSummary();
-  renderPreferencesSummary();
-
-  const updateStats = () => {
-    if (stats.favorites) {
-      stats.favorites.textContent = state.favorites.length.toString();
-    }
-
-    const preferencesTotal = state.genres.size + state.keywords.length + state.providers.size;
-    if (stats.preferences) {
-      stats.preferences.textContent = preferencesTotal.toString();
-    }
-
-    if (favoritesCountBadge) {
-      favoritesCountBadge.textContent = `${state.favorites.length} ${state.favorites.length === 1 ? 'título' : 'títulos'}`;
-    }
-
-    if (favoritesTotalIndicator) {
-      favoritesTotalIndicator.textContent = `${state.favorites.length} ${state.favorites.length === 1 ? 'título' : 'títulos'}`;
-    }
-
-    if (preferencesCountBadge) {
-      preferencesCountBadge.textContent = `${preferencesTotal} ${preferencesTotal === 1 ? 'item' : 'itens'}`;
-    }
-
-    if (stats.updated) {
-      stats.updated.textContent = state.updatedAt ? state.updatedAt : stats.updated.textContent;
-    }
-
-    renderPreferencesSummary();
-    renderFavoritesSummary();
-  };
-
   const renderGenres = () => {
-    if (!genresContainer) {
-      return;
+    const selectedLabels = [];
+    if (genresContainer) {
+      genresContainer.querySelectorAll('[data-genre-id]').forEach((button) => {
+        const id = parseInt(button.getAttribute('data-genre-id'), 10);
+        const isSelected = !Number.isNaN(id) && state.genres.has(id);
+        button.classList.toggle('is-selected', isSelected);
+        button.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
+        if (isSelected) {
+          const label = genreLabels.get(id) || (button.textContent || '').trim();
+          if (label) {
+            selectedLabels.push(label);
+          }
+        }
+      });
     }
-    const buttons = genresContainer.querySelectorAll('[data-genre-id]');
-    buttons.forEach((button) => {
-      const id = parseInt(button.getAttribute('data-genre-id'), 10);
-      const isSelected = state.genres.has(id);
-      button.classList.toggle('is-selected', isSelected);
-      button.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
-    });
+    if (genresSummaryContainer) {
+      renderSummaryChips(genresSummaryContainer, selectedLabels, 'Nenhum genero selecionado ainda.');
+    }
   };
 
   const renderKeywordSuggestions = () => {
     if (!keywordSuggestionsContainer) {
       return;
     }
-    const suggestionButtons = keywordSuggestionsContainer.querySelectorAll('[data-keyword-id]');
-    suggestionButtons.forEach((button) => {
-      const id = parseInt(button.getAttribute('data-keyword-id'), 10);
-      const label = button.getAttribute('data-keyword-label') || '';
-      const exists = state.keywords.some((keyword) => {
-        const keywordId = keyword.id ?? keyword.keyword_id ?? null;
-        if (keywordId && id) {
-          return keywordId === id;
-        }
-        return keyword.label.toLocaleLowerCase('pt-BR') === label.toLocaleLowerCase('pt-BR');
-      });
-      button.classList.toggle('is-selected', exists);
-      button.setAttribute('aria-pressed', exists ? 'true' : 'false');
+    const selectedKeys = new Set(state.keywords.map((keyword) => keywordKey(keyword)));
+    keywordSuggestionsContainer.querySelectorAll('[data-keyword-id]').forEach((button) => {
+      const keyword = {
+        id: parseInt(button.getAttribute('data-keyword-id'), 10) || null,
+        label: button.getAttribute('data-keyword-label') || button.textContent || '',
+      };
+      const key = keywordKey(keyword);
+      const isSelected = key !== null && selectedKeys.has(key);
+      button.classList.toggle('is-selected', isSelected);
+      button.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
     });
   };
 
@@ -358,16 +255,19 @@
     keywordsSelectedContainer.innerHTML = '';
     if (state.keywords.length === 0) {
       const placeholder = document.createElement('p');
-      placeholder.textContent = 'Nenhuma palavra-chave selecionada ainda.';
       placeholder.className = 'profile-empty';
+      placeholder.textContent = 'Nenhuma palavra chave selecionada ainda.';
       keywordsSelectedContainer.appendChild(placeholder);
+      if (keywordsSummaryContainer) {
+        renderSummaryChips(keywordsSummaryContainer, [], 'Nenhuma palavra chave selecionada.');
+      }
       return;
     }
 
+    const labels = [];
     state.keywords.forEach((keyword) => {
       const tag = document.createElement('span');
       tag.className = 'keyword-tag';
-      tag.setAttribute('data-keyword-tag', '');
       tag.dataset.key = keywordKey(keyword) || '';
       tag.textContent = keyword.label;
 
@@ -382,19 +282,130 @@
 
       tag.appendChild(remove);
       keywordsSelectedContainer.appendChild(tag);
+      labels.push(keyword.label);
     });
+
+    if (keywordsSummaryContainer) {
+      renderSummaryChips(keywordsSummaryContainer, labels, 'Nenhuma palavra chave selecionada.');
+    }
   };
 
   const renderProviders = () => {
-    if (!providersContainer) {
+    const labels = [];
+    if (providersContainer) {
+      providersContainer.querySelectorAll('[data-provider-id]').forEach((button) => {
+        const id = parseInt(button.getAttribute('data-provider-id'), 10);
+        const isSelected = !Number.isNaN(id) && state.providers.has(id);
+        button.classList.toggle('is-selected', isSelected);
+        button.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
+        if (isSelected) {
+          labels.push(providerLabels.get(id) || (button.textContent || '').trim());
+        }
+      });
+    }
+
+    if (providersSummaryContainer) {
+      renderSummaryChips(providersSummaryContainer, labels, 'Nenhum provedor selecionado.');
+    }
+  };
+
+  const renderFavoritesSummary = () => {
+    if (!favoritesSummaryList) {
       return;
     }
-    providersContainer.querySelectorAll('[data-provider-id]').forEach((button) => {
-      const id = parseInt(button.getAttribute('data-provider-id'), 10);
-      const isSelected = state.providers.has(id);
-      button.classList.toggle('is-selected', isSelected);
-      button.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
+
+    favoritesSummaryList.innerHTML = '';
+
+    const favorites = Array.isArray(state.favorites) ? state.favorites : [];
+    const summaryItems = favorites.slice(0, 4);
+
+    if (summaryItems.length === 0) {
+      favoritesSummaryList.setAttribute('hidden', 'true');
+      if (favoritesSummaryEmpty) {
+        favoritesSummaryEmpty.hidden = false;
+      }
+      return;
+    }
+
+    favoritesSummaryList.removeAttribute('hidden');
+    if (favoritesSummaryEmpty) {
+      favoritesSummaryEmpty.hidden = true;
+    }
+
+    summaryItems.forEach((favorite) => {
+      const item = document.createElement('li');
+      item.className = 'favorite-tile favorite-tile--poster';
+
+      const figure = document.createElement('figure');
+      figure.className = 'favorite-tile__poster';
+      figure.setAttribute('aria-hidden', 'true');
+
+      const poster = resolvePosterUrl(favorite, 'w185');
+      if (poster) {
+        const img = document.createElement('img');
+        img.src = poster;
+        img.alt = '';
+        img.loading = 'lazy';
+        img.className = 'favorite-tile__image';
+        figure.appendChild(img);
+      } else {
+        const fallback = document.createElement('span');
+        fallback.className = 'favorite-tile__fallback';
+        fallback.textContent = (favorite.title || '?').slice(0, 1).toUpperCase();
+        figure.appendChild(fallback);
+      }
+
+      item.appendChild(figure);
+      favoritesSummaryList.appendChild(item);
     });
+
+    const overflow = Math.max(0, favorites.length - summaryItems.length);
+    if (overflow > 0) {
+      const moreItem = document.createElement('li');
+      moreItem.className = 'favorite-tile favorite-tile--poster favorite-tile--poster-more';
+
+      const value = document.createElement('span');
+      value.className = 'favorite-tile__more-value';
+      value.textContent = `+${overflow}`;
+
+      const label = document.createElement('small');
+      label.className = 'favorite-tile__more-label';
+      label.textContent = overflow === 1 ? 'titulo' : 'titulos';
+
+      moreItem.appendChild(value);
+      moreItem.appendChild(label);
+      favoritesSummaryList.appendChild(moreItem);
+    }
+  };
+
+  const updateStats = () => {
+    const favoritesCount = Array.isArray(state.favorites) ? state.favorites.length : 0;
+    const favoritesLabel = `${favoritesCount} ${favoritesCount === 1 ? 'titulo' : 'titulos'}`;
+
+    if (favoritesCountBadge) {
+      favoritesCountBadge.textContent = favoritesLabel;
+    }
+    if (favoritesTotalIndicator) {
+      favoritesTotalIndicator.textContent = favoritesLabel;
+    }
+    if (stats.favorites) {
+      stats.favorites.textContent = favoritesLabel;
+    }
+
+    const preferencesCount = state.genres.size + state.keywords.length + state.providers.size;
+    const preferencesLabel = `${preferencesCount} ${preferencesCount === 1 ? 'item' : 'itens'}`;
+    if (preferencesCountBadge) {
+      preferencesCountBadge.textContent = preferencesLabel;
+    }
+    if (stats.preferences) {
+      stats.preferences.textContent = preferencesLabel;
+    }
+
+    if (stats.updated) {
+      stats.updated.textContent = state.updatedAt || 'â€”';
+    }
+
+    renderFavoritesSummary();
   };
 
   const renderFavorites = () => {
@@ -403,28 +414,24 @@
     }
 
     favoritesList.innerHTML = '';
-    if (state.favorites.length === 0) {
-      if (favoritesEmpty) {
-        favoritesEmpty.hidden = false;
-      }
-      updateStats();
-      return;
-    }
 
-    if (favoritesEmpty) {
-      favoritesEmpty.hidden = true;
-    }
+    const favorites = Array.isArray(state.favorites) ? state.favorites : [];
+    const fragment = document.createDocumentFragment();
+    const favoriteKeys = new Set();
 
-    state.favorites.forEach((favorite) => {
+    favorites.forEach((favorite) => {
+      const key = `${favorite.tmdb_id}:${favorite.media_type}`;
+      favoriteKeys.add(key);
+
       const card = document.createElement('article');
-      card.className = 'favorite-card';
+      card.className = 'favorite-poster-card favorite-poster-card--selected';
       card.setAttribute('role', 'listitem');
-      card.dataset.key = `${favorite.tmdb_id}:${favorite.media_type}`;
+      card.dataset.key = key;
 
       const media = document.createElement('figure');
-      media.className = 'favorite-card__media';
+      media.className = 'favorite-poster-card__media';
       media.setAttribute('aria-hidden', 'true');
-      const poster = resolvePosterUrl(favorite, 'w185');
+      const poster = resolvePosterUrl(favorite, 'w342');
       if (poster) {
         const img = document.createElement('img');
         img.src = poster;
@@ -433,36 +440,175 @@
         media.appendChild(img);
       } else {
         const fallback = document.createElement('span');
-        fallback.className = 'favorite-card__fallback';
-        fallback.textContent = favorite.title.slice(0, 1).toUpperCase();
+        fallback.className = 'favorite-poster-card__fallback';
+        fallback.textContent = (favorite.title || '?').slice(0, 1).toUpperCase();
         media.appendChild(fallback);
       }
 
-      const title = document.createElement('h3');
-      title.className = 'favorite-card__title';
-      title.textContent = favorite.title;
-
-      const meta = document.createElement('p');
-      meta.className = 'favorite-card__meta';
-      const typeLabel = favorite.media_type === 'tv' ? 'Série' : 'Filme';
-      meta.textContent = `${typeLabel}`;
-
       const removeButton = document.createElement('button');
       removeButton.type = 'button';
-      removeButton.className = 'favorite-card__remove';
-      removeButton.textContent = 'Remover';
+      removeButton.className = 'favorite-poster-card__remove';
+      removeButton.setAttribute('aria-label', `Remover ${favorite.title || 'titulo'} dos favoritos`);
+      removeButton.textContent = '-';
       removeButton.addEventListener('click', () => {
         removeFavorite(favorite.tmdb_id, favorite.media_type);
       });
 
       card.appendChild(media);
-      card.appendChild(title);
-      card.appendChild(meta);
       card.appendChild(removeButton);
+      fragment.appendChild(card);
+    });
+
+    const suggestions = [];
+    if (recommendationsLoaded && Array.isArray(state.recommendations)) {
+      state.recommendations.forEach((item) => {
+        const id = parseInt(item.tmdb_id ?? item.id ?? 0, 10);
+        if (!id) {
+          return;
+        }
+        const mediaType = (item.media_type || item.type || 'movie').toLowerCase() === 'tv' ? 'tv' : 'movie';
+        const key = `${id}:${mediaType}`;
+        if (!key || favoriteKeys.has(key)) {
+          return;
+        }
+        favoriteKeys.add(key);
+        const posterInfo = extractPosterInfo(item);
+        suggestions.push({
+          key,
+          data: {
+            tmdb_id: id,
+            media_type: mediaType,
+            title: item.title || item.name || '',
+            logo_path: item.logo_path || null,
+            logo_url: item.logo_url || null,
+            poster_path: posterInfo.poster_path,
+            poster_url: posterInfo.poster_url,
+            backdrop_path: posterInfo.backdrop_path,
+          },
+        });
+      });
+    }
+
+    const hasFavorites = favorites.length > 0;
+    const hasSuggestions = suggestions.length > 0;
+
+    if (!hasFavorites && !hasSuggestions) {
+      favoritesList.setAttribute('hidden', 'true');
+      if (favoritesEmpty) {
+        favoritesEmpty.hidden = false;
+      }
+      updateStats();
+      return;
+    }
+
+    favoritesList.removeAttribute('hidden');
+    if (favoritesEmpty) {
+      favoritesEmpty.hidden = true;
+    }
+
+    favoritesList.appendChild(fragment);
+
+    suggestions.forEach(({ key, data }) => {
+      const card = document.createElement('button');
+      card.type = 'button';
+      card.className = 'favorite-poster-card favorite-poster-card--suggestion';
+      card.setAttribute('role', 'listitem');
+      card.dataset.key = key;
+
+      const media = document.createElement('figure');
+      media.className = 'favorite-poster-card__media';
+      media.setAttribute('aria-hidden', 'true');
+      const poster = resolvePosterUrl(data, 'w342');
+      if (poster) {
+        const img = document.createElement('img');
+        img.src = poster;
+        img.alt = '';
+        img.loading = 'lazy';
+        media.appendChild(img);
+      } else {
+        const fallback = document.createElement('span');
+        fallback.className = 'favorite-poster-card__fallback';
+        fallback.textContent = (data.title || '?').slice(0, 1).toUpperCase();
+        media.appendChild(fallback);
+      }
+
+      card.setAttribute('aria-label', `Adicionar ${data.title || 'titulo'} aos favoritos`);
+      card.addEventListener('click', () => {
+        addFavorite(data);
+      });
+
+      card.appendChild(media);
       favoritesList.appendChild(card);
     });
 
     updateStats();
+  };
+  const scheduleRecommendationsRefresh = (options = {}) => {
+    if (!isAuthenticated) {
+      return;
+    }
+    const delay = typeof options.delay === 'number' ? options.delay : 320;
+    if (recommendationsReloadTimeout) {
+      clearTimeout(recommendationsReloadTimeout);
+    }
+    recommendationsReloadTimeout = setTimeout(() => {
+      fetchFavoriteRecommendations({ silent: true });
+    }, Math.max(delay, 0));
+  };
+
+  const scheduleFavoritesSync = (delay = 600) => {
+    if (!isAuthenticated) {
+      return;
+    }
+    if (favoritesSyncTimeout) {
+      clearTimeout(favoritesSyncTimeout);
+    }
+    favoritesSyncTimeout = setTimeout(() => {
+      syncFavoritesWithServer();
+    }, Math.max(delay, 0));
+  };
+
+  const syncFavoritesWithServer = async () => {
+    if (favoritesSyncTimeout) {
+      clearTimeout(favoritesSyncTimeout);
+      favoritesSyncTimeout = null;
+    }
+    if (!isAuthenticated) {
+      return;
+    }
+    if (favoritesSyncController) {
+      favoritesSyncController.abort();
+      favoritesSyncController = null;
+    }
+
+    const controller = new AbortController();
+    favoritesSyncController = controller;
+
+    try {
+      const payload = buildPayload();
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+        signal: controller.signal,
+      });
+      if (!response.ok) {
+        throw new Error(`autosave_failed_${response.status}`);
+      }
+    } catch (error) {
+      if (error.name === 'AbortError') {
+        return;
+      }
+      console.error('profile_autosave_error', error);
+      updateFeedback('Nao foi possivel sincronizar seus favoritos agora.', 'error');
+    } finally {
+      if (favoritesSyncController === controller) {
+        favoritesSyncController = null;
+      }
+    }
   };
 
   const closeModal = (modal) => {
@@ -574,7 +720,7 @@
     const key = favoriteKey(id, mediaType);
     const exists = state.favorites.some((item) => favoriteKey(item.tmdb_id, item.media_type) === key);
     if (exists) {
-      updateFeedback('Esse título já está nos seus favoritos.', 'error');
+      updateFeedback('Esse titulo ja esta nos seus favoritos.', 'error');
       return;
     }
     const posterInfo = extractPosterInfo(favorite);
@@ -582,15 +728,18 @@
     state.favorites.push({
       tmdb_id: id,
       media_type: mediaType === 'tv' ? 'tv' : 'movie',
-      title: favorite.title || favorite.name || 'Título',
+      title: favorite.title || favorite.name || 'Titulo',
       logo_path: favorite.logo_path || null,
       logo_url: favorite.logo_url || favorite.logo || null,
       poster_path: posterInfo.poster_path,
       poster_url: posterInfo.poster_url,
       backdrop_path: posterInfo.backdrop_path,
     });
+    state.recommendations = state.recommendations.filter((item) => favoriteKey(item.tmdb_id, item.media_type) !== key);
     renderFavorites();
     updateFeedback('Favorito adicionado com sucesso.', 'success');
+    scheduleRecommendationsRefresh();
+    scheduleFavoritesSync();
   };
 
   const removeFavorite = (id, mediaType) => {
@@ -599,6 +748,8 @@
     state.favorites = nextFavorites;
     renderFavorites();
     updateFeedback('Favorito removido.', 'success');
+    scheduleRecommendationsRefresh();
+    scheduleFavoritesSync();
   };
 
   const buildPayload = () => {
@@ -671,28 +822,32 @@
     renderSelectedKeywords();
     renderProviders();
     renderFavorites();
+    scheduleRecommendationsRefresh({ delay: 0 });
     updateStats();
   };
 
-  const handleFavoritesSearch = async (event) => {
-    event.preventDefault();
-    if (!isAuthenticated || !favoritesSearchInput) {
+  if (hasInitialData) {
+    applyPreferences(initialPayload);
+    initialPayload = null;
+    root.removeAttribute('data-profile-initial');
+  }
+
+  const fetchFavoriteRecommendations = async (options = {}) => {
+    if (!isAuthenticated) {
       return;
     }
-    const query = favoritesSearchInput.value.trim();
-    if (query === '') {
-      updateFeedback('Digite pelo menos uma palavra para buscar novos favoritos.', 'error');
+    if (recommendationsReloadTimeout) {
+      clearTimeout(recommendationsReloadTimeout);
+      recommendationsReloadTimeout = null;
+    }
+    if (recommendationsLoading) {
       return;
     }
-    updateFeedback('Buscando títulos...', null);
-    if (favoritesResultsContainer) {
-      favoritesResultsContainer.innerHTML = '';
-      favoritesResultsContainer.hidden = false;
-    }
+    const silent = !!(options && options.silent);
+    recommendationsLoading = true;
     try {
       const url = new URL(apiUrl, window.location.href);
-      url.searchParams.set('resource', 'titles');
-      url.searchParams.set('q', query);
+      url.searchParams.set('resource', 'recommendations');
       const response = await fetch(url.toString(), {
         credentials: 'include',
       });
@@ -700,57 +855,67 @@
         throw new Error('fetch_failed');
       }
       const data = await response.json();
-      const results = Array.isArray(data.results) ? data.results : [];
-      if (results.length === 0) {
-        updateFeedback('Nenhum título encontrado. Tente outra busca.', 'error');
-        return;
-      }
-      updateFeedback(`${results.length} resultados encontrados.`, 'success');
-      if (favoritesResultsContainer) {
-        favoritesResultsContainer.innerHTML = '';
-        results.forEach((result) => {
-          const row = document.createElement('div');
-          row.className = 'search-result';
-
-          const info = document.createElement('div');
-          info.className = 'search-result__info';
-
-          const title = document.createElement('span');
-          title.className = 'search-result__title';
-          title.textContent = result.title || result.name;
-
-          const meta = document.createElement('span');
-          meta.className = 'search-result__meta';
-          const year = result.release_year ? ` • ${result.release_year}` : '';
-          meta.textContent = `${result.media_type === 'tv' ? 'Série' : 'Filme'}${year}`;
-
-          const action = document.createElement('button');
-          action.type = 'button';
-          action.className = 'search-result__action';
-          action.textContent = 'Adicionar';
-          action.addEventListener('click', () => {
-            addFavorite(result);
-          });
-
-          info.appendChild(title);
-          info.appendChild(meta);
-          row.appendChild(info);
-          row.appendChild(action);
-          favoritesResultsContainer.appendChild(row);
+      const rawResults = Array.isArray(data.results) ? data.results : [];
+      const unique = new Map();
+      rawResults.forEach((raw) => {
+        if (!raw || typeof raw !== 'object') {
+          return;
+        }
+        const id = parseInt(raw.tmdb_id ?? raw.id ?? 0, 10);
+        if (!id) {
+          return;
+        }
+        const mediaType = (raw.media_type || raw.type || 'movie').toLowerCase() === 'tv' ? 'tv' : 'movie';
+        const key = favoriteKey(id, mediaType);
+        if (!key || unique.has(key)) {
+          return;
+        }
+        const posterInfo = extractPosterInfo(raw);
+        unique.set(key, {
+          tmdb_id: id,
+          media_type: mediaType,
+          title: raw.title || raw.name || '',
+          logo_path: raw.logo_path || null,
+          logo_url: raw.logo_url || null,
+          poster_path: posterInfo.poster_path,
+          poster_url: posterInfo.poster_url,
+          backdrop_path: posterInfo.backdrop_path,
         });
-      }
+      });
+      state.recommendations = Array.from(unique.values());
+      recommendationsLoaded = true;
     } catch (error) {
-      console.error('favorites_search_error', error);
-      updateFeedback('Não foi possível buscar títulos agora. Tente novamente mais tarde.', 'error');
+      console.error('favorites_recommendations_error', error);
+      state.recommendations = [];
+      recommendationsLoaded = true;
+      if (!silent) {
+        updateFeedback('Nao foi possivel carregar sugestoes no momento.', 'error');
+      }
+    } finally {
+      recommendationsLoading = false;
+      renderFavorites();
     }
   };
 
-  const fetchPreferences = async () => {
+  const fetchPreferences = async (options = {}) => {
+    if (favoritesSyncTimeout) {
+      clearTimeout(favoritesSyncTimeout);
+      favoritesSyncTimeout = null;
+    }
+    if (favoritesSyncController) {
+      favoritesSyncController.abort();
+      favoritesSyncController = null;
+    }
+    const silent = !!(options && options.silent);
     if (!isAuthenticated) {
-      updateFeedback('Faça login para gerenciar suas preferências.', 'error');
+      if (!silent) {
+        updateFeedback('Faca login para gerenciar suas preferencias.', 'error');
+      }
       return;
     }
-    updateFeedback('Carregando suas preferências...', null);
+    if (!silent) {
+      updateFeedback('Carregando suas preferencias...', null);
+    }
     try {
       const response = await fetch(apiUrl, {
         credentials: 'include',
@@ -760,19 +925,29 @@
       }
       const data = await response.json();
       applyPreferences(data);
-      updateFeedback('Preferências carregadas com sucesso.', 'success');
+      if (!silent) {
+        updateFeedback('Preferencias carregadas com sucesso.', 'success');
+      }
     } catch (error) {
       console.error('profile_preferences_error', error);
-      updateFeedback('Não foi possível carregar suas preferências agora.', 'error');
+      updateFeedback('Nao foi possivel carregar suas preferencias agora.', 'error');
     }
   };
 
   const savePreferences = async () => {
+    if (favoritesSyncTimeout) {
+      clearTimeout(favoritesSyncTimeout);
+      favoritesSyncTimeout = null;
+    }
+    if (favoritesSyncController) {
+      favoritesSyncController.abort();
+      favoritesSyncController = null;
+    }
     if (!isAuthenticated || !saveButton) {
       return;
     }
     const payload = buildPayload();
-    updateFeedback('Salvando preferências...', null);
+    updateFeedback('Salvando preferencias...', null);
     saveButton.disabled = true;
     try {
       const response = await fetch(apiUrl, {
@@ -786,11 +961,11 @@
       if (!response.ok) {
         throw new Error(`save_failed_${response.status}`);
       }
-      updateFeedback('Preferências atualizadas com sucesso.', 'success');
-      await fetchPreferences();
+      updateFeedback('Preferencias atualizadas com sucesso.', 'success');
+      await fetchPreferences({ silent: true });
     } catch (error) {
       console.error('profile_save_error', error);
-      updateFeedback('Não foi possível salvar suas preferências. Tente novamente.', 'error');
+      updateFeedback('Nao foi possivel salvar suas preferencias. Tente novamente.', 'error');
     } finally {
       saveButton.disabled = false;
     }
@@ -892,15 +1067,15 @@
       });
     }
 
-    if (favoritesSearchForm) {
-      favoritesSearchForm.addEventListener('submit', handleFavoritesSearch);
-    }
-
     if (saveButton) {
       saveButton.addEventListener('click', savePreferences);
     }
 
-    fetchPreferences();
+    if (hasInitialData) {
+      fetchPreferences({ silent: true });
+    } else {
+      fetchPreferences();
+    }
   } else {
     if (preferencesContainer) {
       preferencesContainer.setAttribute('aria-disabled', 'true');
@@ -913,6 +1088,6 @@
       favoritesSummaryEmpty.hidden = false;
       favoritesSummaryEmpty.textContent = 'Entre na sua conta para visualizar seus favoritos.';
     }
-    updateFeedback('Faça login para acessar todas as funcionalidades do perfil.', 'error');
+    updateFeedback('Faca login para acessar todas as funcionalidades do perfil.', 'error');
   }
 })();

@@ -103,10 +103,40 @@ BEGIN
             SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
             WHERE TABLE_SCHEMA = DATABASE()
               AND TABLE_NAME = 'user_favorite_titles'
+              AND COLUMN_NAME = 'poster_path'
+        ) THEN
+            ALTER TABLE user_favorite_titles
+                ADD COLUMN poster_path VARCHAR(255) DEFAULT NULL AFTER logo_path;
+        END IF;
+
+        IF NOT EXISTS (
+            SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+            WHERE TABLE_SCHEMA = DATABASE()
+              AND TABLE_NAME = 'user_favorite_titles'
+              AND COLUMN_NAME = 'poster_url'
+        ) THEN
+            ALTER TABLE user_favorite_titles
+                ADD COLUMN poster_url VARCHAR(255) DEFAULT NULL AFTER poster_path;
+        END IF;
+
+        IF NOT EXISTS (
+            SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+            WHERE TABLE_SCHEMA = DATABASE()
+              AND TABLE_NAME = 'user_favorite_titles'
+              AND COLUMN_NAME = 'backdrop_path'
+        ) THEN
+            ALTER TABLE user_favorite_titles
+                ADD COLUMN backdrop_path VARCHAR(255) DEFAULT NULL AFTER poster_url;
+        END IF;
+
+        IF NOT EXISTS (
+            SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+            WHERE TABLE_SCHEMA = DATABASE()
+              AND TABLE_NAME = 'user_favorite_titles'
               AND COLUMN_NAME = 'favorited_at'
         ) THEN
             ALTER TABLE user_favorite_titles
-                ADD COLUMN favorited_at TIMESTAMP NULL DEFAULT NULL AFTER logo_path;
+                ADD COLUMN favorited_at TIMESTAMP NULL DEFAULT NULL AFTER backdrop_path;
             UPDATE user_favorite_titles
                 SET favorited_at = created_at
                 WHERE favorited_at IS NULL;
@@ -133,6 +163,16 @@ BEGIN
             ALTER TABLE user_favorite_titles
                 ADD COLUMN keywords VARCHAR(100) DEFAULT NULL AFTER genres;
         END IF;
+
+        IF NOT EXISTS (
+            SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+            WHERE TABLE_SCHEMA = DATABASE()
+              AND TABLE_NAME = 'user_favorite_titles'
+              AND COLUMN_NAME = 'created_at'
+        ) THEN
+            ALTER TABLE user_favorite_titles
+                ADD COLUMN created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP AFTER keywords;
+        END IF;
     END IF;
 END $$
 DELIMITER ;
@@ -145,6 +185,9 @@ CREATE TABLE IF NOT EXISTS user_favorite_titles (
     media_type  ENUM('movie','tv') NOT NULL DEFAULT 'movie',
     title       VARCHAR(180)    NOT NULL,
     logo_path   VARCHAR(255)    DEFAULT NULL,
+    poster_path VARCHAR(255)    DEFAULT NULL,
+    poster_url  VARCHAR(255)    DEFAULT NULL,
+    backdrop_path VARCHAR(255)  DEFAULT NULL,
     favorited_at TIMESTAMP      NOT NULL DEFAULT CURRENT_TIMESTAMP,
     genres      VARCHAR(100)    DEFAULT NULL,
     keywords    VARCHAR(100)    DEFAULT NULL,

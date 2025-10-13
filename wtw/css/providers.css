@@ -103,12 +103,28 @@
     gap: clamp(12px, 2vw, 18px);
     overflow-x: auto;
     padding: 4px;
-    scrollbar-width: none;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.24) rgba(17, 14, 26, 0.45);
     flex: 1 1 auto;
 }
 
 .providers-hero__rail::-webkit-scrollbar {
-    display: none;
+    height: 3px;
+}
+
+.providers-hero__rail::-webkit-scrollbar-track {
+    background: rgba(17, 14, 26, 0.45);
+    border-radius: 999px;
+}
+
+.providers-hero__rail::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.24);
+    border-radius: 999px;
+    transition: background-color 0.2s ease;
+}
+
+.providers-hero__rail::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.35);
 }
 
 .providers-hero__rail:empty::after {

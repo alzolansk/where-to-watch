@@ -62,7 +62,7 @@
 
     const createResultCard = (item) => {
         const title = item.title || item.name || 'Sem tÃ­tulo';
-        const mediaType = item.media_type === 'movie' ? 'Filme' : 'SÃ©rie';
+        const mediaType = item.media_type === 'movie' ? 'Filme' : 'Série';
         const poster = item.poster_path
             ? `https://image.tmdb.org/t/p/w342${item.poster_path}`
             : 'imagens/icon-cast.png';

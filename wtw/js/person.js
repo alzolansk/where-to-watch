@@ -191,9 +191,7 @@ document.addEventListener('DOMContentLoaded', () => {
         chips.push(`Falecimento - ${dt.toLocaleDateString('pt-BR')}`);
       }catch(_){}
     }
-    if(p.place_of_birth) chips.push(`Local a ${p.place_of_birth}`);
-    const gender = p.gender===1?'Feminino':p.gender===2?'Masculino':null;
-    if(gender) chips.push(`GAanero a ${gender}`);
+    if(p.place_of_birth) chips.push(p.place_of_birth);
 
     dom.metaChips.innerHTML = '';
     chips.forEach(t=>{

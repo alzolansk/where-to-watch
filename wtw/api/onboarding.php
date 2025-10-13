@@ -33,6 +33,28 @@ if ($resource === 'titles') {
     return;
 }
 
+if ($resource === 'recommendations') {
+    if ($method !== 'GET') {
+        http_response_code(405);
+        echo json_encode(['ok' => false, 'error' => 'method_not_allowed']);
+        return;
+    }
+
+    try {
+        $pdo = wyw_bootstrap_pdo();
+        ensure_onboarding_schema($pdo);
+        $preferences = fetchPreferences($pdo, $userId);
+        $favorites = is_array($preferences['favorites'] ?? null) ? $preferences['favorites'] : [];
+        $response = onboardingFavoritesRecommendations($favorites);
+        echo json_encode($response, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    } catch (Throwable $e) {
+        error_log('onboarding_recommendations_error: ' . $e->getMessage());
+        http_response_code(502);
+        echo json_encode(['ok' => false, 'error' => 'recommendations_unavailable']);
+    }
+    return;
+}
+
 try {
     $pdo = wyw_bootstrap_pdo();
     ensure_onboarding_schema($pdo);
@@ -193,6 +215,9 @@ function ensure_onboarding_schema(PDO $pdo): void
                 media_type ENUM('movie','tv') NOT NULL DEFAULT 'movie',
                 title VARCHAR(180) NOT NULL,
                 logo_path VARCHAR(255) DEFAULT NULL,
+                poster_path VARCHAR(255) DEFAULT NULL,
+                poster_url VARCHAR(255) DEFAULT NULL,
+                backdrop_path VARCHAR(255) DEFAULT NULL,
                 favorited_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 genres VARCHAR(100) DEFAULT NULL,
                 keywords VARCHAR(100) DEFAULT NULL,
@@ -206,9 +231,36 @@ function ensure_onboarding_schema(PDO $pdo): void
     }
 
     try {
+        $column = $pdo->query("SHOW COLUMNS FROM user_favorite_titles LIKE 'poster_path'")->fetch(PDO::FETCH_ASSOC);
+        if ($column === false) {
+            $pdo->exec("ALTER TABLE user_favorite_titles ADD COLUMN poster_path VARCHAR(255) DEFAULT NULL AFTER logo_path");
+        }
+    } catch (Throwable $e) {
+        error_log('onboarding_schema_favorites_error: ' . $e->getMessage());
+    }
+
+    try {
+        $column = $pdo->query("SHOW COLUMNS FROM user_favorite_titles LIKE 'poster_url'")->fetch(PDO::FETCH_ASSOC);
+        if ($column === false) {
+            $pdo->exec("ALTER TABLE user_favorite_titles ADD COLUMN poster_url VARCHAR(255) DEFAULT NULL AFTER poster_path");
+        }
+    } catch (Throwable $e) {
+        error_log('onboarding_schema_favorites_error: ' . $e->getMessage());
+    }
+
+    try {
+        $column = $pdo->query("SHOW COLUMNS FROM user_favorite_titles LIKE 'backdrop_path'")->fetch(PDO::FETCH_ASSOC);
+        if ($column === false) {
+            $pdo->exec("ALTER TABLE user_favorite_titles ADD COLUMN backdrop_path VARCHAR(255) DEFAULT NULL AFTER poster_url");
+        }
+    } catch (Throwable $e) {
+        error_log('onboarding_schema_favorites_error: ' . $e->getMessage());
+    }
+
+    try {
         $column = $pdo->query("SHOW COLUMNS FROM user_favorite_titles LIKE 'favorited_at'")->fetch(PDO::FETCH_ASSOC);
         if ($column === false) {
-            $pdo->exec("ALTER TABLE user_favorite_titles ADD COLUMN favorited_at TIMESTAMP NULL DEFAULT NULL AFTER logo_path");
+            $pdo->exec("ALTER TABLE user_favorite_titles ADD COLUMN favorited_at TIMESTAMP NULL DEFAULT NULL AFTER backdrop_path");
             $pdo->exec("UPDATE user_favorite_titles SET favorited_at = created_at WHERE favorited_at IS NULL");
             $pdo->exec("ALTER TABLE user_favorite_titles MODIFY COLUMN favorited_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP");
         }
@@ -229,6 +281,15 @@ function ensure_onboarding_schema(PDO $pdo): void
         $column = $pdo->query("SHOW COLUMNS FROM user_favorite_titles LIKE 'keywords'")->fetch(PDO::FETCH_ASSOC);
         if ($column === false) {
             $pdo->exec("ALTER TABLE user_favorite_titles ADD COLUMN keywords VARCHAR(100) DEFAULT NULL AFTER genres");
+        }
+    } catch (Throwable $e) {
+        error_log('onboarding_schema_favorites_error: ' . $e->getMessage());
+    }
+
+    try {
+        $column = $pdo->query("SHOW COLUMNS FROM user_favorite_titles LIKE 'created_at'")->fetch(PDO::FETCH_ASSOC);
+        if ($column === false) {
+            $pdo->exec("ALTER TABLE user_favorite_titles ADD COLUMN created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP AFTER keywords");
         }
     } catch (Throwable $e) {
         error_log('onboarding_schema_favorites_error: ' . $e->getMessage());
@@ -271,21 +332,99 @@ function fetchPreferences(PDO $pdo, int $userId): array
     $stmt->execute([$userId]);
     $response['providers'] = array_map('intval', array_column($stmt->fetchAll(), 'provider_id'));
 
-    $stmt = $pdo->prepare('SELECT tmdb_id, media_type, title, logo_path, favorited_at, genres, keywords FROM user_favorite_titles WHERE user_id = ? ORDER BY favorited_at DESC, created_at DESC');
+    $stmt = $pdo->prepare('SELECT tmdb_id, media_type, title, logo_path, poster_path, poster_url, backdrop_path, favorited_at, genres, keywords FROM user_favorite_titles WHERE user_id = ? ORDER BY favorited_at DESC, created_at DESC');
     $stmt->execute([$userId]);
-    $response['favorites'] = array_map(static function (array $row) {
+    $favorites = array_map(static function (array $row) {
         $logoPath = $row['logo_path'] ?? null;
+        $posterPath = $row['poster_path'] ?? null;
+        $posterUrl = $row['poster_url'] ?? null;
+        $backdropPath = $row['backdrop_path'] ?? null;
+        if (!$posterUrl) {
+            $posterUrl = tmdb_image_url($posterPath);
+        }
+        if (!$posterUrl) {
+            $posterUrl = tmdb_image_url($backdropPath);
+        }
         return [
             'tmdb_id' => (int) $row['tmdb_id'],
             'media_type' => $row['media_type'],
             'title' => $row['title'],
             'logo_path' => $logoPath,
             'logo_url' => tmdb_image_url($logoPath),
+            'poster_path' => $posterPath,
+            'poster_url' => $posterUrl,
+            'backdrop_path' => $backdropPath,
             'favorited_at' => $row['favorited_at'] ?? null,
             'genres' => parse_favorite_terms($row['genres'] ?? null),
             'keywords' => parse_favorite_terms($row['keywords'] ?? null),
         ];
     }, $stmt->fetchAll());
+
+    $favoritesToUpdate = [];
+    foreach ($favorites as &$favorite) {
+        if (!empty($favorite['poster_url']) || !empty($favorite['poster_path'])) {
+            continue;
+        }
+        try {
+            $details = load_favorite_details($favorite['media_type'], (int) $favorite['tmdb_id']);
+        } catch (Throwable $e) {
+            $details = [];
+        }
+        if (is_array($details)) {
+            if (empty($favorite['poster_path']) && !empty($details['poster_path'])) {
+                $favorite['poster_path'] = $details['poster_path'];
+            }
+            if (empty($favorite['poster_url']) && !empty($details['poster_url'])) {
+                $favorite['poster_url'] = $details['poster_url'];
+            }
+            if (empty($favorite['backdrop_path']) && !empty($details['backdrop_path'])) {
+                $favorite['backdrop_path'] = $details['backdrop_path'];
+            }
+        }
+        if (empty($favorite['poster_url']) && !empty($favorite['poster_path'])) {
+            $favorite['poster_url'] = tmdb_image_url($favorite['poster_path']);
+        }
+        if (empty($favorite['poster_url']) && !empty($favorite['backdrop_path'])) {
+            $favorite['poster_url'] = tmdb_image_url($favorite['backdrop_path']);
+        }
+
+        if (isset($favorite['poster_path'])) {
+            $favorite['poster_path'] = $favorite['poster_path'] !== null ? mb_limit((string) $favorite['poster_path'], 250) : null;
+        }
+        if (isset($favorite['poster_url'])) {
+            $favorite['poster_url'] = $favorite['poster_url'] !== null ? mb_limit((string) $favorite['poster_url'], 250) : null;
+        }
+        if (isset($favorite['backdrop_path'])) {
+            $favorite['backdrop_path'] = $favorite['backdrop_path'] !== null ? mb_limit((string) $favorite['backdrop_path'], 250) : null;
+        }
+
+        if (!empty($favorite['poster_path']) || !empty($favorite['poster_url']) || !empty($favorite['backdrop_path'])) {
+            $favoritesToUpdate[] = [
+                'tmdb_id' => (int) $favorite['tmdb_id'],
+                'media_type' => $favorite['media_type'],
+                'poster_path' => $favorite['poster_path'],
+                'poster_url' => $favorite['poster_url'],
+                'backdrop_path' => $favorite['backdrop_path'],
+            ];
+        }
+    }
+    unset($favorite);
+
+    if (!empty($favoritesToUpdate)) {
+        $updateStmt = $pdo->prepare('UPDATE user_favorite_titles SET poster_path = ?, poster_url = ?, backdrop_path = ? WHERE user_id = ? AND tmdb_id = ? AND media_type = ?');
+        foreach ($favoritesToUpdate as $item) {
+            $updateStmt->execute([
+                $item['poster_path'],
+                $item['poster_url'],
+                $item['backdrop_path'],
+                $userId,
+                $item['tmdb_id'],
+                $item['media_type'],
+            ]);
+        }
+    }
+
+    $response['favorites'] = $favorites;
 
     return $response;
 }
@@ -347,12 +486,23 @@ function persistPreferences(PDO $pdo, int $userId, array $payload): array
         }
         $title = normalise_label((string) ($favorite['title'] ?? $favorite['label'] ?? $favorite['name'] ?? ''));
         $logoPath = normalise_logo_path($favorite['logo_path'] ?? null, $favorite['logo_url'] ?? $favorite['logo'] ?? null);
+        $logoPath = $logoPath !== null ? mb_limit($logoPath, 250) : null;
+
+        $posterPath = normalise_logo_path($favorite['poster_path'] ?? null, $favorite['poster_url'] ?? null);
+        $posterPath = $posterPath !== null ? mb_limit($posterPath, 250) : null;
+        $posterUrlRaw = is_string($favorite['poster_url'] ?? null) ? trim((string) $favorite['poster_url']) : '';
+        $posterUrl = $posterUrlRaw !== '' ? mb_limit($posterUrlRaw, 250) : null;
+        $backdropPath = normalise_logo_path($favorite['backdrop_path'] ?? null, null);
+        $backdropPath = $backdropPath !== null ? mb_limit($backdropPath, 250) : null;
         $key = $id . ':' . $mediaType;
         $favorites[$key] = [
             'tmdb_id' => $id,
             'media_type' => $mediaType,
             'title' => $title !== '' ? mb_limit($title, 180) : '',
             'logo_path' => $logoPath,
+            'poster_path' => $posterPath,
+            'poster_url' => $posterUrl,
+            'backdrop_path' => $backdropPath,
             'genres' => [],
             'keywords' => [],
         ];
@@ -390,7 +540,7 @@ function persistPreferences(PDO $pdo, int $userId, array $payload): array
 
     $pdo->prepare('DELETE FROM user_favorite_titles WHERE user_id = ?')->execute([$userId]);
     if (!empty($favorites)) {
-        $stmt = $pdo->prepare('INSERT INTO user_favorite_titles (user_id, tmdb_id, media_type, title, logo_path, favorited_at, genres, keywords) VALUES (?, ?, ?, ?, ?, NOW(), ?, ?)');
+        $stmt = $pdo->prepare('INSERT INTO user_favorite_titles (user_id, tmdb_id, media_type, title, logo_path, poster_path, poster_url, backdrop_path, favorited_at, genres, keywords) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?)');
         foreach ($favorites as $favorite) {
             if (($favorite['title'] ?? '') === '') {
                 continue;
@@ -405,6 +555,9 @@ function persistPreferences(PDO $pdo, int $userId, array $payload): array
                 $favorite['media_type'],
                 mb_limit($favorite['title'], 180),
                 $favorite['logo_path'],
+                $favorite['poster_path'] ?? null,
+                $favorite['poster_url'] ?? null,
+                $favorite['backdrop_path'] ?? null,
                 $genresText,
                 $keywordsText,
             ]);
@@ -471,6 +624,34 @@ function enrich_favorite_selections(array $favorites, array &$genres, array &$ke
                     'label' => mb_limit($label, 120),
                 ];
             }
+        }
+
+        if (($favorite['poster_path'] ?? null) === null && !empty($details['poster_path'])) {
+            $favorite['poster_path'] = normalise_logo_path($details['poster_path'], $details['poster_url'] ?? null);
+        }
+
+        $hasPosterUrl = is_string($favorite['poster_url'] ?? null) && $favorite['poster_url'] !== '';
+        if (!$hasPosterUrl && !empty($details['poster_url'])) {
+            $favorite['poster_url'] = mb_limit($details['poster_url'], 250);
+            $hasPosterUrl = true;
+        }
+        if (!$hasPosterUrl && !empty($favorite['poster_path'])) {
+            $favorite['poster_url'] = tmdb_image_url($favorite['poster_path']);
+            $hasPosterUrl = is_string($favorite['poster_url']) && $favorite['poster_url'] !== '';
+        }
+
+        if (($favorite['backdrop_path'] ?? null) === null && !empty($details['backdrop_path'])) {
+            $favorite['backdrop_path'] = normalise_logo_path($details['backdrop_path'], null);
+        }
+
+        if (isset($favorite['poster_path'])) {
+            $favorite['poster_path'] = $favorite['poster_path'] !== null ? mb_limit($favorite['poster_path'], 250) : null;
+        }
+        if (isset($favorite['poster_url'])) {
+            $favorite['poster_url'] = $favorite['poster_url'] !== null ? mb_limit($favorite['poster_url'], 250) : null;
+        }
+        if (isset($favorite['backdrop_path'])) {
+            $favorite['backdrop_path'] = $favorite['backdrop_path'] !== null ? mb_limit($favorite['backdrop_path'], 250) : null;
         }
 
         if (($favorite['title'] ?? '') === '') {
@@ -546,10 +727,20 @@ function load_favorite_details(string $mediaType, int $tmdbId): array
         }
     }
 
+    $posterPath = normalise_logo_path($response['poster_path'] ?? null, null);
+    $backdropPath = normalise_logo_path($response['backdrop_path'] ?? null, null);
+    $posterUrl = tmdb_image_url($posterPath);
+    if (!$posterUrl) {
+        $posterUrl = tmdb_image_url($backdropPath);
+    }
+
     return $cache[$cacheKey] = [
         'title' => $title,
         'genres' => $genres,
         'keywords' => $keywords,
+        'poster_path' => $posterPath,
+        'poster_url' => $posterUrl,
+        'backdrop_path' => $backdropPath,
     ];
 }
 
@@ -688,10 +879,20 @@ function onboardingTitleSuggestions(array $queryParams): array
         if ($title === '') {
             continue;
         }
+        $posterPath = normalise_logo_path($row['poster_path'] ?? null, null);
+        $backdropPath = normalise_logo_path($row['backdrop_path'] ?? null, null);
+        $posterUrl = tmdb_image_url($posterPath);
+        if (!$posterUrl) {
+            $posterUrl = tmdb_image_url($backdropPath);
+        }
+
         $prepared[] = [
             'id' => $id,
             'title' => $title,
             'release_year' => isset($row['release_date']) && $row['release_date'] !== '' ? substr($row['release_date'], 0, 4) : null,
+            'poster_path' => $posterPath,
+            'poster_url' => $posterUrl,
+            'backdrop_path' => $backdropPath,
         ];
     }
 
@@ -706,6 +907,9 @@ function onboardingTitleSuggestions(array $queryParams): array
                 'logo_path' => $logo['path'] ?? null,
                 'logo_url' => $logo['url'] ?? null,
                 'release_year' => $item['release_year'],
+                'poster_path' => $item['poster_path'],
+                'poster_url' => $item['poster_url'],
+                'backdrop_path' => $item['backdrop_path'],
             ];
         }
     }
@@ -713,6 +917,163 @@ function onboardingTitleSuggestions(array $queryParams): array
     return [
         'ok' => true,
         'results' => $results,
+    ];
+}
+
+function onboardingFavoritesRecommendations(array $favorites): array
+{
+    require_once __DIR__ . '/../includes/tmdb.php';
+
+    $preparedFavorites = [];
+    $existingKeys = [];
+
+    foreach ($favorites as $favorite) {
+        if (!is_array($favorite)) {
+            continue;
+        }
+        $id = (int)($favorite['tmdb_id'] ?? $favorite['id'] ?? 0);
+        if ($id <= 0) {
+            continue;
+        }
+        $mediaTypeRaw = strtolower((string)($favorite['media_type'] ?? $favorite['type'] ?? 'movie'));
+        $mediaType = $mediaTypeRaw === 'tv' ? 'tv' : 'movie';
+        $key = $mediaType . ':' . $id;
+        $existingKeys[$key] = true;
+        $preparedFavorites[] = [
+            'tmdb_id' => $id,
+            'media_type' => $mediaType,
+        ];
+    }
+
+    if (empty($preparedFavorites)) {
+        $fallback = onboardingTitleSuggestions([]);
+        return [
+            'ok' => $fallback['ok'] ?? true,
+            'source' => 'fallback',
+            'results' => $fallback['results'] ?? [],
+        ];
+    }
+
+    $seedFavorites = array_slice($preparedFavorites, 0, 6);
+    $candidates = [];
+
+    foreach ($seedFavorites as $seedIndex => $favorite) {
+        $items = [];
+        try {
+            $response = tmdb_get(sprintf('/%s/%d/recommendations', $favorite['media_type'], $favorite['tmdb_id']), [
+                'language' => 'pt-BR',
+                'page' => 1,
+            ]);
+            $items = $response['results'] ?? [];
+            if (empty($items)) {
+                $fallbackResponse = tmdb_get(sprintf('/%s/%d/similar', $favorite['media_type'], $favorite['tmdb_id']), [
+                    'language' => 'pt-BR',
+                    'page' => 1,
+                ]);
+                $items = $fallbackResponse['results'] ?? [];
+            }
+        } catch (Throwable $e) {
+            error_log('onboarding_recommendations_fetch_error: ' . $e->getMessage());
+        }
+
+        if (empty($items)) {
+            continue;
+        }
+
+        $items = array_slice($items, 0, 12);
+        foreach ($items as $position => $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+            $candidateId = (int)($item['id'] ?? 0);
+            if ($candidateId <= 0) {
+                continue;
+            }
+
+            $candidateTypeRaw = strtolower((string)($item['media_type'] ?? $favorite['media_type']));
+            $candidateType = $candidateTypeRaw === 'tv' ? 'tv' : 'movie';
+            $candidateKey = $candidateType . ':' . $candidateId;
+            if (isset($existingKeys[$candidateKey])) {
+                continue;
+            }
+
+            $title = normalise_label((string)($item['title'] ?? $item['name'] ?? ''));
+            if ($title === '') {
+                continue;
+            }
+
+            $posterPath = normalise_logo_path($item['poster_path'] ?? null, null);
+            $backdropPath = normalise_logo_path($item['backdrop_path'] ?? null, null);
+            $posterUrl = tmdb_image_url($posterPath);
+            if ($posterUrl === null) {
+                $posterUrl = tmdb_image_url($backdropPath);
+            }
+
+            $score = 120 - ($seedIndex * 14) - ($position * 2);
+            if (isset($item['vote_average'])) {
+                $score += (float)$item['vote_average'] * 1.5;
+            }
+
+            if (!isset($candidates[$candidateKey]) || $score > $candidates[$candidateKey]['score']) {
+                $candidates[$candidateKey] = [
+                    'tmdb_id' => $candidateId,
+                    'media_type' => $candidateType,
+                    'title' => $title,
+                    'poster_path' => $posterPath,
+                    'poster_url' => $posterUrl,
+                    'backdrop_path' => $backdropPath,
+                    'score' => $score,
+                ];
+            }
+        }
+    }
+
+    if (empty($candidates)) {
+        $fallback = onboardingTitleSuggestions([]);
+        return [
+            'ok' => $fallback['ok'] ?? true,
+            'source' => 'fallback',
+            'results' => $fallback['results'] ?? [],
+        ];
+    }
+
+    $byType = [];
+    foreach ($candidates as $candidate) {
+        $byType[$candidate['media_type']][] = (int)$candidate['tmdb_id'];
+    }
+
+    foreach ($byType as $type => $ids) {
+        $uniqueIds = array_values(array_unique(array_filter(array_map('intval', $ids))));
+        if (empty($uniqueIds)) {
+            continue;
+        }
+        $logos = resolveTitleLogosBulk($type, $uniqueIds);
+        foreach ($uniqueIds as $id) {
+            $key = $type . ':' . $id;
+            if (!isset($candidates[$key])) {
+                continue;
+            }
+            $logo = $logos[$id] ?? null;
+            $candidates[$key]['logo_path'] = $logo['path'] ?? null;
+            $candidates[$key]['logo_url'] = $logo['url'] ?? null;
+        }
+    }
+
+    $sorted = array_values($candidates);
+    usort($sorted, static function (array $a, array $b): int {
+        return ($b['score'] ?? 0) <=> ($a['score'] ?? 0);
+    });
+
+    $limited = array_slice($sorted, 0, 15);
+    foreach ($limited as &$entry) {
+        unset($entry['score']);
+    }
+    unset($entry);
+
+    return [
+        'ok' => true,
+        'source' => 'recommendations',
+        'results' => $limited,
     ];
 }
 
