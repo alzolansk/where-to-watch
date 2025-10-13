@@ -650,6 +650,30 @@ document.addEventListener('DOMContentLoaded', function() {
             return null;
         }
 
+        const allProviders = [...flatrate, ...rent];
+        const primaryPreview = allProviders[0] || null;
+        const additionalCount = Math.max(allProviders.length - 1, 0);
+        let previewMarkup = '';
+        let previewAssistiveText = '';
+
+        if (primaryPreview) {
+            const previewParts = [];
+            if (primaryPreview.logo_path) {
+                const previewAlt = primaryPreview.provider_name || 'Provedor de streaming';
+                previewParts.push(`<img src="${logoBaseUrl}${primaryPreview.logo_path}" class="provider-logo provider-logo--preview" alt="${previewAlt}">`);
+            }
+            const previewLabel = primaryPreview.provider_name || 'Disponível';
+            previewParts.push(`<span class="provider-preview__label">${previewLabel}</span>`);
+            if (additionalCount > 0) {
+                previewParts.push(`<span class="provider-preview__count">+${additionalCount}</span>`);
+            }
+            previewMarkup = previewParts.join('');
+            const pluralSuffix = additionalCount === 1 ? '' : 'es';
+            previewAssistiveText = additionalCount > 0
+                ? `${previewLabel} e mais ${additionalCount} provedor${pluralSuffix}`
+                : previewLabel;
+        }
+
         const providerNames = [
             flatrate.slice(0, 3).map(provider => provider.provider_name).join(', '),
             rent.slice(0, 1).map(provider => provider.provider_name).join(', ')
@@ -657,7 +681,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
         return {
             logosMarkup: groups.join(''),
-            providerNames
+            providerNames,
+            previewMarkup,
+            previewAssistiveText
         };
     }
 
@@ -704,6 +730,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const titleText = movie.title || movie.name || '';
 
+        const providerPreviewMarkup = providerInfo.previewMarkup
+            ? `<div class="provider-preview"${providerInfo.previewAssistiveText ? ` title="${providerInfo.previewAssistiveText.replace(/"/g, '&quot;')}"` : ''}>${providerInfo.previewMarkup}</div>`
+            : '';
+
         card.innerHTML = `
             <div class="description">
                 <li id="movie-li-link">
@@ -714,6 +744,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <p class="rating-value">${rating}</p>
                     <li class="movie-name">
                         <a href="#">${titleText}</a>
+                        ${providerPreviewMarkup}
                         <div class="provider-logo-container">${providerInfo.logosMarkup}</div>
                     </li>
                     <li class="watch-trailer">

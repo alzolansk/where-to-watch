@@ -434,8 +434,8 @@ $favoritesBadgeLabel = $favoritesCount . ' ' . ($favoritesCount === 1 ? 'título
 $favoritesTotalLabel = $favoritesBadgeLabel;
 $preferencesBadgeLabel = $preferencesCount . ' ' . ($preferencesCount === 1 ? 'item' : 'itens');
 
-$favoritesSummaryData = array_slice($favorites, 0, 4);
-$favoritesOverflow = max(0, $favoritesCount - count($favoritesSummaryData));
+$favoritesSummaryData = $favorites;
+$favoritesSummaryCount = count($favoritesSummaryData);
 $showFavoritesSummaryEmpty = $favoritesCount === 0 || $initialFeedbackMessage !== null;
 $showFavoritesListEmpty = $showFavoritesSummaryEmpty;
 
@@ -532,19 +532,23 @@ $favoritesList = $favorites;
                         <button type="button" class="profile-button profile-button--primary" data-profile-open-modal="favorites" <?php echo $isAuthenticated ? '' : 'disabled'; ?>>Gerenciar favoritos</button>
                     </div>
                 </header>
-                <ul class="profile-favorite-rail" data-profile-favorites-summary role="list">
-                    <?php foreach ($favoritesSummaryData as $favorite): ?>
+                <div class="profile-favorite-rail-wrapper" data-profile-favorites-summary-viewport>
+                    <ul class="profile-favorite-rail" data-profile-favorites-summary role="list">
+                        <?php foreach ($favoritesSummaryData as $summaryIndex => $favorite): ?>
                         <?php
-                        $summaryPoster = $favorite['poster_url'] ?? null;
-                        if (!$summaryPoster && !empty($favorite['poster_path'])) {
-                            $summaryPoster = wyw_tmdb_image_url((string) $favorite['poster_path']);
-                        }
-                        if (!$summaryPoster && !empty($favorite['backdrop_path'])) {
-                            $summaryPoster = wyw_tmdb_image_url((string) $favorite['backdrop_path']);
-                        }
-                        $summaryTitle = $favorite['title'] ?? '';
+                            $summaryPoster = $favorite['poster_url'] ?? null;
+                            if (!$summaryPoster && !empty($favorite['poster_path'])) {
+                                $summaryPoster = wyw_tmdb_image_url((string) $favorite['poster_path']);
+                            }
+                            if (!$summaryPoster && !empty($favorite['backdrop_path'])) {
+                                $summaryPoster = wyw_tmdb_image_url((string) $favorite['backdrop_path']);
+                            }
+                            $summaryTitle = $favorite['title'] ?? '';
+                            $summaryDepth = $favoritesSummaryCount > 1
+                                ? ($favoritesSummaryCount - 1 - $summaryIndex) / ($favoritesSummaryCount - 1)
+                                : 0;
                         ?>
-                        <li class="favorite-tile favorite-tile--poster">
+                        <li class="favorite-tile favorite-tile--poster" style="--favorite-depth: <?php echo htmlspecialchars(number_format($summaryDepth, 4, '.', ''), ENT_QUOTES, 'UTF-8'); ?>;">
                             <figure class="favorite-tile__poster" aria-hidden="true">
                                 <?php if ($summaryPoster): ?>
                                     <img src="<?php echo htmlspecialchars($summaryPoster, ENT_QUOTES, 'UTF-8'); ?>" alt="" loading="lazy" class="favorite-tile__image">
@@ -553,14 +557,11 @@ $favoritesList = $favorites;
                                 <?php endif; ?>
                             </figure>
                         </li>
-                    <?php endforeach; ?>
-                    <?php if ($favoritesOverflow > 0): ?>
-                        <li class="favorite-tile favorite-tile--poster favorite-tile--poster-more">
-                            <span class="favorite-tile__more-value">+<?php echo (int) $favoritesOverflow; ?></span>
-                            <small class="favorite-tile__more-label"><?php echo $favoritesOverflow === 1 ? 'título' : 'títulos'; ?></small>
-                        </li>
-                    <?php endif; ?>
-                </ul>
+                        <?php endforeach; ?>
+                    </ul>
+                    <span class="profile-favorite-rail__overflow-indicator" data-profile-favorites-overflow-indicator aria-hidden="true" hidden></span>
+                </div>
+                <p class="sr-only" data-profile-favorites-overflow-hint hidden>Há mais favoritos disponíveis além dos exibidos neste painel.</p>
                 <p class="profile-empty profile-empty--rail" data-profile-favorites-summary-empty <?php echo $showFavoritesSummaryEmpty ? '' : 'hidden'; ?>>
                     <?php echo htmlspecialchars($favoritesEmptyMessage, ENT_QUOTES, 'UTF-8'); ?>
                 </p>

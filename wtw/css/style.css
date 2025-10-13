@@ -1726,7 +1726,7 @@ button.prev:active, button.next:active {
     margin: 0;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 5px;
 }
 
 .media-section .row .description .movie-name a{
@@ -1751,7 +1751,79 @@ button.prev:active, button.next:active {
     flex-wrap: wrap;
     align-items: center;
     gap: 8px;
-    margin-top: 1px;
+    margin: 0;
+    margin-top: 0;
+    opacity: 0;
+    visibility: hidden;
+    max-height: 0;
+    overflow: hidden;
+    transform: translateY(12px);
+    pointer-events: none;
+    transition:
+        opacity 0.45s ease,
+        transform 0.6s cubic-bezier(0.22, 1, 0.36, 1),
+        max-height 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+        margin-top 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.media-section .row .description .provider-preview{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 6px;
+    opacity: 1;
+    visibility: visible;
+    max-height: 38px;
+    transform: translateY(0);
+    pointer-events: none;
+    transition:
+        opacity 0.2s ease,
+        transform 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+        max-height 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+        margin-top 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+        visibility 0.45s ease;
+}
+
+.media-section .row .description .provider-preview .provider-logo--preview{
+    width: 36px;
+    height: 24px;
+    border-radius: 8px;
+    object-fit: cover;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+    filter: brightness(1.05) contrast(1.05);
+}
+
+.media-section .row .description .provider-preview__label{
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.82);
+    font-weight: 600;
+}
+
+.media-section .row .description .provider-preview__count{
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.08);
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-weight: 600;
+}
+
+.media-section .row .description:hover .provider-logo-container,
+.media-section .row .description:focus-within .provider-logo-container{
+    opacity: 1;
+    visibility: visible;
+    max-height: 90px;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
+.media-section .row .description:hover .provider-preview,
+.media-section .row .description:focus-within .provider-preview{
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-6px);
+    max-height: 0;
+    margin-top: 0;
 }
 
 .media-section .row .description .provider-group{
@@ -1779,8 +1851,30 @@ button.prev:active, button.next:active {
 
 .media-section .row .description .watch-trailer{
     margin: 0;
+    margin-top: 0;
     padding-top: 0;
     width: auto;
+    opacity: 0;
+    visibility: hidden;
+    max-height: 0;
+    overflow: hidden;
+    transform: translateY(16px);
+    pointer-events: none;
+    transition:
+        opacity 0.45s ease,
+        transform 0.6s cubic-bezier(0.22, 1, 0.36, 1),
+        max-height 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+        margin-top 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.media-section .row .description:hover .watch-trailer,
+.media-section .row .description:focus-within .watch-trailer{
+    opacity: 1;
+    visibility: visible;
+    max-height: 80px;
+    transform: translateY(0);
+    pointer-events: auto;
+    margin-top: 12px;
 }
 
 .media-section .row .description .watch-trailer a{
