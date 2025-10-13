@@ -29,6 +29,9 @@
   const favoritesEmpty = root.querySelector('[data-profile-favorites-empty]');
   const favoritesCountBadge = root.querySelector('[data-profile-favorites-count]');
   const favoritesSummaryList = root.querySelector('[data-profile-favorites-summary]');
+  const favoritesSummaryViewport = root.querySelector('[data-profile-favorites-summary-viewport]');
+  const favoritesOverflowIndicator = root.querySelector('[data-profile-favorites-overflow-indicator]');
+  const favoritesOverflowHint = root.querySelector('[data-profile-favorites-overflow-hint]');
   const favoritesSummaryEmpty = root.querySelector('[data-profile-favorites-summary-empty]');
   const favoritesTotalIndicator = root.querySelector('[data-profile-favorites-total]');
   const saveButton = root.querySelector('[data-profile-save]');
@@ -49,6 +52,87 @@
 
   const genreLabels = new Map();
   const providerLabels = new Map();
+
+  const applyFavoritesOverflowState = () => {
+    if (!favoritesSummaryList) {
+      return;
+    }
+
+    const scrollWidth = favoritesSummaryList.scrollWidth;
+    const clientWidth = favoritesSummaryList.clientWidth;
+    const scrollLeft = favoritesSummaryList.scrollLeft;
+    const totalOverflow = scrollWidth - clientWidth > 1;
+    const hasHiddenToRight =
+      totalOverflow && scrollLeft + clientWidth < scrollWidth - 1;
+
+    if (favoritesSummaryViewport) {
+      favoritesSummaryViewport.classList.toggle(
+        'profile-favorite-rail-wrapper--overflow',
+        hasHiddenToRight,
+      );
+    }
+
+    favoritesSummaryList.classList.toggle(
+      'profile-favorite-rail--overflow',
+      hasHiddenToRight,
+    );
+
+    if (favoritesOverflowIndicator) {
+      favoritesOverflowIndicator.hidden = !hasHiddenToRight;
+    }
+
+    if (favoritesOverflowHint) {
+      favoritesOverflowHint.hidden = !totalOverflow;
+    }
+  };
+
+  let favoritesOverflowAnimationFrame = null;
+  const scheduleFavoritesOverflowUpdate = () => {
+    if (!favoritesSummaryList) {
+      return;
+    }
+    if (favoritesOverflowAnimationFrame !== null) {
+      return;
+    }
+    favoritesOverflowAnimationFrame = requestAnimationFrame(() => {
+      favoritesOverflowAnimationFrame = null;
+      applyFavoritesOverflowState();
+    });
+  };
+
+  if (favoritesSummaryList) {
+    try {
+      favoritesSummaryList.addEventListener('scroll', scheduleFavoritesOverflowUpdate, {
+        passive: true,
+      });
+    } catch (error) {
+      favoritesSummaryList.addEventListener('scroll', scheduleFavoritesOverflowUpdate);
+    }
+  }
+
+  if (typeof ResizeObserver === 'function' && favoritesSummaryViewport) {
+    const observer = new ResizeObserver(() => {
+      scheduleFavoritesOverflowUpdate();
+    });
+    observer.observe(favoritesSummaryViewport);
+  } else {
+    window.addEventListener('resize', scheduleFavoritesOverflowUpdate);
+  }
+
+  const triggerInitialFavoritesOverflowMeasurement = () => {
+    if (!favoritesSummaryList) {
+      return;
+    }
+    scheduleFavoritesOverflowUpdate();
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', triggerInitialFavoritesOverflowMeasurement, {
+      once: true,
+    });
+  } else {
+    triggerInitialFavoritesOverflowMeasurement();
+  }
 
   if (genresContainer) {
     genresContainer.querySelectorAll('[data-genre-id]').forEach((button) => {
@@ -317,13 +401,24 @@
     favoritesSummaryList.innerHTML = '';
 
     const favorites = Array.isArray(state.favorites) ? state.favorites : [];
-    const summaryItems = favorites.slice(0, 4);
+    const summaryItems = favorites.slice();
 
     if (summaryItems.length === 0) {
       favoritesSummaryList.setAttribute('hidden', 'true');
       if (favoritesSummaryEmpty) {
         favoritesSummaryEmpty.hidden = false;
       }
+      if (favoritesSummaryViewport) {
+        favoritesSummaryViewport.classList.remove('profile-favorite-rail-wrapper--overflow');
+      }
+      favoritesSummaryList.classList.remove('profile-favorite-rail--overflow');
+      if (favoritesOverflowIndicator) {
+        favoritesOverflowIndicator.hidden = true;
+      }
+      if (favoritesOverflowHint) {
+        favoritesOverflowHint.hidden = true;
+      }
+      scheduleFavoritesOverflowUpdate();
       return;
     }
 
@@ -332,9 +427,17 @@
       favoritesSummaryEmpty.hidden = true;
     }
 
-    summaryItems.forEach((favorite) => {
+    const totalSummary = summaryItems.length;
+
+    favoritesSummaryList.scrollLeft = 0;
+
+    const fragment = document.createDocumentFragment();
+
+    summaryItems.forEach((favorite, index) => {
       const item = document.createElement('li');
       item.className = 'favorite-tile favorite-tile--poster';
+      const depth = totalSummary > 1 ? (totalSummary - 1 - index) / (totalSummary - 1) : 0;
+      item.style.setProperty('--favorite-depth', depth.toFixed(4));
 
       const figure = document.createElement('figure');
       figure.className = 'favorite-tile__poster';
@@ -356,26 +459,12 @@
       }
 
       item.appendChild(figure);
-      favoritesSummaryList.appendChild(item);
+      fragment.appendChild(item);
     });
 
-    const overflow = Math.max(0, favorites.length - summaryItems.length);
-    if (overflow > 0) {
-      const moreItem = document.createElement('li');
-      moreItem.className = 'favorite-tile favorite-tile--poster favorite-tile--poster-more';
+    favoritesSummaryList.appendChild(fragment);
 
-      const value = document.createElement('span');
-      value.className = 'favorite-tile__more-value';
-      value.textContent = `+${overflow}`;
-
-      const label = document.createElement('small');
-      label.className = 'favorite-tile__more-label';
-      label.textContent = overflow === 1 ? 'titulo' : 'titulos';
-
-      moreItem.appendChild(value);
-      moreItem.appendChild(label);
-      favoritesSummaryList.appendChild(moreItem);
-    }
+    scheduleFavoritesOverflowUpdate();
   };
 
   const updateStats = () => {
