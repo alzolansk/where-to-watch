@@ -37,8 +37,8 @@ a {
 body {
     background:
         radial-gradient(120% 120% at 19% 25%, rgba(225, 29, 72, 0.26) 0%, rgba(15, 16, 24, 0) 55%),
-        radial-gradient(120% 120% at 85% 200%, rgba(59, 130, 246, 0.12) 0%, rgba(6, 7, 13, 0) 50%),
-        linear-gradient(160deg, #0a0b11 0%, #07070d 40%, #14070b 100%);
+        radial-gradient(120% 120% at 85% 200%, rgba(59, 131, 246, 0.267) 0%, rgba(32, 44, 124, 0.144) 50%),
+        linear-gradient(160deg, #0a0b11 0%, #07070d 40%, #14070b 50%);
     color: var(--color-text);
     font-family: var(--font-body);
     min-height: 100vh;
@@ -88,8 +88,8 @@ body {
 .hero-backdrop__gradient {
     position: absolute;
     inset: 0;
-    background: linear-gradient(120deg, rgba(5, 7, 13, 0.92) 18%, rgba(7, 8, 15, 0.65) 50%, rgba(7, 7, 13, 0.92) 100%),
-                linear-gradient(180deg, rgba(7, 7, 13, 0.7) 0%, rgba(7, 7, 13, 0.2) 50%, rgba(7, 7, 13, 0.88) 100%);
+    background: linear-gradient(120deg, rgba(5, 7, 13, 0.589) 18%, rgba(7, 8, 15, 0.253) 50%, rgba(7, 7, 13, 0.212) 100%),
+                linear-gradient(180deg, rgba(7, 7, 13, 0.137) 0%, rgba(7, 7, 13, 0.2) 50%, rgba(7, 7, 13, 0.274) 100%);
     backdrop-filter: blur(16px);
 }
 

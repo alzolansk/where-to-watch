@@ -4,9 +4,17 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 $isAuthenticated = isset($_SESSION['id']) || isset($_SESSION['id_user']);
-$userName = isset($_SESSION['nome']) ? trim((string) $_SESSION['nome']) : '';
-if ($userName === '') {
-    $userName = 'Visitante';
+$rawUserName = isset($_SESSION['nome']) ? trim((string) $_SESSION['nome']) : '';
+$hasPersonalName = $rawUserName !== '';
+$userName = $hasPersonalName ? $rawUserName : 'Visitante';
+
+$pageBreadcrumbs = [
+    ['label' => 'Inicio', 'href' => 'index.php'],
+    ['label' => 'Meu perfil'],
+];
+
+if ($hasPersonalName) {
+    $pageBreadcrumbs[] = ['label' => $userName];
 }
 
 $onboardingCompletedAt = $_SESSION['onboarding_completed_at'] ?? null;
@@ -458,6 +466,7 @@ $favoritesList = $favorites;
     <title>Meu perfil | where you watch</title>
     <link rel="icon" href="imagens/wywatch-favicon-iris-nobackground.png">
     <link rel="stylesheet" href="css/brand.css">
+    <link rel="stylesheet" href="css/breadcrumb.css">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/profile.css">
 </head>

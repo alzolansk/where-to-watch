@@ -25,9 +25,9 @@
 
 body {
   background:
-    radial-gradient(120% 120% at 19% 25%, rgba(225, 29, 72, 0.26) 0%, rgba(15, 16, 24, 0) 55%),
-    radial-gradient(120% 120% at 85% 200%, rgba(59, 130, 246, 0.12) 0%, rgba(6, 7, 13, 0) 50%),
-    linear-gradient(160deg, #0a0b11 0%, #07070d 40%, #14070b 100%);
+    radial-gradient(120% 120% at 19% 25%, rgba(190, 13, 51, 0.349) 0%, rgba(15, 16, 24, 0) 55%),
+    radial-gradient(120% 120% at 85% 200%, rgba(59, 130, 246, 0.12) 0%, rgba(19, 24, 54, 0.308) 50%),
+    linear-gradient(160deg, #0a0b11 0%, #07070d 40%, #14070b 50%);
   color: var(--color-text);
   font-family: var(--font-body);
   min-height: 100vh;

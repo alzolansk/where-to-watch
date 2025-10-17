@@ -206,8 +206,7 @@ $navStates = [
     z-index: 1000;
     min-height: 0;
     background: linear-gradient(135deg, rgba(138, 138, 138, 0.15), rgba(255,255,255,0.05)); /*Glass transparency*/
-    backdrop-filter: blur(10px) saturate(180%);
-    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    backdrop-filter: blur(5px) saturate(180%);
     border-bottom: 1px solid rgba(255, 255, 255, 0.034);
     isolation: isolate;
 }
@@ -394,11 +393,7 @@ $navStates = [
     pointer-events: none;
     transform: translateY(-10px);
     z-index: 20;
-    background:
-    radial-gradient(circle at -12% -10%, rgba(225, 29, 72, 0.35), transparent 62%),
-    radial-gradient(circle at 112% 10%, rgba(99, 102, 241, 0.28), transparent 60%),
-    radial-gradient(circle at 50% 120%, rgba(34, 211, 238, 0.18), transparent 58%),
-    linear-gradient(160deg, rgba(12, 15, 26, 0.94) 0%, rgba(9, 11, 18, 0.85) 45%, rgba(13, 15, 24, 0.96) 100%);
+    background: linear-gradient(135deg, rgba(255, 93, 124, 0.24), rgba(84, 118, 255, 0.24));
     backdrop-filter: blur(26px) saturate(160%) contrast(108%);
     -webkit-backdrop-filter: blur(26px) saturate(160%) contrast(108%);
     box-shadow:
