@@ -103,6 +103,7 @@ function scrollRight() {
 
 
 /* Menu */
+let closeMenuDropdowns = () => {};
 const menuTrigger = document.querySelector('.menu-trigger');
 const menuPanel = document.getElementById('menu-buttons');
 const menuIcon = document.getElementById('menuIcon');
@@ -115,6 +116,7 @@ function syncMenuState() {
     }
 
     if (!menuViewportQuery.matches) {
+        closeMenuDropdowns();
         menuPanel.classList.remove('hidden-menu');
         menuPanel.classList.remove('active-menu');
         menuPanel.removeAttribute('aria-hidden');
@@ -147,6 +149,10 @@ function toggleMenu(forceState) {
     }
 
     syncMenuState();
+
+    if (!isMenuOpen) {
+        closeMenuDropdowns();
+    }
 }
 
 if (menuTrigger && menuPanel && menuIcon) {
@@ -180,8 +186,191 @@ if (menuTrigger && menuPanel && menuIcon) {
         }
 
         if (!menuPanel.contains(event.target) && !menuTrigger.contains(event.target) && isMenuOpen) {
+            closeMenuDropdowns();
             toggleMenu(false);
         }
+    });
+}
+
+const menuDropdownNodes = Array.from(document.querySelectorAll('[data-menu-dropdown]'));
+if (menuDropdownNodes.length) {
+    const hoverMediaQuery = window.matchMedia('(hover: hover)');
+
+    const controllers = menuDropdownNodes
+        .map((node) => {
+            if (!node) {
+                return null;
+            }
+
+            const trigger = node.querySelector('[data-dropdown-trigger]');
+            const menu = node.querySelector('[data-dropdown-menu]');
+            if (!trigger || !menu) {
+                return null;
+            }
+
+            return {
+                node,
+                trigger,
+                menu,
+                isOpen: false,
+                hoverTimer: null
+            };
+        })
+        .filter(Boolean);
+
+    const setDropdownState = (controller, state) => {
+        if (!controller) {
+            return;
+        }
+
+        const nextState = Boolean(state);
+        if (controller.isOpen === nextState && controller.node.classList.contains('is-open') === nextState) {
+            controller.trigger.setAttribute('aria-expanded', nextState ? 'true' : 'false');
+            controller.menu.setAttribute('aria-hidden', nextState ? 'false' : 'true');
+            return;
+        }
+
+        controller.isOpen = nextState;
+        controller.node.classList.toggle('is-open', nextState);
+        controller.trigger.setAttribute('aria-expanded', nextState ? 'true' : 'false');
+        controller.menu.setAttribute('aria-hidden', nextState ? 'false' : 'true');
+    };
+
+    const openDropdown = (controller) => {
+        if (controller.hoverTimer) {
+            clearTimeout(controller.hoverTimer);
+            controller.hoverTimer = null;
+        }
+        controllers.forEach((other) => {
+            if (other !== controller) {
+                setDropdownState(other, false);
+            }
+        });
+        setDropdownState(controller, true);
+    };
+
+    const closeDropdown = (controller) => {
+        if (controller.hoverTimer) {
+            clearTimeout(controller.hoverTimer);
+            controller.hoverTimer = null;
+        }
+        setDropdownState(controller, false);
+    };
+
+    closeMenuDropdowns = () => {
+        controllers.forEach((controller) => {
+            closeDropdown(controller);
+        });
+    };
+
+    controllers.forEach((controller) => {
+        const { node, trigger, menu } = controller;
+
+        trigger.addEventListener('click', (event) => {
+            event.preventDefault();
+            if (controller.isOpen) {
+                closeDropdown(controller);
+            } else {
+                openDropdown(controller);
+            }
+        });
+
+        trigger.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                if (controller.isOpen) {
+                    closeDropdown(controller);
+                } else {
+                    openDropdown(controller);
+                }
+                return;
+            }
+
+            if (event.key === 'ArrowDown') {
+                event.preventDefault();
+                if (!controller.isOpen) {
+                    openDropdown(controller);
+                }
+                const firstFocusable = menu.querySelector('a, button, [tabindex]:not([tabindex="-1"])');
+                if (firstFocusable) {
+                    firstFocusable.focus();
+                }
+                return;
+            }
+
+            if (event.key === 'Escape') {
+                event.preventDefault();
+                closeDropdown(controller);
+                trigger.focus();
+            }
+        });
+
+        menu.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') {
+                event.preventDefault();
+                closeDropdown(controller);
+                trigger.focus();
+            }
+        });
+
+        if (typeof hoverMediaQuery.addEventListener === 'function') {
+            hoverMediaQuery.addEventListener('change', () => {
+                if (!hoverMediaQuery.matches) {
+                    closeDropdown(controller);
+                }
+            });
+        }
+
+        const handlePointerEnter = () => {
+            if (!hoverMediaQuery.matches) {
+                return;
+            }
+            if (controller.hoverTimer) {
+                clearTimeout(controller.hoverTimer);
+                controller.hoverTimer = null;
+            }
+            openDropdown(controller);
+        };
+
+        const handlePointerLeave = () => {
+            if (!hoverMediaQuery.matches) {
+                return;
+            }
+            if (controller.hoverTimer) {
+                clearTimeout(controller.hoverTimer);
+            }
+            controller.hoverTimer = setTimeout(() => {
+                closeDropdown(controller);
+            }, 80);
+        };
+
+        node.addEventListener('pointerenter', handlePointerEnter);
+        node.addEventListener('pointerleave', handlePointerLeave);
+    });
+
+    document.addEventListener('click', (event) => {
+        controllers.forEach((controller) => {
+            if (controller.isOpen && !controller.node.contains(event.target)) {
+                closeDropdown(controller);
+            }
+        });
+    });
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key !== 'Escape') {
+            return;
+        }
+
+        let handled = false;
+        controllers.forEach((controller) => {
+            if (controller.isOpen) {
+                closeDropdown(controller);
+                if (!handled) {
+                    controller.trigger.focus();
+                    handled = true;
+                }
+            }
+        });
     });
 }
 

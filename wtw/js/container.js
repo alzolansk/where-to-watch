@@ -25,6 +25,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let buttonInteractionTimeout;
     let isProgrammaticScroll = false;
     let programmaticScrollTarget = null;
+    let hasHandledInitialHash = false;
     // Cache para evitar duplicidade
     const fetchCache = {};
     const fetchJson = (url) => {
@@ -41,6 +42,122 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         return fetchCache[url];
     };
+
+    const HERO_SKELETON_CARDS = 4;
+    const ROW_SKELETON_CARDS = 6;
+
+    function applyHeroSkeleton(container) {
+        if (!container) {
+            return () => {};
+        }
+
+        container.dataset.loadingSkeleton = 'hero';
+        container.classList.add('is-loading');
+
+        const fragment = document.createDocumentFragment();
+        for (let index = 0; index < HERO_SKELETON_CARDS; index += 1) {
+            const skeletonCard = document.createElement('article');
+            skeletonCard.className = 'backdropContainer hero-skeleton';
+            skeletonCard.innerHTML = `
+                <div class="hero-skeleton__backdrop skeleton-block"></div>
+                <div class="hero-skeleton__layout">
+                    <div class="hero-skeleton__content">
+                        <span class="skeleton-block skeleton-chip"></span>
+                        <span class="skeleton-block skeleton-line skeleton-line--lg"></span>
+                        <span class="skeleton-block skeleton-line skeleton-line--md"></span>
+                        <span class="skeleton-block skeleton-line skeleton-line--sm"></span>
+                        <span class="skeleton-block skeleton-line skeleton-line--xs"></span>
+                        <div class="hero-skeleton__actions">
+                            <span class="skeleton-block skeleton-button skeleton-button--primary"></span>
+                            <span class="skeleton-block skeleton-button"></span>
+                        </div>
+                    </div>
+                    <div class="hero-skeleton__poster skeleton-block"></div>
+                </div>
+            `;
+            fragment.appendChild(skeletonCard);
+        }
+
+        container.replaceChildren(fragment);
+
+        let cleared = false;
+        return () => {
+            if (cleared || container.dataset.loadingSkeleton !== 'hero') {
+                return;
+            }
+            cleared = true;
+            container.classList.remove('is-loading');
+            container.removeAttribute('data-loading-skeleton');
+            container.innerHTML = '';
+        };
+    }
+
+    function applyRowSkeleton(container, cardCount = ROW_SKELETON_CARDS) {
+        if (!container) {
+            return () => {};
+        }
+
+        const cards = Math.max(4, Math.min(cardCount, 8));
+        const fragment = document.createDocumentFragment();
+        for (let index = 0; index < cards; index += 1) {
+            const skeletonCol = document.createElement('div');
+            skeletonCol.className = 'col-md-3 movies media-skeleton-card';
+            skeletonCol.innerHTML = `
+                <div class="description description--skeleton">
+                    <div class="skeleton-block media-skeleton__poster"></div>
+                    <div class="media-skeleton__info">
+                        <span class="skeleton-block skeleton-line skeleton-line--xs"></span>
+                        <span class="skeleton-block skeleton-line skeleton-line--lg"></span>
+                        <span class="skeleton-block skeleton-line skeleton-line--md"></span>
+                        <div class="media-skeleton__chips">
+                            <span class="skeleton-block skeleton-chip skeleton-chip--lg"></span>
+                            <span class="skeleton-block skeleton-chip"></span>
+                        </div>
+                        <span class="skeleton-block skeleton-pill"></span>
+                    </div>
+                </div>
+            `;
+            fragment.appendChild(skeletonCol);
+        }
+
+        container.dataset.loadingSkeleton = 'row';
+        container.classList.add('is-loading');
+        container.replaceChildren(fragment);
+
+        let cleared = false;
+        return () => {
+            if (cleared || container.dataset.loadingSkeleton !== 'row') {
+                return;
+            }
+            cleared = true;
+            container.classList.remove('is-loading');
+            container.removeAttribute('data-loading-skeleton');
+            container.innerHTML = '';
+        };
+    }
+
+    function handleHashNavigation(options = {}) {
+        const { force = false, smooth = true } = options;
+        const hash = (window.location.hash || '').replace('#', '').trim();
+        if (!hash) {
+            return;
+        }
+        if (!force && hasHandledInitialHash) {
+            return;
+        }
+        const target = document.getElementById(hash);
+        if (!target) {
+            return;
+        }
+        hasHandledInitialHash = true;
+        const behavior = smooth ? 'smooth' : 'auto';
+        window.requestAnimationFrame(() => {
+            target.scrollIntoView({
+                behavior,
+                block: 'start'
+            });
+        });
+    }
 
     const resetHeroProgress = () => {
         if (!heroProgressElement || !heroProgressTrack) {
@@ -554,6 +671,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 wrapper = document.createElement('section');
                 wrapper.className = 'media-section__group';
                 wrapper.dataset.section = section.id;
+                wrapper.id = section.id;
+                wrapper.tabIndex = -1;
 
                 const heading = createHeadingElement(section.heading || {});
                 wrapper.appendChild(heading);
@@ -580,6 +699,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 wrapper.appendChild(carousel);
                 root.appendChild(wrapper);
+            } else {
+                if (!wrapper.id) {
+                    wrapper.id = section.id;
+                }
+                if (!wrapper.hasAttribute('tabindex')) {
+                    wrapper.tabIndex = -1;
+                }
             }
 
             const rowNode = wrapper.querySelector(`#${section.containerId}`);
@@ -802,19 +928,28 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         const container = entry.row;
-        container.innerHTML = '';
+        const cleanupSkeleton = applyRowSkeleton(container, section.skeletonCount || ROW_SKELETON_CARDS);
 
         let items = [];
+        let loadFailed = false;
+
         try {
             const data = await fetchJson(section.endpoint(context));
             items = Array.isArray(data?.results) ? data.results : [];
         } catch (error) {
-            console.error(`Erro ao buscar a seção ${section.id}:`, error);
+            console.error('Erro ao buscar a secao ' + section.id + ':', error);
+            loadFailed = true;
+        }
+
+        if (loadFailed) {
+            cleanupSkeleton();
+            container.innerHTML = '<p class="media-section__empty">Nao foi possivel carregar os titulos agora.</p>';
             return;
         }
 
         if (!items.length) {
-            container.innerHTML = '<p class="media-section__empty">Nenhum título encontrado.</p>';
+            cleanupSkeleton();
+            container.innerHTML = '<p class="media-section__empty">Nenhum titulo encontrado.</p>';
             return;
         }
 
@@ -830,12 +965,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     added += 1;
                 }
             } catch (error) {
-                console.error(`Erro ao montar card na seção ${section.id}:`, error);
+                console.error('Erro ao montar card na secao ' + section.id + ':', error);
             }
         }
 
+        cleanupSkeleton();
+
         if (!added) {
-            container.innerHTML = '<p class="media-section__empty">Sem títulos com streaming disponível no momento.</p>';
+            container.innerHTML = '<p class="media-section__empty">Sem titulos com streaming disponivel no momento.</p>';
         } else {
             container.appendChild(fragment);
         }
@@ -882,14 +1019,14 @@ document.addEventListener('DOMContentLoaded', function() {
         if (contentSection) {
             contentSection.classList.add('is-loading-rows');
         }
-        if (typeof showLoading === 'function') {
-            showLoading();
-        } // Mostra o spinner ao comecar
+        const heroContainer = document.getElementById('container-wrap');
+        const cleanupHeroSkeleton = applyHeroSkeleton(heroContainer);
         resetHeroProgress();
 
         const heroUrl = `https://api.themoviedb.org/3/trending/all/week?api_key=${apiKey}&language=pt-BR&page=1`;
         const heroPromise = fetchJson(heroUrl)
             .then(heroData => {
+                cleanupHeroSkeleton();
                 const heroItems = Array.isArray(heroData?.results)
                     ? heroData.results.filter(item => item && (item.media_type === "movie" || item.media_type === "tv"))
                     : [];
@@ -1175,11 +1312,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
         setTimeout(initAutoScroll, 500);
     })
-            .catch(error => console.error('Erro ao carregar destaque:', error));
-
-
+            .catch(error => {
+                console.error('Erro ao carregar destaque:', error);
+                cleanupHeroSkeleton();
+                const containerNew = heroContainer || document.getElementById('container-wrap');
+                if (containerNew && !containerNew.hasChildNodes()) {
+                    containerNew.innerHTML = '<p class="media-section__empty media-section__empty--hero">Nao foi possivel carregar os destaques agora.</p>';
+                }
+            })
+            .finally(() => {
+                cleanupHeroSkeleton();
+            });
         const sectionsPromise = renderSections(mediaType).catch(error => {
-            console.error('Erro ao renderizar seções:', error);
+            console.error('Erro ao renderizar secoes:', error);
         });
 
         Promise.allSettled([heroPromise, sectionsPromise])
@@ -1203,6 +1348,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (contentSection) {
                     contentSection.classList.remove('is-loading-rows');
                 }
+                handleHashNavigation();
                 scheduleAutoScrollRefresh();
             });
     }    // Botoes para alternar entre filmes e series
@@ -1230,6 +1376,8 @@ document.addEventListener('DOMContentLoaded', function() {
             sliderIndicator.style.transform = `translateX(${buttonWidth}px)`;
         } // Move para a direita
     });
+
+    window.addEventListener('hashchange', () => handleHashNavigation({ force: true }));
 
     loadContent();        // Carregar conteudo de filmes
 

@@ -168,7 +168,7 @@
             <button id="close-trailer" onclick="closeTrailer()">X</button>
         </dialog>
 
-        <div class="wrap">
+        <div id="surprise-me" class="wrap" tabindex="-1">
             <button id="btnLeft" class="prev" onclick="scrollLeftCustom()">&#10094;</button>
             <div id="container-wrap">
             <!--Primeiro container com trailer e backdrop-->

@@ -2,6 +2,12 @@
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
+
+$currentScript = basename($_SERVER['SCRIPT_NAME'] ?? 'index.php');
+$navStates = [
+    'home' => $currentScript === 'index.php',
+    'providers' => $currentScript === 'providers.php',
+];
 ?>
 <nav id="menu">
     <div class="faixa">
@@ -19,7 +25,61 @@ if (session_status() === PHP_SESSION_NONE) {
 
         <nav id="menu-buttons" class="menu-panel hidden-menu" aria-hidden="true">
             <ul id="ulBotoes">
-                <li><a href="index.php">Pagina Inicial </a></li>
+                <li class="menu-panel__item menu-panel__item--dropdown" data-menu-dropdown>
+                    <button
+                        type="button"
+                        class="menu-panel__trigger"
+                        data-dropdown-trigger
+                        aria-haspopup="true"
+                        aria-expanded="false"
+                        aria-controls="exploreDropdown"
+                    >
+                        <span class="menu-panel__trigger-label">Explorar</span>
+                        <span class="menu-panel__trigger-icon" aria-hidden="true">▾</span>
+                    </button>
+                    <div class="menu-dropdown" id="exploreDropdown" data-dropdown-menu role="menu" aria-hidden="true">
+                        <div class="menu-dropdown__content">
+                            <a
+                                href="index.php"
+                                class="menu-dropdown__link<?php echo $navStates['home'] ? ' is-active' : ''; ?>"
+                                role="menuitem"
+                                <?php echo $navStates['home'] ? 'aria-current="page"' : ''; ?>
+                                <?php echo $navStates['home'] ? 'data-current-label="Voce aqui"' : ''; ?>
+                            >
+                                <span class="menu-dropdown__label">Pagina Inicial</span>
+                                <?php if ($navStates['home']): ?>
+                                    <span class="menu-dropdown__badge" aria-hidden="true">agora</span>
+                                <?php endif; ?>
+                            </a>
+                            <a
+                                href="index.php#surprise-me"
+                                class="menu-dropdown__link"
+                                role="menuitem"
+                            >
+                                <span class="menu-dropdown__label">Surpreenda-me</span>
+                            </a>
+                            <a
+                                href="providers.php"
+                                class="menu-dropdown__link<?php echo $navStates['providers'] ? ' is-active' : ''; ?>"
+                                role="menuitem"
+                                <?php echo $navStates['providers'] ? 'aria-current="page"' : ''; ?>
+                                <?php echo $navStates['providers'] ? 'data-current-label="Voce aqui"' : ''; ?>
+                            >
+                                <span class="menu-dropdown__label">Filmes e s&eacute;ries por provedor</span>
+                                <?php if ($navStates['providers']): ?>
+                                    <span class="menu-dropdown__badge" aria-hidden="true">agora</span>
+                                <?php endif; ?>
+                            </a>
+                            <a
+                                href="index.php#streaming-trending"
+                                class="menu-dropdown__link"
+                                role="menuitem"
+                            >
+                                <span class="menu-dropdown__label">Tend&ecirc;ncias</span>
+                            </a>
+                        </div>
+                    </div>
+                </li>
             </ul>
             <div id="search-div" class="menu-panel__search">
                 <div class="search-panel">
@@ -523,22 +583,157 @@ if (session_status() === PHP_SESSION_NONE) {
 
 .menu-panel ul li {
     padding: 0;
+    overflow: visible;
 }
 
-.menu-panel ul li a {
+.menu-panel__item {
+    position: relative;
+    overflow: visible;
+}
+
+.menu-panel__trigger {
     display: inline-flex;
     align-items: center;
-    padding: 8px 16px;
+    gap: 10px;
+    padding: 10px 20px;
     border-radius: 999px;
+    border: 1px solid transparent;
+    background: rgba(255, 255, 255, 0.04);
     color: inherit;
-    transition: background 0.2s ease, color 0.2s ease;
+    font-size: 0.95rem;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    transition: background 0.25s ease, border-color 0.25s ease, transform 0.25s ease;
 }
 
-.menu-panel ul li a:hover,
-.menu-panel ul li a:focus {
-    background-color: rgba(77, 77, 77, 0.32);
+.menu-panel__trigger:hover,
+.menu-panel__trigger:focus {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.12);
     text-decoration: none;
     color: #fff;
+    transform: translateY(-1px);
+}
+
+.menu-panel__trigger:focus-visible {
+    outline: 2px solid rgba(255, 83, 112, 0.4);
+    outline-offset: 3px;
+}
+
+.menu-panel__trigger-icon {
+    font-size: 0.85rem;
+    transform: translateY(1px);
+    transition: transform 0.25s ease;
+}
+
+.menu-panel__item--dropdown.is-open .menu-panel__trigger-icon {
+    transform: rotate(180deg);
+}
+
+.menu-dropdown {
+    position: absolute;
+    top: calc(100% + 14px);
+    left: 0;
+    min-width: clamp(240px, 26vw, 300px);
+    padding: 16px;
+    border-radius: 20px;
+    background: linear-gradient(155deg, rgba(24, 26, 44, 0.92), rgba(14, 16, 30, 0.88));
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 28px 60px rgba(6, 5, 20, 0.55);
+    backdrop-filter: blur(20px) saturate(170%);
+    -webkit-backdrop-filter: blur(20px) saturate(170%);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    pointer-events: none;
+    transition: opacity 0.25s ease, transform 0.25s ease, visibility 0s linear 0.25s;
+    z-index: 22;
+    overflow: hidden;
+}
+
+.menu-dropdown::before {
+    content: "";
+    position: absolute;
+    inset: 1px;
+    border-radius: inherit;
+    background: radial-gradient(circle at top right, rgba(255, 90, 120, 0.18), transparent 55%);
+    mix-blend-mode: screen;
+    pointer-events: none;
+}
+
+.menu-panel__item--dropdown.is-open .menu-dropdown {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+    pointer-events: auto;
+    transition-delay: 0s;
+}
+
+.menu-dropdown__content {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.menu-dropdown__link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid transparent;
+    color: rgba(244, 245, 255, 0.88);
+    text-decoration: none;
+    font-size: 0.92rem;
+    letter-spacing: 0.01em;
+    transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.menu-dropdown__link:hover,
+.menu-dropdown__link:focus {
+    background: linear-gradient(135deg, rgba(255, 93, 124, 0.24), rgba(84, 118, 255, 0.24));
+    border-color: rgba(255, 255, 255, 0.16);
+    color: #fff;
+    text-decoration: none;
+    transform: translateX(2px);
+}
+
+.menu-dropdown__link.is-active {
+    background: linear-gradient(135deg, rgba(255, 96, 128, 0.32), rgba(104, 126, 255, 0.3));
+    border-color: rgba(255, 255, 255, 0.22);
+    color: #fff;
+    box-shadow: 0 18px 42px rgba(9, 9, 28, 0.42);
+}
+
+.menu-dropdown__label {
+    flex: 1 1 auto;
+    display: inline-flex;
+    align-items: center;
+}
+
+.menu-dropdown__badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    background: linear-gradient(135deg, rgba(255, 120, 140, 0.65), rgba(110, 134, 255, 0.58));
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    color: #fff;
+    box-shadow: 0 8px 20px rgba(8, 7, 18, 0.45);
+}
+
+@media (hover: hover) {
+    .menu-panel__item--dropdown:hover .menu-panel__trigger,
+    .menu-panel__item--dropdown:focus-within .menu-panel__trigger {
+        background: rgba(255, 255, 255, 0.08);
+        border-color: rgba(255, 255, 255, 0.12);
+    }
 }
 
 @media (max-width: 760px) {
@@ -655,16 +850,44 @@ if (session_status() === PHP_SESSION_NONE) {
         gap: 12px;
     }
 
-    .menu-panel ul li a {
-        justify-content: center;
-        padding: 12px;
-        border-radius: 14px;
-        background: rgba(255, 255, 255, 0.04);
+    .menu-panel__item {
+        width: 100%;
     }
 
-    .menu-panel ul li a:hover,
-    .menu-panel ul li a:focus {
-        background: rgba(255, 83, 112, 0.25);
+    .menu-panel__trigger {
+        width: 100%;
+        justify-content: space-between;
+        padding: 14px 16px;
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.06);
+    }
+
+    .menu-dropdown {
+        position: static;
+        width: 100%;
+        margin-top: 10px;
+        transform: none;
+        box-shadow: none;
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        max-height: 0;
+        padding: 0;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        overflow: hidden;
+        transition: opacity 0.25s ease, max-height 0.35s ease, padding 0.35s ease;
+    }
+
+    .menu-panel__item--dropdown.is-open .menu-dropdown {
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+        max-height: 500px;
+        padding: 14px;
+    }
+
+    .menu-dropdown__link {
+        padding: 14px;
     }
 
     #search-div {
