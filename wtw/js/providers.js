@@ -28,6 +28,110 @@
         return;
     }
 
+    const setupStickyRailSurface = () => {
+        const railSurface = document.querySelector('.providers-hero__rail-surface');
+        if (!railSurface) {
+            return;
+        }
+
+        const parent = railSurface.parentElement;
+        if (!parent) {
+            return;
+        }
+
+        const sentinel = document.createElement('div');
+        sentinel.className = 'providers-hero__rail-sentinel';
+        sentinel.setAttribute('aria-hidden', 'true');
+        parent.insertBefore(sentinel, railSurface);
+
+        const placeholder = document.createElement('div');
+        placeholder.className = 'providers-hero__rail-placeholder';
+        placeholder.setAttribute('aria-hidden', 'true');
+        parent.insertBefore(placeholder, railSurface.nextSibling);
+
+        const initialStyles = window.getComputedStyle(railSurface);
+        const initialMarginTop = initialStyles.marginTop;
+        const initialMarginBottom = initialStyles.marginBottom;
+
+        const header = document.getElementById('menu');
+        const offsetGap = 12;
+        let isFixed = false;
+
+        const getTopOffset = () => {
+            if (!header) {
+                return offsetGap;
+            }
+            const rect = header.getBoundingClientRect();
+            const fallback = header.offsetHeight || 0;
+            const base = rect.bottom > 0 ? rect.bottom : fallback;
+            return base + offsetGap;
+        };
+
+        const updateFixedMetrics = () => {
+            if (!isFixed) {
+                return;
+            }
+            const referenceRect = placeholder.getBoundingClientRect();
+            const surfaceRect = railSurface.getBoundingClientRect();
+            placeholder.style.height = `${surfaceRect.height}px`;
+            railSurface.style.width = `${referenceRect.width}px`;
+            railSurface.style.left = `${referenceRect.left}px`;
+            railSurface.style.top = `${getTopOffset()}px`;
+        };
+
+        const enableFixed = () => {
+            if (isFixed) {
+                updateFixedMetrics();
+                return;
+            }
+            const surfaceRect = railSurface.getBoundingClientRect();
+            placeholder.style.height = `${surfaceRect.height}px`;
+            placeholder.style.display = 'block';
+            placeholder.style.marginTop = initialMarginTop;
+            placeholder.style.marginBottom = initialMarginBottom;
+
+            railSurface.classList.add('providers-hero__rail-surface--fixed');
+            railSurface.style.width = `${surfaceRect.width}px`;
+            railSurface.style.left = `${surfaceRect.left}px`;
+            railSurface.style.top = `${getTopOffset()}px`;
+            isFixed = true;
+        };
+
+        const disableFixed = () => {
+            if (!isFixed) {
+                return;
+            }
+            isFixed = false;
+            placeholder.style.display = 'none';
+            placeholder.style.height = '';
+            placeholder.style.marginTop = '';
+            placeholder.style.marginBottom = '';
+            railSurface.classList.remove('providers-hero__rail-surface--fixed');
+            railSurface.style.width = '';
+            railSurface.style.left = '';
+            railSurface.style.top = '';
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            const entry = entries[0];
+            if (!entry) {
+                return;
+            }
+            if (entry.isIntersecting) {
+                disableFixed();
+            } else {
+                enableFixed();
+            }
+        });
+
+        observer.observe(sentinel);
+
+        window.addEventListener('resize', updateFixedMetrics, { passive: true });
+        window.addEventListener('scroll', updateFixedMetrics, { passive: true });
+    };
+
+    setupStickyRailSurface();
+
     const PROVIDER_POPULARITY_ORDER = [
         8,   // Netflix
         9,   // Prime Video

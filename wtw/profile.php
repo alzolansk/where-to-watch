@@ -434,7 +434,7 @@ $favoritesBadgeLabel = $favoritesCount . ' ' . ($favoritesCount === 1 ? 'título
 $favoritesTotalLabel = $favoritesBadgeLabel;
 $preferencesBadgeLabel = $preferencesCount . ' ' . ($preferencesCount === 1 ? 'item' : 'itens');
 
-$favoritesSummaryData = $favorites;
+$favoritesSummaryData = array_slice($favorites, 0, 12);
 $favoritesSummaryCount = count($favoritesSummaryData);
 $showFavoritesSummaryEmpty = $favoritesCount === 0 || $initialFeedbackMessage !== null;
 $showFavoritesListEmpty = $showFavoritesSummaryEmpty;
@@ -532,7 +532,7 @@ $favoritesList = $favorites;
                         <button type="button" class="profile-button profile-button--primary" data-profile-open-modal="favorites" <?php echo $isAuthenticated ? '' : 'disabled'; ?>>Gerenciar favoritos</button>
                     </div>
                 </header>
-                <div class="profile-favorite-rail-wrapper" data-profile-favorites-summary-viewport>
+                <div class="profile-favorite-rail-wrapper">
                     <ul class="profile-favorite-rail" data-profile-favorites-summary role="list">
                         <?php foreach ($favoritesSummaryData as $summaryIndex => $favorite): ?>
                         <?php
@@ -545,10 +545,11 @@ $favoritesList = $favorites;
                             }
                             $summaryTitle = $favorite['title'] ?? '';
                             $summaryDepth = $favoritesSummaryCount > 1
-                                ? ($favoritesSummaryCount - 1 - $summaryIndex) / ($favoritesSummaryCount - 1)
+                                ? $summaryIndex / ($favoritesSummaryCount - 1)
                                 : 0;
+                            $summaryLayer = $favoritesSummaryCount - $summaryIndex;
                         ?>
-                        <li class="favorite-tile favorite-tile--poster" style="--favorite-depth: <?php echo htmlspecialchars(number_format($summaryDepth, 4, '.', ''), ENT_QUOTES, 'UTF-8'); ?>;">
+                        <li class="favorite-tile favorite-tile--poster" style="--favorite-depth: <?php echo htmlspecialchars(number_format($summaryDepth, 4, '.', ''), ENT_QUOTES, 'UTF-8'); ?>; --favorite-layer: <?php echo htmlspecialchars((string) $summaryLayer, ENT_QUOTES, 'UTF-8'); ?>;">
                             <figure class="favorite-tile__poster" aria-hidden="true">
                                 <?php if ($summaryPoster): ?>
                                     <img src="<?php echo htmlspecialchars($summaryPoster, ENT_QUOTES, 'UTF-8'); ?>" alt="" loading="lazy" class="favorite-tile__image">
@@ -559,9 +560,7 @@ $favoritesList = $favorites;
                         </li>
                         <?php endforeach; ?>
                     </ul>
-                    <span class="profile-favorite-rail__overflow-indicator" data-profile-favorites-overflow-indicator aria-hidden="true" hidden></span>
                 </div>
-                <p class="sr-only" data-profile-favorites-overflow-hint hidden>Há mais favoritos disponíveis além dos exibidos neste painel.</p>
                 <p class="profile-empty profile-empty--rail" data-profile-favorites-summary-empty <?php echo $showFavoritesSummaryEmpty ? '' : 'hidden'; ?>>
                     <?php echo htmlspecialchars($favoritesEmptyMessage, ENT_QUOTES, 'UTF-8'); ?>
                 </p>

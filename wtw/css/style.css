@@ -1726,7 +1726,7 @@ button.prev:active, button.next:active {
     margin: 0;
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    gap: 10px;
 }
 
 .media-section .row .description .movie-name a{
@@ -1777,7 +1777,7 @@ button.prev:active, button.next:active {
     transform: translateY(0);
     pointer-events: none;
     transition:
-        opacity 0.2s ease,
+        opacity 0.45s ease,
         transform 0.55s cubic-bezier(0.22, 1, 0.36, 1),
         max-height 0.55s cubic-bezier(0.22, 1, 0.36, 1),
         margin-top 0.55s cubic-bezier(0.22, 1, 0.36, 1),
@@ -1815,6 +1815,7 @@ button.prev:active, button.next:active {
     max-height: 90px;
     transform: translateY(0);
     pointer-events: auto;
+    margin-top: 6px;
 }
 
 .media-section .row .description:hover .provider-preview,

@@ -29,9 +29,6 @@
   const favoritesEmpty = root.querySelector('[data-profile-favorites-empty]');
   const favoritesCountBadge = root.querySelector('[data-profile-favorites-count]');
   const favoritesSummaryList = root.querySelector('[data-profile-favorites-summary]');
-  const favoritesSummaryViewport = root.querySelector('[data-profile-favorites-summary-viewport]');
-  const favoritesOverflowIndicator = root.querySelector('[data-profile-favorites-overflow-indicator]');
-  const favoritesOverflowHint = root.querySelector('[data-profile-favorites-overflow-hint]');
   const favoritesSummaryEmpty = root.querySelector('[data-profile-favorites-summary-empty]');
   const favoritesTotalIndicator = root.querySelector('[data-profile-favorites-total]');
   const saveButton = root.querySelector('[data-profile-save]');
@@ -53,86 +50,22 @@
   const genreLabels = new Map();
   const providerLabels = new Map();
 
-  const applyFavoritesOverflowState = () => {
-    if (!favoritesSummaryList) {
-      return;
+  const getFavoritesSummaryLimit = () => {
+    const width = window.innerWidth || document.documentElement.clientWidth || 0;
+    if (width <= 480) {
+      return 4;
     }
-
-    const scrollWidth = favoritesSummaryList.scrollWidth;
-    const clientWidth = favoritesSummaryList.clientWidth;
-    const scrollLeft = favoritesSummaryList.scrollLeft;
-    const totalOverflow = scrollWidth - clientWidth > 1;
-    const hasHiddenToRight =
-      totalOverflow && scrollLeft + clientWidth < scrollWidth - 1;
-
-    if (favoritesSummaryViewport) {
-      favoritesSummaryViewport.classList.toggle(
-        'profile-favorite-rail-wrapper--overflow',
-        hasHiddenToRight,
-      );
+    if (width <= 768) {
+      return 6;
     }
-
-    favoritesSummaryList.classList.toggle(
-      'profile-favorite-rail--overflow',
-      hasHiddenToRight,
-    );
-
-    if (favoritesOverflowIndicator) {
-      favoritesOverflowIndicator.hidden = !hasHiddenToRight;
+    if (width <= 1024) {
+      return 8;
     }
-
-    if (favoritesOverflowHint) {
-      favoritesOverflowHint.hidden = !totalOverflow;
+    if (width <= 1280) {
+      return 10;
     }
+    return 11;
   };
-
-  let favoritesOverflowAnimationFrame = null;
-  const scheduleFavoritesOverflowUpdate = () => {
-    if (!favoritesSummaryList) {
-      return;
-    }
-    if (favoritesOverflowAnimationFrame !== null) {
-      return;
-    }
-    favoritesOverflowAnimationFrame = requestAnimationFrame(() => {
-      favoritesOverflowAnimationFrame = null;
-      applyFavoritesOverflowState();
-    });
-  };
-
-  if (favoritesSummaryList) {
-    try {
-      favoritesSummaryList.addEventListener('scroll', scheduleFavoritesOverflowUpdate, {
-        passive: true,
-      });
-    } catch (error) {
-      favoritesSummaryList.addEventListener('scroll', scheduleFavoritesOverflowUpdate);
-    }
-  }
-
-  if (typeof ResizeObserver === 'function' && favoritesSummaryViewport) {
-    const observer = new ResizeObserver(() => {
-      scheduleFavoritesOverflowUpdate();
-    });
-    observer.observe(favoritesSummaryViewport);
-  } else {
-    window.addEventListener('resize', scheduleFavoritesOverflowUpdate);
-  }
-
-  const triggerInitialFavoritesOverflowMeasurement = () => {
-    if (!favoritesSummaryList) {
-      return;
-    }
-    scheduleFavoritesOverflowUpdate();
-  };
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', triggerInitialFavoritesOverflowMeasurement, {
-      once: true,
-    });
-  } else {
-    triggerInitialFavoritesOverflowMeasurement();
-  }
 
   if (genresContainer) {
     genresContainer.querySelectorAll('[data-genre-id]').forEach((button) => {
@@ -401,24 +334,14 @@
     favoritesSummaryList.innerHTML = '';
 
     const favorites = Array.isArray(state.favorites) ? state.favorites : [];
-    const summaryItems = favorites.slice();
+    const limit = getFavoritesSummaryLimit();
+    const summaryItems = favorites.slice(0, limit);
 
     if (summaryItems.length === 0) {
       favoritesSummaryList.setAttribute('hidden', 'true');
       if (favoritesSummaryEmpty) {
         favoritesSummaryEmpty.hidden = false;
       }
-      if (favoritesSummaryViewport) {
-        favoritesSummaryViewport.classList.remove('profile-favorite-rail-wrapper--overflow');
-      }
-      favoritesSummaryList.classList.remove('profile-favorite-rail--overflow');
-      if (favoritesOverflowIndicator) {
-        favoritesOverflowIndicator.hidden = true;
-      }
-      if (favoritesOverflowHint) {
-        favoritesOverflowHint.hidden = true;
-      }
-      scheduleFavoritesOverflowUpdate();
       return;
     }
 
@@ -436,8 +359,9 @@
     summaryItems.forEach((favorite, index) => {
       const item = document.createElement('li');
       item.className = 'favorite-tile favorite-tile--poster';
-      const depth = totalSummary > 1 ? (totalSummary - 1 - index) / (totalSummary - 1) : 0;
+      const depth = totalSummary > 1 ? index / (totalSummary - 1) : 0;
       item.style.setProperty('--favorite-depth', depth.toFixed(4));
+      item.style.setProperty('--favorite-layer', String(totalSummary - index));
 
       const figure = document.createElement('figure');
       figure.className = 'favorite-tile__poster';
@@ -463,9 +387,22 @@
     });
 
     favoritesSummaryList.appendChild(fragment);
-
-    scheduleFavoritesOverflowUpdate();
   };
+
+  let favoritesSummaryRenderFrame = null;
+  const scheduleFavoritesSummaryRender = () => {
+    if (favoritesSummaryRenderFrame !== null) {
+      return;
+    }
+    favoritesSummaryRenderFrame = requestAnimationFrame(() => {
+      favoritesSummaryRenderFrame = null;
+      renderFavoritesSummary();
+    });
+  };
+
+  if (favoritesSummaryList) {
+    window.addEventListener('resize', scheduleFavoritesSummaryRender);
+  }
 
   const updateStats = () => {
     const favoritesCount = Array.isArray(state.favorites) ? state.favorites.length : 0;
