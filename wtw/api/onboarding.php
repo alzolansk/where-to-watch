@@ -663,30 +663,14 @@ function enrich_favorite_selections(array $favorites, array &$genres, array &$ke
     return $favorites;
 }
 
-function load_favorite_details(string $mediaType, int $tmdbId): array
+function &favorite_details_cache(): array
 {
     static $cache = [];
-    $cacheKey = $mediaType . ':' . $tmdbId;
-    if (array_key_exists($cacheKey, $cache)) {
-        return $cache[$cacheKey];
-    }
+    return $cache;
+}
 
-    require_once __DIR__ . '/../includes/tmdb.php';
-
-    try {
-        $response = tmdb_get(sprintf('/%s/%d', $mediaType, $tmdbId), [
-            'append_to_response' => 'keywords',
-            'language' => 'pt-BR',
-        ]);
-    } catch (Throwable $e) {
-        error_log('onboarding_favorite_metadata_error: ' . $e->getMessage());
-        return $cache[$cacheKey] = [];
-    }
-
-    if (!is_array($response)) {
-        return $cache[$cacheKey] = [];
-    }
-
+function process_favorite_details_response(string $mediaType, int $tmdbId, array $response): array
+{
     $title = normalise_label((string) ($response['title'] ?? $response['name'] ?? ''));
 
     $genres = [];
@@ -727,6 +711,38 @@ function load_favorite_details(string $mediaType, int $tmdbId): array
         }
     }
 
+    $collection = null;
+    if (!empty($response['belongs_to_collection']) && is_array($response['belongs_to_collection'])) {
+        $collectionId = (int) ($response['belongs_to_collection']['id'] ?? 0);
+        $collectionName = normalise_label((string) ($response['belongs_to_collection']['name'] ?? ''));
+        if ($collectionId > 0 || $collectionName !== '') {
+            $collection = [
+                'id' => $collectionId > 0 ? $collectionId : null,
+                'name' => $collectionName,
+            ];
+        }
+    }
+
+    $cast = [];
+    if (!empty($response['credits']['cast']) && is_array($response['credits']['cast'])) {
+        foreach ($response['credits']['cast'] as $index => $member) {
+            if ($index >= 12) {
+                break;
+            }
+            if (!is_array($member)) {
+                continue;
+            }
+            $name = normalise_label((string) ($member['name'] ?? ''));
+            if ($name === '') {
+                continue;
+            }
+            $cast[] = [
+                'id' => isset($member['id']) && (int) $member['id'] > 0 ? (int) $member['id'] : null,
+                'name' => mb_limit($name, 120),
+            ];
+        }
+    }
+
     $posterPath = normalise_logo_path($response['poster_path'] ?? null, null);
     $backdropPath = normalise_logo_path($response['backdrop_path'] ?? null, null);
     $posterUrl = tmdb_image_url($posterPath);
@@ -734,14 +750,99 @@ function load_favorite_details(string $mediaType, int $tmdbId): array
         $posterUrl = tmdb_image_url($backdropPath);
     }
 
-    return $cache[$cacheKey] = [
+    return [
         'title' => $title,
         'genres' => $genres,
         'keywords' => $keywords,
+        'collection' => $collection,
+        'cast' => $cast,
         'poster_path' => $posterPath,
         'poster_url' => $posterUrl,
         'backdrop_path' => $backdropPath,
     ];
+}
+
+function load_favorite_details(string $mediaType, int $tmdbId): array
+{
+    $cache = &favorite_details_cache();
+    $cacheKey = $mediaType . ':' . $tmdbId;
+    if (array_key_exists($cacheKey, $cache)) {
+        return $cache[$cacheKey];
+    }
+
+    require_once __DIR__ . '/../includes/tmdb.php';
+
+    try {
+        $response = tmdb_get(sprintf('/%s/%d', $mediaType, $tmdbId), [
+            'append_to_response' => 'keywords,credits',
+            'language' => 'pt-BR',
+        ]);
+    } catch (Throwable $e) {
+        error_log('onboarding_favorite_metadata_error: ' . $e->getMessage());
+        $cache[$cacheKey] = [];
+        return [];
+    }
+
+    if (!is_array($response)) {
+        $cache[$cacheKey] = [];
+        return [];
+    }
+
+    $details = process_favorite_details_response($mediaType, $tmdbId, $response);
+    $cache[$cacheKey] = $details;
+
+    return $details;
+}
+
+function prefetch_favorite_details_bulk(string $mediaType, array $ids): array
+{
+    $cache = &favorite_details_cache();
+    $uniqueIds = array_values(array_unique(array_filter(array_map('intval', $ids))));
+    if (empty($uniqueIds)) {
+        return [];
+    }
+
+    require_once __DIR__ . '/../includes/tmdb.php';
+
+    $requests = [];
+    foreach ($uniqueIds as $id) {
+        $cacheKey = $mediaType . ':' . $id;
+        if (!array_key_exists($cacheKey, $cache)) {
+            $requests[$id] = [
+                'path' => sprintf('/%s/%d', $mediaType, $id),
+                'params' => [
+                    'append_to_response' => 'keywords,credits',
+                    'language' => 'pt-BR',
+                ],
+            ];
+        }
+    }
+
+    $responses = [];
+    if (!empty($requests)) {
+        try {
+            $responses = tmdb_get_bulk($requests);
+        } catch (Throwable $e) {
+            error_log('favorite_details_bulk_error: ' . $e->getMessage());
+            $responses = [];
+        }
+    }
+
+    $results = [];
+    foreach ($uniqueIds as $id) {
+        $cacheKey = $mediaType . ':' . $id;
+        if (!array_key_exists($cacheKey, $cache)) {
+            $response = $responses[$id] ?? null;
+            if (!is_array($response)) {
+                $cache[$cacheKey] = [];
+                continue;
+            }
+            $cache[$cacheKey] = process_favorite_details_response($mediaType, $id, $response);
+        }
+        $results[$id] = $cache[$cacheKey];
+    }
+
+    return $results;
 }
 
 function format_favorite_terms_for_storage(array $terms, int $limit = 100): ?string
@@ -937,7 +1038,7 @@ function onboardingFavoritesRecommendations(array $favorites): array
         }
         $mediaTypeRaw = strtolower((string)($favorite['media_type'] ?? $favorite['type'] ?? 'movie'));
         $mediaType = $mediaTypeRaw === 'tv' ? 'tv' : 'movie';
-        $key = $mediaType . ':' . $id;
+        $key = $id . ':' . $mediaType;
         $existingKeys[$key] = true;
         $preparedFavorites[] = [
             'tmdb_id' => $id,
@@ -955,9 +1056,16 @@ function onboardingFavoritesRecommendations(array $favorites): array
     }
 
     $seedFavorites = array_slice($preparedFavorites, 0, 6);
+    $seedProfiles = [];
     $candidates = [];
 
     foreach ($seedFavorites as $seedIndex => $favorite) {
+        $seedKey = (int) $favorite['tmdb_id'] . ':' . $favorite['media_type'];
+        if (!isset($seedProfiles[$seedKey])) {
+            $seedDetails = load_favorite_details($favorite['media_type'], (int) $favorite['tmdb_id']);
+            $seedProfiles[$seedKey] = build_recommendation_match_profile($seedDetails);
+        }
+
         $items = [];
         try {
             $response = tmdb_get(sprintf('/%s/%d/recommendations', $favorite['media_type'], $favorite['tmdb_id']), [
@@ -992,7 +1100,7 @@ function onboardingFavoritesRecommendations(array $favorites): array
 
             $candidateTypeRaw = strtolower((string)($item['media_type'] ?? $favorite['media_type']));
             $candidateType = $candidateTypeRaw === 'tv' ? 'tv' : 'movie';
-            $candidateKey = $candidateType . ':' . $candidateId;
+            $candidateKey = $candidateId . ':' . $candidateType;
             if (isset($existingKeys[$candidateKey])) {
                 continue;
             }
@@ -1014,7 +1122,13 @@ function onboardingFavoritesRecommendations(array $favorites): array
                 $score += (float)$item['vote_average'] * 1.5;
             }
 
-            if (!isset($candidates[$candidateKey]) || $score > $candidates[$candidateKey]['score']) {
+            $existing = $candidates[$candidateKey] ?? null;
+            $seedKeys = $existing['seed_keys'] ?? [];
+            if (!in_array($seedKey, $seedKeys, true)) {
+                $seedKeys[] = $seedKey;
+            }
+
+            if ($existing === null || $score > ($existing['score'] ?? -INF)) {
                 $candidates[$candidateKey] = [
                     'tmdb_id' => $candidateId,
                     'media_type' => $candidateType,
@@ -1022,8 +1136,12 @@ function onboardingFavoritesRecommendations(array $favorites): array
                     'poster_path' => $posterPath,
                     'poster_url' => $posterUrl,
                     'backdrop_path' => $backdropPath,
+                    'seed_keys' => $seedKeys,
                     'score' => $score,
                 ];
+            } else {
+                $existing['seed_keys'] = $seedKeys;
+                $candidates[$candidateKey] = $existing;
             }
         }
     }
@@ -1059,6 +1177,30 @@ function onboardingFavoritesRecommendations(array $favorites): array
         }
     }
 
+    if (!empty($candidates)) {
+        $prefetchByType = [];
+        foreach ($candidates as $candidate) {
+            $type = $candidate['media_type'] ?? null;
+            $id = isset($candidate['tmdb_id']) ? (int) $candidate['tmdb_id'] : 0;
+            if ($type && $id > 0) {
+                $prefetchByType[$type][] = $id;
+            }
+        }
+        foreach ($prefetchByType as $type => $ids) {
+            prefetch_favorite_details_bulk($type, $ids);
+        }
+    }
+
+    foreach ($candidates as $candidateKey => &$candidate) {
+        $details = load_favorite_details($candidate['media_type'], (int) $candidate['tmdb_id']);
+        $profile = build_recommendation_match_profile($details);
+        $match = summarize_candidate_match($candidate['seed_keys'] ?? [], $seedProfiles, $profile);
+        if ($match !== null) {
+            $candidate['match'] = $match;
+        }
+    }
+    unset($candidate);
+
     $sorted = array_values($candidates);
     usort($sorted, static function (array $a, array $b): int {
         return ($b['score'] ?? 0) <=> ($a['score'] ?? 0);
@@ -1074,6 +1216,186 @@ function onboardingFavoritesRecommendations(array $favorites): array
         'ok' => true,
         'source' => 'recommendations',
         'results' => $limited,
+    ];
+}
+
+function build_recommendation_match_profile(array $details): array
+{
+    $genreIds = [];
+    $genreLabels = [];
+    if (!empty($details['genres']) && is_array($details['genres'])) {
+        foreach ($details['genres'] as $genreId => $genreName) {
+            $genreId = (int) $genreId;
+            if ($genreId <= 0) {
+                continue;
+            }
+            $genreIds[] = $genreId;
+            $label = normalise_label((string) $genreName);
+            if ($label !== '') {
+                $genreLabels[$genreId] = mb_limit($label, 80);
+            }
+        }
+    }
+
+    $keywords = [];
+    if (!empty($details['keywords']) && is_array($details['keywords'])) {
+        foreach ($details['keywords'] as $keyword) {
+            if (!is_array($keyword)) {
+                continue;
+            }
+            $label = normalise_label((string) ($keyword['label'] ?? $keyword['name'] ?? ''));
+            if ($label === '') {
+                continue;
+            }
+            $keywords[mb_lower($label)] = mb_limit($label, 120);
+        }
+    }
+
+    $cast = [];
+    if (!empty($details['cast']) && is_array($details['cast'])) {
+        foreach ($details['cast'] as $member) {
+            if (!is_array($member)) {
+                continue;
+            }
+            $name = normalise_label((string) ($member['name'] ?? ''));
+            if ($name === '') {
+                continue;
+            }
+            $id = isset($member['id']) && (int) $member['id'] > 0 ? (int) $member['id'] : null;
+            $key = $id !== null ? 'id:' . $id : 'name:' . mb_lower($name);
+            if (!isset($cast[$key])) {
+                $cast[$key] = mb_limit($name, 120);
+            }
+        }
+    }
+
+    $collection = null;
+    if (!empty($details['collection']) && is_array($details['collection'])) {
+        $collectionId = isset($details['collection']['id']) ? (int) $details['collection']['id'] : 0;
+        $collectionName = normalise_label((string) ($details['collection']['name'] ?? ''));
+        if ($collectionId > 0 || $collectionName !== '') {
+            $collection = [
+                'id' => $collectionId > 0 ? $collectionId : null,
+                'name' => $collectionName,
+            ];
+        }
+    }
+
+    return [
+        'genre_ids' => array_values(array_unique($genreIds)),
+        'genre_labels' => $genreLabels,
+        'keywords' => $keywords,
+        'cast' => $cast,
+        'collection' => $collection,
+    ];
+}
+
+function summarize_candidate_match(array $seedKeys, array $seedProfiles, array $candidateProfile): ?array
+{
+    $best = null;
+    foreach ($seedKeys as $seedKey) {
+        $seedProfile = $seedProfiles[$seedKey] ?? null;
+        if ($seedProfile === null) {
+            continue;
+        }
+        $result = evaluate_match_profiles($seedProfile, $candidateProfile);
+        if ($result['score'] <= 0) {
+            continue;
+        }
+        $result['seed'] = $seedKey;
+        if ($best === null || $result['score'] > $best['score']) {
+            $best = $result;
+        }
+    }
+
+    return $best;
+}
+
+function evaluate_match_profiles(array $seedProfile, array $candidateProfile): array
+{
+    $score = 0;
+    $reasons = [];
+
+    $seedCollection = $seedProfile['collection'] ?? null;
+    $candidateCollection = $candidateProfile['collection'] ?? null;
+    if ($seedCollection && $candidateCollection) {
+        $seedId = $seedCollection['id'] ?? null;
+        $candidateId = $candidateCollection['id'] ?? null;
+        if ($seedId !== null && $candidateId !== null && $seedId === $candidateId) {
+            $reasons['collection'] = $candidateCollection['name'] ?: $seedCollection['name'];
+            $score += 60;
+        } elseif ($seedId === null && $candidateId === null) {
+            $seedName = $seedCollection['name'] ?? '';
+            $candidateName = $candidateCollection['name'] ?? '';
+            if ($seedName !== '' && $candidateName !== '' && mb_lower($seedName) === mb_lower($candidateName)) {
+                $reasons['collection'] = $candidateName;
+                $score += 40;
+            }
+        }
+    }
+
+    $candidateCast = $candidateProfile['cast'] ?? [];
+    $seedCast = $seedProfile['cast'] ?? [];
+    if (!empty($candidateCast) && !empty($seedCast)) {
+        $sharedCastKeys = array_intersect(array_keys($candidateCast), array_keys($seedCast));
+        if (!empty($sharedCastKeys)) {
+            $castNames = [];
+            foreach ($sharedCastKeys as $index => $castKey) {
+                if ($index >= 5) {
+                    break;
+                }
+                $castNames[] = $candidateCast[$castKey] ?? $seedCast[$castKey];
+            }
+            if (!empty($castNames)) {
+                $reasons['cast'] = array_values(array_unique($castNames));
+                $score += count($sharedCastKeys) * 12;
+            }
+        }
+    }
+
+    $seedGenres = $seedProfile['genre_ids'] ?? [];
+    $candidateGenres = $candidateProfile['genre_ids'] ?? [];
+    if (!empty($seedGenres) && !empty($candidateGenres)) {
+        $sharedGenres = array_values(array_intersect($candidateGenres, $seedGenres));
+        if (!empty($sharedGenres)) {
+            $genreLabels = [];
+            foreach ($sharedGenres as $genreId) {
+                if (isset($candidateProfile['genre_labels'][$genreId])) {
+                    $genreLabels[] = $candidateProfile['genre_labels'][$genreId];
+                } elseif (isset($seedProfile['genre_labels'][$genreId])) {
+                    $genreLabels[] = $seedProfile['genre_labels'][$genreId];
+                }
+            }
+            if (!empty($genreLabels)) {
+                $reasons['genres'] = array_slice(array_values(array_unique($genreLabels)), 0, 4);
+            }
+            $score += count($sharedGenres) * 5;
+        }
+    }
+
+    $seedKeywords = $seedProfile['keywords'] ?? [];
+    $candidateKeywords = $candidateProfile['keywords'] ?? [];
+    if (!empty($seedKeywords) && !empty($candidateKeywords)) {
+        $sharedKeywords = array_values(array_intersect(array_keys($candidateKeywords), array_keys($seedKeywords)));
+        if (!empty($sharedKeywords)) {
+            $keywordLabels = [];
+            foreach ($sharedKeywords as $key) {
+                if (isset($candidateKeywords[$key])) {
+                    $keywordLabels[] = $candidateKeywords[$key];
+                } elseif (isset($seedKeywords[$key])) {
+                    $keywordLabels[] = $seedKeywords[$key];
+                }
+            }
+            if (!empty($keywordLabels)) {
+                $reasons['keywords'] = array_slice(array_values(array_unique($keywordLabels)), 0, 4);
+            }
+            $score += count($sharedKeywords) * 4;
+        }
+    }
+
+    return [
+        'score' => $score,
+        'reasons' => $reasons,
     ];
 }
 
