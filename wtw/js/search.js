@@ -10,36 +10,66 @@
     }
 
     const genreMap = {
-        28: 'AÃ§Ã£o',
+        28: 'Ação',
         12: 'Aventura',
-        16: 'AnimaÃ§Ã£o',
-        35: 'ComÃ©dia',
+        16: 'Animação',
+        35: 'Comédia',
         80: 'Crime',
-        99: 'DocumentÃ¡rio',
+        99: 'Documentário',
         18: 'Drama',
-        10751: 'FamÃ­lia',
+        10751: 'Família',
         14: 'Fantasia',
-        36: 'HistÃ³ria',
+        36: 'História',
         27: 'Terror',
-        10402: 'MÃºsica',
-        9648: 'MistÃ©rio',
+        10402: 'Música',
+        9648: 'Mistério',
         10749: 'Romance',
-        878: 'FicÃ§Ã£o CientÃ­fica',
+        878: 'Ficção Científica',
         10770: 'Filme de TV',
         53: 'Suspense',
         10752: 'Guerra',
         37: 'Faroeste',
-        10759: 'AÃ§Ã£o e Aventura',
+        10759: 'Ação e Aventura',
         10762: 'Infantil',
-        10763: 'NotÃ­cias',
+        10763: 'Notícias',
         10764: 'Reality',
         10765: 'Sci-Fi & Fantasia',
         10766: 'Novela',
         10767: 'Talk Show',
-        10768: 'Guerra & PolÃ­tica'
+        10768: 'Guerra & Política'
     };
 
     const fetchJson = (url) => fetch(url).then((response) => response.json());
+
+    const redirectToFullResults = (query) => {
+        if (!query) {
+            return;
+        }
+        const target = `search.php?q=${encodeURIComponent(query)}`;
+        window.location.href = target;
+    };
+
+    const renderViewAllAction = (query) => {
+        if (!resultsContainer) {
+            return;
+        }
+
+        const existingAction = resultsContainer.querySelector('.search-view-all');
+        if (existingAction) {
+            existingAction.remove();
+        }
+
+        if (!query) {
+            return;
+        }
+
+        const action = document.createElement('button');
+        action.type = 'button';
+        action.className = 'search-view-all';
+        action.textContent = 'Ver todos os resultados';
+        action.addEventListener('click', () => redirectToFullResults(query));
+        resultsContainer.appendChild(action);
+    };
 
     const toggleClearState = () => {
         if (!inputWrapper) {
@@ -119,6 +149,7 @@
 
     const showEmptyState = (message) => {
         resultsContainer.innerHTML = '';
+        renderViewAllAction('');
         const empty = document.createElement('p');
         empty.className = 'search-empty';
         empty.textContent = message;
@@ -134,11 +165,23 @@
         });
     }
 
+    searchInput.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+            const query = searchInput.value.trim();
+            if (query.length > 0) {
+                event.preventDefault();
+                redirectToFullResults(query);
+            }
+        }
+    });
+
+
     searchInput.addEventListener('input', () => {
         const query = searchInput.value.trim();
         toggleClearState();
 
         if (query.length === 0) {
+            renderViewAllAction('');
             return;
         }
 
@@ -160,6 +203,7 @@
                     const card = createResultCard(item);
                     resultsContainer.appendChild(card);
                 });
+                renderViewAllAction(query);
                 resultsContainer.style.display = 'block';
             })
             .catch((error) => {
@@ -167,6 +211,12 @@
                 showEmptyState('NÃ£o foi possÃ­vel carregar os resultados agora.');
             });
     });
+
+    const params = new URLSearchParams(window.location.search);
+    const initialQuery = params.get('q');
+    if (initialQuery && searchInput.value.trim().length === 0) {
+        searchInput.value = initialQuery;
+    }
 
     toggleClearState();
 });

@@ -891,8 +891,12 @@ $navStates = [
         max-width: none;
     }
 
-    .search-results {
-        position: static;
+    #search-div .search-results {
+        top: calc(100% + 12px);
+        left: 0;
+        right: 0;
+        width: 100%;
+        max-width: none;
     }
 }
 @media screen and (max-width: 500px) {
@@ -1016,12 +1020,14 @@ $navStates = [
     transform: scale(1);
 }
 
-.search-results {
+#search-div .search-results {
     position: absolute;
     top: calc(100% + 16px);
     left: 0;
+    right: 0;
     width: 100%;
     max-height: clamp(280px, 36vh, 400px);
+    max-height: min(calc(100vh - 140px), 420px);
     overflow-y: auto;
     padding: clamp(10px, 1.5vw, 18px);
     border-radius: 15px;
@@ -1030,10 +1036,11 @@ $navStates = [
     border: 1px solid rgba(255, 255, 255, 0.06);
     backdrop-filter: blur(28px) saturate(160%);
     -webkit-backdrop-filter: blur(28px) saturate(160%);
+    overscroll-behavior: contain;
     z-index: 999;
 }
 
-.search-results::before {
+#search-div .search-results::before {
     content: "";
     position: absolute;
     inset: 0;
@@ -1042,11 +1049,11 @@ $navStates = [
     pointer-events: none;
 }
 
-.search-results::-webkit-scrollbar {
+#search-div .search-results::-webkit-scrollbar {
     width: 6px;
 }
 
-.search-results::-webkit-scrollbar-thumb {
+#search-div .search-results::-webkit-scrollbar-thumb {
     background-color: rgba(255, 255, 255, 0.08);
     border-radius: 999px;
 }
@@ -1100,6 +1107,35 @@ $navStates = [
 .search-result-card figure {
     margin: 0;
 }
+
+.search-view-all {
+    margin-top: clamp(12px, 1.2vw, 16px);
+    width: 100%;
+    padding: 12px 18px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, rgba(216, 8, 20, 0.92), rgba(255, 92, 141, 0.85));
+    border: none;
+    color: #fff;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.25s ease, box-shadow 0.25s ease, filter 0.25s ease;
+    box-shadow: 0 18px 36px rgba(210, 49, 92, 0.35);
+}
+
+.search-view-all:hover,
+.search-view-all:focus-visible {
+    transform: translateY(-1px);
+    box-shadow: 0 22px 40px rgba(210, 49, 92, 0.4);
+    filter: brightness(1.05);
+}
+
+.search-view-all:focus-visible {
+    outline: 2px solid rgba(255, 255, 255, 0.4);
+    outline-offset: 3px;
+}
+
+
 
 
 .result-info {
@@ -1175,8 +1211,12 @@ $navStates = [
         max-width: none;
     }
 
-    .search-results {
-        position: static;
+    #search-div .search-results {
+        top: calc(100% + 12px);
+        left: 0;
+        right: 0;
+        width: 100%;
+        max-width: none;
     }
 }
 

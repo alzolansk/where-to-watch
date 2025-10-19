@@ -95,12 +95,30 @@
     updatedAt: null,
     inlineSuggestions: {
       anchorKey: null,
+      parentKey: null,
       items: [],
       isOpen: false,
       pending: false,
       lastUpdated: 0,
+      level: null,
     },
   };
+
+  const suggestionStore = {
+    level1: [],
+    level2: new Map(),
+    level3: new Map(),
+  };
+
+  const createInlineState = () => ({
+    anchorKey: null,
+    parentKey: null,
+    items: [],
+    isOpen: false,
+    pending: false,
+    lastUpdated: 0,
+    level: null,
+  });
 
   let recommendationsLoaded = false;
   let recommendationsLoading = false;
@@ -175,6 +193,30 @@
     }
 
     return info;
+  };
+
+  const normalizeSuggestion = (raw) => {
+    if (!raw || typeof raw !== 'object') {
+      return null;
+    }
+    const id = parseInt(raw.tmdb_id ?? raw.id ?? 0, 10);
+    const title = raw.title || raw.name || '';
+    if (!id || !title) {
+      return null;
+    }
+    const mediaType = (raw.media_type || raw.type || 'movie').toLowerCase() === 'tv' ? 'tv' : 'movie';
+    const posterInfo = extractPosterInfo(raw);
+    return {
+      tmdb_id: id,
+      media_type: mediaType,
+      title,
+      logo_path: raw.logo_path || null,
+      logo_url: raw.logo_url || raw.logo || null,
+      poster_path: posterInfo.poster_path,
+      poster_url: posterInfo.poster_url,
+      backdrop_path: posterInfo.backdrop_path,
+      origin_key: raw.origin_key || null,
+    };
   };
 
   const escapeSelector = (value) => {
@@ -456,6 +498,15 @@
     card.className = `favorite-poster-card favorite-poster-card--suggestion${extraClass}`;
     card.setAttribute('role', 'listitem');
     card.dataset.key = key;
+    if (options.level !== undefined && options.level !== null) {
+      card.dataset.suggestionLevel = String(options.level);
+    }
+    if (options.anchorKey) {
+      card.dataset.suggestionAnchor = options.anchorKey;
+    }
+    if (options.originKey) {
+      card.dataset.suggestionOrigin = options.originKey;
+    }
     if (options.dataset && typeof options.dataset === 'object') {
       Object.entries(options.dataset).forEach(([datasetKey, datasetValue]) => {
         if (datasetValue !== undefined && datasetValue !== null) {
@@ -482,7 +533,12 @@
     const ariaLabel = options.ariaLabel || `Adicionar ${data.title || data.name || 'titulo'} aos favoritos`;
     card.setAttribute('aria-label', ariaLabel);
     card.addEventListener('click', () => {
-      addFavorite(data, { source: options.source || 'suggestion' });
+      addFavorite(data, {
+        source: options.source || 'suggestion',
+        level: options.level ?? null,
+        anchorKey: options.anchorKey ?? null,
+        originKey: options.originKey ?? null,
+      });
     });
     card.appendChild(media);
     return card;
@@ -495,13 +551,7 @@
     const favorites = Array.isArray(state.favorites) ? state.favorites : [];
     const fragment = document.createDocumentFragment();
     const favoriteKeys = new Set();
-    const inlineState = state.inlineSuggestions || {
-      anchorKey: null,
-      items: [],
-      isOpen: false,
-      pending: false,
-      lastUpdated: 0,
-    };
+    const inlineState = state.inlineSuggestions || createInlineState();
     const inlineItems = Array.isArray(inlineState.items) ? inlineState.items.slice(0, 3) : [];
     const inlineHasItems = inlineItems.length > 0;
     if (inlineState.isOpen && !inlineHasItems) {
@@ -519,6 +569,14 @@
       const inlineType = (item.media_type || item.type || 'movie').toLowerCase() === 'tv' ? 'tv' : 'movie';
       inlineKeys.add(`${inlineId}:${inlineType}`);
     });
+    const inlineGroup = inlineState.anchorKey && inlineState.isOpen && inlineHasItems
+      ? {
+        anchorKey: inlineState.anchorKey,
+        parentKey: inlineState.parentKey || null,
+        level: inlineState.level === 3 ? 3 : 2,
+        items: inlineItems,
+      }
+      : null;
     const favoriteSet = new Set();
     favorites.forEach((favorite) => {
       favoriteSet.add(`${favorite.tmdb_id}:${favorite.media_type}`);
@@ -529,6 +587,7 @@
       inlineState.isOpen = false;
       inlineState.pending = false;
       inlineState.lastUpdated = Date.now();
+      inlineState.level = null;
     }
     favorites.forEach((favorite) => {
       const key = `${favorite.tmdb_id}:${favorite.media_type}`;
@@ -570,6 +629,66 @@
         slot.classList.add('favorite-slot--with-suggestions');
       }
       slot.appendChild(card);
+      if (inlineState.anchorKey === key && inlineState.pending) {
+        const pendingNotice = document.createElement('div');
+        pendingNotice.className = 'favorite-inline-placeholder';
+        pendingNotice.setAttribute('role', 'status');
+        pendingNotice.setAttribute('aria-live', 'polite');
+        pendingNotice.textContent = 'Carregando sugest\u00f5es relacionadas...';
+        slot.appendChild(pendingNotice);
+      }
+      if (inlineGroup && inlineGroup.anchorKey === key) {
+        const inlineList = document.createElement('div');
+        inlineList.className = 'favorite-inline-card-list';
+        inlineList.dataset.inlineSuggestions = inlineGroup.anchorKey;
+        inlineList.dataset.level = String(inlineGroup.level);
+        inlineList.setAttribute('role', 'group');
+        inlineList.setAttribute(
+          'aria-label',
+          inlineGroup.level === 3
+            ? 'Sugestões adicionais relacionadas ao favorito selecionado'
+            : 'Novas sugestões baseadas no favorito selecionado',
+        );
+        let inlineCount = 0;
+        inlineGroup.items.forEach((item) => {
+          const inlineId = parseInt(item.tmdb_id ?? item.id ?? 0, 10);
+          if (!inlineId) {
+            return;
+          }
+          const inlineType = (item.media_type || item.type || 'movie').toLowerCase() === 'tv' ? 'tv' : 'movie';
+          const inlineKey = `${inlineId}:${inlineType}`;
+          const suggestionCard = buildSuggestionCard(item, inlineKey, {
+            extraClass: 'favorite-poster-card--inline-suggestion',
+            source: 'suggestion',
+            level: inlineGroup.level,
+            anchorKey: inlineGroup.anchorKey,
+            originKey: inlineGroup.level === 3 ? inlineGroup.parentKey || inlineGroup.anchorKey : inlineGroup.anchorKey,
+            ariaLabel: `Adicionar ${item.title || item.name || 'titulo'} sugerido recentemente aos favoritos`,
+          });
+          suggestionCard.setAttribute('role', 'listitem');
+          inlineList.appendChild(suggestionCard);
+          inlineCount += 1;
+        });
+        if (inlineCount > 0) {
+          const closeButton = document.createElement('button');
+          closeButton.type = 'button';
+          closeButton.className = 'favorite-inline-card-list__close';
+          closeButton.setAttribute('aria-label', 'Fechar sugestões relacionadas');
+          closeButton.innerHTML = '&times;';
+          closeButton.addEventListener('click', () => {
+            inlineState.isOpen = false;
+            inlineState.pending = false;
+            inlineState.anchorKey = null;
+            inlineState.parentKey = null;
+            inlineState.items = [];
+            inlineState.lastUpdated = Date.now();
+            inlineState.level = null;
+            renderFavorites();
+          });
+          inlineList.appendChild(closeButton);
+          slot.appendChild(inlineList);
+        }
+      }
       fragment.appendChild(slot);
     });
     const suggestions = [];
@@ -578,12 +697,11 @@
         inlineKeys.forEach((key) => favoriteKeys.add(key));
       }
       state.recommendations.forEach((item) => {
-        const id = parseInt(item.tmdb_id ?? item.id ?? 0, 10);
-        if (!id) {
+        const normalized = normalizeSuggestion(item);
+        if (!normalized) {
           return;
         }
-        const mediaType = (item.media_type || item.type || 'movie').toLowerCase() === 'tv' ? 'tv' : 'movie';
-        const key = `${id}:${mediaType}`;
+        const key = favoriteKey(normalized.tmdb_id, normalized.media_type);
         if (!key || favoriteKeys.has(key)) {
           return;
         }
@@ -591,24 +709,17 @@
           return;
         }
         favoriteKeys.add(key);
-        const posterInfo = extractPosterInfo(item);
         suggestions.push({
           key,
-          data: {
-            tmdb_id: id,
-            media_type: mediaType,
-            title: item.title || item.name || '',
-            logo_path: item.logo_path || null,
-            logo_url: item.logo_url || null,
-            poster_path: posterInfo.poster_path,
-            poster_url: posterInfo.poster_url,
-            backdrop_path: posterInfo.backdrop_path,
-          },
+          data: normalized,
         });
       });
     }
     const hasFavorites = favorites.length > 0;
     const hasSuggestions = suggestions.length > 0 || (inlineState.isOpen && inlineHasItems);
+    const shouldShowLoadingIndicator = hasFavorites
+      && !hasSuggestions
+      && (!recommendationsLoaded || recommendationsLoading || inlineState.pending);
     if (!hasFavorites && !hasSuggestions) {
       favoritesList.setAttribute('hidden', 'true');
       if (favoritesEmpty) {
@@ -622,74 +733,34 @@
       favoritesEmpty.hidden = true;
     }
     favoritesList.appendChild(fragment);
-    if (inlineState.anchorKey && inlineState.isOpen && inlineHasItems) {
-      const anchorSelector = `[data-favorite-slot="${escapeSelector(inlineState.anchorKey)}"]`;
-      const anchorSlot = favoritesList.querySelector(anchorSelector);
-      if (anchorSlot) {
-        const strip = document.createElement('div');
-        strip.className = 'favorite-inline-suggestions';
-        strip.dataset.inlineSuggestions = inlineState.anchorKey;
-        strip.setAttribute('role', 'group');
-        strip.setAttribute('aria-label', 'Novas sugestões baseadas no favorito selecionado');
-        const meta = document.createElement('div');
-        meta.className = 'favorite-inline-suggestions__meta';
-        const label = document.createElement('span');
-        label.className = 'favorite-inline-suggestions__label';
-        label.textContent = 'Novas sugestões';
-        const hint = document.createElement('p');
-        hint.className = 'favorite-inline-suggestions__hint';
-        hint.textContent = 'Inspiradas no título que você acabou de favoritar.';
-        meta.appendChild(label);
-        meta.appendChild(hint);
-        const list = document.createElement('div');
-        list.className = 'favorite-inline-suggestions__list';
-        inlineItems.forEach((item) => {
-          const inlineId = parseInt(item.tmdb_id ?? item.id ?? 0, 10);
-          if (!inlineId) {
-            return;
-          }
-          const inlineType = (item.media_type || item.type || 'movie').toLowerCase() === 'tv' ? 'tv' : 'movie';
-          const inlineKey = `${inlineId}:${inlineType}`;
-          const card = buildSuggestionCard(item, inlineKey, {
-            extraClass: 'favorite-inline-suggestions__item',
-            source: 'suggestion',
-            ariaLabel: `Adicionar ${item.title || item.name || 'titulo'} sugerido recentemente aos favoritos`,
-          });
-          list.appendChild(card);
-        });
-        const closeButton = document.createElement('button');
-        closeButton.type = 'button';
-        closeButton.className = 'favorite-inline-suggestions__close';
-        closeButton.setAttribute('aria-label', 'Fechar sugestões relacionadas');
-        closeButton.innerHTML = '&times;';
-        closeButton.addEventListener('click', () => {
-          strip.classList.add('is-closing');
-          inlineState.isOpen = false;
-          inlineState.pending = false;
-          inlineState.anchorKey = null;
-          inlineState.items = [];
-          inlineState.lastUpdated = Date.now();
-          setTimeout(() => {
-            renderFavorites();
-          }, 260);
-        });
-        strip.appendChild(meta);
-        strip.appendChild(list);
-        strip.appendChild(closeButton);
-        anchorSlot.appendChild(strip);
+    if (inlineGroup) {
+      const inlineSelector = `[data-inline-suggestions="${escapeSelector(inlineGroup.anchorKey)}"]`;
+      const inlineElement = favoritesList.querySelector(inlineSelector);
+      if (inlineElement) {
         requestAnimationFrame(() => {
-          strip.classList.add('is-open');
+          inlineElement.classList.add('is-open');
         });
       }
+    }
+    if (shouldShowLoadingIndicator) {
+      const status = document.createElement('div');
+      status.className = 'favorite-suggestions-status';
+      status.setAttribute('role', 'status');
+      status.setAttribute('aria-live', 'polite');
+      status.textContent = 'Carregando sugest\u00f5es...';
+      favoritesList.appendChild(status);
     }
     suggestions.forEach(({ key, data }) => {
       const card = buildSuggestionCard(data, key, {
         source: 'suggestion',
+        level: 1,
+        anchorKey: key,
       });
       favoritesList.appendChild(card);
     });
     updateStats();
   };
+
   const scheduleRecommendationsRefresh = (options = {}) => {
     if (!isAuthenticated) {
       return;
@@ -874,19 +945,74 @@
     }
     const posterInfo = extractPosterInfo(favorite);
     const fromSuggestion = options && options.source === 'suggestion';
-    const inlineState = state.inlineSuggestions || {
-      anchorKey: null,
-      items: [],
-      isOpen: false,
-      pending: false,
-      lastUpdated: 0,
-    };
+    const inlineState = state.inlineSuggestions || createInlineState();
     if (fromSuggestion) {
-      inlineState.anchorKey = key;
-      inlineState.items = [];
-      inlineState.isOpen = false;
-      inlineState.pending = true;
-      inlineState.lastUpdated = Date.now();
+      const sourceLevel = typeof options.level === 'number' ? options.level : null;
+      const providedAnchor = typeof options.anchorKey === 'string' && options.anchorKey !== '' ? options.anchorKey : null;
+      const toNormalizedList = (list) => {
+        if (!Array.isArray(list)) {
+          return [];
+        }
+        return list
+          .map((entry) => normalizeSuggestion(entry) || entry)
+          .filter((entry) => entry && entry.tmdb_id && entry.title);
+      };
+
+      if (sourceLevel === 1) {
+        const anchorKey = providedAnchor || key;
+        const level2Raw = suggestionStore.level2.get(anchorKey) || [];
+        const level2Items = toNormalizedList(level2Raw);
+        suggestionStore.level2.delete(anchorKey);
+        inlineState.anchorKey = anchorKey;
+        inlineState.parentKey = null;
+        inlineState.items = level2Items;
+        inlineState.isOpen = level2Items.length > 0;
+        inlineState.pending = false;
+        inlineState.lastUpdated = Date.now();
+        inlineState.level = inlineState.isOpen ? 2 : null;
+        if (!inlineState.isOpen) {
+          inlineState.anchorKey = null;
+          inlineState.level = null;
+        }
+      } else if (sourceLevel === 2) {
+        const level1Anchor = providedAnchor || inlineState.anchorKey || null;
+        const cachedLevel3 = suggestionStore.level3.get(key);
+        inlineState.anchorKey = key;
+        inlineState.parentKey = level1Anchor;
+        inlineState.lastUpdated = Date.now();
+        if (Array.isArray(cachedLevel3) && cachedLevel3.length > 0) {
+          const normalized = toNormalizedList(cachedLevel3);
+          inlineState.items = normalized;
+          inlineState.isOpen = normalized.length > 0;
+          inlineState.pending = false;
+          inlineState.level = 3;
+        } else {
+          inlineState.items = [];
+          inlineState.isOpen = false;
+          inlineState.pending = true;
+          inlineState.level = 3;
+          suggestionStore.level3.delete(key);
+          state.inlineSuggestions = inlineState;
+          fetchFavoriteRecommendations({ anchor: key, level: 3, silent: true });
+        }
+      } else if (sourceLevel === 3) {
+        inlineState.anchorKey = null;
+        inlineState.parentKey = null;
+        inlineState.items = [];
+        inlineState.isOpen = false;
+        inlineState.pending = false;
+        inlineState.lastUpdated = Date.now();
+        inlineState.level = null;
+        suggestionStore.level3.delete(key);
+      } else {
+        inlineState.anchorKey = key;
+        inlineState.parentKey = null;
+        inlineState.items = [];
+        inlineState.isOpen = false;
+        inlineState.pending = true;
+        inlineState.lastUpdated = Date.now();
+        inlineState.level = null;
+      }
       state.inlineSuggestions = inlineState;
     }
     state.favorites.push({
@@ -900,6 +1026,7 @@
       backdrop_path: posterInfo.backdrop_path,
     });
     state.recommendations = state.recommendations.filter((item) => favoriteKey(item.tmdb_id, item.media_type) !== key);
+    suggestionStore.level1 = state.recommendations.slice();
     renderFavorites();
     updateFeedback('Favorito adicionado com sucesso.', 'success');
     scheduleRecommendationsRefresh();
@@ -1000,18 +1127,35 @@
     if (!isAuthenticated) {
       return;
     }
-    if (recommendationsReloadTimeout) {
-      clearTimeout(recommendationsReloadTimeout);
-      recommendationsReloadTimeout = null;
-    }
-    if (recommendationsLoading) {
-      return;
-    }
+
+    const anchorRaw = options && (options.anchor ?? options.anchorKey);
+    const anchorKey = typeof anchorRaw === 'string' ? anchorRaw.trim() : '';
+    const anchor = anchorKey !== '' ? anchorKey : null;
+    const requestedLevel = typeof options.level === 'number' ? options.level : null;
+    const isAnchorRequest = Boolean(anchor);
     const silent = !!(options && options.silent);
-    recommendationsLoading = true;
+
+    if (!isAnchorRequest) {
+      if (recommendationsReloadTimeout) {
+        clearTimeout(recommendationsReloadTimeout);
+        recommendationsReloadTimeout = null;
+      }
+      if (recommendationsLoading) {
+        return;
+      }
+      recommendationsLoading = true;
+    }
+
     try {
       const url = new URL(apiUrl, window.location.href);
       url.searchParams.set('resource', 'recommendations');
+      if (anchor) {
+        url.searchParams.set('anchor', anchor);
+      }
+      if (requestedLevel !== null && !Number.isNaN(requestedLevel)) {
+        url.searchParams.set('level', String(requestedLevel));
+      }
+
       const response = await fetch(url.toString(), {
         credentials: 'include',
       });
@@ -1019,88 +1163,111 @@
         throw new Error('fetch_failed');
       }
       const data = await response.json();
-      const rawResults = Array.isArray(data.results) ? data.results : [];
-      const unique = new Map();
-      rawResults.forEach((raw) => {
-        if (!raw || typeof raw !== 'object') {
-          return;
-        }
-        const id = parseInt(raw.tmdb_id ?? raw.id ?? 0, 10);
-        if (!id) {
-          return;
-        }
-        const mediaType = (raw.media_type || raw.type || 'movie').toLowerCase() === 'tv' ? 'tv' : 'movie';
-        const key = favoriteKey(id, mediaType);
-        if (!key || unique.has(key)) {
-          return;
-        }
-        const posterInfo = extractPosterInfo(raw);
-        unique.set(key, {
-          tmdb_id: id,
-          media_type: mediaType,
-          title: raw.title || raw.name || '',
-          logo_path: raw.logo_path || null,
-          logo_url: raw.logo_url || null,
-          poster_path: posterInfo.poster_path,
-          poster_url: posterInfo.poster_url,
-          backdrop_path: posterInfo.backdrop_path,
-        });
-      });
-      state.recommendations = Array.from(unique.values());
-      const inlineState = state.inlineSuggestions || {
-        anchorKey: null,
-        items: [],
-        isOpen: false,
-        pending: false,
-        lastUpdated: 0,
-      };
-      if (inlineState.anchorKey) {
-        const favoritesSet = new Set(
-          state.favorites.map((favorite) => favoriteKey(favorite.tmdb_id, favorite.media_type)),
-        );
-        const inlineCandidates = [];
-        state.recommendations.some((candidate) => {
-          if (!candidate) {
-            return false;
+
+      if (isAnchorRequest) {
+        const level3Raw = Array.isArray(data.level3) ? data.level3 : (Array.isArray(data.results) ? data.results : []);
+        const normalizedLevel3 = level3Raw.map((item) => normalizeSuggestion(item)).filter((item) => item);
+        suggestionStore.level3.set(anchor, normalizedLevel3);
+        const inlineState = state.inlineSuggestions || createInlineState();
+        if (inlineState.anchorKey === anchor && inlineState.level === 3) {
+          inlineState.items = normalizedLevel3;
+          inlineState.isOpen = normalizedLevel3.length > 0;
+          inlineState.pending = false;
+          inlineState.lastUpdated = Date.now();
+          if (!inlineState.isOpen) {
+            inlineState.anchorKey = null;
+            inlineState.parentKey = null;
+            inlineState.level = null;
           }
-          const candidateKey = favoriteKey(candidate.tmdb_id, candidate.media_type);
-          if (!candidateKey || favoritesSet.has(candidateKey)) {
-            return false;
-          }
-          inlineCandidates.push(candidate);
-          return inlineCandidates.length >= 3;
-        });
-        inlineState.items = inlineCandidates;
-        inlineState.pending = false;
-        inlineState.isOpen = inlineCandidates.length > 0;
-        inlineState.lastUpdated = Date.now();
-        if (inlineCandidates.length === 0) {
-          inlineState.anchorKey = null;
+          state.inlineSuggestions = inlineState;
+          renderFavorites();
         }
-        state.inlineSuggestions = inlineState;
-      } else if (inlineState.pending) {
+        return;
+      }
+
+      const level1Raw = Array.isArray(data.level1) ? data.level1 : (Array.isArray(data.results) ? data.results : []);
+      const level1 = level1Raw.map((item) => normalizeSuggestion(item)).filter((item) => item);
+      suggestionStore.level1 = level1.slice();
+      state.recommendations = level1.slice();
+
+      suggestionStore.level2 = new Map();
+      const level2Raw = data.level2;
+      if (level2Raw && typeof level2Raw === 'object') {
+        Object.entries(level2Raw).forEach(([key, list]) => {
+          const normalizedList = Array.isArray(list)
+            ? list.map((item) => normalizeSuggestion(item)).filter((item) => item)
+            : [];
+          if (normalizedList.length > 0) {
+            suggestionStore.level2.set(key, normalizedList);
+          }
+        });
+      }
+
+      const inlineState = state.inlineSuggestions || createInlineState();
+
+      if (inlineState.anchorKey && inlineState.level === 2) {
+        const preloaded = suggestionStore.level2.get(inlineState.anchorKey) || [];
+        if (inlineState.pending || (!inlineState.isOpen && preloaded.length > 0)) {
+          inlineState.items = preloaded;
+          inlineState.isOpen = preloaded.length > 0;
+          inlineState.pending = false;
+          inlineState.lastUpdated = Date.now();
+          inlineState.level = inlineState.isOpen ? 2 : null;
+          if (!inlineState.isOpen) {
+            inlineState.anchorKey = null;
+            inlineState.level = null;
+          }
+          state.inlineSuggestions = inlineState;
+        }
+      } else if (inlineState.pending && !inlineState.anchorKey) {
         inlineState.pending = false;
         inlineState.lastUpdated = Date.now();
+        inlineState.level = null;
         state.inlineSuggestions = inlineState;
       }
+
       recommendationsLoaded = true;
+      renderFavorites();
     } catch (error) {
       console.error('favorites_recommendations_error', error);
-      state.recommendations = [];
-      if (state.inlineSuggestions) {
-        state.inlineSuggestions.pending = false;
-        state.inlineSuggestions.isOpen = false;
-        state.inlineSuggestions.items = [];
-        state.inlineSuggestions.anchorKey = null;
-        state.inlineSuggestions.lastUpdated = Date.now();
+      if (isAnchorRequest) {
+        const inlineState = state.inlineSuggestions || createInlineState();
+        if (inlineState.anchorKey === anchor && inlineState.level === 3) {
+          inlineState.pending = false;
+          inlineState.isOpen = false;
+          inlineState.anchorKey = null;
+          inlineState.parentKey = null;
+          inlineState.level = null;
+          inlineState.items = [];
+          inlineState.lastUpdated = Date.now();
+          state.inlineSuggestions = inlineState;
+          renderFavorites();
+        }
+        if (!silent) {
+          updateFeedback('Nao foi possivel carregar sugestoes adicionais agora.', 'error');
+        }
+      } else {
+        state.recommendations = [];
+        suggestionStore.level1 = [];
+        if (state.inlineSuggestions) {
+          state.inlineSuggestions.pending = false;
+          state.inlineSuggestions.isOpen = false;
+          state.inlineSuggestions.items = [];
+          state.inlineSuggestions.anchorKey = null;
+          state.inlineSuggestions.parentKey = null;
+          state.inlineSuggestions.level = null;
+          state.inlineSuggestions.lastUpdated = Date.now();
+        }
+        recommendationsLoaded = true;
+        if (!silent) {
+          updateFeedback('Nao foi possivel carregar sugestoes no momento.', 'error');
+        }
+        renderFavorites();
       }
-      recommendationsLoaded = true;
-      if (!silent) {
-        updateFeedback('Nao foi possivel carregar sugestoes no momento.', 'error');
+    } finally {
+      if (!isAnchorRequest) {
+        recommendationsLoading = false;
       }
-        } finally {
-      recommendationsLoading = false;
-      renderFavorites();
     }
   };
 
@@ -1298,3 +1465,4 @@
     updateFeedback('Faca login para acessar todas as funcionalidades do perfil.', 'error');
   }
 })();
+

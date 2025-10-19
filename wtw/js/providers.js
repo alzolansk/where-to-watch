@@ -28,6 +28,65 @@
         return;
     }
 
+    const defaultResultsCaption = elements.resultsCaption
+        ? elements.resultsCaption.textContent.trim()
+        : '';
+    const loadingCaption = 'Buscando destaques personalizados...';
+
+    if (elements.loading) {
+        elements.loading.setAttribute('aria-hidden', 'true');
+        elements.loading.setAttribute('aria-busy', 'false');
+    }
+
+    const PROVIDERS_SKELETON_CARDS = 8;
+    let clearLoadingSkeleton = null;
+
+    const createSkeletonCard = () => {
+        const card = document.createElement('article');
+        card.className = 'providers-skeleton-card';
+        card.innerHTML = `
+            <div class="providers-skeleton-card__poster skeleton-block"></div>
+            <div class="providers-skeleton-card__meta">
+                <span class="skeleton-block skeleton-chip"></span>
+                <span class="skeleton-block skeleton-line skeleton-line--lg"></span>
+                <span class="skeleton-block skeleton-line skeleton-line--md"></span>
+                <span class="skeleton-block skeleton-line skeleton-line--xs"></span>
+                <div class="providers-skeleton-card__chips">
+                    <span class="skeleton-block skeleton-chip skeleton-chip--lg"></span>
+                    <span class="skeleton-block skeleton-chip"></span>
+                </div>
+                <span class="skeleton-block skeleton-button skeleton-button--primary providers-skeleton-card__cta"></span>
+            </div>
+        `;
+        return card;
+    };
+
+    const applyProvidersSkeleton = () => {
+        if (!elements.grid) {
+            return () => {};
+        }
+
+        const fragment = document.createDocumentFragment();
+        for (let index = 0; index < PROVIDERS_SKELETON_CARDS; index += 1) {
+            fragment.appendChild(createSkeletonCard());
+        }
+
+        elements.grid.dataset.loadingSkeleton = 'providers';
+        elements.grid.classList.add('is-loading');
+        elements.grid.setAttribute('aria-busy', 'true');
+        elements.grid.replaceChildren(fragment);
+
+        return () => {
+            if (!elements.grid || elements.grid.dataset.loadingSkeleton !== 'providers') {
+                return;
+            }
+            elements.grid.classList.remove('is-loading');
+            elements.grid.removeAttribute('data-loading-skeleton');
+            elements.grid.removeAttribute('aria-busy');
+            elements.grid.innerHTML = '';
+        };
+    };
+
     const setupStickyRailSurface = () => {
         const railSurface = document.querySelector('.providers-hero__rail-surface');
         if (!railSurface) {
@@ -288,7 +347,47 @@ const updateProviderRailNav = () => {
         return list.filter((value) => Number.isInteger(value) && value > 0);
     };
 
-    const setLoading = () => {};
+    const setLoading = (isLoading) => {
+        if (!elements.grid) {
+            return;
+        }
+
+        if (isLoading) {
+            if (clearLoadingSkeleton) {
+                clearLoadingSkeleton();
+                clearLoadingSkeleton = null;
+            }
+
+            if (elements.resultsCaption) {
+                elements.resultsCaption.textContent = loadingCaption;
+            }
+            if (elements.resultsCount) {
+                elements.resultsCount.textContent = '...';
+            }
+            if (elements.loading) {
+                elements.loading.hidden = true;
+                elements.loading.setAttribute('aria-busy', 'true');
+            }
+
+            setEmptyState('hidden');
+            clearLoadingSkeleton = applyProvidersSkeleton();
+            return;
+        }
+
+        if (clearLoadingSkeleton) {
+            clearLoadingSkeleton();
+            clearLoadingSkeleton = null;
+        } else {
+            elements.grid.classList.remove('is-loading');
+            elements.grid.removeAttribute('data-loading-skeleton');
+            elements.grid.removeAttribute('aria-busy');
+        }
+
+        if (elements.loading) {
+            elements.loading.hidden = true;
+            elements.loading.setAttribute('aria-busy', 'false');
+        }
+    };
 
 
     const setEmptyState = (mode) => {
@@ -944,11 +1043,33 @@ const updateResultsCaption = (count) => {
         }
     };
 
-    const fetchTitles = async () => {
-        
+    const resetResultsHeader = (message = defaultResultsCaption) => {
+        if (elements.resultsCount) {
+            elements.resultsCount.textContent = '';
+        }
+        if (elements.resultsCaption) {
+            elements.resultsCaption.textContent = message;
+        }
+    };
 
+    const fetchTitles = async () => {
         const token = ++state.fetchToken;
-        setLoading();
+
+        if (!state.selected.size) {
+            setLoading(false);
+            state.availability = new Map();
+            if (elements.grid) {
+                elements.grid.innerHTML = '';
+                elements.grid.classList.remove('is-loading');
+                elements.grid.removeAttribute('data-loading-skeleton');
+                elements.grid.removeAttribute('aria-busy');
+            }
+            resetResultsHeader();
+            setEmptyState('no-selection');
+            return;
+        }
+
+        setLoading(true);
 
         try {
             const requests = [];
@@ -979,6 +1100,7 @@ const updateResultsCaption = (count) => {
                 .slice(0, MAX_RESULTS);
 
             state.availability = new Map();
+            setLoading(false);
             renderTitles(combined);
 
             const availability = await fetchAvailabilityForItems(combined);
@@ -990,13 +1112,19 @@ const updateResultsCaption = (count) => {
             applyAvailabilityToRenderedTitles(state.availability);
         } catch (error) {
             console.error(error);
+            if (token !== state.fetchToken) {
+                return;
+            }
             state.availability = new Map();
-            renderTitles([]);
-            updateResultsCaption(0);
-            setEmptyState('no-results');
+            setLoading(false);
+            if (elements.grid) {
+                elements.grid.innerHTML = '';
+            }
+            resetResultsHeader('Nao foi possivel carregar os destaques agora. Tente novamente em instantes.');
+            setEmptyState('error');
         } finally {
             if (token === state.fetchToken) {
-                
+                setLoading(false);
             }
         }
     };

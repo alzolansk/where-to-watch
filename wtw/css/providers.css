@@ -537,6 +537,10 @@
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
 }
 
+.providers-grid[data-loading-skeleton] {
+    pointer-events: none;
+}
+
 .providers-grid.is-updating {
     opacity: 0.45;
     transition: opacity 0.25s ease;
@@ -546,6 +550,65 @@
 @media (max-width: 640px) {
     .providers-grid {
         grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    }
+}
+
+.providers-skeleton-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(14px, 2.2vw, 20px);
+    padding: clamp(18px, 2.4vw, 24px);
+    border-radius: clamp(18px, 3vw, 26px);
+    background: linear-gradient(150deg, rgba(255, 255, 255, 0.22), rgba(108, 116, 186, 0.12), rgba(16, 18, 28, 0.78));
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 24px 48px rgba(5, 7, 18, 0.52);
+    min-height: clamp(240px, 32vw, 340px);
+    overflow: hidden;
+}
+
+.providers-skeleton-card::before {
+    content: "";
+    position: absolute;
+    inset: -45% -28% auto auto;
+    width: clamp(200px, 32vw, 340px);
+    height: clamp(200px, 32vw, 340px);
+    background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.26), rgba(255, 255, 255, 0));
+    opacity: 0.55;
+    filter: blur(30px);
+}
+
+.providers-skeleton-card > * {
+    position: relative;
+    z-index: 1;
+}
+
+.providers-skeleton-card__poster {
+    width: 100%;
+    aspect-ratio: 2 / 3;
+    border-radius: clamp(18px, 3vw, 24px);
+}
+
+.providers-skeleton-card__meta {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(10px, 2vw, 16px);
+}
+
+.providers-skeleton-card__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.providers-skeleton-card__cta {
+    align-self: flex-start;
+}
+
+@media (max-width: 640px) {
+    .providers-skeleton-card {
+        min-height: clamp(220px, 60vw, 300px);
+        padding: clamp(16px, 4vw, 22px);
     }
 }
 

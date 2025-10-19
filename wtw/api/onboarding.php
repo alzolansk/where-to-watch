@@ -45,7 +45,12 @@ if ($resource === 'recommendations') {
         ensure_onboarding_schema($pdo);
         $preferences = fetchPreferences($pdo, $userId);
         $favorites = is_array($preferences['favorites'] ?? null) ? $preferences['favorites'] : [];
-        $response = onboardingFavoritesRecommendations($favorites);
+        $anchorParam = isset($_GET['anchor']) ? trim((string) $_GET['anchor']) : null;
+        $levelParam = isset($_GET['level']) ? (int) $_GET['level'] : null;
+        $response = onboardingFavoritesRecommendations($favorites, [
+            'anchor' => $anchorParam !== '' ? $anchorParam : null,
+            'level' => $levelParam,
+        ]);
         echo json_encode($response, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     } catch (Throwable $e) {
         error_log('onboarding_recommendations_error: ' . $e->getMessage());
@@ -1021,9 +1026,12 @@ function onboardingTitleSuggestions(array $queryParams): array
     ];
 }
 
-function onboardingFavoritesRecommendations(array $favorites): array
+function onboardingFavoritesRecommendations(array $favorites, array $options = []): array
 {
     require_once __DIR__ . '/../includes/tmdb.php';
+
+    $anchorRaw = isset($options['anchor']) ? (string) $options['anchor'] : null;
+    $levelRequested = isset($options['level']) ? (int) $options['level'] : null;
 
     $preparedFavorites = [];
     $existingKeys = [];
@@ -1046,12 +1054,45 @@ function onboardingFavoritesRecommendations(array $favorites): array
         ];
     }
 
+    if ($anchorRaw !== null) {
+        [$anchorId, $anchorType] = parse_anchor_key($anchorRaw);
+        if ($anchorId <= 0) {
+            return [
+                'ok' => false,
+                'error' => 'invalid_anchor',
+            ];
+        }
+
+        $exclude = array_keys($existingKeys);
+        $exclude[] = $anchorType . ':' . $anchorId;
+        $level = $levelRequested ?? 3;
+        if ($level < 2) {
+            $level = 3;
+        }
+
+        $related = load_related_suggestions($anchorType, $anchorId, [
+            'exclude_keys' => $exclude,
+            'limit' => 9,
+        ]);
+
+        return [
+            'ok' => true,
+            'source' => 'anchor',
+            'anchor' => $anchorType . ':' . $anchorId,
+            'level' => $level,
+            'results' => $related,
+            'level3' => $related,
+        ];
+    }
+
     if (empty($preparedFavorites)) {
         $fallback = onboardingTitleSuggestions([]);
         return [
             'ok' => $fallback['ok'] ?? true,
             'source' => 'fallback',
             'results' => $fallback['results'] ?? [],
+            'level1' => $fallback['results'] ?? [],
+            'level2' => [],
         ];
     }
 
@@ -1152,6 +1193,8 @@ function onboardingFavoritesRecommendations(array $favorites): array
             'ok' => $fallback['ok'] ?? true,
             'source' => 'fallback',
             'results' => $fallback['results'] ?? [],
+            'level1' => $fallback['results'] ?? [],
+            'level2' => [],
         ];
     }
 
@@ -1206,16 +1249,48 @@ function onboardingFavoritesRecommendations(array $favorites): array
         return ($b['score'] ?? 0) <=> ($a['score'] ?? 0);
     });
 
-    $limited = array_slice($sorted, 0, 15);
-    foreach ($limited as &$entry) {
+    $level1Limit = 15;
+    $level1 = array_slice($sorted, 0, $level1Limit);
+    foreach ($level1 as &$entry) {
         unset($entry['score']);
     }
     unset($entry);
 
+    $globalExclude = $existingKeys;
+    foreach ($level1 as $entry) {
+        $key = ($entry['tmdb_id'] ?? 0) . ':' . ($entry['media_type'] ?? 'movie');
+        $globalExclude[$key] = true;
+    }
+
+    $level2 = [];
+    $preloadAnchors = array_slice($level1, 0, 4);
+    foreach ($preloadAnchors as $anchor) {
+        $anchorId = isset($anchor['tmdb_id']) ? (int) $anchor['tmdb_id'] : 0;
+        $anchorType = $anchor['media_type'] ?? 'movie';
+        if ($anchorId <= 0) {
+            continue;
+        }
+        $anchorKey = $anchorId . ':' . $anchorType;
+        $children = load_related_suggestions($anchorType, $anchorId, [
+            'exclude_keys' => array_keys($globalExclude),
+            'limit' => 6,
+        ]);
+        if (!empty($children)) {
+            $level2[$anchorKey] = $children;
+            foreach ($children as $child) {
+                $childKey = ($child['tmdb_id'] ?? 0) . ':' . ($child['media_type'] ?? 'movie');
+                $globalExclude[$childKey] = true;
+            }
+        }
+    }
+
     return [
         'ok' => true,
         'source' => 'recommendations',
-        'results' => $limited,
+        'level' => 1,
+        'results' => $level1,
+        'level1' => $level1,
+        'level2' => $level2,
     ];
 }
 
@@ -1397,6 +1472,150 @@ function evaluate_match_profiles(array $seedProfile, array $candidateProfile): a
         'score' => $score,
         'reasons' => $reasons,
     ];
+}
+
+function parse_anchor_key(?string $value): array
+{
+    if ($value === null) {
+        return [0, 'movie'];
+    }
+
+    $trimmed = trim($value);
+    if ($trimmed === '') {
+        return [0, 'movie'];
+    }
+
+    if (preg_match('/^(?<type>movie|tv)\s*:\s*(?<id>\d+)$/i', $trimmed, $matches)) {
+        $type = strtolower((string) ($matches['type'] ?? 'movie'));
+        return [(int) ($matches['id'] ?? 0), $type === 'tv' ? 'tv' : 'movie'];
+    }
+
+    if (preg_match('/^(?<id>\d+)\s*:\s*(?<type>movie|tv)$/i', $trimmed, $matches)) {
+        $type = strtolower((string) ($matches['type'] ?? 'movie'));
+        return [(int) ($matches['id'] ?? 0), $type === 'tv' ? 'tv' : 'movie'];
+    }
+
+    if (preg_match('/^(?<id>\d+)$/', $trimmed, $matches)) {
+        return [(int) ($matches['id'] ?? 0), 'movie'];
+    }
+
+    $digits = preg_replace('/\D+/', '', $trimmed);
+    $id = $digits !== '' ? (int) $digits : 0;
+    $type = preg_match('/tv/i', $trimmed) ? 'tv' : 'movie';
+
+    return [$id, $type];
+}
+
+function load_related_suggestions(string $mediaType, int $tmdbId, array $options = []): array
+{
+    $limit = isset($options['limit']) ? max(1, (int) $options['limit']) : 6;
+    $excludeSet = [];
+    if (!empty($options['exclude_keys']) && is_array($options['exclude_keys'])) {
+        foreach ($options['exclude_keys'] as $key) {
+            if (is_string($key) && $key !== '') {
+                $excludeSet[$key] = true;
+            }
+        }
+    }
+
+    $items = [];
+    try {
+        $response = tmdb_get(sprintf('/%s/%d/recommendations', $mediaType, $tmdbId), [
+            'language' => 'pt-BR',
+            'page' => 1,
+        ]);
+        $items = is_array($response['results'] ?? null) ? $response['results'] : [];
+        if (empty($items)) {
+            $fallback = tmdb_get(sprintf('/%s/%d/similar', $mediaType, $tmdbId), [
+                'language' => 'pt-BR',
+                'page' => 1,
+            ]);
+            $items = is_array($fallback['results'] ?? null) ? $fallback['results'] : [];
+        }
+    } catch (Throwable $e) {
+        error_log('onboarding_related_fetch_error: ' . $e->getMessage());
+    }
+
+    if (empty($items)) {
+        return [];
+    }
+
+    $results = [];
+    foreach ($items as $item) {
+        if (!is_array($item)) {
+            continue;
+        }
+        $candidateId = (int) ($item['id'] ?? 0);
+        if ($candidateId <= 0) {
+            continue;
+        }
+        $candidateTypeRaw = strtolower((string) ($item['media_type'] ?? $mediaType));
+        $candidateType = $candidateTypeRaw === 'tv' ? 'tv' : 'movie';
+        $candidateKey = $candidateId . ':' . $candidateType;
+        if (isset($excludeSet[$candidateKey])) {
+            continue;
+        }
+        $title = normalise_label((string) ($item['title'] ?? $item['name'] ?? ''));
+        if ($title === '') {
+            continue;
+        }
+        $posterPath = normalise_logo_path($item['poster_path'] ?? null, null);
+        $backdropPath = normalise_logo_path($item['backdrop_path'] ?? null, null);
+        $posterUrl = tmdb_image_url($posterPath);
+        if ($posterUrl === null) {
+            $posterUrl = tmdb_image_url($backdropPath);
+        }
+        $results[] = [
+            'tmdb_id' => $candidateId,
+            'media_type' => $candidateType,
+            'title' => $title,
+            'poster_path' => $posterPath,
+            'poster_url' => $posterUrl,
+            'backdrop_path' => $backdropPath,
+        ];
+        $excludeSet[$candidateKey] = true;
+        if (count($results) >= $limit) {
+            break;
+        }
+    }
+
+    if (empty($results)) {
+        return [];
+    }
+
+    $byType = [];
+    foreach ($results as $entry) {
+        $type = $entry['media_type'] ?? 'movie';
+        $byType[$type][] = (int) ($entry['tmdb_id'] ?? 0);
+    }
+
+    foreach ($byType as $type => $ids) {
+        $uniqueIds = array_values(array_unique(array_filter(array_map('intval', $ids))));
+        if (empty($uniqueIds)) {
+            continue;
+        }
+        $logos = resolveTitleLogosBulk($type, $uniqueIds);
+        foreach ($results as $index => $entry) {
+            if (($entry['media_type'] ?? 'movie') !== $type) {
+                continue;
+            }
+            $id = (int) ($entry['tmdb_id'] ?? 0);
+            if ($id <= 0) {
+                continue;
+            }
+            if (isset($logos[$id])) {
+                $results[$index]['logo_path'] = $logos[$id]['path'] ?? null;
+                $results[$index]['logo_url'] = $logos[$id]['url'] ?? null;
+            }
+        }
+        prefetch_favorite_details_bulk($type, $uniqueIds);
+    }
+
+    foreach ($results as $index => $entry) {
+        $results[$index]['origin_key'] = $mediaType . ':' . $tmdbId;
+    }
+
+    return $results;
 }
 
 function resolveTitleLogosBulk(string $mediaType, array $ids): array

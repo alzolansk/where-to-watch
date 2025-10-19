@@ -428,7 +428,7 @@ if ($isAuthenticated && $userId > 0) {
 
 $favorites = $initialState['favorites'];
 $favoritesCount = count($favorites);
-$preferencesCount = count($initialState['genres']) + count($initialState['keywords']) + count($initialState['providers']);
+$preferencesCount = count($initialState['genres']) + count($initialState['providers']);
 
 $favoritesBadgeLabel = $favoritesCount . ' ' . ($favoritesCount === 1 ? 'título' : 'títulos');
 $favoritesTotalLabel = $favoritesBadgeLabel;
@@ -493,7 +493,7 @@ $favoritesList = $favorites;
                 <header class="profile-option__header">
                     <p class="profile-option__eyebrow">Preferências</p>
                     <h2 class="profile-option__title" id="preferencesTitle">Sua curadoria</h2>
-                    <p class="profile-option__subtitle">Os gêneros, temas e provedores que guiam nossas recomendações.</p>
+                    <p class="profile-option__subtitle">Os generos e provedores que guiam nossas recomendacoes.</p>
                 </header>
                 <?php if (!$isAuthenticated): ?>
                     <div class="profile-notice" role="alert">
@@ -504,10 +504,6 @@ $favoritesList = $favorites;
                     <div class="profile-option__group">
                         <dt>Gêneros</dt>
                         <dd><div class="profile-summary-chips" data-profile-genres-summary></div></dd>
-                    </div>
-                    <div class="profile-option__group">
-                        <dt>Temas</dt>
-                        <dd><div class="profile-summary-chips" data-profile-keywords-summary></div></dd>
                     </div>
                     <div class="profile-option__group">
                         <dt>Provedores</dt>
@@ -643,25 +639,6 @@ $favoritesList = $favorites;
                         </div>
                     </section>
 
-                    <section class="preference-group" aria-labelledby="keywordsTitle">
-                        <div class="preference-group__header">
-                            <h3 id="keywordsTitle">Temas e palavras-chave</h3>
-                            <p>Combine ideias centrais para refinar ainda mais suas recomendações.</p>
-                        </div>
-                        <div class="profile-keywords">
-                            <div class="profile-keywords__selected" data-profile-keywords-list aria-live="polite"></div>
-                            <div class="chip-grid chip-grid--suggestions" data-profile-keyword-suggestions>
-                                <?php foreach ($keywordOptions as $keyword): ?>
-                                    <button type="button" class="chip chip--outline" data-keyword-id="<?php echo (int) $keyword['id']; ?>" data-keyword-label="<?php echo htmlspecialchars($keyword['label'], ENT_QUOTES, 'UTF-8'); ?>" <?php echo $isAuthenticated ? '' : 'disabled'; ?>><?php echo htmlspecialchars($keyword['label'], ENT_QUOTES, 'UTF-8'); ?></button>
-                                <?php endforeach; ?>
-                            </div>
-                            <form class="profile-keywords__form" data-profile-keyword-form>
-                                <label for="profileKeywordInput" class="sr-only">Adicionar palavra-chave</label>
-                                <input type="text" id="profileKeywordInput" placeholder="Adicionar nova palavra-chave" data-profile-keyword-input <?php echo $isAuthenticated ? '' : 'disabled'; ?>>
-                                <button type="submit" class="profile-button profile-button--primary" <?php echo $isAuthenticated ? '' : 'disabled'; ?>>Adicionar</button>
-                            </form>
-                        </div>
-                    </section>
 
                     <section class="preference-group" aria-labelledby="providersTitle">
                         <div class="preference-group__header">
