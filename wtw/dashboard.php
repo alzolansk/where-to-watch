@@ -10,6 +10,7 @@ $navStates = [
 ];
 ?>
 <nav id="menu">
+    <filter id="glass-distortion" x="0%" y="0%" width="100%" height="100%">
     <div class="faixa">
         <button class="menu-trigger" type="button" aria-label="Abrir menu" aria-expanded="false" aria-controls="menu-buttons">
             <img src="imagens/menu-icon.png" alt="Menu" id="menuIcon" width="30px">
@@ -101,6 +102,7 @@ $navStates = [
                 </div>
                 <div id="results" class="search-results" style="display: none;"></div>
             </div>
+            </filter>
         </nav>
 
         <?php
@@ -321,7 +323,31 @@ $navStates = [
     font-weight: 600;
     cursor: pointer;
     text-align: left;
+    isolation: isolate;
     transition: transform 0.2s ease, box-shadow 0.2s ease, border 0.2s ease;
+}
+
+.user-account__trigger::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    border-radius: 999px;
+    box-shadow:
+        inset 0 0 10px -5px rgba(255, 255, 255, 0.7);
+}
+
+.glassDiv::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: 999px;
+    backdrop-filter: blur(2px);
+    filter: url(#glass-distortion);
+    isolation: isolate;
+    -webkit-backdrop-filter: blur(var(--frost-blur));
+    -webkit-filter: url("#glass-distortion");
 }
 
 .user-account__trigger:focus-visible {

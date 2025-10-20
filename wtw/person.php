@@ -14,10 +14,98 @@ include_once("dashboard.php")
 </head>
 <body class="has-fixed-header">
 
-  <main class="page-shell interface-section">
+  <main class="page-shell interface-section is-loading">
+
+    <div id="personSkeleton" class="person-skeleton" aria-hidden="true">
+      <section class="glass-panel person-skeleton__hero">
+        <div class="person-skeleton__hero-grid">
+          <div class="skeleton-block skeleton-portrait"></div>
+
+          <div class="person-skeleton__hero-body">
+            <span class="skeleton-block skeleton-line skeleton-line--xl"></span>
+
+            <div class="person-skeleton__hero-chips">
+              <span class="skeleton-block skeleton-chip"></span>
+              <span class="skeleton-block skeleton-chip"></span>
+            </div>
+
+            <span class="skeleton-block skeleton-line skeleton-line--lg"></span>
+            <span class="skeleton-block skeleton-line skeleton-line--md"></span>
+            <span class="skeleton-block skeleton-line skeleton-line--sm"></span>
+
+            <div class="person-skeleton__hero-chips">
+              <span class="skeleton-block skeleton-chip skeleton-chip--lg"></span>
+              <span class="skeleton-block skeleton-chip skeleton-chip--lg"></span>
+              <span class="skeleton-block skeleton-chip skeleton-chip--lg"></span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="glass-panel person-skeleton__timeline">
+        <div class="person-skeleton__section-heading">
+          <span class="skeleton-block skeleton-line skeleton-line--lg"></span>
+          <span class="skeleton-block skeleton-line skeleton-line--sm"></span>
+        </div>
+
+        <div class="person-skeleton__timeline-list">
+          <span class="skeleton-block skeleton-poster"></span>
+          <span class="skeleton-block skeleton-poster"></span>
+          <span class="skeleton-block skeleton-poster"></span>
+          <span class="skeleton-block skeleton-poster"></span>
+          <span class="skeleton-block skeleton-poster"></span>
+        </div>
+
+        <div class="person-skeleton__actions">
+          <span class="skeleton-block skeleton-button"></span>
+        </div>
+      </section>
+
+      <section class="glass-panel person-skeleton__coworkers">
+        <div class="person-skeleton__section-heading">
+          <span class="skeleton-block skeleton-line skeleton-line--lg"></span>
+          <span class="skeleton-block skeleton-line skeleton-line--sm"></span>
+        </div>
+
+        <div class="person-skeleton__coworkers-grid">
+          <span class="skeleton-block skeleton-avatar"></span>
+          <span class="skeleton-block skeleton-avatar"></span>
+          <span class="skeleton-block skeleton-avatar"></span>
+          <span class="skeleton-block skeleton-avatar"></span>
+          <span class="skeleton-block skeleton-avatar"></span>
+          <span class="skeleton-block skeleton-avatar"></span>
+        </div>
+      </section>
+
+      <section class="glass-panel person-skeleton__info">
+        <div class="person-skeleton__section-heading">
+          <span class="skeleton-block skeleton-line skeleton-line--lg"></span>
+          <span class="skeleton-block skeleton-line skeleton-line--sm"></span>
+        </div>
+
+        <div class="person-skeleton__info-grid">
+          <div class="person-skeleton__info-item">
+            <span class="skeleton-block skeleton-line skeleton-line--md"></span>
+            <span class="skeleton-block skeleton-line skeleton-line--xs"></span>
+          </div>
+          <div class="person-skeleton__info-item">
+            <span class="skeleton-block skeleton-line skeleton-line--md"></span>
+            <span class="skeleton-block skeleton-line skeleton-line--xs"></span>
+          </div>
+          <div class="person-skeleton__info-item">
+            <span class="skeleton-block skeleton-line skeleton-line--md"></span>
+            <span class="skeleton-block skeleton-line skeleton-line--xs"></span>
+          </div>
+          <div class="person-skeleton__info-item">
+            <span class="skeleton-block skeleton-line skeleton-line--md"></span>
+            <span class="skeleton-block skeleton-line skeleton-line--xs"></span>
+          </div>
+        </div>
+      </section>
+    </div>
 
     <!-- ========== HERO ========== -->
-    <section class="person-hero glass-panel">
+    <section class="person-hero glass-panel" data-person-content>
       <div class="hero-grid">
         <figure class="portrait-frame">
           <img id="person-img" class="actor-photo" src="" alt="Foto do(a) artista">
@@ -44,7 +132,7 @@ include_once("dashboard.php")
     </section>
 
     <!-- ========== TIMELINE ========== -->
-    <section class="card-section glass-panel">
+    <section class="card-section glass-panel" data-person-content>
       <div class="section-heading">
         <h2>Timeline</h2>
         <p class="section-subtitle">Ordenamos por popularidade e ano.</p>
@@ -58,7 +146,7 @@ include_once("dashboard.php")
     </section>
 
     <!-- ========== COLEGAS ==========- -->
-    <section class="card-section glass-panel" id="coworkersSection">
+    <section class="card-section glass-panel" id="coworkersSection" data-person-content>
       <div class="section-heading">
         <h2>Colaboracoes frequentes</h2>
         <p class="section-subtitle">Essas parcerias arrasam em cena!</p>
@@ -68,7 +156,7 @@ include_once("dashboard.php")
     </section>
 
     <!-- ========== INFORMACOES / PREMIOS ========== -->
-    <section class="card-section glass-panel">
+    <section class="card-section glass-panel" data-person-content>
       <div class="section-heading">
         <h2>Informacoes</h2>
         <p class="section-subtitle">Dados basicos e curiosidades.</p>
@@ -114,23 +202,6 @@ include_once("dashboard.php")
     </div>
   </dialog>
 
-  <script>
-    // Fallback simples para show/hide loading caso nao exista global
-    window.showLoading = window.showLoading || function(){ 
-      const el = document.getElementById('loadingOverlay'); 
-      if (el) {
-        el.classList.remove('is-hidden');
-        el.setAttribute('aria-hidden', 'false');
-      }
-    };
-    window.hideLoading = window.hideLoading || function(){ 
-      const el = document.getElementById('loadingOverlay'); 
-      if (el) {
-        el.classList.add('is-hidden');
-        el.setAttribute('aria-hidden', 'true');
-      }
-    };
-  </script>
   <script src="js/person.js"></script>
   <script src="js/script.js"></script>
   <script src="js/search.js"></script>

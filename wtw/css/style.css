@@ -459,7 +459,7 @@ body{
 }
 
 .hero-progress__segment.is-active {
-    border-bottom-color: #d7171e;
+    border-bottom-color: var(--text-dim);
     opacity: 1;
     transform: scaleY(1.2);
 }

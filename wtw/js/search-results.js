@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const apiKey = 'dc3b4144ae24ddabacaeda024ff0585c';
     const initialQuery = (window.__INITIAL_SEARCH_QUERY__ || '').trim();
     const resultsGrid = document.querySelector('[data-search-results]');
-    const loader = document.querySelector('[data-search-loader]');
+    const resultsSection = document.querySelector('.search-results');
     const emptyState = document.querySelector('[data-search-empty]');
     const resultCount = document.querySelector('[data-result-count]');
     const searchTerm = document.querySelector('[data-search-term]');
@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const genreButtons = document.querySelectorAll('[data-genre-option]');
     const releaseButtons = document.querySelectorAll('[data-release-option]');
     const sortButtons = document.querySelectorAll('[data-sort-option]');
+    const filterSections = document.querySelectorAll('[data-filter-section]');
     const searchForm = document.querySelector('[data-search-form]');
     const searchField = document.querySelector('[data-search-field]');
     const clearSearchButton = document.querySelector('[data-search-clear]');
@@ -29,7 +30,168 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const cache = {
         rawResults: [],
+        availability: new Map(),
     };
+    const availabilityCache = new Map();
+    const availabilityRegion = 'BR';
+    const SKELETON_CARD_COUNT = 12;
+
+    const setEmptyStateContent = (titleText, descriptionText) => {
+        if (!emptyState) {
+            return;
+        }
+        const titleNode = emptyState.querySelector('h2');
+        const descriptionNode = emptyState.querySelector('p');
+        if (titleNode && typeof titleText === 'string') {
+            titleNode.textContent = titleText;
+        }
+        if (descriptionNode && typeof descriptionText === 'string') {
+            descriptionNode.textContent = descriptionText;
+        }
+    };
+
+    const buildAvailabilityKey = (item) => {
+        if (!item || typeof item.id === 'undefined') {
+            return '';
+        }
+        const type = item.media_type === 'tv' ? 'tv' : 'movie';
+        return `${type}-${item.id}`;
+    };
+
+    const collectProviderIds = (regionPayload) => {
+        const providerIds = new Set();
+        if (!regionPayload) {
+            return providerIds;
+        }
+        ['flatrate', 'ads', 'free', 'rent', 'buy'].forEach((category) => {
+            const entries = regionPayload[category];
+            if (!Array.isArray(entries)) {
+                return;
+            }
+            entries.forEach((entry) => {
+                if (entry && Number.isInteger(entry.provider_id)) {
+                    providerIds.add(entry.provider_id);
+                }
+            });
+        });
+        return providerIds;
+    };
+
+    const fetchAvailabilityForItems = async (items) => {
+        const availability = new Map();
+        if (!items.length) {
+            return availability;
+        }
+
+        const queue = [];
+
+        items.forEach((item) => {
+            const key = buildAvailabilityKey(item);
+            if (!key) {
+                return;
+            }
+            const cached = availabilityCache.get(key);
+            if (cached !== undefined) {
+                if (Array.isArray(cached) && cached.length) {
+                    availability.set(key, cached);
+                }
+                return;
+            }
+            queue.push({
+                key,
+                id: item.id,
+                mediaType: item.media_type === 'tv' ? 'tv' : 'movie',
+            });
+        });
+
+        if (!queue.length) {
+            return availability;
+        }
+
+        const MAX_CONCURRENT = 6;
+        let index = 0;
+
+        const runWorker = async () => {
+            while (index < queue.length) {
+                const currentIndex = index;
+                index += 1;
+                const { key, id, mediaType } = queue[currentIndex];
+                try {
+                    const url = new URL(`https://api.themoviedb.org/3/${mediaType}/${id}/watch/providers`);
+                    url.search = new URLSearchParams({ api_key: apiKey });
+                    const response = await fetch(url.toString());
+                    if (!response.ok) {
+                        console.error(`Falha ao carregar provedores para ${mediaType} ${id}: ${response.status}`);
+                        availabilityCache.set(key, []);
+                        continue;
+                    }
+                    const payload = await response.json();
+                    const results = payload && payload.results ? payload.results : null;
+                    const regionPayload = results && results[availabilityRegion] ? results[availabilityRegion] : null;
+                    const providers = Array.from(collectProviderIds(regionPayload));
+                    availabilityCache.set(key, providers);
+                    if (providers.length) {
+                        availability.set(key, providers);
+                    }
+                } catch (error) {
+                    console.error('Erro ao consultar provedores:', error);
+                    availabilityCache.set(key, []);
+                }
+            }
+        };
+
+        const workers = Array.from({ length: Math.min(MAX_CONCURRENT, queue.length) }, runWorker);
+        await Promise.all(workers);
+        return availability;
+    };
+
+    const filterItemsByAvailability = async (items) => {
+        if (!items.length) {
+            cache.availability = new Map();
+            return [];
+        }
+        const availability = await fetchAvailabilityForItems(items);
+        cache.availability = availability;
+        return items.filter((item) => {
+            const key = buildAvailabilityKey(item);
+            return key && availability.has(key);
+        });
+    };
+
+    const hasCustomActiveChip = (section) => section.querySelector('.search-chip.is-active:not([data-default-active])') !== null;
+
+    const syncFilterSectionIndicators = () => {
+        filterSections.forEach((section) => {
+            section.classList.toggle('has-active-filter', hasCustomActiveChip(section));
+        });
+    };
+
+    const setupFilterSections = () => {
+        filterSections.forEach((section) => {
+            const toggle = section.querySelector('[data-filter-toggle]');
+            const content = section.querySelector('[data-filter-content]');
+            if (!toggle || !content) {
+                return;
+            }
+
+            const setExpanded = (expanded) => {
+                toggle.setAttribute('aria-expanded', String(expanded));
+                section.classList.toggle('is-collapsed', !expanded);
+                content.hidden = !expanded;
+            };
+
+            const initialExpanded = toggle.getAttribute('aria-expanded') === 'true' || hasCustomActiveChip(section);
+            setExpanded(initialExpanded);
+
+            toggle.addEventListener('click', () => {
+                const isExpanded = toggle.getAttribute('aria-expanded') === 'true';
+                setExpanded(!isExpanded);
+            });
+        });
+    };
+
+    setupFilterSections();
+    syncFilterSectionIndicators();
 
     const normalizeText = (value) => {
         if (!value) return '';
@@ -202,7 +364,7 @@ document.addEventListener('DOMContentLoaded', () => {
         card.setAttribute('role', 'link');
         card.setAttribute('aria-label', `Ver detalhes de ${item.title || item.name}`);
 
-        const media = document.createElement('div');
+        const media = document.createElement('figure');
         media.className = 'search-card__media';
         const img = document.createElement('img');
         img.src = item.poster_path
@@ -212,7 +374,7 @@ document.addEventListener('DOMContentLoaded', () => {
         img.loading = 'lazy';
         media.appendChild(img);
 
-        const overlay = document.createElement('div');
+        const overlay = document.createElement('figcaption');
         overlay.className = 'search-card__overlay';
 
         const type = document.createElement('span');
@@ -231,20 +393,22 @@ document.addEventListener('DOMContentLoaded', () => {
             yearEl.textContent = year.toString();
             metaRow.appendChild(yearEl);
         }
+        const detailParts = [];
         if (item.vote_average) {
-            const vote = document.createElement('span');
-            vote.textContent = `${item.vote_average.toFixed(1)} \u2605`;
-            metaRow.appendChild(vote);
+            detailParts.push(`${item.vote_average.toFixed(1)} \u2605`);
         }
         const genres = (item.genre_ids || [])
             .map((id) => genreMap.get(id))
             .filter(Boolean)
             .slice(0, 2);
-        genres.forEach((genre) => {
-            const chip = document.createElement('span');
-            chip.textContent = genre;
-            metaRow.appendChild(chip);
-        });
+        if (genres.length) {
+            detailParts.push(genres.join(' \u2022 '));
+        }
+        if (detailParts.length) {
+            const details = document.createElement('span');
+            details.textContent = detailParts.join(' \u2022 ');
+            metaRow.appendChild(details);
+        }
 
         overlay.appendChild(type);
         overlay.appendChild(title);
@@ -256,8 +420,15 @@ document.addEventListener('DOMContentLoaded', () => {
         cta.textContent = 'Ver detalhes';
         overlay.appendChild(cta);
 
+        media.appendChild(overlay);
         card.appendChild(media);
-        card.appendChild(overlay);
+
+        const availabilityKey = buildAvailabilityKey(item);
+        if (availabilityKey && cache.availability.has(availabilityKey)) {
+            card.dataset.availabilityKey = availabilityKey;
+        } else {
+            delete card.dataset.availabilityKey;
+        }
 
         const navigateToDetails = () => {
             const params = new URLSearchParams({ id: item.id, mediaTp: item.media_type });
@@ -284,15 +455,65 @@ document.addEventListener('DOMContentLoaded', () => {
         emptyState.classList.toggle('is-visible', isVisible);
     };
 
+    const buildSkeletonCard = () => {
+        const card = document.createElement('article');
+        card.className = 'search-card search-card--skeleton';
+
+        const media = document.createElement('figure');
+        media.className = 'search-card__media search-card__media--skeleton';
+        const poster = document.createElement('div');
+        poster.className = 'search-card__skeleton-poster';
+        media.appendChild(poster);
+
+        const body = document.createElement('div');
+        body.className = 'search-card__skeleton-body';
+
+        const typePill = document.createElement('div');
+        typePill.className = 'search-card__skeleton-pill';
+        const titleLine = document.createElement('div');
+        titleLine.className = 'search-card__skeleton-line search-card__skeleton-line--title';
+        const metaLine = document.createElement('div');
+        metaLine.className = 'search-card__skeleton-line search-card__skeleton-line--meta';
+        const metaLineShort = document.createElement('div');
+        metaLineShort.className = 'search-card__skeleton-line search-card__skeleton-line--short';
+        const ctaLine = document.createElement('div');
+        ctaLine.className = 'search-card__skeleton-line search-card__skeleton-line--cta';
+
+        body.append(typePill, titleLine, metaLine, metaLineShort, ctaLine);
+        card.append(media, body);
+
+        return card;
+    };
+
     const showLoader = () => {
+        if (!resultsGrid) {
+            return;
+        }
         resultsGrid.innerHTML = '';
-        resultsGrid.hidden = true;
-        if (loader) loader.hidden = false;
+        resultsGrid.hidden = false;
+        resultsGrid.classList.add('is-loading');
+        const fragment = document.createDocumentFragment();
+        for (let index = 0; index < SKELETON_CARD_COUNT; index += 1) {
+            fragment.appendChild(buildSkeletonCard());
+        }
+        resultsGrid.appendChild(fragment);
+        if (resultsSection) {
+            resultsSection.setAttribute('aria-busy', 'true');
+        }
+        if (resultCount) {
+            resultCount.textContent = 'Carregando...';
+        }
         toggleEmptyState(false);
     };
 
     const hideLoader = () => {
-        if (loader) loader.hidden = true;
+        if (!resultsGrid) {
+            return;
+        }
+        resultsGrid.classList.remove('is-loading');
+        if (resultsSection) {
+            resultsSection.setAttribute('aria-busy', 'false');
+        }
     };
 
     const updateCount = (total) => {
@@ -324,6 +545,9 @@ document.addEventListener('DOMContentLoaded', () => {
         resultsGrid.innerHTML = '';
         if (!filtered.length) {
             resultsGrid.hidden = true;
+            if (cache.rawResults.length) {
+                setEmptyStateContent('Nenhum resultado para os filtros selecionados', 'Ajuste os filtros ou limpe-os para ver mais t\u00EDtulos.');
+            }
             toggleEmptyState(true);
             return;
         }
@@ -334,23 +558,24 @@ document.addEventListener('DOMContentLoaded', () => {
             const card = buildCard(item);
             resultsGrid.appendChild(card);
         });
+
+        syncFilterSectionIndicators();
     };
 
     const fetchResults = async (query) => {
         state.query = query;
+        cache.availability = new Map();
         if (!query) {
             cache.rawResults = [];
             updateCount(0);
             resultsGrid.innerHTML = '';
             resultsGrid.hidden = true;
-            if (loader) loader.hidden = true;
-            if (emptyState) {
-                toggleEmptyState(true);
-                const title = emptyState.querySelector('h2');
-                const description = emptyState.querySelector('p');
-                if (title) title.textContent = 'Digite algo para pesquisar';
-                if (description) description.textContent = 'Use a busca no topo para encontrar filmes e s\u00E9ries.';
+            resultsGrid.classList.remove('is-loading');
+            if (resultsSection) {
+                resultsSection.setAttribute('aria-busy', 'false');
             }
+            toggleEmptyState(true);
+            setEmptyStateContent('Digite algo para pesquisar', 'Use a busca no topo para encontrar filmes e s\u00E9ries.');
             return;
         }
 
@@ -383,16 +608,20 @@ document.addEventListener('DOMContentLoaded', () => {
                     collected.push(item);
                 });
             });
-            cache.rawResults = applyRelevanceScores(collected, query);
+            const availableItems = await filterItemsByAvailability(collected);
+            cache.rawResults = applyRelevanceScores(availableItems, query);
+            if (!cache.rawResults.length) {
+                setEmptyStateContent('Nenhum provedor encontrado', 'Nenhum servi\u00E7o de streaming no Brasil oferece este t\u00EDtulo no momento.');
+            } else {
+                setEmptyStateContent('Nenhum resultado encontrado', 'Tente ajustar os filtros ou realizar uma nova pesquisa.');
+            }
         } catch (error) {
             console.error('Erro ao carregar resultados:', error);
             cache.rawResults = [];
+            cache.availability = new Map();
             resultsGrid.hidden = true;
-            if (emptyState) {
-                toggleEmptyState(true);
-                emptyState.querySelector('h2').textContent = 'Algo deu errado';
-                emptyState.querySelector('p').textContent = 'N\u00E3o foi poss\u00EDvel carregar os resultados agora. Tente novamente em instantes.';
-            }
+            toggleEmptyState(true);
+            setEmptyStateContent('Algo deu errado', 'N\u00E3o foi poss\u00EDvel carregar os resultados agora. Tente novamente em instantes.');
         } finally {
             hideLoader();
             applyFilters();
@@ -403,6 +632,7 @@ document.addEventListener('DOMContentLoaded', () => {
         state.media = value;
         toggleActiveChip(mediaButtons, value, 'data-media-filter');
         applyFilters();
+        syncFilterSectionIndicators();
     };
 
     const updateActiveGenre = (value) => {
@@ -413,18 +643,21 @@ document.addEventListener('DOMContentLoaded', () => {
             chip.classList.toggle('is-active', isActive);
         });
         applyFilters();
+        syncFilterSectionIndicators();
     };
 
     const updateRelease = (value) => {
         state.release = value;
         toggleActiveChip(releaseButtons, value, 'data-release-option');
         applyFilters();
+        syncFilterSectionIndicators();
     };
 
     const updateSort = (value) => {
         state.sort = value;
         toggleActiveChip(sortButtons, value, 'data-sort-option');
         applyFilters();
+        syncFilterSectionIndicators();
     };
 
     mediaButtons.forEach((button) => {
@@ -466,6 +699,7 @@ document.addEventListener('DOMContentLoaded', () => {
             toggleActiveChip(sortButtons, state.sort, 'data-sort-option');
             genreButtons.forEach((chip) => chip.classList.remove('is-active'));
             applyFilters();
+            syncFilterSectionIndicators();
         });
     }
 

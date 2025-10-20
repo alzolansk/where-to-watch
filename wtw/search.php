@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -123,52 +123,64 @@ $sortOptions = [
     <div class="search-results-layout">
         <aside class="search-filters" aria-label="Filtros da pesquisa">
             <button type="button" class="search-results-hero__reset" data-reset-filters>Limpar filtros</button>
-            <section class="search-filter-section">
-                <h2 class="search-filter-title">Tipos</h2>
-                <div class="search-filter-chips" role="group" aria-label="Filtrar por tipo de m&#237;dia">
-                    <button type="button" class="search-chip is-active" data-media-filter="both">Filmes &amp; s&#233;ries</button>
-                    <button type="button" class="search-chip" data-media-filter="movie">Filmes</button>
-                    <button type="button" class="search-chip" data-media-filter="tv">S&#233;ries</button>
+            <section class="search-filter-section" data-filter-section>
+                <button type="button" class="search-filter-toggle" data-filter-toggle aria-expanded="true" aria-controls="filter-panel-type" role="heading" aria-level="2">
+                    <span class="search-filter-title">Tipos</span>
+                </button>
+                <div class="search-filter-content" id="filter-panel-type" data-filter-content>
+                    <div class="search-filter-chips" role="group" aria-label="Filtrar por tipo de m&#237;dia">
+                        <button type="button" class="search-chip is-active" data-media-filter="both" data-default-active>Filmes &amp; s&#233;ries</button>
+                        <button type="button" class="search-chip" data-media-filter="movie">Filmes</button>
+                        <button type="button" class="search-chip" data-media-filter="tv">S&#233;ries</button>
+                    </div>
                 </div>
             </section>
-            <section class="search-filter-section">
-                <h2 class="search-filter-title">G&#234;nero</h2>
-                <div class="search-filter-chips search-filter-chips--wrap" role="group" aria-label="Filtrar por g&#234;nero">
-                    <?php foreach ($genreOptions as $genre): ?>
-                        <button type="button" class="search-chip" data-genre-option="<?php echo (int) $genre['id']; ?>">
-                            <?php echo htmlspecialchars($genre['label'], ENT_QUOTES, 'UTF-8'); ?>
-                        </button>
-                    <?php endforeach; ?>
+            <section class="search-filter-section is-collapsed" data-filter-section>
+                <button type="button" class="search-filter-toggle" data-filter-toggle aria-expanded="false" aria-controls="filter-panel-genre" role="heading" aria-level="2">
+                    <span class="search-filter-title">G&#234;nero</span>
+                </button>
+                <div class="search-filter-content" id="filter-panel-genre" data-filter-content hidden>
+                    <div class="search-filter-chips search-filter-chips--wrap" role="group" aria-label="Filtrar por g&#234;nero">
+                        <?php foreach ($genreOptions as $genre): ?>
+                            <button type="button" class="search-chip" data-genre-option="<?php echo (int) $genre['id']; ?>">
+                                <?php echo htmlspecialchars($genre['label'], ENT_QUOTES, 'UTF-8'); ?>
+                            </button>
+                        <?php endforeach; ?>
+                    </div>
                 </div>
             </section>
-            <section class="search-filter-section">
-                <h2 class="search-filter-title">Lan&#231;amento</h2>
-                <div class="search-filter-chips search-filter-chips--wrap" role="group" aria-label="Filtrar por per&#237;odo de lan&#231;amento">
-                    <?php foreach ($releaseOptions as $period): ?>
-                        <button type="button" class="search-chip<?php echo $period['id'] === 'all' ? ' is-active' : ''; ?>" data-release-option="<?php echo htmlspecialchars($period['id'], ENT_QUOTES, 'UTF-8'); ?>">
-                            <?php echo htmlspecialchars($period['label'], ENT_QUOTES, 'UTF-8'); ?>
-                        </button>
-                    <?php endforeach; ?>
+            <section class="search-filter-section is-collapsed" data-filter-section>
+                <button type="button" class="search-filter-toggle" data-filter-toggle aria-expanded="false" aria-controls="filter-panel-release" role="heading" aria-level="2">
+                    <span class="search-filter-title">Lan&#231;amento</span>
+                </button>
+                <div class="search-filter-content" id="filter-panel-release" data-filter-content hidden>
+                    <div class="search-filter-chips search-filter-chips--wrap" role="group" aria-label="Filtrar por per&#237;odo de lan&#231;amento">
+                        <?php foreach ($releaseOptions as $period): ?>
+                            <button type="button" class="search-chip<?php echo $period['id'] === 'all' ? ' is-active' : ''; ?>" data-release-option="<?php echo htmlspecialchars($period['id'], ENT_QUOTES, 'UTF-8'); ?>"<?php echo $period['id'] === 'all' ? ' data-default-active' : ''; ?>">
+                                <?php echo htmlspecialchars($period['label'], ENT_QUOTES, 'UTF-8'); ?>
+                            </button>
+                        <?php endforeach; ?>
+                    </div>
                 </div>
             </section>
-            <section class="search-filter-section">
-                <h2 class="search-filter-title">Ordenar por</h2>
-                <div class="search-filter-chips search-filter-chips--wrap" role="group" aria-label="Ordenar resultados">
-                    <?php foreach ($sortOptions as $sort): ?>
-                        <button type="button" class="search-chip<?php echo $sort['id'] === 'popularity.desc' ? ' is-active' : ''; ?>" data-sort-option="<?php echo htmlspecialchars($sort['id'], ENT_QUOTES, 'UTF-8'); ?>">
-                            <?php echo htmlspecialchars($sort['label'], ENT_QUOTES, 'UTF-8'); ?>
-                        </button>
-                    <?php endforeach; ?>
+            <section class="search-filter-section is-collapsed" data-filter-section>
+                <button type="button" class="search-filter-toggle" data-filter-toggle aria-expanded="false" aria-controls="filter-panel-sort" role="heading" aria-level="2">
+                    <span class="search-filter-title">Ordenar por</span>
+                </button>
+                <div class="search-filter-content" id="filter-panel-sort" data-filter-content hidden>
+                    <div class="search-filter-chips search-filter-chips--wrap" role="group" aria-label="Ordenar resultados">
+                        <?php foreach ($sortOptions as $sort): ?>
+                            <button type="button" class="search-chip<?php echo $sort['id'] === 'popularity.desc' ? ' is-active' : ''; ?>" data-sort-option="<?php echo htmlspecialchars($sort['id'], ENT_QUOTES, 'UTF-8'); ?>"<?php echo $sort['id'] === 'popularity.desc' ? ' data-default-active' : ''; ?>">
+                                <?php echo htmlspecialchars($sort['label'], ENT_QUOTES, 'UTF-8'); ?>
+                            </button>
+                        <?php endforeach; ?>
+                    </div>
                 </div>
             </section>
         </aside>
 
         <section class="search-results" aria-live="polite" aria-busy="false">
             <div class="search-results__grid" data-search-results></div>
-            <div class="search-results__loader" data-search-loader hidden>
-                <div class="search-results__spinner" aria-hidden="true"></div>
-                <p>Carregando resultados...</p>
-            </div>
             <div class="search-results__empty" data-search-empty hidden>
                 <h2>Nenhum resultado encontrado</h2>
                 <p>Tente ajustar os filtros ou realizar uma nova pesquisa.</p>

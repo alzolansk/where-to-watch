@@ -31,6 +31,9 @@
   const favoritesSummaryList = root.querySelector('[data-profile-favorites-summary]');
   const favoritesSummaryEmpty = root.querySelector('[data-profile-favorites-summary-empty]');
   const favoritesTotalIndicator = root.querySelector('[data-profile-favorites-total]');
+  const favoriteSearchForm = root.querySelector('[data-profile-favorite-search]');
+  const favoriteSearchInput = root.querySelector('[data-profile-favorite-search-input]');
+  const favoriteSearchResults = root.querySelector('[data-profile-favorite-search-results]');
   const saveButton = root.querySelector('[data-profile-save]');
   const feedbackBox = root.querySelector('[data-profile-feedback]');
   const preferencesContainer = root.querySelector('[data-profile-preferences]');
@@ -102,6 +105,27 @@
       lastUpdated: 0,
       level: null,
     },
+  };
+
+  const TMDB_API_KEY = 'dc3b4144ae24ddabacaeda024ff0585c';
+  const FAVORITE_SEARCH_MIN_CHARS = 2;
+  const favoriteSearchState = {
+    items: [],
+    lastQuery: '',
+    loading: false,
+    controller: null,
+  };
+
+  const isFavoriteEntry = (entry) => {
+    if (!entry) {
+      return false;
+    }
+    const id = parseInt(entry.tmdb_id ?? entry.id ?? 0, 10);
+    if (!id) {
+      return false;
+    }
+    const media = (entry.media_type || entry.type || 'movie').toLowerCase() === 'tv' ? 'tv' : 'movie';
+    return state.favorites.some((favorite) => favorite.tmdb_id === id && favorite.media_type === media);
   };
 
   const suggestionStore = {
@@ -543,6 +567,235 @@
     card.appendChild(media);
     return card;
   };
+
+  const setFavoriteSearchMessage = (message) => {
+    if (!favoriteSearchResults) {
+      return;
+    }
+    favoriteSearchResults.innerHTML = '';
+    if (!message) {
+      return;
+    }
+    const paragraph = document.createElement('p');
+    paragraph.className = 'favorite-search-message';
+    paragraph.textContent = message;
+    favoriteSearchResults.appendChild(paragraph);
+  };
+
+  const buildFavoriteSearchSelectedCard = (item) => {
+    const key = favoriteKey(item.tmdb_id, item.media_type);
+    const card = document.createElement('article');
+    card.className = 'favorite-poster-card favorite-poster-card--selected favorite-poster-card--search-result';
+    card.setAttribute('role', 'listitem');
+    card.dataset.key = key;
+
+    const media = document.createElement('figure');
+    media.className = 'favorite-poster-card__media';
+    media.setAttribute('aria-hidden', 'true');
+
+    const poster = resolvePosterUrl(item, 'w342');
+    if (poster) {
+      const img = document.createElement('img');
+      img.src = poster;
+      img.alt = '';
+      img.loading = 'lazy';
+      media.appendChild(img);
+    } else {
+      const fallback = document.createElement('span');
+      fallback.className = 'favorite-poster-card__fallback';
+      fallback.textContent = (item.title || item.name || '?').slice(0, 1).toUpperCase();
+      media.appendChild(fallback);
+    }
+
+    const badge = document.createElement('span');
+    badge.className = 'favorite-search-badge';
+    badge.textContent = 'Nos favoritos';
+
+    const overlayButton = document.createElement('button');
+    overlayButton.type = 'button';
+    overlayButton.className = 'favorite-search-overlay';
+    overlayButton.setAttribute('aria-label', `Remover ${item.title || item.name || 'titulo'} dos favoritos`);
+    overlayButton.innerHTML = `
+      <span class="favorite-search-overlay__icon" aria-hidden="true">&minus;</span>
+      <span class="favorite-search-overlay__text">Toque para remover</span>
+    `;
+    overlayButton.addEventListener('click', (event) => {
+      event.preventDefault();
+      removeFavorite(item.tmdb_id, item.media_type);
+    });
+
+    card.appendChild(media);
+    card.appendChild(badge);
+    card.appendChild(overlayButton);
+    return card;
+  };
+
+  const renderFavoriteSearchItems = (items) => {
+    if (!favoriteSearchResults) {
+      return;
+    }
+    const visibleItems = Array.isArray(items) ? items.slice(0, 12) : [];
+    favoriteSearchResults.innerHTML = '';
+    if (!visibleItems.length) {
+      return;
+    }
+    const grid = document.createElement('div');
+    grid.className = 'favorite-search-grid';
+    visibleItems.forEach((item) => {
+      const isAlreadyFavorite = isFavoriteEntry(item);
+      let card;
+      if (isAlreadyFavorite) {
+        card = buildFavoriteSearchSelectedCard(item);
+      } else {
+        const key = `search:${item.tmdb_id}:${item.media_type}`;
+        card = buildSuggestionCard(item, key, {
+          source: 'search',
+          ariaLabel: `Adicionar ${item.title || item.name || 'titulo'} aos favoritos`,
+          imageSize: 'w342',
+        });
+        card.classList.add('favorite-poster-card--search-result');
+      }
+      grid.appendChild(card);
+    });
+    favoriteSearchResults.appendChild(grid);
+  };
+
+  const refreshFavoriteSearchResults = () => {
+    if (!favoriteSearchResults || favoriteSearchState.loading) {
+      return;
+    }
+    if (!favoriteSearchState.items.length) {
+      if (!isAuthenticated) {
+        setFavoriteSearchMessage('Entre na sua conta para buscar novos favoritos.');
+      } else if (!favoriteSearchState.lastQuery) {
+        setFavoriteSearchMessage('Digite o nome de um filme ou serie para adicionar aos favoritos.');
+      }
+      return;
+    }
+    renderFavoriteSearchItems(favoriteSearchState.items);
+  };
+
+  const runFavoriteSearch = async (query) => {
+    if (!favoriteSearchResults) {
+      return;
+    }
+    if (favoriteSearchState.controller) {
+      favoriteSearchState.controller.abort();
+      favoriteSearchState.controller = null;
+    }
+    const controller = new AbortController();
+    favoriteSearchState.controller = controller;
+    favoriteSearchState.loading = true;
+    favoriteSearchState.lastQuery = query;
+    setFavoriteSearchMessage('Buscando titulos...');
+
+    try {
+      const url = new URL('https://api.themoviedb.org/3/search/multi');
+      url.searchParams.set('api_key', TMDB_API_KEY);
+      url.searchParams.set('language', 'pt-BR');
+      url.searchParams.set('query', query);
+      url.searchParams.set('page', '1');
+      url.searchParams.set('include_adult', 'false');
+
+      const response = await fetch(url.toString(), { signal: controller.signal });
+      if (!response.ok) {
+        throw new Error(`favorite_search_failed_${response.status}`);
+      }
+
+      const payload = await response.json();
+      const rawResults = Array.isArray(payload.results) ? payload.results : [];
+      const normalizedResults = rawResults
+        .filter((item) => item && (item.media_type === 'movie' || item.media_type === 'tv'))
+        .map((item) => normalizeSuggestion(item))
+        .filter((item) => item);
+
+      if (controller.signal.aborted) {
+        return;
+      }
+
+      if (!normalizedResults.length) {
+        favoriteSearchState.items = [];
+        const noResultMessage = query
+          ? `Nenhum titulo encontrado para "${query}".`
+          : 'Nenhum titulo encontrado.';
+        setFavoriteSearchMessage(noResultMessage);
+        return;
+      }
+
+      favoriteSearchState.items = normalizedResults.slice(0, 12);
+      renderFavoriteSearchItems(favoriteSearchState.items);
+    } catch (error) {
+      if (error.name === 'AbortError') {
+        return;
+      }
+      console.error('favorite_search_error', error);
+      setFavoriteSearchMessage('Nao foi possivel buscar agora. Tente novamente.');
+    } finally {
+      if (favoriteSearchState.controller === controller) {
+        favoriteSearchState.controller = null;
+      }
+      favoriteSearchState.loading = false;
+    }
+  };
+
+  const cancelFavoriteSearch = () => {
+    if (favoriteSearchState.controller) {
+      favoriteSearchState.controller.abort();
+      favoriteSearchState.controller = null;
+    }
+    favoriteSearchState.loading = false;
+    favoriteSearchState.items = [];
+    favoriteSearchState.lastQuery = '';
+  };
+
+  const handleFavoriteSearchSubmit = (event) => {
+    event.preventDefault();
+    if (!isAuthenticated || !favoriteSearchInput) {
+      return;
+    }
+    const query = favoriteSearchInput.value.trim();
+    if (query.length < FAVORITE_SEARCH_MIN_CHARS) {
+      favoriteSearchState.items = [];
+      favoriteSearchState.lastQuery = '';
+      setFavoriteSearchMessage('Digite pelo menos 2 caracteres para buscar novos favoritos.');
+      return;
+    }
+    if (query === favoriteSearchState.lastQuery && !favoriteSearchState.loading) {
+      refreshFavoriteSearchResults();
+      return;
+    }
+    runFavoriteSearch(query);
+  };
+
+  const handleFavoriteSearchInput = () => {
+    if (!favoriteSearchInput) {
+      return;
+    }
+    const value = favoriteSearchInput.value.trim();
+    if (value.length === 0) {
+      cancelFavoriteSearch();
+      if (isAuthenticated) {
+        setFavoriteSearchMessage('Digite o nome de um filme ou serie para adicionar aos favoritos.');
+      } else {
+        setFavoriteSearchMessage('Entre na sua conta para buscar novos favoritos.');
+      }
+    }
+  };
+
+  const initFavoriteSearch = () => {
+    if (!favoriteSearchResults) {
+      return;
+    }
+    if (!isAuthenticated) {
+      setFavoriteSearchMessage('Entre na sua conta para buscar novos favoritos.');
+      return;
+    }
+    setFavoriteSearchMessage('Digite o nome de um filme ou serie para adicionar aos favoritos.');
+    if (favoriteSearchForm && favoriteSearchInput) {
+      favoriteSearchForm.addEventListener('submit', handleFavoriteSearchSubmit);
+      favoriteSearchInput.addEventListener('input', handleFavoriteSearchInput);
+    }
+  };
   const renderFavorites = () => {
     if (!favoritesList) {
       return;
@@ -759,6 +1012,7 @@
       favoritesList.appendChild(card);
     });
     updateStats();
+    refreshFavoriteSearchResults();
   };
 
   const scheduleRecommendationsRefresh = (options = {}) => {
@@ -1344,6 +1598,8 @@
       saveButton.disabled = false;
     }
   };
+
+  initFavoriteSearch();
 
   modalElements.forEach((modal) => {
     modal.setAttribute('aria-hidden', 'true');

@@ -2,7 +2,19 @@
 
 
 document.addEventListener('DOMContentLoaded', () => {
-  showLoading();
+  const pageShell = document.querySelector('.page-shell');
+  const skeleton = document.getElementById('personSkeleton');
+
+  const setLoadingState = (isLoading) => {
+    if (pageShell) {
+      pageShell.classList.toggle('is-loading', isLoading);
+    }
+    if (skeleton) {
+      skeleton.setAttribute('aria-hidden', 'true');
+    }
+  };
+
+  setLoadingState(true);
 
   function waitForImages(container){
     return new Promise(resolve => {
@@ -38,7 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const personId = params.get('personId');
 
   if(!personId){
-    hideLoading();
+    setLoadingState(false);
     console.error('personId ausente');
     return;
   }
@@ -149,7 +161,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }finally{
       await waitForImages(document);
-      hideLoading();
+      setLoadingState(false);
     }
   })();
 

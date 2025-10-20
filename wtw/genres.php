@@ -106,5 +106,6 @@ if (session_status() === PHP_SESSION_NONE) {
 
 <script src="js/script.js"></script>
 <script src="js/genres.js"></script>
+<script src="js/search.js"></script>
 </body>
 </html>

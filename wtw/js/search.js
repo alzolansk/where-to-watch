@@ -4,9 +4,16 @@
     const resultsContainer = document.getElementById('results');
     const clearButton = document.getElementById('clearSearch');
     const inputWrapper = document.getElementById('searchInputWrapper');
+    const isSearchResultsPage = document.body.classList.contains('search-results-page');
+    const dropdownEnabled = !isSearchResultsPage && !!resultsContainer;
 
-    if (!searchInput || !resultsContainer) {
+    if (!searchInput) {
         return;
+    }
+
+    if (!dropdownEnabled && resultsContainer) {
+        resultsContainer.innerHTML = '';
+        resultsContainer.style.display = 'none';
     }
 
     const genreMap = {
@@ -50,7 +57,7 @@
     };
 
     const renderViewAllAction = (query) => {
-        if (!resultsContainer) {
+        if (!dropdownEnabled || !resultsContainer) {
             return;
         }
 
@@ -77,7 +84,7 @@
         }
         const hasText = searchInput.value.trim().length > 0;
         inputWrapper.classList.toggle('has-text', hasText);
-        if (!hasText) {
+        if (!hasText && dropdownEnabled && resultsContainer) {
             resultsContainer.innerHTML = '';
             resultsContainer.style.display = 'none';
         }
@@ -148,6 +155,10 @@
     };
 
     const showEmptyState = (message) => {
+        if (!dropdownEnabled || !resultsContainer) {
+            return;
+        }
+
         resultsContainer.innerHTML = '';
         renderViewAllAction('');
         const empty = document.createElement('p');
@@ -179,6 +190,10 @@
     searchInput.addEventListener('input', () => {
         const query = searchInput.value.trim();
         toggleClearState();
+
+        if (!dropdownEnabled || !resultsContainer) {
+            return;
+        }
 
         if (query.length === 0) {
             renderViewAllAction('');
@@ -220,4 +235,3 @@
 
     toggleClearState();
 });
-

@@ -569,22 +569,41 @@ $favoritesList = $favorites;
         <div class="profile-modal__window" role="document">
             <header class="profile-modal__header">
                 <div>
-                    <h2 class="profile-modal__title" id="favoritesModalTitle">Gerenciar favoritos</h2>
-                    <span class="profile-modal__badge" data-profile-favorites-total><?php echo htmlspecialchars($favoritesTotalLabel, ENT_QUOTES, 'UTF-8'); ?></span>
+                    <h2 class="profile-modal__title" id="favoritesModalTitle">Coleção de favoritos</h2>
+                    <span class="favorites-modal-caption">Remova com "-" ou toque em um novo pôster para adicioná-lo imediatamente.</span>
                 </div>
                 <button type="button" class="profile-modal__close" data-profile-modal-close aria-label="Fechar">&times;</button>
             </header>
-            <div class="profile-modal__body">
-                <section class="favorites-section" aria-labelledby="favoritesDeckTitle" data-profile-modal-focus tabindex="-1">
-                    <header class="favorites-section__header">
-                        <div>
-                            <h3 class="favorites-section__title" id="favoritesDeckTitle">Coleção de favoritos</h3>
-                            <p class="favorites-section__caption">Remova com "-" ou toque em um novo pôster para adicioná-lo imediatamente.</p>
-                        </div>
-                    </header>
-                    <div class="favorite-poster-grid" data-profile-favorites-list role="list">
+            <div class="profile-modal__body favorites-modal-body" data-profile-modal-focus tabindex="-1" aria-labelledby="favoritesDeckTitle">
+                <div class="favorite-search-block">
+                    <form class="favorite-search-form" data-profile-favorite-search novalidate>
+                        <label class="favorite-search-field">
+                            <span class="favorite-search-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                                    <path d="M11 4a7 7 0 0 1 5.45 11.45l3.55 3.55a1 1 0 0 1-1.41 1.41l-3.55-3.55A7 7 0 1 1 11 4zm0 2a5 5 0 1 0 3.54 8.54A5 5 0 0 0 11 6z" />
+                                </svg>
+                            </span>
+                            <span class="sr-only">Pesquisar t&iacute;tulos para adicionar aos favoritos</span>
+                            <input
+                                type="search"
+                                name="favoriteSearch"
+                                class="favorite-search-input"
+                                placeholder="Pesquisar nova s&eacute;rie ou filme"
+                                autocomplete="off"
+                                spellcheck="false"
+                                data-profile-favorite-search-input
+                                <?php echo $isAuthenticated ? '' : 'disabled'; ?>
+                            >
+                            <button type="submit" class="favorite-search-button" <?php echo $isAuthenticated ? '' : 'disabled'; ?>>
+                                <span class="favorite-search-button__label">Buscar</span>
+                            </button>
+                        </label>
+                    </form>
+                    <div class="favorite-search-results" data-profile-favorite-search-results role="status" aria-live="polite"></div>
+                </div>
+                <div class="favorite-poster-grid" data-profile-favorites-list role="list">
                         <?php foreach ($favoritesList as $favorite): ?>
-                            <?php
+                        <?php
                             $posterUrl = $favorite['poster_url'] ?? null;
                             if (!$posterUrl && !empty($favorite['poster_path'])) {
                                 $posterUrl = wyw_tmdb_image_url((string) $favorite['poster_path']);
@@ -606,15 +625,11 @@ $favoritesList = $favorites;
                                 <button type="button" class="favorite-poster-card__remove" aria-label="Remover dos favoritos" <?php echo $isAuthenticated ? '' : 'disabled'; ?>>-</button>
                             </article>
                         <?php endforeach; ?>
-                    </div>
-                    <p class="profile-empty favorite-poster-grid__empty" data-profile-favorites-empty <?php echo $showFavoritesListEmpty ? '' : 'hidden'; ?>>
+                </div>
+                <p class="profile-empty favorite-poster-grid__empty favorites-modal-empty" data-profile-favorites-empty <?php echo $showFavoritesListEmpty ? '' : 'hidden'; ?>>
                         <?php echo htmlspecialchars($modalFavoritesEmptyMessage, ENT_QUOTES, 'UTF-8'); ?>
-                    </p>
-                </section>
+                </p>
             </div>
-            <footer class="profile-modal__footer">
-                <button type="button" class="profile-button profile-button--ghost" data-profile-modal-close>Fechar</button>
-            </footer>
         </div>
     </div>
 
