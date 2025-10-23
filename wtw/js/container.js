@@ -546,6 +546,18 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
 
+    const MUSICAL_KEYWORDS = [
+        4344,   // musical
+        156028, // broadway
+        165241, // broadway musical
+        206597, // stage musical
+        240462, // musical comedy
+        334841, // musical proshot
+        201353, // glee club
+        220201, // musical theater
+        235324  // drama club
+    ].join('|');
+
     const SECTION_CONFIGS = [
         {
             id: 'popular',
@@ -592,7 +604,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 highlight: 'musicais'
             },
             endpoint(context) {
-                return `${context.discoverBase}&sort_by=revenue.desc&with_genres=10402`;
+                const base = `${context.discoverBase}&include_adult=false&sort_by=popularity.desc&with_keywords=${MUSICAL_KEYWORDS}`;
+                if (context.mediaType === 'movie') {
+                    return `${base}&without_genres=99`;
+                }
+                return `${base}&without_genres=80|9648|10759|10763|10768|99`;
             }
         }
     ];

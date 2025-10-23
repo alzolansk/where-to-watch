@@ -73,7 +73,7 @@
         <div class="onboarding-modal" role="dialog" aria-modal="true" aria-labelledby="onboardingTitle" data-onboarding-modal>
             <div class="onboarding-header">
                 <h2 class="onboarding-title" id="onboardingTitle">Personalize sua experiência</h2>
-                <p class="onboarding-subtitle">Selecione os gêneros, provedores e filmes que têm a ver com você.</p>
+                <p class="onboarding-subtitle">Selecione os gêneros, provedores e filmes e séries que têm a ver com você.</p>
             </div>
 
             <div class="onboarding-steps" data-onboarding-steps>
@@ -126,15 +126,15 @@
                     </div>
                 </section>
 
-                <section class="onboarding-step" data-onboarding-step="favorites" aria-label="Escolha seus filmes favoritos" hidden>
+                <section class="onboarding-step" data-onboarding-step="favorites" aria-label="Escolha seus filmes e séries favoritos" hidden>
                     <header class="onboarding-step__header">
-                        <h3>Filmes que são a sua cara</h3>
+                        <h3>Filmes e séries que são a sua cara</h3>
                         <p>Selecione alguns títulos que você ama. Usaremos essas referências para encontrar recomendações melhores.</p>
                     </header>
                     <div class="onboarding-section onboarding-section--search">
                         <div class="onboarding-search" data-onboarding-favorites-search-wrapper>
-                            <label for="onboardingFavoriteSearch" class="sr-only">Buscar filmes</label>
-                            <input type="search" id="onboardingFavoriteSearch" class="onboarding-input" placeholder="Busque por filmes que você ama" data-onboarding-favorites-search>
+                            <label for="onboardingFavoriteSearch" class="sr-only">Buscar filmes e séries</label>
+                            <input type="search" id="onboardingFavoriteSearch" class="onboarding-input" placeholder="Busque por filmes ou séries que você ama" data-onboarding-favorites-search>
                             <button type="button" class="onboarding-button onboarding-button--inline onboarding-button--primary" data-onboarding-favorites-refresh>Buscar</button>
                         </div>
                         <p class="onboarding-helper-text">Mostramos opções populares automaticamente. Busque para encontrar qualquer título disponível na API.</p>

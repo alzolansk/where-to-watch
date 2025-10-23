@@ -107,7 +107,7 @@ if (session_status() === PHP_SESSION_NONE) {
         <div class="providers-results__header">
             <div>
                 <h2 class="providers-results__title" id="providersResultsTitle">Destaques em alta</h2>
-                <p class="providers-results__caption" id="providersResultsCaption">Selecione um provedor para ver as recomendacoes.</p>
+                <p class="providers-results__caption" id="providersResultsCaption">Descubra os titulos em alta nos provedores escolhidos. Sem selecao, exibimos destaques de todos os provedores.</p>
             </div>
             <span class="providers-results__count" id="providersResultsCount"></span>
         </div>

@@ -334,7 +334,7 @@ $navStates = [
     z-index: 0;
     border-radius: 999px;
     box-shadow:
-        inset 0 0 10px -5px rgba(255, 255, 255, 0.7);
+        inset 0 0 10px -8px rgba(255, 255, 255, 0.47);
 }
 
 .glassDiv::after {

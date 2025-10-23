@@ -965,10 +965,13 @@ const updateResultsCaption = (count) => {
             sort_by: mapSortForMedia(state.sortBy, mediaType),
             include_adult: 'false',
             watch_region: REGION,
-            with_watch_providers: Array.from(state.selected).join('|'),
             with_watch_monetization_types: MONETIZATION,
             page: String(page)
         });
+
+        if (state.selected.size) {
+            params.set('with_watch_providers', Array.from(state.selected).join('|'));
+        }
 
         if (mediaType === 'movie') {
             params.set('include_video', 'false');
@@ -1055,29 +1058,25 @@ const updateResultsCaption = (count) => {
     const fetchTitles = async () => {
         const token = ++state.fetchToken;
 
-        if (!state.selected.size) {
-            setLoading(false);
-            state.availability = new Map();
-            if (elements.grid) {
-                elements.grid.innerHTML = '';
-                elements.grid.classList.remove('is-loading');
-                elements.grid.removeAttribute('data-loading-skeleton');
-                elements.grid.removeAttribute('aria-busy');
-            }
-            resetResultsHeader();
-            setEmptyState('no-selection');
-            return;
-        }
-
         setLoading(true);
 
         try {
             const requests = [];
-            if (state.mediaType === 'movie' || state.mediaType === 'both') {
+            const includeMovies = state.mediaType === 'movie' || state.mediaType === 'both';
+            const includeTv = state.mediaType === 'tv' || state.mediaType === 'both';
+
+            if (includeMovies) {
                 requests.push(fetchDiscover('movie'));
             }
-            if (state.mediaType === 'tv' || state.mediaType === 'both') {
+            if (includeTv) {
                 requests.push(fetchDiscover('tv'));
+            }
+
+            if (!requests.length) {
+                state.availability = new Map();
+                setLoading(false);
+                renderTitles([]);
+                return;
             }
 
             const results = await Promise.all(requests);

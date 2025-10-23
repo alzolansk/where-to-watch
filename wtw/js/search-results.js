@@ -331,6 +331,34 @@ document.addEventListener('DOMContentLoaded', () => {
         'vote_average.desc': (a, b) => (b.vote_average || 0) - (a.vote_average || 0),
     };
 
+    const getSortComparator = (sort, query) => {
+        const baseComparator = sortComparators[sort] || sortComparators['popularity.desc'];
+        const normalizedQuery = normalizeText(query);
+        if (!normalizedQuery) {
+            return baseComparator;
+        }
+        if (sort !== 'popularity.desc') {
+            return (a, b) => {
+                const result = baseComparator(a, b);
+                if (result !== 0) {
+                    return result;
+                }
+                const relevanceDiff = (b._searchRelevance || 0) - (a._searchRelevance || 0);
+                if (relevanceDiff !== 0) {
+                    return relevanceDiff;
+                }
+                return (b.popularity || 0) - (a.popularity || 0);
+            };
+        }
+        return (a, b) => {
+            const relevanceDiff = (b._searchRelevance || 0) - (a._searchRelevance || 0);
+            if (relevanceDiff !== 0) {
+                return relevanceDiff;
+            }
+            return baseComparator(a, b);
+        };
+    };
+
     const mediaLabel = {
         movie: 'Filme',
         tv: 'S\u00E9rie',
@@ -524,9 +552,9 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const applyFilters = () => {
-        const { media, genre, release, sort } = state;
+        const { media, genre, release, sort, query } = state;
         const matcher = releaseMatchers[release] || releaseMatchers.all;
-        const comparator = sortComparators[sort] || sortComparators['popularity.desc'];
+        const comparator = getSortComparator(sort, query);
         const filtered = cache.rawResults
             .filter((item) => {
                 if (media !== 'both' && item.media_type !== media) {

@@ -113,7 +113,9 @@ $sortOptions = [
 
 <main class="search-results-shell" data-search-root>
     <header class="search-results-hero">
+        <div class="search-results-hero__info">
             <h1 class="search-results-hero__title">Explorar t&#237;tulos para <span data-search-term><?php echo htmlspecialchars($query, ENT_QUOTES, 'UTF-8'); ?></span></h1>
+            <p class="search-results-hero__providers-note">Todos os t&#237;tulos exibidos possuem provedores dispon&#237;veis; itens sem disponibilidade n&#227;o aparecem aqui.</p>
         </div>
         <div class="search-results-hero__meta">
             <span class="search-results-hero__count" data-result-count>0 resultados</span>

@@ -547,6 +547,12 @@
       img.src = poster;
       img.alt = '';
       img.loading = 'lazy';
+      if ('decoding' in img) {
+        img.decoding = 'async';
+      }
+      if ('fetchPriority' in img) {
+        img.fetchPriority = 'low';
+      }
       media.appendChild(img);
     } else {
       const fallback = document.createElement('span');
@@ -599,6 +605,12 @@
       img.src = poster;
       img.alt = '';
       img.loading = 'lazy';
+      if ('decoding' in img) {
+        img.decoding = 'async';
+      }
+      if ('fetchPriority' in img) {
+        img.fetchPriority = 'low';
+      }
       media.appendChild(img);
     } else {
       const fallback = document.createElement('span');
@@ -861,6 +873,12 @@
         img.src = poster;
         img.alt = '';
         img.loading = 'lazy';
+        if ('decoding' in img) {
+          img.decoding = 'async';
+        }
+        if ('fetchPriority' in img) {
+          img.fetchPriority = 'low';
+        }
         media.appendChild(img);
       } else {
         const fallback = document.createElement('span');

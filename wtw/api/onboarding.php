@@ -948,39 +948,87 @@ function onboardingTitleSuggestions(array $queryParams): array
 
     $query = normalise_label((string)($queryParams['q'] ?? $queryParams['query'] ?? ''));
     $results = [];
+    $loadTrending = static function (): array {
+        $movieResponse = tmdb_get('/trending/movie/week', [
+            'page' => 1,
+            'language' => 'pt-BR',
+        ]);
+        $tvResponse = tmdb_get('/trending/tv/week', [
+            'page' => 1,
+            'language' => 'pt-BR',
+        ]);
+
+        $movieItems = is_array($movieResponse['results'] ?? null) ? array_values($movieResponse['results']) : [];
+        foreach ($movieItems as &$movieRow) {
+            if (!isset($movieRow['media_type']) || $movieRow['media_type'] === '') {
+                $movieRow['media_type'] = 'movie';
+            }
+        }
+        unset($movieRow);
+
+        $tvItems = is_array($tvResponse['results'] ?? null) ? array_values($tvResponse['results']) : [];
+        foreach ($tvItems as &$tvRow) {
+            $tvRow['media_type'] = 'tv';
+        }
+        unset($tvRow);
+
+        $combined = array_merge($movieItems, $tvItems);
+        usort($combined, static function (array $left, array $right): int {
+            $leftPopularity = isset($left['popularity']) ? (float) $left['popularity'] : 0.0;
+            $rightPopularity = isset($right['popularity']) ? (float) $right['popularity'] : 0.0;
+            if ($leftPopularity === $rightPopularity) {
+                $leftVotes = isset($left['vote_count']) ? (int) $left['vote_count'] : 0;
+                $rightVotes = isset($right['vote_count']) ? (int) $right['vote_count'] : 0;
+                if ($leftVotes === $rightVotes) {
+                    return 0;
+                }
+                return $rightVotes <=> $leftVotes;
+            }
+            return $rightPopularity <=> $leftPopularity;
+        });
+
+        return $combined;
+    };
 
     if ($query !== '') {
-        $response = tmdb_get('/search/movie', [
+        $response = tmdb_get('/search/multi', [
             'query' => $query,
             'include_adult' => 'false',
             'page' => 1,
             'language' => 'pt-BR',
         ]);
+        $items = [];
+        foreach (($response['results'] ?? []) as $row) {
+            $mediaType = strtolower((string)($row['media_type'] ?? ''));
+            if ($mediaType === 'movie' || $mediaType === 'tv') {
+                $items[] = $row;
+            }
+        }
     } else {
-        $response = tmdb_get('/trending/movie/week', [
-            'page' => 1,
-            'language' => 'pt-BR',
-        ]);
+        $items = $loadTrending();
     }
-
-    $items = $response['results'] ?? [];
 
     if (empty($items) && $query !== '') {
-        $fallback = tmdb_get('/trending/movie/week', [
-            'page' => 1,
-            'language' => 'pt-BR',
-        ]);
-        $items = $fallback['results'] ?? [];
+        $items = $loadTrending();
     }
 
-    $items = array_slice($items, 0, 15);
+    $items = array_slice(array_values($items), 0, 18);
 
     $prepared = [];
+    $seen = [];
     foreach ($items as $row) {
         $id = (int)($row['id'] ?? 0);
         if ($id <= 0) {
             continue;
         }
+        $mediaTypeRaw = strtolower((string)($row['media_type'] ?? ''));
+        $mediaType = $mediaTypeRaw === 'tv' ? 'tv' : 'movie';
+        $key = $mediaType . ':' . $id;
+        if (isset($seen[$key])) {
+            continue;
+        }
+        $seen[$key] = true;
+
         $title = normalise_label((string)($row['title'] ?? $row['name'] ?? ''));
         if ($title === '') {
             continue;
@@ -991,11 +1039,16 @@ function onboardingTitleSuggestions(array $queryParams): array
         if (!$posterUrl) {
             $posterUrl = tmdb_image_url($backdropPath);
         }
+        $releaseSource = $mediaType === 'tv'
+            ? (string)($row['first_air_date'] ?? '')
+            : (string)($row['release_date'] ?? '');
+        $releaseYear = $releaseSource !== '' ? substr($releaseSource, 0, 4) : null;
 
         $prepared[] = [
             'id' => $id,
+            'media_type' => $mediaType,
             'title' => $title,
-            'release_year' => isset($row['release_date']) && $row['release_date'] !== '' ? substr($row['release_date'], 0, 4) : null,
+            'release_year' => $releaseYear,
             'poster_path' => $posterPath,
             'poster_url' => $posterUrl,
             'backdrop_path' => $backdropPath,
@@ -1003,12 +1056,28 @@ function onboardingTitleSuggestions(array $queryParams): array
     }
 
     if (!empty($prepared)) {
-        $logos = resolveTitleLogosBulk('movie', array_column($prepared, 'id'));
+        $idsByType = [];
         foreach ($prepared as $item) {
-            $logo = $logos[$item['id']] ?? null;
+            $type = $item['media_type'] ?? 'movie';
+            $idsByType[$type][] = $item['id'];
+        }
+
+        $logosByType = [];
+        foreach ($idsByType as $type => $ids) {
+            $uniqueIds = array_values(array_unique(array_filter(array_map('intval', $ids))));
+            if (empty($uniqueIds)) {
+                continue;
+            }
+            $logosByType[$type] = resolveTitleLogosBulk($type, $uniqueIds);
+        }
+
+        foreach ($prepared as $item) {
+            $type = $item['media_type'] ?? 'movie';
+            $logoList = $logosByType[$type] ?? [];
+            $logo = $logoList[$item['id']] ?? null;
             $results[] = [
                 'tmdb_id' => $item['id'],
-                'media_type' => 'movie',
+                'media_type' => $type,
                 'title' => $item['title'],
                 'logo_path' => $logo['path'] ?? null,
                 'logo_url' => $logo['url'] ?? null,
