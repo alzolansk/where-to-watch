@@ -26,6 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
         genre: null,
         release: 'all',
         sort: 'popularity.desc',
+        fuzzyActive: false,
     };
 
     const cache = {
@@ -206,8 +207,209 @@ document.addEventListener('DOMContentLoaded', () => {
             .trim();
     };
 
+    const levenshtein = (source, target) => {
+        if (source === target) {
+            return 0;
+        }
+        if (!source) {
+            return target.length;
+        }
+        if (!target) {
+            return source.length;
+        }
+
+        const sourceLength = source.length;
+        const targetLength = target.length;
+        let previous = new Array(targetLength + 1);
+        let current = new Array(targetLength + 1);
+
+        for (let index = 0; index <= targetLength; index += 1) {
+            previous[index] = index;
+        }
+
+        for (let i = 0; i < sourceLength; i += 1) {
+            current[0] = i + 1;
+            const sourceCode = source.charCodeAt(i);
+            for (let j = 0; j < targetLength; j += 1) {
+                const cost = sourceCode === target.charCodeAt(j) ? 0 : 1;
+                const insertion = current[j] + 1;
+                const deletion = previous[j + 1] + 1;
+                const substitution = previous[j] + cost;
+                current[j + 1] = Math.min(insertion, deletion, substitution);
+            }
+            [previous, current] = [current, previous];
+        }
+
+        return previous[targetLength];
+    };
+
+    const computeFuzzySimilarity = (query, target) => {
+        if (!query || !target) {
+            return 0;
+        }
+        const distance = levenshtein(query, target);
+        const maxLength = Math.max(query.length, target.length);
+        if (maxLength === 0) {
+            return 1;
+        }
+        const similarity = 1 - distance / maxLength;
+        return similarity < 0 ? 0 : similarity;
+    };
+
+    const computeItemFuzzyScore = (item, normalizedQuery) => {
+        if (!normalizedQuery) {
+            return 0;
+        }
+        const fields = [
+            normalizeText(item.title || item.name || ''),
+            normalizeText(item.original_title || item.original_name || ''),
+            normalizeText(item.overview || ''),
+        ];
+        let best = 0;
+        fields.forEach((field) => {
+            if (!field) {
+                return;
+            }
+            const similarity = computeFuzzySimilarity(normalizedQuery, field);
+            if (similarity > best) {
+                best = similarity;
+            }
+        });
+        return best;
+    };
+
+    const buildQueryVariants = (query) => {
+        const normalized = normalizeText(query);
+        if (!normalized) {
+            return [];
+        }
+        const variants = new Set();
+        const tokens = normalized.split(' ').filter((token) => token.length >= 3);
+        tokens.forEach((token) => variants.add(token));
+        if (normalized.length >= 5) {
+            variants.add(normalized.slice(0, -1));
+        }
+        if (normalized.length >= 6) {
+            variants.add(normalized.slice(0, -2));
+        }
+        const collapsed = normalized.replace(/(.)\1+/g, '$1');
+        if (collapsed.length >= 3) {
+            variants.add(collapsed);
+        }
+        return Array.from(variants).slice(0, 4);
+    };
+
+    const dedupeItems = (items) => {
+        const seen = new Set();
+        const deduped = [];
+        items.forEach((item) => {
+            if (!item || typeof item.id === 'undefined') {
+                return;
+            }
+            const mediaType = (item.media_type === 'tv' ? 'tv' : 'movie');
+            const key = `${mediaType}-${item.id}`;
+            if (seen.has(key)) {
+                return;
+            }
+            seen.add(key);
+            deduped.push(item);
+        });
+        return deduped;
+    };
+
+    let trendingCache = null;
+    const FUZZY_SIMILARITY_THRESHOLD = 0.35;
+
+    const fetchTrendingCandidates = async () => {
+        if (trendingCache) {
+            return trendingCache;
+        }
+        const endpoints = [
+            'https://api.themoviedb.org/3/trending/movie/week',
+            'https://api.themoviedb.org/3/trending/tv/week',
+        ];
+        const responses = await Promise.all(endpoints.map((endpoint) => {
+            const url = new URL(endpoint);
+            url.searchParams.set('api_key', apiKey);
+            url.searchParams.set('language', 'pt-BR');
+            return fetch(url)
+                .then((response) => (response.ok ? response.json() : { results: [] }))
+                .catch(() => ({ results: [] }));
+        }));
+
+        const combined = [];
+        responses.forEach((payload, index) => {
+            const defaultType = index === 1 ? 'tv' : 'movie';
+            (payload.results || []).forEach((item) => {
+                const mediaType = item.media_type === 'tv' ? 'tv' : item.media_type === 'movie' ? 'movie' : defaultType;
+                if (!item.media_type) {
+                    item.media_type = mediaType;
+                }
+                combined.push(item);
+            });
+        });
+
+        trendingCache = dedupeItems(combined).slice(0, 60);
+        return trendingCache;
+    };
+
+    const fetchMultiSearch = async (query, pages = [1]) => {
+        const trimmed = (query || '').trim();
+        if (!trimmed) {
+            return [];
+        }
+        const promises = pages.map((page) => {
+            const url = new URL('https://api.themoviedb.org/3/search/multi');
+            url.searchParams.set('api_key', apiKey);
+            url.searchParams.set('language', 'pt-BR');
+            url.searchParams.set('include_adult', 'false');
+            url.searchParams.set('page', page.toString());
+            url.searchParams.set('query', trimmed);
+            return fetch(url)
+                .then((response) => (response.ok ? response.json() : { results: [] }))
+                .catch(() => ({ results: [] }));
+        });
+        const responses = await Promise.all(promises);
+        const collected = [];
+        responses.forEach((payload) => {
+            (payload.results || []).forEach((item) => {
+                if (item.media_type !== 'movie' && item.media_type !== 'tv') {
+                    return;
+                }
+                collected.push(item);
+            });
+        });
+        return dedupeItems(collected);
+    };
+
+    const collectCandidatesWithFallback = async (query) => {
+        const primary = await fetchMultiSearch(query, [1, 2, 3, 4, 5]);
+        if (primary.length) {
+            return { items: primary.slice(0, 80), source: 'primary' };
+        }
+
+        const variants = buildQueryVariants(query);
+        if (variants.length) {
+            const fallback = [];
+            for (const variant of variants) {
+                const entries = await fetchMultiSearch(variant, [1, 2]);
+                fallback.push(...entries);
+            }
+            const deduped = dedupeItems(fallback);
+            if (deduped.length) {
+                return { items: deduped.slice(0, 80), source: 'variants' };
+            }
+        }
+
+        const trending = await fetchTrendingCandidates();
+        return { items: trending.slice(0, 60), source: 'trending' };
+    };
+
     const computeRelevanceScore = (item, normalizedQuery, queryTokens) => {
-        if (!normalizedQuery) return 0;
+        if (!normalizedQuery) {
+            item._wtwFuzzyScore = 0;
+            return 0;
+        }
 
         const candidates = [
             normalizeText(item.title || item.name || ''),
@@ -216,9 +418,15 @@ document.addEventListener('DOMContentLoaded', () => {
         ];
 
         let score = 0;
+        let bestFuzzy = 0;
 
         const evaluateCandidate = (target, baseWeight) => {
             if (!target) return;
+
+            const fuzzy = computeFuzzySimilarity(normalizedQuery, target);
+            if (fuzzy > bestFuzzy) {
+                bestFuzzy = fuzzy;
+            }
 
             if (target === normalizedQuery) {
                 score += 1000 * baseWeight;
@@ -236,11 +444,21 @@ document.addEventListener('DOMContentLoaded', () => {
                     score += coverage * 200 * baseWeight;
                 }
             }
+
+            if (fuzzy >= 0.85) {
+                score += 450 * fuzzy * baseWeight;
+            } else if (fuzzy >= 0.6) {
+                score += 260 * fuzzy * baseWeight;
+            } else if (fuzzy >= 0.35) {
+                score += 120 * fuzzy * baseWeight;
+            }
         };
 
         evaluateCandidate(candidates[0], 1);
         evaluateCandidate(candidates[1], 0.6);
         evaluateCandidate(candidates[2], 0.2);
+
+        item._wtwFuzzyScore = bestFuzzy;
 
         return score;
     };
@@ -316,6 +534,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (relevanceDiff !== 0) {
                 return relevanceDiff;
             }
+            const fuzzyDiff = (b._wtwFuzzyScore || 0) - (a._wtwFuzzyScore || 0);
+            if (fuzzyDiff !== 0) {
+                return fuzzyDiff;
+            }
             return (b.vote_average || 0) - (a.vote_average || 0);
         },
         'release_date.desc': (a, b) => {
@@ -347,6 +569,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (relevanceDiff !== 0) {
                     return relevanceDiff;
                 }
+                const fuzzyDiff = (b._wtwFuzzyScore || 0) - (a._wtwFuzzyScore || 0);
+                if (fuzzyDiff !== 0) {
+                    return fuzzyDiff;
+                }
                 return (b.popularity || 0) - (a.popularity || 0);
             };
         }
@@ -354,6 +580,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const relevanceDiff = (b._searchRelevance || 0) - (a._searchRelevance || 0);
             if (relevanceDiff !== 0) {
                 return relevanceDiff;
+            }
+            const fuzzyDiff = (b._wtwFuzzyScore || 0) - (a._wtwFuzzyScore || 0);
+            if (fuzzyDiff !== 0) {
+                return fuzzyDiff;
             }
             return baseComparator(a, b);
         };
@@ -563,6 +793,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (genre && !(item.genre_ids || []).includes(parseInt(genre, 10))) {
                     return false;
                 }
+                if (state.fuzzyActive && (item._wtwFuzzyScore || 0) < FUZZY_SIMILARITY_THRESHOLD) {
+                    return false;
+                }
                 const year = getReleaseYear(item);
                 return matcher(year);
             })
@@ -592,6 +825,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const fetchResults = async (query) => {
         state.query = query;
+        state.fuzzyActive = false;
         cache.availability = new Map();
         if (!query) {
             cache.rawResults = [];
@@ -610,38 +844,61 @@ document.addEventListener('DOMContentLoaded', () => {
         showLoader();
 
         try {
-            const pages = [1, 2, 3, 4, 5];
-            const promises = pages.map((page) => {
-                const url = new URL('https://api.themoviedb.org/3/search/multi');
-                url.searchParams.set('api_key', apiKey);
-                url.searchParams.set('language', 'pt-BR');
-                url.searchParams.set('page', page.toString());
-                url.searchParams.set('include_adult', 'false');
-                url.searchParams.set('query', query);
-                return fetch(url).then((response) => response.json());
-            });
-            const responses = await Promise.all(promises);
-            const collected = [];
-            const seen = new Set();
-            responses.forEach((payload) => {
-                (payload.results || []).forEach((item) => {
-                    if (item.media_type !== 'movie' && item.media_type !== 'tv') {
-                        return;
-                    }
-                    const key = `${item.media_type}-${item.id}`;
-                    if (seen.has(key)) {
-                        return;
-                    }
-                    seen.add(key);
-                    collected.push(item);
+            const { items: candidates, source } = await collectCandidatesWithFallback(query);
+            state.fuzzyActive = source !== 'primary';
+
+            const normalizedQuery = normalizeText(query);
+            let preparedCandidates = candidates.slice(0, 80);
+
+            if (state.fuzzyActive && normalizedQuery) {
+                const ranked = candidates
+                    .map((item) => ({
+                        item,
+                        score: computeItemFuzzyScore(item, normalizedQuery),
+                        popularity: item.popularity || 0,
+                    }))
+                    .filter((entry) => entry.score >= FUZZY_SIMILARITY_THRESHOLD)
+                    .sort((a, b) => {
+                        if (b.score !== a.score) {
+                            return b.score - a.score;
+                        }
+                        return b.popularity - a.popularity;
+                    })
+                    .slice(0, 40);
+                preparedCandidates = ranked.map((entry) => {
+                    entry.item._wtwFuzzyScore = entry.score;
+                    return entry.item;
                 });
-            });
-            const availableItems = await filterItemsByAvailability(collected);
-            cache.rawResults = applyRelevanceScores(availableItems, query);
-            if (!cache.rawResults.length) {
-                setEmptyStateContent('Nenhum provedor encontrado', 'Nenhum servi\u00E7o de streaming no Brasil oferece este t\u00EDtulo no momento.');
+            }
+
+            if (!preparedCandidates.length) {
+                cache.rawResults = [];
+                if (state.fuzzyActive) {
+                    setEmptyStateContent('Nenhum t\u00EDtulo encontrado', 'Tente ajustar a grafia ou experimentar outras palavras-chave.');
+                } else {
+                    setEmptyStateContent('Nenhum provedor encontrado', 'Nenhum servi\u00E7o de streaming no Brasil oferece este t\u00EDtulo no momento.');
+                }
             } else {
-                setEmptyStateContent('Nenhum resultado encontrado', 'Tente ajustar os filtros ou realizar uma nova pesquisa.');
+                const availableItems = await filterItemsByAvailability(preparedCandidates);
+                const scoredItems = applyRelevanceScores(availableItems, query);
+                cache.rawResults = state.fuzzyActive
+                    ? scoredItems.filter((item) => (item._wtwFuzzyScore || 0) >= FUZZY_SIMILARITY_THRESHOLD)
+                    : scoredItems;
+
+                if (!cache.rawResults.length) {
+                    setEmptyStateContent(
+                        state.fuzzyActive
+                            ? 'Nenhum t\u00EDtulo encontrado'
+                            : 'Nenhum provedor encontrado',
+                        state.fuzzyActive
+                            ? 'Nenhum servi\u00E7o de streaming no Brasil oferece este t\u00EDtulo no momento.'
+                            : 'Nenhum servi\u00E7o de streaming no Brasil oferece este t\u00EDtulo no momento.',
+                    );
+                } else if (state.fuzzyActive) {
+                    setEmptyStateContent('Resultados da busca', 'Mostrando t\u00EDtulos encontrados para sua pesquisa.');
+                } else {
+                    setEmptyStateContent('Nenhum resultado encontrado', 'Tente ajustar os filtros ou realizar uma nova pesquisa.');
+                }
             }
         } catch (error) {
             console.error('Erro ao carregar resultados:', error);

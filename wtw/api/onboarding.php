@@ -309,6 +309,7 @@ function fetchPreferences(PDO $pdo, int $userId): array
         'completed' => null,
         'genres' => [],
         'keywords' => [],
+        'people' => [],
         'providers' => [],
         'favorites' => [],
     ];
@@ -329,6 +330,15 @@ function fetchPreferences(PDO $pdo, int $userId): array
         return [
             'id' => $row['keyword_id'] !== null ? (int) $row['keyword_id'] : null,
             'label' => $row['label'],
+            'weight' => (float) $row['weight'],
+        ];
+    }, $stmt->fetchAll());
+
+    $stmt = $pdo->prepare('SELECT person_id, weight FROM user_people WHERE user_id = ? ORDER BY weight DESC, person_id ASC');
+    $stmt->execute([$userId]);
+    $response['people'] = array_map(static function (array $row) {
+        return [
+            'id' => (int) $row['person_id'],
             'weight' => (float) $row['weight'],
         ];
     }, $stmt->fetchAll());
@@ -468,6 +478,8 @@ function persistPreferences(PDO $pdo, int $userId, array $payload): array
         ];
     }
 
+    $people = [];
+
     $providers = [];
     foreach ($providersInput as $value) {
         $id = (int) $value;
@@ -510,11 +522,12 @@ function persistPreferences(PDO $pdo, int $userId, array $payload): array
             'backdrop_path' => $backdropPath,
             'genres' => [],
             'keywords' => [],
+            'cast' => [],
         ];
     }
 
     if (!empty($favorites)) {
-        $favorites = enrich_favorite_selections($favorites, $genres, $keywords);
+        $favorites = enrich_favorite_selections($favorites, $genres, $keywords, $people);
     }
 
     $pdo->beginTransaction();
@@ -532,6 +545,25 @@ function persistPreferences(PDO $pdo, int $userId, array $payload): array
         $stmt = $pdo->prepare('INSERT INTO user_keywords (user_id, keyword_id, label, weight) VALUES (?, ?, ?, 1.0)');
         foreach ($keywords as $keyword) {
             $stmt->execute([$userId, $keyword['id'], $keyword['label']]);
+        }
+    }
+
+    $pdo->prepare('DELETE FROM user_people WHERE user_id = ?')->execute([$userId]);
+    if (!empty($people)) {
+        arsort($people);
+        $stmt = $pdo->prepare('INSERT INTO user_people (user_id, person_id, weight) VALUES (?, ?, ?)');
+        $count = 0;
+        foreach ($people as $personId => $weight) {
+            $personId = (int) $personId;
+            if ($personId <= 0) {
+                continue;
+            }
+            $weightValue = round(max(0.1, min((float) $weight, 10.0)), 4);
+            $stmt->execute([$userId, $personId, $weightValue]);
+            $count++;
+            if ($count >= 60) {
+                break;
+            }
         }
     }
 
@@ -593,7 +625,7 @@ function markOnboardingSessionComplete(): void
     $_SESSION['onboarding_completed_at'] = date('c');
 }
 
-function enrich_favorite_selections(array $favorites, array &$genres, array &$keywords): array
+function enrich_favorite_selections(array $favorites, array &$genres, array &$keywords, array &$people): array
 {
     foreach ($favorites as $key => &$favorite) {
         $details = load_favorite_details($favorite['media_type'], $favorite['tmdb_id']);
@@ -628,6 +660,38 @@ function enrich_favorite_selections(array $favorites, array &$genres, array &$ke
                     'id' => $keywordId,
                     'label' => mb_limit($label, 120),
                 ];
+            }
+        }
+
+        if (!empty($details['cast']) && is_array($details['cast'])) {
+            $favoriteCast = [];
+            $favoriteCastIds = [];
+            $weightMap = [1.0, 0.75, 0.5];
+            foreach ($details['cast'] as $index => $member) {
+                if ($index >= 3) {
+                    break;
+                }
+                if (!is_array($member)) {
+                    continue;
+                }
+                $personId = isset($member['id']) ? (int) $member['id'] : 0;
+                if ($personId <= 0 || isset($favoriteCastIds[$personId])) {
+                    continue;
+                }
+                $name = normalise_label((string) ($member['name'] ?? ''));
+                if ($name === '') {
+                    continue;
+                }
+                $favoriteCastIds[$personId] = true;
+                $favoriteCast[] = [
+                    'id' => $personId,
+                    'name' => mb_limit($name, 120),
+                ];
+                $increment = $weightMap[$index] ?? max(0.25, 1.0 - 0.25 * $index);
+                $people[$personId] = ($people[$personId] ?? 0.0) + $increment;
+            }
+            if (!empty($favoriteCast)) {
+                $favorite['cast'] = $favoriteCast;
             }
         }
 

@@ -46,7 +46,245 @@
         10768: 'Guerra & Política'
     };
 
-    const fetchJson = (url) => fetch(url).then((response) => response.json());
+    const normalizeText = (value) => {
+        if (!value) {
+            return '';
+        }
+        let normalized = `${value}`;
+        if (typeof normalized.normalize === 'function') {
+            normalized = normalized.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        }
+        return normalized
+            .toLowerCase()
+            .replace(/[^\w\s]/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+    };
+
+    const levenshtein = (source, target) => {
+        if (source === target) {
+            return 0;
+        }
+        if (!source) {
+            return target.length;
+        }
+        if (!target) {
+            return source.length;
+        }
+
+        const sourceLength = source.length;
+        const targetLength = target.length;
+        let previous = new Array(targetLength + 1);
+        let current = new Array(targetLength + 1);
+
+        for (let index = 0; index <= targetLength; index += 1) {
+            previous[index] = index;
+        }
+
+        for (let i = 0; i < sourceLength; i += 1) {
+            current[0] = i + 1;
+            const sourceCode = source.charCodeAt(i);
+            for (let j = 0; j < targetLength; j += 1) {
+                const cost = sourceCode === target.charCodeAt(j) ? 0 : 1;
+                const insertion = current[j] + 1;
+                const deletion = previous[j + 1] + 1;
+                const substitution = previous[j] + cost;
+                current[j + 1] = Math.min(insertion, deletion, substitution);
+            }
+            [previous, current] = [current, previous];
+        }
+
+        return previous[targetLength];
+    };
+
+    const computeFuzzySimilarity = (query, target) => {
+        if (!query || !target) {
+            return 0;
+        }
+        const distance = levenshtein(query, target);
+        const maxLength = Math.max(query.length, target.length);
+        if (maxLength === 0) {
+            return 1;
+        }
+        const similarity = 1 - distance / maxLength;
+        return similarity < 0 ? 0 : similarity;
+    };
+
+    const computeItemFuzzyScore = (item, normalizedQuery) => {
+        if (!normalizedQuery) {
+            return 0;
+        }
+        const candidates = [
+            normalizeText(item.title || item.name || ''),
+            normalizeText(item.original_title || item.original_name || ''),
+            normalizeText(item.overview || ''),
+        ];
+        let best = 0;
+        candidates.forEach((candidate) => {
+            if (!candidate) {
+                return;
+            }
+            const similarity = computeFuzzySimilarity(normalizedQuery, candidate);
+            if (similarity > best) {
+                best = similarity;
+            }
+        });
+        return best;
+    };
+
+    const buildQueryVariants = (query) => {
+        const normalized = normalizeText(query);
+        if (!normalized) {
+            return [];
+        }
+        const variants = new Set();
+        const tokens = normalized.split(' ').filter((token) => token.length >= 3);
+        tokens.forEach((token) => variants.add(token));
+        if (normalized.length >= 5) {
+            variants.add(normalized.slice(0, -1));
+        }
+        const collapsed = normalized.replace(/(.)\1+/g, '$1');
+        if (collapsed.length >= 3) {
+            variants.add(collapsed);
+        }
+        return Array.from(variants).slice(0, 4);
+    };
+
+    const dedupeItems = (items) => {
+        const seen = new Set();
+        const output = [];
+        items.forEach((item) => {
+            if (!item || typeof item.id === 'undefined') {
+                return;
+            }
+            const key = `${item.media_type === 'tv' ? 'tv' : 'movie'}-${item.id}`;
+            if (seen.has(key)) {
+                return;
+            }
+            seen.add(key);
+            output.push(item);
+        });
+        return output;
+    };
+
+    let trendingCache = null;
+    let lastRequestToken = 0;
+    const FUZZY_SIMILARITY_THRESHOLD = 0.35;
+
+    const fetchTrendingCandidates = async () => {
+        if (trendingCache) {
+            return trendingCache;
+        }
+        const endpoints = [
+            'https://api.themoviedb.org/3/trending/movie/week',
+            'https://api.themoviedb.org/3/trending/tv/week',
+        ];
+        const responses = await Promise.all(endpoints.map((endpoint) => {
+            const url = new URL(endpoint);
+            url.searchParams.set('api_key', apiKey);
+            url.searchParams.set('language', 'pt-BR');
+            return fetch(url)
+                .then((response) => (response.ok ? response.json() : { results: [] }))
+                .catch(() => ({ results: [] }));
+        }));
+        const combined = [];
+        responses.forEach((payload, index) => {
+            const defaultType = index === 1 ? 'tv' : 'movie';
+            (payload.results || []).forEach((item) => {
+                const mediaType = item.media_type === 'tv' ? 'tv' : item.media_type === 'movie' ? 'movie' : defaultType;
+                if (!item.media_type) {
+                    item.media_type = mediaType;
+                }
+                combined.push(item);
+            });
+        });
+        trendingCache = dedupeItems(combined).slice(0, 40);
+        return trendingCache;
+    };
+
+    const fetchMultiSearch = async (query, page = 1) => {
+        const trimmed = (query || '').trim();
+        if (!trimmed) {
+            return [];
+        }
+        const url = new URL('https://api.themoviedb.org/3/search/multi');
+        url.searchParams.set('api_key', apiKey);
+        url.searchParams.set('language', 'pt-BR');
+        url.searchParams.set('include_adult', 'false');
+        url.searchParams.set('page', page.toString());
+        url.searchParams.set('query', trimmed);
+        try {
+            const response = await fetch(url);
+            if (!response.ok) {
+                return [];
+            }
+            const payload = await response.json();
+            return dedupeItems(
+                (payload.results || []).filter((item) => item.media_type === 'movie' || item.media_type === 'tv'),
+            );
+        } catch (error) {
+            console.error('Erro ao buscar dados TMDB:', error);
+            return [];
+        }
+    };
+
+    const collectCandidatesWithFallback = async (query) => {
+        const primary = await fetchMultiSearch(query, 1);
+        if (primary.length) {
+            return { items: primary, source: 'primary' };
+        }
+
+        const variants = buildQueryVariants(query);
+        if (variants.length) {
+            const aggregated = [];
+            for (const variant of variants.slice(0, 3)) {
+                const entries = await fetchMultiSearch(variant, 1);
+                aggregated.push(...entries);
+            }
+            const deduped = dedupeItems(aggregated);
+            if (deduped.length) {
+                return { items: deduped, source: 'variants' };
+            }
+        }
+
+        const trending = await fetchTrendingCandidates();
+        return { items: trending, source: 'trending' };
+    };
+
+    const rankCandidates = (items, query, { forceFuzzy = false, limit = 8 } = {}) => {
+        if (!items.length) {
+            return [];
+        }
+        const normalizedQuery = normalizeText(query);
+        if (!normalizedQuery) {
+            return items.slice(0, limit);
+        }
+        const scored = items.map((item) => ({
+            item,
+            similarity: computeItemFuzzyScore(item, normalizedQuery),
+            popularity: item.popularity || 0,
+        })).sort((a, b) => {
+            if (b.similarity !== a.similarity) {
+                return b.similarity - a.similarity;
+            }
+            return b.popularity - a.popularity;
+        });
+
+        const filtered = forceFuzzy
+            ? scored.filter((entry) => entry.similarity >= FUZZY_SIMILARITY_THRESHOLD)
+            : scored;
+
+        const subset = filtered.length || !forceFuzzy ? filtered : [];
+        if (forceFuzzy && subset.length === 0) {
+            return [];
+        }
+        return (subset.length ? subset : scored)
+            .slice(0, limit)
+            .map((entry) => {
+                entry.item._wtwFuzzyScore = entry.similarity;
+                return entry.item;
+            });
+    };
 
     const redirectToFullResults = (query) => {
         if (!query) {
@@ -187,7 +425,7 @@
     });
 
 
-    searchInput.addEventListener('input', () => {
+    searchInput.addEventListener('input', async () => {
         const query = searchInput.value.trim();
         toggleClearState();
 
@@ -196,36 +434,50 @@
         }
 
         if (query.length === 0) {
+            lastRequestToken += 1;
+            resultsContainer.innerHTML = '';
+            resultsContainer.style.display = 'none';
             renderViewAllAction('');
             return;
         }
 
-        const url = `https://api.themoviedb.org/3/search/multi?api_key=${apiKey}&query=${encodeURIComponent(query)}&language=pt-BR&page=1&sort_by=popularity.desc`;
+        const requestToken = ++lastRequestToken;
+        resultsContainer.innerHTML = '';
 
-        fetchJson(url)
-            .then((data) => {
-                resultsContainer.innerHTML = '';
-                const items = (data.results || [])
-                    .filter((item) => item.media_type === 'movie' || item.media_type === 'tv')
-                    .sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
+        try {
+            const { items: candidates, source } = await collectCandidatesWithFallback(query);
+            if (requestToken !== lastRequestToken) {
+                return;
+            }
 
-                if (!items.length) {
-                    showEmptyState('Nenhum resultado encontrado.');
-                    return;
-                }
-
-                items.forEach((item) => {
-                    const card = createResultCard(item);
-                    resultsContainer.appendChild(card);
-                });
-                renderViewAllAction(query);
-                resultsContainer.style.display = 'block';
-            })
-            .catch((error) => {
-                console.error('Erro:', error);
-                showEmptyState('NÃ£o foi possÃ­vel carregar os resultados agora.');
+            const ranked = rankCandidates(candidates, query, {
+                forceFuzzy: source !== 'primary',
+                limit: 8,
             });
+
+            resultsContainer.innerHTML = '';
+
+            if (!ranked.length) {
+                const message = 'Nenhum resultado encontrado.';
+                showEmptyState(message);
+                return;
+            }
+
+            ranked.forEach((item) => {
+                const card = createResultCard(item);
+                resultsContainer.appendChild(card);
+            });
+            renderViewAllAction(query);
+            resultsContainer.style.display = 'block';
+        } catch (error) {
+            if (requestToken !== lastRequestToken) {
+                return;
+            }
+            console.error('Erro:', error);
+            showEmptyState('Nao foi possivel carregar os resultados agora.');
+        }
     });
+
 
     const params = new URLSearchParams(window.location.search);
     const initialQuery = params.get('q');
