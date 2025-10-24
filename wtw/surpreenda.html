@@ -184,11 +184,13 @@
     }
 
     async function ensureLibs(){
+      const status = { gsapReady: !!window.gsap, threeReady: !!window.THREE };
+
       // Verifica GSAP
-      if (window.gsap) setDiag('t_gsap','ok','ok'); else setDiag('t_gsap','err','missing');
+      setDiag('t_gsap', status.gsapReady ? 'ok' : 'err', status.gsapReady ? 'ok' : 'missing');
 
       // Verifica THREE primário; se ausente, tenta fallbacks
-      if (!window.THREE){
+      if (!status.threeReady){
         setDiag('t_three','warn','loading…');
         try {
           await loadScript('https://unpkg.com/three@0.161.0/build/three.min.js');
@@ -199,27 +201,14 @@
           await loadScript('https://cdnjs.cloudflare.com/ajax/libs/three.js/0.161.0/three.min.js');
         } catch(e){ /* último recurso */ }
       }
-      setDiag('t_three', window.THREE ? 'ok' : 'err', window.THREE ? 'ok' : 'missing');
+
+      status.threeReady = !!window.THREE;
+      setDiag('t_three', status.threeReady ? 'ok' : 'err', status.threeReady ? 'ok' : 'missing');
+
+      return status;
     }
 
-    // Bootstrap após DOM pronto e libs garantidas
-    (async function bootstrap(){
-      // Aguarda defer scripts terminarem
-      if (document.readyState === 'loading') await new Promise(r => document.addEventListener('DOMContentLoaded', r, {once:true}));
-      await ensureLibs();
-
-      if (!window.THREE){
-        console.error('THREE não carregou. Verifique CSP/Network.');
-        setDiag('t_render','err','THREE missing');
-        return; // não segue para evitar ReferenceError
-      }
-
-      const THREE_NS = window.THREE;
-
-      // ============================
-      // THREE.JS — Starfield + Warp
-      // ============================
-      const canvas = document.getElementById('warpCanvas');
+    function initThreeStarfield(THREE_NS, canvas, warpState){
       const renderer = new THREE_NS.WebGLRenderer({ canvas, antialias: true });
       const scene = new THREE_NS.Scene();
       const camera = new THREE_NS.PerspectiveCamera(70, 1, 0.1, 2000);
@@ -232,17 +221,16 @@
       };
       window.addEventListener('resize', resize); resize();
 
-      // Partículas (estrelas)
       const starCount = 2200;
       const geometry = new THREE_NS.BufferGeometry();
       const positions = new Float32Array(starCount * 3);
       const speeds = new Float32Array(starCount);
 
       for (let i = 0; i < starCount; i++) {
-        positions[i * 3 + 0] = (Math.random() - 0.5) * 20; // x
-        positions[i * 3 + 1] = (Math.random() - 0.5) * 20; // y
-        positions[i * 3 + 2] = -Math.random() * 80;        // z (para trás)
-        speeds[i] = 0.02 + Math.random() * 0.06;           // velocidade base
+        positions[i * 3 + 0] = (Math.random() - 0.5) * 20;
+        positions[i * 3 + 1] = (Math.random() - 0.5) * 20;
+        positions[i * 3 + 2] = -Math.random() * 80;
+        speeds[i] = 0.02 + Math.random() * 0.06;
       }
       geometry.setAttribute('position', new THREE_NS.BufferAttribute(positions, 3));
 
@@ -250,14 +238,13 @@
       const stars = new THREE_NS.Points(geometry, material);
       scene.add(stars);
 
-      let warpFactor = 1; // multiplicador de velocidade
-
+      let rafId = null;
       function animate() {
-        requestAnimationFrame(animate);
+        rafId = requestAnimationFrame(animate);
         const pos = stars.geometry.attributes.position.array;
         for (let i = 0; i < starCount; i++) {
-          pos[i * 3 + 2] += speeds[i] * warpFactor; // avança para a câmera
-          if (pos[i * 3 + 2] > 5) { // quando passa por nós, reponha atrás
+          pos[i * 3 + 2] += speeds[i] * warpState.value;
+          if (pos[i * 3 + 2] > 5) {
             pos[i * 3 + 0] = (Math.random() - 0.5) * 20;
             pos[i * 3 + 1] = (Math.random() - 0.5) * 20;
             pos[i * 3 + 2] = -80 - Math.random() * 40;
@@ -268,7 +255,106 @@
       }
       animate();
 
-      setDiag('t_render','ok','running');
+      return {
+        renderer,
+        scene,
+        cleanup(){ cancelAnimationFrame(rafId); window.removeEventListener('resize', resize); }
+      };
+    }
+
+    function initCanvasStarfield(canvas, warpState){
+      const ctx = canvas.getContext('2d');
+      let width = 0, height = 0;
+      const starCount = 900;
+      const stars = Array.from({ length: starCount }, () => ({ x: 0, y: 0, z: 0, speed: 0 }));
+      const maxDepth = 140;
+
+      function resize(){
+        width = window.innerWidth;
+        height = window.innerHeight;
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = width * dpr;
+        canvas.height = height * dpr;
+        canvas.style.width = width + 'px';
+        canvas.style.height = height + 'px';
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.scale(dpr, dpr);
+      }
+
+      function resetStar(star){
+        star.x = (Math.random() - 0.5) * width * 0.6;
+        star.y = (Math.random() - 0.5) * height * 0.6;
+        star.z = Math.random() * maxDepth + 10;
+        star.speed = 0.02 + Math.random() * 0.05;
+      }
+
+      stars.forEach(resetStar);
+      window.addEventListener('resize', resize); resize();
+
+      let rafId = null;
+      function animate(){
+        rafId = requestAnimationFrame(animate);
+        ctx.clearRect(0, 0, width, height);
+        const bgGradient = ctx.createRadialGradient(width * 0.3, height * 0.1, 0, width * 0.3, height * 0.1, Math.max(width, height));
+        bgGradient.addColorStop(0, 'rgba(11, 20, 48, 0.45)');
+        bgGradient.addColorStop(1, 'rgba(6, 9, 19, 0)');
+        ctx.fillStyle = bgGradient;
+        ctx.fillRect(0, 0, width, height);
+
+        ctx.fillStyle = 'rgba(128, 216, 255, 0.85)';
+        ctx.strokeStyle = 'rgba(0, 229, 255, 0.35)';
+        for (const star of stars){
+          star.z -= star.speed * Math.max(0.5, warpState.value * 1.2);
+          if (star.z <= 1) resetStar(star);
+
+          const k = 180 / star.z;
+          const x = width / 2 + star.x * k;
+          const y = height / 2 + star.y * k;
+
+          if (x < 0 || x > width || y < 0 || y > height){
+            resetStar(star);
+            continue;
+          }
+
+          const size = Math.max(0.6, (1 - star.z / maxDepth) * 3 + warpState.value * 0.4);
+          ctx.beginPath();
+          ctx.arc(x, y, size, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+      animate();
+
+      return {
+        cleanup(){ cancelAnimationFrame(rafId); window.removeEventListener('resize', resize); },
+        renderer: null,
+        scene: null
+      };
+    }
+
+    // Bootstrap após DOM pronto e libs garantidas
+    (async function bootstrap(){
+      if (document.readyState === 'loading') await new Promise(r => document.addEventListener('DOMContentLoaded', r, {once:true}));
+      await ensureLibs();
+
+      const canvas = document.getElementById('warpCanvas');
+      const warpState = { value: 1 };
+      let renderer = null;
+      let scene = null;
+      let renderMode = 'three';
+
+      const THREE_NS = window.THREE || null;
+      if (THREE_NS){
+        const starfield = initThreeStarfield(THREE_NS, canvas, warpState);
+        renderer = starfield.renderer;
+        scene = starfield.scene;
+        setDiag('t_render','ok','running (three)');
+      } else {
+        renderMode = 'canvas';
+        initCanvasStarfield(canvas, warpState);
+        console.warn('THREE não disponível — ativando fallback em canvas.');
+        setDiag('t_three','warn','fallback');
+        setDiag('t_render','warn','running (canvas)');
+      }
 
       // ============================
       // UX / Interações de portal
@@ -320,7 +406,9 @@
         gsap.to(div, { duration: .12, opacity: 1, ease: 'power3.out', onComplete: () => { gsap.to(div, { duration: .35, opacity: 0, ease: 'power3.in', onComplete: () => div.remove() }); }});
       }
 
-      function warp(to = 1){ gsap.to(window, { duration: .9, onUpdate: () => { warpFactor = gsap.utils.interpolate(warpFactor, to, 0.18); } }); }
+      function warp(to = 1){
+        gsap.to(warpState, { duration: .9, value: to, ease: 'power2.out' });
+      }
 
       async function getRandomTitle(){ await new Promise(r => setTimeout(r, 450)); return pickRandom(); }
 
@@ -341,11 +429,13 @@
       // "Testes" rápidos (auto-checagens)
       // ============================
       try {
-        const okRenderer = renderer instanceof THREE_NS.WebGLRenderer;
-        const okScene = scene instanceof THREE_NS.Scene;
         const okHasGSAP = !!window.gsap;
-        console.assert(okRenderer, 'Renderer não é THREE.WebGLRenderer');
-        console.assert(okScene, 'Scene não é THREE.Scene');
+        const okRenderer = !THREE_NS || (renderer instanceof THREE_NS.WebGLRenderer);
+        const okScene = !THREE_NS || (scene instanceof THREE_NS.Scene);
+        if (renderMode === 'three'){
+          console.assert(okRenderer, 'Renderer não é THREE.WebGLRenderer');
+          console.assert(okScene, 'Scene não é THREE.Scene');
+        }
         console.assert(okHasGSAP, 'GSAP não carregou');
       } catch (e) {
         console.error('Self-tests falharam', e);
