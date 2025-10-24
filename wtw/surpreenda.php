@@ -1,3 +1,32 @@
+<?php
+declare(strict_types=1);
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+require_once __DIR__ . '/includes/env.php';
+
+wyw_load_env(__DIR__);
+
+require_once __DIR__ . '/includes/db.php';
+
+$dbConnected = true;
+
+try {
+    $pdo = get_pdo();
+} catch (Throwable $exception) {
+    $dbConnected = false;
+    $pdo = null;
+}
+
+$clientConfig = [
+    'apiBaseUrl' => rtrim((string) wyw_env('APP_API_BASE_URL', '/api'), '/'),
+    'tmdbImageBase' => rtrim((string) wyw_env('TMDB_IMAGE_BASE_URL', 'https://image.tmdb.org/t/p'), '/'),
+    'isAuthenticated' => isset($_SESSION['id']) && (int) $_SESSION['id'] > 0,
+    'databaseConnected' => $dbConnected,
+];
+?>
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -13,6 +42,9 @@
   <!-- Three.js primário (defer) -->
   <script src="https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.min.js" defer></script>
   <!-- Observação: também carregamos fallback programático no JS abaixo caso o CDN falhe -->
+  <script>
+    window.__WY_WATCH_CONFIG__ = Object.freeze(Object.assign({}, window.__WY_WATCH_CONFIG__ || {}, <?php echo json_encode($clientConfig, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>));
+  </script>
   <style>
     :root {
       --bg-a: #060913;
@@ -104,6 +136,7 @@
     .poster { width: 100%; aspect-ratio: 2/3; border-radius: 16px; object-fit: cover; box-shadow: 0 8px 30px rgba(0,0,0,.4); }
     .meta h2 { margin: 0 0 6px; font-family: Orbitron, Inter, sans-serif; letter-spacing: .06ch; }
     .meta .sub { opacity: .8; margin-bottom: 12px; }
+    .meta .providers { opacity: .85; margin-bottom: 16px; font-size: 0.95rem; }
     .actions { display: flex; flex-wrap: wrap; gap: 10px; }
     .btn { padding: 10px 14px; border-radius: 12px; border: 1px solid var(--border); background: linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.04)); color: var(--white); font-weight: 600; cursor: pointer; transition: transform .16s ease, box-shadow .16s ease; box-shadow: var(--glow); }
     .btn:hover { transform: translateY(-1px); }
@@ -152,6 +185,7 @@
         <div class="meta">
           <h2 id="title">Interstellar</h2>
           <div class="sub" id="subtitle">Ficção científica • 2014 • 2h49</div>
+          <p class="providers" id="providers" hidden>Disponível em: —</p>
           <p id="overview">Num futuro sombrio na Terra, um grupo de astronautas atravessa um buraco de minhoca em busca de um novo lar para a humanidade.</p>
           <div class="actions">
             <button class="btn" id="again">🔁 Outro salto</button>
@@ -167,7 +201,8 @@
   <div class="diag" id="diag">
     <b>Diagnostics</b><br>
     GSAP: <span id="t_gsap" class="warn">checking…</span> • THREE: <span id="t_three" class="warn">checking…</span><br>
-    Render: <span id="t_render" class="warn">idle</span>
+    Render: <span id="t_render" class="warn">idle</span> • API: <span id="t_api" class="warn">idle</span><br>
+    Sessão: <span id="t_auth" class="warn">checking…</span> • DB: <span id="t_db" class="warn">checking…</span>
   </div>
 
   <script>
@@ -210,9 +245,8 @@
 
     function initThreeStarfield(THREE_NS, canvas, warpState){
       const renderer = new THREE_NS.WebGLRenderer({ canvas, antialias: true });
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
       const scene = new THREE_NS.Scene();
-      const camera = new THREE_NS.PerspectiveCamera(68, 1, 0.1, 2000);
+      const camera = new THREE_NS.PerspectiveCamera(70, 1, 0.1, 2000);
       camera.position.z = 5;
 
       const resize = () => {
@@ -222,86 +256,36 @@
       };
       window.addEventListener('resize', resize); resize();
 
-      const starCount = 1800;
-      const stars = Array.from({ length: starCount }, () => ({ x: 0, y: 0, z: 0, speed: 0 }));
-      const headPositions = new Float32Array(starCount * 3);
-      const tailPositions = new Float32Array(starCount * 6);
+      const starCount = 2200;
+      const geometry = new THREE_NS.BufferGeometry();
+      const positions = new Float32Array(starCount * 3);
+      const speeds = new Float32Array(starCount);
 
-      function resetStar(i){
-        const star = stars[i];
-        star.x = (Math.random() - 0.5) * 20;
-        star.y = (Math.random() - 0.5) * 20;
-        star.z = -Math.random() * 220 - 20;
-        star.speed = 0.05 + Math.random() * 0.12;
+      for (let i = 0; i < starCount; i++) {
+        positions[i * 3 + 0] = (Math.random() - 0.5) * 20;
+        positions[i * 3 + 1] = (Math.random() - 0.5) * 20;
+        positions[i * 3 + 2] = -Math.random() * 80;
+        speeds[i] = 0.02 + Math.random() * 0.06;
       }
+      geometry.setAttribute('position', new THREE_NS.BufferAttribute(positions, 3));
 
-      stars.forEach((_, i) => resetStar(i));
-
-      const headGeometry = new THREE_NS.BufferGeometry();
-      const headAttr = new THREE_NS.BufferAttribute(headPositions, 3);
-      headGeometry.setAttribute('position', headAttr);
-      const headMaterial = new THREE_NS.PointsMaterial({
-        color: 0xb6f1ff,
-        size: 0.02,
-        transparent: true,
-        opacity: 0.82,
-        depthWrite: false,
-        blending: THREE_NS.AdditiveBlending
-      });
-      const heads = new THREE_NS.Points(headGeometry, headMaterial);
-      scene.add(heads);
-
-      const tailGeometry = new THREE_NS.BufferGeometry();
-      const tailAttr = new THREE_NS.BufferAttribute(tailPositions, 3);
-      tailGeometry.setAttribute('position', tailAttr);
-      const tailMaterial = new THREE_NS.LineBasicMaterial({
-        color: 0x3db9ff,
-        transparent: true,
-        opacity: 0.45,
-        depthWrite: false,
-        blending: THREE_NS.AdditiveBlending
-      });
-      const tails = new THREE_NS.LineSegments(tailGeometry, tailMaterial);
-      scene.add(tails);
+      const material = new THREE_NS.PointsMaterial({ color: 0x80d8ff, size: 0.015, transparent: true, opacity: 0.85 });
+      const stars = new THREE_NS.Points(geometry, material);
+      scene.add(stars);
 
       let rafId = null;
-      function animate(){
+      function animate() {
         rafId = requestAnimationFrame(animate);
-
-        const warpSpeed = 0.35 + warpState.value * 0.85;
-        const streakForce = THREE_NS.MathUtils.clamp((warpState.value - 1) / 10, 0, 1);
-        const streakEase = THREE_NS.MathUtils.clamp(warpState.streak, 0, 1);
-
+        const pos = stars.geometry.attributes.position.array;
         for (let i = 0; i < starCount; i++) {
-          const star = stars[i];
-          star.z += star.speed * warpSpeed;
-          if (star.z > 6) resetStar(i);
-
-          const idxHead = i * 3;
-          headPositions[idxHead] = star.x;
-          headPositions[idxHead + 1] = star.y;
-          headPositions[idxHead + 2] = star.z;
-
-          const idxTail = i * 6;
-          const dist = Math.sqrt(star.x * star.x + star.y * star.y + star.z * star.z) || 1;
-          const tailLen = (0.6 + streakForce * 8) * (0.4 + streakEase) * (1 - Math.min(1, (star.z + 240) / 260));
-          tailPositions[idxTail] = star.x;
-          tailPositions[idxTail + 1] = star.y;
-          tailPositions[idxTail + 2] = star.z;
-          tailPositions[idxTail + 3] = star.x - (star.x / dist) * tailLen;
-          tailPositions[idxTail + 4] = star.y - (star.y / dist) * tailLen;
-          tailPositions[idxTail + 5] = star.z - (star.z / dist) * tailLen;
+          pos[i * 3 + 2] += speeds[i] * warpState.value;
+          if (pos[i * 3 + 2] > 5) {
+            pos[i * 3 + 0] = (Math.random() - 0.5) * 20;
+            pos[i * 3 + 1] = (Math.random() - 0.5) * 20;
+            pos[i * 3 + 2] = -80 - Math.random() * 40;
+          }
         }
-
-        headAttr.needsUpdate = true;
-        tailAttr.needsUpdate = true;
-
-        heads.material.size = THREE_NS.MathUtils.lerp(0.015, 0.11, Math.min(1, warpState.value / 12));
-        heads.material.opacity = THREE_NS.MathUtils.lerp(0.65, 1, streakEase + 0.2);
-        tailMaterial.opacity = THREE_NS.MathUtils.lerp(0.25, 0.85, streakEase + streakForce * 0.5);
-        heads.material.needsUpdate = true;
-        tailMaterial.needsUpdate = true;
-
+        stars.geometry.attributes.position.needsUpdate = true;
         renderer.render(scene, camera);
       }
       animate();
@@ -330,70 +314,48 @@
         canvas.style.height = height + 'px';
         ctx.setTransform(1, 0, 0, 1, 0, 0);
         ctx.scale(dpr, dpr);
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
       }
 
       function resetStar(star){
         star.x = (Math.random() - 0.5) * width * 0.6;
         star.y = (Math.random() - 0.5) * height * 0.6;
         star.z = Math.random() * maxDepth + 10;
-        star.speed = 0.018 + Math.random() * 0.05;
+        star.speed = 0.02 + Math.random() * 0.05;
       }
 
-      window.addEventListener('resize', resize);
-      resize();
       stars.forEach(resetStar);
+      window.addEventListener('resize', resize); resize();
 
       let rafId = null;
       function animate(){
         rafId = requestAnimationFrame(animate);
         ctx.clearRect(0, 0, width, height);
-        ctx.globalCompositeOperation = 'source-over';
         const bgGradient = ctx.createRadialGradient(width * 0.3, height * 0.1, 0, width * 0.3, height * 0.1, Math.max(width, height));
         bgGradient.addColorStop(0, 'rgba(11, 20, 48, 0.45)');
         bgGradient.addColorStop(1, 'rgba(6, 9, 19, 0)');
         ctx.fillStyle = bgGradient;
         ctx.fillRect(0, 0, width, height);
 
-        ctx.fillStyle = 'rgba(128, 216, 255, 0.9)';
-        ctx.strokeStyle = 'rgba(0, 229, 255, 0.55)';
-        ctx.globalCompositeOperation = 'lighter';
-
+        ctx.fillStyle = 'rgba(128, 216, 255, 0.85)';
+        ctx.strokeStyle = 'rgba(0, 229, 255, 0.35)';
         for (const star of stars){
-          star.z -= star.speed * Math.max(0.45, warpState.value * 1.4);
+          star.z -= star.speed * Math.max(0.5, warpState.value * 1.2);
           if (star.z <= 1) resetStar(star);
 
-          const k = 200 / star.z;
+          const k = 180 / star.z;
           const x = width / 2 + star.x * k;
           const y = height / 2 + star.y * k;
 
-          if (x < -50 || x > width + 50 || y < -50 || y > height + 50){
+          if (x < 0 || x > width || y < 0 || y > height){
             resetStar(star);
             continue;
           }
 
-          const depthFactor = 1 - star.z / maxDepth;
-          const streakStrength = Math.min(1, Math.max(0, warpState.streak));
-          const dirX = x - width / 2;
-          const dirY = y - height / 2;
-          const dirLen = Math.hypot(dirX, dirY) || 1;
-          const tailLength = (18 + warpState.value * 6) * streakStrength * (0.2 + depthFactor);
-          const tailX = x - (dirX / dirLen) * tailLength;
-          const tailY = y - (dirY / dirLen) * tailLength;
-
-          ctx.lineWidth = Math.max(0.4, streakStrength * 3.6 * (0.3 + depthFactor));
+          const size = Math.max(0.6, (1 - star.z / maxDepth) * 3 + warpState.value * 0.4);
           ctx.beginPath();
-          ctx.moveTo(tailX, tailY);
-          ctx.lineTo(x, y);
-          ctx.stroke();
-
-          ctx.beginPath();
-          ctx.arc(x, y, Math.max(0.6, depthFactor * 3.2 + warpState.value * 0.35), 0, Math.PI * 2);
+          ctx.arc(x, y, size, 0, Math.PI * 2);
           ctx.fill();
         }
-
-        ctx.globalCompositeOperation = 'source-over';
       }
       animate();
 
@@ -410,7 +372,7 @@
       await ensureLibs();
 
       const canvas = document.getElementById('warpCanvas');
-      const warpState = { value: 1, streak: 0 };
+      const warpState = { value: 1 };
       let renderer = null;
       let scene = null;
       let renderMode = 'three';
@@ -420,7 +382,7 @@
         const starfield = initThreeStarfield(THREE_NS, canvas, warpState);
         renderer = starfield.renderer;
         scene = starfield.scene;
-        setDiag('t_render','ok','running (three warp)');
+        setDiag('t_render','ok','running (three)');
       } else {
         renderMode = 'canvas';
         initCanvasStarfield(canvas, warpState);
@@ -440,16 +402,136 @@
       const subtitleEl = document.getElementById('subtitle');
       const overviewEl = document.getElementById('overview');
 
-      // Array fake para simular retorno de API (troque por sua integração TMDB)
-      const sample = [
-        { title: 'Ex Machina', sub: 'Ficção científica • 2015 • 1h48', poster: 'https://image.tmdb.org/t/p/w500/DMoKk4ZCkxzgv2Fne5DE5FCDJMm.jpg', overview: 'Um jovem programador é selecionado para participar de um experimento com uma avançada inteligência artificial.' },
-        { title: 'Blade Runner 2049', sub: 'Ficção científica • 2017 • 2h44', poster: 'https://image.tmdb.org/t/p/w500/aMPkE7uWJtGhqy5MzZY1ja2G4bC.jpg', overview: 'Um novo blade runner descobre um segredo enterrado que o leva a buscar Rick Deckard, desaparecido há 30 anos.' },
-        { title: 'TRON: O Legado', sub: 'Ficção científica • 2010 • 2h05', poster: 'https://image.tmdb.org/t/p/w500/5cIUvCJQ2aNPXRCmXiOIuJJxIki.jpg', overview: 'O filho de um programador é transportado para dentro de um universo digital e precisa encontrar seu pai.' },
-        { title: 'A Chegada', sub: 'Ficção científica • 2016 • 1h56', poster: 'https://image.tmdb.org/t/p/w500/x2FJsf1ElAgr63Y3PNPtJRcPoeJ.jpg', overview: 'Quando doze naves alienígenas chegam à Terra, uma linguista é recrutada para se comunicar com os visitantes.' }
-      ];
+      const providersEl = document.getElementById('providers');
+      const detailsBtn = document.getElementById('details');
+      const favBtn = document.getElementById('fav');
+      const againBtn = document.getElementById('again');
 
-      function pickRandom(){ return sample[Math.floor(Math.random() * sample.length)]; }
-      function setResult(data){ poster.src = data.poster; poster.alt = 'Poster — ' + data.title; titleEl.textContent = data.title; subtitleEl.textContent = data.sub; overviewEl.textContent = data.overview; }
+      const config = window.__WY_WATCH_CONFIG__ || {};
+      const API_BASE = (config.apiBaseUrl || '/api').replace(/\/$/, '');
+      const IMAGE_BASE = (config.tmdbImageBase || 'https://image.tmdb.org/t/p').replace(/\/$/, '');
+      const PLACEHOLDER_POSTER = 'imagens/icon-cast.png';
+
+      if (config.isAuthenticated) {
+        setDiag('t_auth', 'ok', 'ok');
+      } else {
+        setDiag('t_auth', 'warn', 'anon');
+      }
+      setDiag('t_db', config.databaseConnected ? 'ok' : 'err', config.databaseConnected ? 'ok' : 'offline');
+
+      let currentItem = null;
+      let isAnimating = false;
+
+      function resolvePoster(item){
+        if (item && item.poster_url) return item.poster_url;
+        if (item && item.poster_path) return `${IMAGE_BASE}/w500${item.poster_path}`;
+        return PLACEHOLDER_POSTER;
+      }
+
+      function formatProviders(item){
+        if (!item || !Array.isArray(item.providers) || item.providers.length === 0) {
+          return item && item.providers_note ? item.providers_note : null;
+        }
+        const names = item.providers.map(provider => provider && provider.name ? provider.name : null).filter(Boolean);
+        if (names.length === 0) {
+          return item.providers_note || null;
+        }
+        return `Disponível em: ${names.join(', ')}`;
+      }
+
+      function setResult(item){
+        currentItem = item;
+        poster.src = resolvePoster(item);
+        poster.alt = item && item.title ? 'Poster — ' + item.title : 'Poster do título';
+        titleEl.textContent = item && item.title ? item.title : 'Sugestão misteriosa';
+        subtitleEl.textContent = item && item.subtitle ? item.subtitle : (item && item.meta_summary ? item.meta_summary : 'Atualizando metadados…');
+        overviewEl.textContent = item && item.overview ? item.overview : 'Sem sinopse disponível no momento. Tente outro salto!';
+        const providersText = formatProviders(item);
+        if (providersText) {
+          providersEl.textContent = providersText;
+          providersEl.hidden = false;
+        } else {
+          providersEl.hidden = true;
+        }
+        favBtn.textContent = '❤️ Favoritar';
+        favBtn.dataset.state = 'idle';
+      }
+
+      async function fetchSurprise(params = {}){
+        const url = new URL(`${API_BASE}/surprise.php`, window.location.origin);
+        Object.entries(params).forEach(([key, value]) => {
+          if (value !== undefined && value !== null && value !== '') {
+            url.searchParams.set(key, value);
+          }
+        });
+
+        setDiag('t_api', 'warn', 'carregando…');
+
+        let response;
+        try {
+          response = await fetch(url.toString(), {
+            method: 'GET',
+            credentials: 'include',
+            headers: { 'Accept': 'application/json' }
+          });
+        } catch (error) {
+          setDiag('t_api', 'err', 'offline');
+          throw error;
+        }
+
+        if (response.status === 401) {
+          setDiag('t_api', 'err', '401');
+          setDiag('t_auth', 'err', 'login');
+          throw new Error('unauthorized');
+        }
+
+        if (!response.ok) {
+          const text = await response.text();
+          setDiag('t_api', 'err', response.statusText || 'erro');
+          throw new Error(text || `HTTP ${response.status}`);
+        }
+
+        const payload = await response.json().catch(() => null);
+        if (!payload || (payload.status ?? 'ok') !== 'ok' || !payload.item) {
+          setDiag('t_api', 'err', 'inválido');
+          throw new Error('Resposta inesperada da API de surpresa');
+        }
+
+        setDiag('t_api', 'ok', 'ok');
+        return payload.item;
+      }
+
+      async function surprise(){
+        if (isAnimating) {
+          return;
+        }
+        if (!config.isAuthenticated) {
+          alert('Faça login para usar a experiência Surpreenda-me.');
+          window.location.href = 'login.php';
+          return;
+        }
+        isAnimating = true;
+        cta.disabled = true;
+
+        try {
+          const item = await fetchSurprise({ media_type: 'movie' });
+          setResult(item);
+          showResultTL.restart();
+          setTimeout(() => {
+            cta.disabled = false;
+            isAnimating = false;
+          }, 900);
+        } catch (error) {
+          console.error('Erro ao buscar recomendação surpresa', error);
+          if (error.message === 'unauthorized') {
+            alert('Sua sessão expirou. Faça login novamente para continuar.');
+          } else {
+            alert('Não foi possível encontrar um título agora. Tente novamente em instantes.');
+          }
+          cta.disabled = false;
+          isAnimating = false;
+        }
+      }
 
       // Timelines
       const showResultTL = gsap.timeline({ paused: true });
@@ -458,7 +540,7 @@
         .to(portal, { duration: .6, scale: 1.08, filter: 'drop-shadow(0 0 70px rgba(0,229,255,.6))', ease: 'power2.out' }, 0)
         .to(portal, { duration: .7, scale: 12, ease: 'power3.in' }, 0.6)
         .to('body', { duration: .5, filter: 'blur(3px) contrast(105%)', ease: 'power3.inOut' }, 0.6)
-        .add(() => { warp(14); flash(); }, 0.6)
+        .add(() => { warp(5); flash(); }, 0.6)
         .to(resultWrap, { duration: .001, opacity: 1 }, '>-0.05')
         .from('#resultCard', { duration: .6, y: 40, opacity: 0, scale: .96, ease: 'power3.out' }, '>-0.02')
         .to('body', { duration: .6, filter: 'blur(0px) contrast(100%)', ease: 'power3.out' }, '>-0.2');
@@ -479,31 +561,82 @@
         gsap.to(div, { duration: .12, opacity: 1, ease: 'power3.out', onComplete: () => { gsap.to(div, { duration: .35, opacity: 0, ease: 'power3.in', onComplete: () => div.remove() }); }});
       }
 
-      let warpTween = null;
       function warp(to = 1){
-        if (warpTween) warpTween.kill();
-        const goingHyper = to > warpState.value;
-        const targetStreak = to > 1 ? 1 : 0;
-        warpTween = gsap.timeline();
-        warpTween
-          .to(warpState, { duration: goingHyper ? 1.4 : 0.8, value: to, ease: goingHyper ? 'power3.inOut' : 'power2.out' }, 0)
-          .to(warpState, { duration: goingHyper ? 0.9 : 0.6, streak: targetStreak, ease: goingHyper ? 'power2.out' : 'sine.inOut' }, 0);
+        gsap.to(warpState, { duration: .9, value: to, ease: 'power2.out' });
       }
 
-      async function getRandomTitle(){ await new Promise(r => setTimeout(r, 450)); return pickRandom(); }
+      cta.addEventListener('click', (event) => {
+        event.preventDefault();
+        surprise();
+      });
 
-      async function surprise(){
-        cta.disabled = true;
-        const data = await getRandomTitle();
-        setResult(data);
-        showResultTL.restart();
-        setTimeout(() => { cta.disabled = false; }, 1300);
-      }
+      againBtn.addEventListener('click', (event) => {
+        event.preventDefault();
+        hideResultTL.restart();
+        setTimeout(() => {
+          surprise();
+        }, 450);
+      });
 
-      cta.addEventListener('click', surprise);
-      document.getElementById('again').addEventListener('click', async () => { hideResultTL.restart(); setTimeout(() => surprise(), 450); });
-      document.getElementById('details').addEventListener('click', () => { alert('Abrir página de detalhes — integre com sua rota/slug do WYWatch.'); });
-      document.getElementById('fav').addEventListener('click', () => { alert('Favoritado! (simulado)'); });
+      detailsBtn.addEventListener('click', (event) => {
+        event.preventDefault();
+        if (!currentItem) {
+          alert('Peça uma sugestão antes de abrir os detalhes.');
+          return;
+        }
+        const params = new URLSearchParams({
+          id: currentItem.tmdb_id,
+          mediaTp: currentItem.media_type || 'movie',
+        });
+        window.location.href = `filme.php?${params.toString()}`;
+      });
+
+      favBtn.addEventListener('click', async (event) => {
+        event.preventDefault();
+        if (!config.isAuthenticated) {
+          alert('Faça login para salvar títulos nos seus favoritos.');
+          window.location.href = 'login.php';
+          return;
+        }
+        if (!currentItem) {
+          alert('Busque um título antes de favoritar.');
+          return;
+        }
+        if (favBtn.dataset.state === 'saving') {
+          return;
+        }
+
+        favBtn.dataset.state = 'saving';
+        favBtn.textContent = '❤️ Salvando…';
+
+        try {
+          const response = await fetch(`${API_BASE}/interactions.php`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              tmdb_id: currentItem.tmdb_id,
+              media_type: currentItem.media_type || 'movie',
+              type: 'watchlist',
+            }),
+          });
+
+          if (!response.ok) {
+            const text = await response.text();
+            throw new Error(text || `HTTP ${response.status}`);
+          }
+
+          favBtn.textContent = '❤️ Salvo';
+          favBtn.dataset.state = 'saved';
+          setDiag('t_api', 'ok', 'ok');
+        } catch (error) {
+          console.error('Erro ao favoritar título', error);
+          favBtn.textContent = '❤️ Tentar novamente';
+          favBtn.dataset.state = 'idle';
+          setDiag('t_api', 'err', 'fav erro');
+          alert('Não foi possível salvar este título agora. Tente novamente em instantes.');
+        }
+      });
 
       // ============================
       // "Testes" rápidos (auto-checagens)
