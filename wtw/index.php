@@ -23,6 +23,44 @@
         include_once('dashboard.php');
         include_once('config/config.php');
 
+        $personalizedRowEnabled = false;
+        $personalizedPreferenceCount = 0;
+        $personalizationTables = [
+            'SELECT COUNT(*) FROM user_genres WHERE user_id = ?',
+            'SELECT COUNT(*) FROM user_keywords WHERE user_id = ?',
+            'SELECT COUNT(*) FROM user_people WHERE user_id = ?',
+            'SELECT COUNT(*) FROM user_providers WHERE user_id = ? AND enabled = 1',
+            'SELECT COUNT(*) FROM user_favorite_titles WHERE user_id = ?',
+        ];
+
+        $sessionUserId = (int)($_SESSION['id'] ?? 0);
+
+        if ($sessionUserId > 0 && isset($conexao) && $conexao instanceof mysqli) {
+            foreach ($personalizationTables as $sql) {
+                $stmt = null;
+                try {
+                    $stmt = $conexao->prepare($sql);
+                    if (!$stmt) {
+                        continue;
+                    }
+                    $stmt->bind_param('i', $sessionUserId);
+                    $stmt->execute();
+                    $stmt->bind_result($rowCount);
+                    if ($stmt->fetch()) {
+                        $personalizedPreferenceCount += (int) $rowCount;
+                    }
+                } catch (mysqli_sql_exception $exception) {
+                    continue;
+                } finally {
+                    if ($stmt instanceof mysqli_stmt) {
+                        $stmt->close();
+                    }
+                }
+            }
+
+            $personalizedRowEnabled = $personalizedPreferenceCount > 0;
+        }
+
         $genreOptions = [
             ['id' => 28, 'label' => 'Ação'],
             ['id' => 16, 'label' => 'Animação'],
@@ -220,6 +258,14 @@
         </div> <!-- end media-section -->
 
     </section>
+    <script>
+        window.wtwPersonalization = <?php echo json_encode([
+            'enabled' => $personalizedRowEnabled,
+            'mediaTypes' => ['movie'],
+            'endpoint' => 'api/home-personalized.php',
+            'preferenceCount' => $personalizedPreferenceCount,
+        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
+    </script>
     <script>
         window.wtwOnboarding = <?php echo json_encode([
             'required' => $onboardingRequired,

@@ -211,6 +211,33 @@
       z-index: 2;
     }
 
+    .hero__visual {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: clamp(28px, 6vw, 48px);
+      z-index: 1;
+    }
+
+    .hero__visual::before {
+      content: "";
+      position: absolute;
+      inset: -14% -22% -18% -18%;
+      background:
+        radial-gradient(70% 60% at 72% 22%, rgba(255, 255, 255, 0.22), rgba(255, 88, 100, 0.1), rgba(6, 5, 11, 0)),
+        radial-gradient(65% 58% at 32% 82%, rgba(59, 130, 246, 0.16), rgba(9, 7, 18, 0));
+      opacity: 0.85;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .hero__visual .card {
+      width: min(420px, 86%);
+      min-width: clamp(280px, 28vw, 420px);
+      margin-right: clamp(-24px, -2vw, 0px);
+    }
+
     .hero__pill {
       display: inline-flex;
       align-items: center;
@@ -464,10 +491,19 @@
     }
 
     @media (max-width: 960px) {
-      .card {
-        order: -1;
-        max-width: min(520px, 90vw);
-        justify-self: center;
+      .hero__visual {
+        align-items: center;
+        gap: clamp(24px, 7vw, 40px);
+      }
+
+      .hero__visual::before {
+        inset: -20% -12% -24% -12%;
+      }
+
+      .hero__visual .card {
+        width: min(520px, 92vw);
+        margin-right: 0;
+        align-self: center;
       }
 
       .hero__floating {
@@ -720,8 +756,8 @@
       body {
         color: #111222;
         background:
-          radial-gradient(120% 90% at 10% 5%, rgba(255, 88, 100, 0.12) 0%, rgba(255, 255, 255, 0) 60%),
-          linear-gradient(180deg, #f7f8fb 0%, #eef0f7 100%);
+            radial-gradient(120% 90% at 10% 5%, rgba(255, 88, 100, 0.12) 0%, rgba(255, 255, 255, 0) 60%),
+            linear-gradient(180deg, #f7f8fb 0%, #eef0f7 100%);
       }
 
       header {
@@ -777,9 +813,6 @@
   <main>
     <section class="container hero" aria-labelledby="titulo">
       <div class="hero__content">
-        <picture class="asset asset--right">
-          <img src="imagens/camera.png" alt="Câmera WYWatch" />
-        </picture>
         <p class="hero__pill">Streaming Inteligente</p>
         <h1 class="hero__wordmark" id="titulo">
           <span class="wyw-brand wyw-brand--xl hero__logo">
@@ -810,14 +843,16 @@
         <div class="hero__metrics" data-metrics-root></div>
       </div>
 
-      <figure class="card" aria-label="Prévia do aplicativo">
-        <div class="hero__glass" aria-hidden="true"></div>
-        <div class="hero__orb" aria-hidden="true"></div>
-        <div class="hero__floating">
-          <span>Em alta agora</span>
-          <strong>Novos lançamentos e listas personalizadas</strong>
-        </div>
-      </figure>
+      <div class="hero__visual">
+        <figure class="card" aria-label="Prévia do aplicativo">
+          <div class="hero__glass" aria-hidden="true"></div>
+          <div class="hero__orb" aria-hidden="true"></div>
+          <div class="hero__floating">
+            <span>Em alta agora</span>
+            <strong>Novos lançamentos e listas personalizadas</strong>
+          </div>
+        </figure>
+      </div>
     </section>
 
     <section class="container panels-grid" aria-label="Novidades e destaques">

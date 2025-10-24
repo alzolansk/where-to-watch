@@ -472,10 +472,21 @@ function persistPreferences(PDO $pdo, int $userId, array $payload): array
             continue;
         }
         $key = ($id > 0 ? (string) $id : 'custom') . ':' . mb_lower($label);
-        $keywords[$key] = [
-            'id' => $id > 0 ? $id : null,
-            'label' => mb_limit($label, 120),
-        ];
+        if (!isset($keywords[$key])) {
+            $keywords[$key] = [
+                'id' => $id > 0 ? $id : null,
+                'label' => mb_limit($label, 120),
+                'weight' => 1.0,
+            ];
+        } else {
+            if ($id > 0 && ($keywords[$key]['id'] ?? null) === null) {
+                $keywords[$key]['id'] = $id;
+            }
+            if (($keywords[$key]['label'] ?? '') === '') {
+                $keywords[$key]['label'] = mb_limit($label, 120);
+            }
+            $keywords[$key]['weight'] = ($keywords[$key]['weight'] ?? 0.0) + 1.0;
+        }
     }
 
     $people = [];
@@ -542,9 +553,10 @@ function persistPreferences(PDO $pdo, int $userId, array $payload): array
 
     $pdo->prepare('DELETE FROM user_keywords WHERE user_id = ?')->execute([$userId]);
     if (!empty($keywords)) {
-        $stmt = $pdo->prepare('INSERT INTO user_keywords (user_id, keyword_id, label, weight) VALUES (?, ?, ?, 1.0)');
+        $stmt = $pdo->prepare('INSERT INTO user_keywords (user_id, keyword_id, label, weight) VALUES (?, ?, ?, ?)');
         foreach ($keywords as $keyword) {
-            $stmt->execute([$userId, $keyword['id'], $keyword['label']]);
+            $weightValue = round(max(0.1, min((float) ($keyword['weight'] ?? 1.0), 99.99)), 2);
+            $stmt->execute([$userId, $keyword['id'], $keyword['label'], $weightValue]);
         }
     }
 
@@ -646,6 +658,7 @@ function enrich_favorite_selections(array $favorites, array &$genres, array &$ke
 
         if (!empty($details['keywords']) && is_array($details['keywords'])) {
             $favorite['keywords'] = $details['keywords'];
+            $favoriteKeywordKeys = [];
             foreach ($details['keywords'] as $keyword) {
                 if (!is_array($keyword)) {
                     continue;
@@ -656,10 +669,26 @@ function enrich_favorite_selections(array $favorites, array &$genres, array &$ke
                 }
                 $keywordId = isset($keyword['id']) && (int) $keyword['id'] > 0 ? (int) $keyword['id'] : null;
                 $keywordKey = ($keywordId !== null ? (string) $keywordId : 'tmdb') . ':' . mb_lower($label);
-                $keywords[$keywordKey] = [
-                    'id' => $keywordId,
-                    'label' => mb_limit($label, 120),
-                ];
+                if (isset($favoriteKeywordKeys[$keywordKey])) {
+                    continue;
+                }
+                $favoriteKeywordKeys[$keywordKey] = true;
+
+                if (!isset($keywords[$keywordKey])) {
+                    $keywords[$keywordKey] = [
+                        'id' => $keywordId,
+                        'label' => mb_limit($label, 120),
+                        'weight' => 1.0,
+                    ];
+                } else {
+                    if ($keywordId !== null && ($keywords[$keywordKey]['id'] ?? null) === null) {
+                        $keywords[$keywordKey]['id'] = $keywordId;
+                    }
+                    if (($keywords[$keywordKey]['label'] ?? '') === '') {
+                        $keywords[$keywordKey]['label'] = mb_limit($label, 120);
+                    }
+                    $keywords[$keywordKey]['weight'] = ($keywords[$keywordKey]['weight'] ?? 0.0) + 1.0;
+                }
             }
         }
 

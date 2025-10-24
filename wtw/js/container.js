@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     const apiKey = 'dc3b4144ae24ddabacaeda024ff0585c';
     let mediaType = 'movie'; // Inicialmente filmes
+    const personalizationConfig = window.wtwPersonalization || null;
     const contentSection = document.querySelector(".media-section");
     const sliderIndicator = document.querySelector('.style-buttons .slider-indicator');
     const heroProgressElement = document.querySelector('[data-hero-progress]');
@@ -675,6 +676,79 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     ];
 
+    if (personalizationConfig?.enabled) {
+        const normalizeMediaTypes = (value) => {
+            if (Array.isArray(value) && value.length) {
+                return value;
+            }
+            if (typeof value === 'object' && value !== null) {
+                return Object.keys(value).filter((key) => value[key]);
+            }
+            if (typeof value === 'string' && value.trim()) {
+                return [value.trim()];
+            }
+            return ['movie'];
+        };
+
+        const supportedMediaTypes = normalizeMediaTypes(personalizationConfig.mediaTypes);
+        const personalizationEndpoint = typeof personalizationConfig.endpoint === 'string'
+            ? personalizationConfig.endpoint
+            : 'api/home-personalized.php';
+
+        SECTION_CONFIGS.unshift({
+            id: 'personalized',
+            containerId: 'personalized-movies-container',
+            itemFetch: 'personalized',
+            heading: {
+                highlight: 'Pensado para você'
+            },
+            mediaTypes: supportedMediaTypes,
+            skeletonCount: 6,
+            endpoint(context) {
+                const params = new URLSearchParams({ media_type: context.mediaType });
+                if (typeof personalizationConfig.limit === 'number') {
+                    params.set('limit', String(personalizationConfig.limit));
+                }
+                return `${personalizationEndpoint}?${params.toString()}`;
+            }
+        });
+    }
+
+    function supportsMediaType(section, currentType) {
+        if (!section) {
+            return true;
+        }
+
+        const mediaConfig = section.mediaTypes;
+        if (!mediaConfig) {
+            return true;
+        }
+
+        if (typeof mediaConfig === 'string') {
+            return mediaConfig === currentType;
+        }
+
+        if (Array.isArray(mediaConfig)) {
+            return mediaConfig.includes(currentType);
+        }
+
+        if (typeof mediaConfig === 'object') {
+            return Boolean(mediaConfig[currentType]);
+        }
+
+        if (typeof mediaConfig === 'function') {
+            try {
+                return Boolean(mediaConfig(currentType));
+            } catch (error) {
+                return true;
+            }
+        }
+
+        return true;
+    }
+
+    let activeSectionConfigs = SECTION_CONFIGS.filter(section => supportsMediaType(section, mediaType));
+
     function createBrandElement() {
         const brand = document.createElement('span');
         brand.className = 'wyw-brand wyw-brand--compact section-heading__brand';
@@ -734,7 +808,7 @@ document.addEventListener('DOMContentLoaded', function() {
         return heading;
     }
 
-    function ensureSectionsStructure() {
+    function ensureSectionsStructure(sectionsList = SECTION_CONFIGS) {
         const root = document.getElementById('media-sections-root');
         if (!root) {
             console.warn('Media sections root not found.');
@@ -742,8 +816,16 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         const sectionsMap = new Map();
+        const allowedIds = new Set(sectionsList.map(section => section.id));
 
-        SECTION_CONFIGS.forEach(section => {
+        root.querySelectorAll('[data-section]').forEach((wrapper) => {
+            if (!allowedIds.has(wrapper.dataset.section)) {
+                wrapper.setAttribute('hidden', 'hidden');
+                wrapper.classList.add('media-section__group--hidden');
+            }
+        });
+
+        sectionsList.forEach(section => {
             let wrapper = root.querySelector(`[data-section="${section.id}"]`);
             if (!wrapper) {
                 wrapper = document.createElement('section');
@@ -785,6 +867,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     wrapper.tabIndex = -1;
                 }
             }
+
+            wrapper.removeAttribute('hidden');
+            wrapper.classList.remove('media-section__group--hidden');
 
             const rowNode = wrapper.querySelector(`#${section.containerId}`);
             sectionsMap.set(section.id, {
@@ -1072,7 +1157,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     async function renderSections(mediaType) {
-        const sectionsMap = ensureSectionsStructure();
+        const applicableSections = SECTION_CONFIGS.filter(section => supportsMediaType(section, mediaType));
+        activeSectionConfigs = applicableSections.slice();
+
+        const sectionsMap = ensureSectionsStructure(applicableSections);
         if (!sectionsMap.size) {
             return;
         }
@@ -1083,7 +1171,7 @@ document.addEventListener('DOMContentLoaded', function() {
         };
 
         await Promise.all(
-            SECTION_CONFIGS.map(section => populateSection(section, context, sectionsMap))
+            applicableSections.map(section => populateSection(section, context, sectionsMap))
         );
 
         if (typeof window.initializeCarouselNav === 'function') {
@@ -1421,7 +1509,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         Promise.allSettled([heroPromise, sectionsPromise])
             .then(() => {
-                const containerIds = ['container-wrap', ...SECTION_CONFIGS.map(section => section.containerId)];
+                const containerIds = ['container-wrap', ...activeSectionConfigs.map(section => section.containerId)];
                 const containers = containerIds
                     .map(id => document.getElementById(id))
                     .filter(Boolean);
