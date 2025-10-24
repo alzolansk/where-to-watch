@@ -65,6 +65,8 @@ $providerOptions = [
 ];
 
 $streamingProvidersCatalog = [];
+$hasStreamingProvidersCatalog = false;
+
 
 $userId = (int)($_SESSION['id'] ?? $_SESSION['id_user'] ?? 0);
 
@@ -359,6 +361,9 @@ if ($isAuthenticated && $userId > 0) {
                     });
                     $streamingProvidersCatalog[$key] = $providersGroup;
                 }
+                $hasStreamingProvidersCatalog = true;
+            } else {
+                $hasStreamingProvidersCatalog = false;
             }
 
             $orderParts = [];
@@ -677,7 +682,10 @@ $favoritesList = $favorites;
         <div class="profile-modal__overlay" data-profile-modal-close aria-hidden="true"></div>
         <div class="profile-modal__window" role="document">
             <header class="profile-modal__header">
-                <h2 class="profile-modal__title" id="preferencesModalTitle">Gerenciar preferências</h2>
+                <div class="profile-modal__heading">
+                    <h2 class="profile-modal__title" id="preferencesModalTitle">Gerenciar preferências</h2>
+                    <p class="profile-modal__subtitle">Personalize sua experiência escolhendo gêneros, provedores e palavras-chave favoritos.</p>
+                </div>
                 <button type="button" class="profile-modal__close" data-profile-modal-close data-profile-modal-focus aria-label="Fechar">&times;</button>
             </header>
             <div class="profile-modal__body">

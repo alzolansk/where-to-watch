@@ -49,6 +49,8 @@
   const providersCatalogContainer = root.querySelector('[data-profile-providers-catalog]');
   const providersCatalogSearch = root.querySelector('[data-profile-providers-search]');
   const providersCatalogEmptyState = root.querySelector('[data-profile-providers-empty]');
+  const preferencesModalElement = root.querySelector('[data-profile-modal="preferences"]');
+  const providersCatalogModalElement = root.querySelector('[data-profile-modal="providers-catalog"]');
   const preferencesCountBadge = root.querySelector('[data-profile-preferences-count]');
   const modalTriggers = root.querySelectorAll('[data-profile-open-modal]');
   const modalElements = root.querySelectorAll('[data-profile-modal]');
@@ -132,6 +134,30 @@
     if (providersCatalogEmptyState) {
       providersCatalogEmptyState.hidden = visibleCount > 0;
     }
+  };
+
+  const openModals = [];
+  const modalFocusMemory = new Map();
+
+  const updateDualModalLayout = () => {
+    const preferencesOpen = preferencesModalElement && preferencesModalElement.classList.contains('is-open');
+    const providersOpen = providersCatalogModalElement && providersCatalogModalElement.classList.contains('is-open');
+    const isDual = preferencesOpen && providersOpen;
+    document.body.classList.toggle('profile-modal-dual', isDual);
+  };
+
+  const refreshActiveModal = () => {
+    while (openModals.length > 0) {
+      const candidate = openModals[openModals.length - 1];
+      if (candidate && candidate.classList.contains('is-open')) {
+        activeModal.element = candidate;
+        activeModal.lastFocused = modalFocusMemory.get(candidate) || null;
+        return;
+      }
+      openModals.pop();
+    }
+    activeModal.element = null;
+    activeModal.lastFocused = null;
   };
 
   const state = {
@@ -1157,26 +1183,42 @@
     }
   };
 
-  const closeModal = (modal) => {
+  const closeModal = (modal, options = {}) => {
     if (!modal || !modal.classList.contains('is-open')) {
+      updateDualModalLayout();
       return;
     }
+
+    const { restoreFocus = true } = options;
 
     modal.classList.remove('is-open');
     modal.setAttribute('aria-hidden', 'true');
 
-    if (activeModal.element === modal) {
-      const { lastFocused } = activeModal;
-      activeModal.element = null;
-      activeModal.lastFocused = null;
-      if (lastFocused && typeof lastFocused.focus === 'function') {
-        lastFocused.focus();
+    const focusSource = modalFocusMemory.get(modal) || null;
+    modalFocusMemory.delete(modal);
+
+    const index = openModals.indexOf(modal);
+    if (index !== -1) {
+      openModals.splice(index, 1);
+    }
+
+    if (modal.dataset && modal.dataset.profileModal === 'preferences') {
+      const providersModal = providersCatalogModalElement;
+      if (providersModal && providersModal.classList.contains('is-open')) {
+        closeModal(providersModal, { restoreFocus: false });
       }
     }
 
     if (!root.querySelector('.profile-modal.is-open')) {
       document.body.classList.remove('profile-modal-open');
     }
+
+    if (restoreFocus && focusSource && typeof focusSource.focus === 'function') {
+      focusSource.focus();
+    }
+
+    refreshActiveModal();
+    updateDualModalLayout();
   };
 
   const openModal = (name, trigger) => {
@@ -1189,18 +1231,29 @@
       return;
     }
 
-    activeModal.element = modal;
-    activeModal.lastFocused = trigger || document.activeElement;
+    const focusSource = trigger || document.activeElement;
+
+    modalFocusMemory.set(modal, focusSource);
+
+    const existingIndex = openModals.indexOf(modal);
+    if (existingIndex !== -1) {
+      openModals.splice(existingIndex, 1);
+    }
+    openModals.push(modal);
 
     modal.classList.add('is-open');
     modal.setAttribute('aria-hidden', 'false');
     document.body.classList.add('profile-modal-open');
+
+    refreshActiveModal();
 
     const focusTarget = modal.querySelector('[data-profile-modal-focus]') ||
       modal.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
     if (focusTarget && typeof focusTarget.focus === 'function') {
       focusTarget.focus();
     }
+
+    updateDualModalLayout();
   };
 
   const ensureUniqueKeyword = (keyword) => {

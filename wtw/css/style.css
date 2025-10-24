@@ -1738,6 +1738,10 @@ button.prev:active, button.next:active {
     gap: clamp(8px, 1.4vw, 12px);
 }
 
+.media-section__group--personalized{
+    position: relative;
+}
+
 .section-heading{
     display: flex;
     flex-wrap: wrap;
@@ -1772,6 +1776,37 @@ button.prev:active, button.next:active {
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
+}
+
+.section-heading--personalized{
+    position: relative;
+    padding: clamp(10px, 1.6vw, 14px) clamp(14px, 2.2vw, 20px);
+    border-radius: clamp(8px, 1vw, 14px);
+    background: linear-gradient(140deg, rgba(39, 45, 58, 0.3), rgba(15, 23, 42, 0.082));
+    isolation: isolate;
+}
+
+.section-heading--personalized::before{
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(120deg, rgba(128, 22, 45, 0.16), rgba(59, 131, 246, 0.082));
+    z-index: -1;
+}
+
+.section-heading--personalized::after{
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(135deg, rgba(75, 74, 74, 0.103) 40%, rgba(1, 2, 85, 0.007));
+}
+
+.section-heading__highlight--personalized{
+    text-shadow:
+        0 4px 18px rgba(250, 37, 83, 0.32),
+        0 2px 12px rgba(82, 146, 250, 0.38);
 }
 
 .section-heading__tag{
