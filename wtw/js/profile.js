@@ -46,12 +46,32 @@
   const keywordInput = root.querySelector('[data-profile-keyword-input]');
   const providersContainer = root.querySelector('[data-profile-providers]');
   const providersSummaryContainer = root.querySelector('[data-profile-providers-summary]');
+  const providersCatalogContainer = root.querySelector('[data-profile-providers-catalog]');
+  const providersCatalogSearch = root.querySelector('[data-profile-providers-search]');
+  const providersCatalogEmptyState = root.querySelector('[data-profile-providers-empty]');
   const preferencesCountBadge = root.querySelector('[data-profile-preferences-count]');
   const modalTriggers = root.querySelectorAll('[data-profile-open-modal]');
   const modalElements = root.querySelectorAll('[data-profile-modal]');
 
   const genreLabels = new Map();
   const providerLabels = new Map();
+
+  const registerProviderLabels = (container) => {
+    if (!container) {
+      return;
+    }
+    container.querySelectorAll('[data-provider-id]').forEach((button) => {
+      const id = parseInt(button.getAttribute('data-provider-id'), 10);
+      if (Number.isNaN(id)) {
+        return;
+      }
+      const labelSource = button.getAttribute('data-provider-label') || button.dataset.providerLabel || button.textContent || '';
+      const label = labelSource.trim();
+      if (label) {
+        providerLabels.set(id, label);
+      }
+    });
+  };
 
   const getFavoritesSummaryLimit = () => {
     const width = window.innerWidth || document.documentElement.clientWidth || 0;
@@ -80,14 +100,39 @@
   }
 
   if (providersContainer) {
-    providersContainer.querySelectorAll('[data-provider-id]').forEach((button) => {
-      const id = parseInt(button.getAttribute('data-provider-id'), 10);
-      if (!Number.isNaN(id)) {
-        const label = button.querySelector('.provider-card__label');
-        providerLabels.set(id, label ? label.textContent.trim() : (button.textContent || '').trim());
-      }
-    });
+    registerProviderLabels(providersContainer);
   }
+
+  registerProviderLabels(providersCatalogContainer);
+
+  const filterProvidersCatalog = () => {
+    if (!providersCatalogContainer) {
+      return;
+    }
+
+    const rawQuery = providersCatalogSearch && !providersCatalogSearch.disabled ? providersCatalogSearch.value : '';
+    const query = (rawQuery || '').trim().toLocaleLowerCase('pt-BR');
+    let visibleCount = 0;
+
+    providersCatalogContainer.querySelectorAll('[data-provider-group]').forEach((group) => {
+      let groupVisible = 0;
+      group.querySelectorAll('[data-provider-id]').forEach((button) => {
+        const labelSource = button.getAttribute('data-provider-label') || button.dataset.providerLabel || button.textContent || '';
+        const normalizedLabel = labelSource.trim().toLocaleLowerCase('pt-BR');
+        const matches = query === '' || normalizedLabel.includes(query);
+        button.hidden = !matches;
+        if (matches) {
+          groupVisible += 1;
+          visibleCount += 1;
+        }
+      });
+      group.hidden = groupVisible === 0;
+    });
+
+    if (providersCatalogEmptyState) {
+      providersCatalogEmptyState.hidden = visibleCount > 0;
+    }
+  };
 
   const state = {
     genres: new Set(),
@@ -391,18 +436,29 @@
   };
 
   const renderProviders = () => {
-    const labels = [];
     if (providersContainer) {
       providersContainer.querySelectorAll('[data-provider-id]').forEach((button) => {
         const id = parseInt(button.getAttribute('data-provider-id'), 10);
         const isSelected = !Number.isNaN(id) && state.providers.has(id);
         button.classList.toggle('is-selected', isSelected);
         button.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
-        if (isSelected) {
-          labels.push(providerLabels.get(id) || (button.textContent || '').trim());
-        }
       });
     }
+
+    if (providersCatalogContainer) {
+      providersCatalogContainer.querySelectorAll('[data-provider-id]').forEach((button) => {
+        const id = parseInt(button.getAttribute('data-provider-id'), 10);
+        const isSelected = !Number.isNaN(id) && state.providers.has(id);
+        button.classList.toggle('is-selected', isSelected);
+        button.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
+      });
+    }
+
+    const labels = Array.from(state.providers)
+      .map((providerId) => providerLabels.get(providerId) || null)
+      .filter((label) => typeof label === 'string' && label.trim() !== '')
+      .map((label) => label.trim())
+      .sort((a, b) => a.localeCompare(b, 'pt-BR'));
 
     if (providersSummaryContainer) {
       renderSummaryChips(providersSummaryContainer, labels, 'Nenhum provedor selecionado.');
@@ -1660,6 +1716,21 @@
     }
   });
 
+    if (providersCatalogContainer) {
+      providersCatalogContainer.querySelectorAll('[data-provider-id]').forEach((button) => {
+        const id = parseInt(button.getAttribute('data-provider-id'), 10);
+        const isSelected = !Number.isNaN(id) && state.providers.has(id);
+        button.classList.toggle('is-selected', isSelected);
+        button.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
+      });
+    }
+
+    const labels = Array.from(state.providers)
+      .map((providerId) => providerLabels.get(providerId) || null)
+      .filter((label) => typeof label === 'string' && label.trim() !== '')
+      .map((label) => label.trim())
+      .sort((a, b) => a.localeCompare(b, 'pt-BR'));
+
   if (isAuthenticated) {
     if (genresContainer) {
       genresContainer.querySelectorAll('[data-genre-id]').forEach((button) => {
@@ -1669,6 +1740,21 @@
             toggleGenre(id);
           }
         });
+      });
+    }
+
+    if (providersCatalogContainer) {
+      providersCatalogContainer.addEventListener('click', (event) => {
+        const target = event.target && typeof event.target.closest === 'function'
+          ? event.target.closest('[data-provider-id]')
+          : null;
+        if (!target || target.disabled) {
+          return;
+        }
+        const id = parseInt(target.getAttribute('data-provider-id'), 10);
+        if (!Number.isNaN(id)) {
+          toggleProvider(id);
+        }
       });
     }
 

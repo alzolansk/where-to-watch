@@ -722,7 +722,7 @@ $navStates = [
 }
 
 .menu-dropdown__link.is-active {
-    background: linear-gradient(135deg, rgba(255, 96, 128, 0.32), rgba(104, 126, 255, 0.3));
+    background: linear-gradient(135deg, rgba(255, 96, 96, 0.36), rgba(104, 126, 255, 0.3));
     border-color: rgba(255, 255, 255, 0.22);
     color: #fff;
     box-shadow: 0 18px 42px rgba(9, 9, 28, 0.42);
@@ -743,7 +743,7 @@ $navStates = [
     font-size: 0.72rem;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    background: linear-gradient(135deg, rgba(255, 120, 140, 0.65), rgba(110, 134, 255, 0.58));
+    background: linear-gradient(135deg, rgba(250, 74, 100, 0.65), rgba(110, 134, 255, 0.58));
     border: 1px solid rgba(255, 255, 255, 0.28);
     color: #fff;
     box-shadow: 0 8px 20px rgba(8, 7, 18, 0.45);

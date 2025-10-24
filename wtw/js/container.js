@@ -28,6 +28,68 @@ document.addEventListener('DOMContentLoaded', function() {
     let hasHandledInitialHash = false;
     // Cache para evitar duplicidade
     const fetchCache = {};
+    let hasShownConnectionError = false;
+
+    function showConnectionErrorPage() {
+        if (hasShownConnectionError) {
+            return;
+        }
+
+        hasShownConnectionError = true;
+
+        if (typeof hideLoading === 'function') {
+            try {
+                hideLoading();
+            } catch (error) {
+                console.error('Erro ao ocultar loading:', error);
+            }
+        }
+
+        const { body } = document;
+        if (!body) {
+            return;
+        }
+
+        body.classList.add('connection-error-active');
+        body.innerHTML = `
+            <main class="connection-error" role="main">
+                <section class="connection-error__card" aria-labelledby="connectionErrorTitle">
+                    <div class="connection-error__content">
+                        <span class="connection-error__eyebrow">Sem conexão</span>
+                        <h1 class="connection-error__title" id="connectionErrorTitle">Não foi possível conectar</h1>
+                        <p class="connection-error__description">Não conseguimos carregar os conteúdos do Where You Watch. Verifique sua conexão com a internet e tente novamente.</p>
+                        <div class="connection-error__actions">
+                            <button type="button" class="connection-error__button connection-error__button--primary" data-connection-retry>
+                                Tentar novamente
+                            </button>
+                            <a class="connection-error__button connection-error__button--ghost" href="landing.html">
+                                Conhecer o projeto
+                            </a>
+                        </div>
+                    </div>
+                    <div class="connection-error__visual" aria-hidden="true">
+                        <div class="connection-error__orb">
+                            <span class="connection-error__orb-glow"></span>
+                            <img src="imagens/wywatch-favicon-iris-nobackground.png" alt="" class="connection-error__icon">
+                        </div>
+                        <div class="connection-error__sparkles">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        `;
+
+        const retryButton = body.querySelector('[data-connection-retry]');
+        if (retryButton) {
+            retryButton.addEventListener('click', () => {
+                window.location.reload();
+            });
+        }
+    }
     const fetchJson = (url) => {
         if (!url || typeof url !== 'string') {
             return Promise.reject(new Error('fetchJson called with invalid url'));
@@ -943,11 +1005,17 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
+        if (hasShownConnectionError) {
+            return;
+        }
+
         const container = entry.row;
         const cleanupSkeleton = applyRowSkeleton(container, section.skeletonCount || ROW_SKELETON_CARDS);
 
         let items = [];
         let loadFailed = false;
+        let loadError = null;
+
 
         try {
             const data = await fetchJson(section.endpoint(context));
@@ -955,10 +1023,15 @@ document.addEventListener('DOMContentLoaded', function() {
         } catch (error) {
             console.error('Erro ao buscar a secao ' + section.id + ':', error);
             loadFailed = true;
+            loadError = error;
         }
 
         if (loadFailed) {
             cleanupSkeleton();
+            showConnectionErrorPage();
+            if (loadError) {
+                throw loadError;
+            }
             container.innerHTML = '<p class="media-section__empty">Nao foi possivel carregar os titulos agora.</p>';
             return;
         }
@@ -1032,6 +1105,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function loadContent(){
+        if (hasShownConnectionError) {
+            return;
+        }
         if (contentSection) {
             contentSection.classList.add('is-loading-rows');
         }
@@ -1331,16 +1407,16 @@ document.addEventListener('DOMContentLoaded', function() {
             .catch(error => {
                 console.error('Erro ao carregar destaque:', error);
                 cleanupHeroSkeleton();
-                const containerNew = heroContainer || document.getElementById('container-wrap');
-                if (containerNew && !containerNew.hasChildNodes()) {
-                    containerNew.innerHTML = '<p class="media-section__empty media-section__empty--hero">Nao foi possivel carregar os destaques agora.</p>';
-                }
+                showConnectionErrorPage();
+                throw error;
             })
             .finally(() => {
                 cleanupHeroSkeleton();
             });
         const sectionsPromise = renderSections(mediaType).catch(error => {
             console.error('Erro ao renderizar secoes:', error);
+            showConnectionErrorPage();
+            throw error;
         });
 
         Promise.allSettled([heroPromise, sectionsPromise])

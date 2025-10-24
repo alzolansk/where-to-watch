@@ -9,6 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/brand.css" />
   <style>
     :root {
       color-scheme: dark;
@@ -97,35 +98,16 @@
       gap: clamp(18px, 4vw, 44px);
     }
 
-    .brand {
-      display: inline-flex;
+    header .dashboard-logo {
+      --wyw-brand-size: clamp(1.35rem, 2.2vw, 1.8rem);
+      --wyw-brand-eye-scale: 0.5;
+      gap: 10px;
       align-items: center;
-      gap: 8px;
-      font-weight: 800;
-      font-size: clamp(1.25rem, 2.6vw, 1.6rem);
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
       text-decoration: none;
-      padding: 6px 14px;
-      border-radius: 999px;
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
     }
 
-    .brand__where,
-    .brand__watch {
-      font-family: "Outfit", sans-serif;
-      letter-spacing: 0.18em;
-    }
-
-    .brand__watch {
-      color: var(--wyw-red-300);
-    }
-
-    .brand__eye {
-      width: 18px;
-      display: inline-block;
+    header .dashboard-logo .wyw-brand__watch {
+      text-shadow: none;
     }
 
     .nav__spacer {
@@ -253,41 +235,39 @@
       box-shadow: 0 0 12px rgba(255, 88, 100, 0.9);
     }
 
-    .logo {
-      display: flex;
-      align-items: baseline;
-      gap: 6px;
-      flex-wrap: wrap;
+    .hero__wordmark {
+      margin: 0;
     }
 
-    .logo-font,
-    .logo-font2 {
-      font-family: "Outfit", "Nunito", sans-serif;
-      font-weight: 900;
-      text-transform: uppercase;
-      letter-spacing: -0.01em;
-      font-size: clamp(48px, 10vw, 120px);
-      line-height: 0.86;
-      background: linear-gradient(180deg, #fff 0%, rgba(255, 255, 255, 0.2) 45%, rgba(255, 88, 100, 0.4) 100%);
+    .hero__logo {
+      --wyw-brand-size: clamp(48px, 9vw, 88px);
+      --wyw-brand-eye-scale: 0.68;
+      display: inline-flex;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      gap: clamp(0.18em, 1vw, 0.4em);
+      padding: clamp(6px, 1vw, 12px) clamp(10px, 2vw, 18px);
+      white-space: normal;
+      max-width: min(100%, 420px);
+    }
+
+    .hero__logo .wyw-brand__where {
+      color: rgba(255, 255, 255, 0.92);
+      text-shadow: 0 22px 60px rgba(10, 6, 18, 0.62);
+    }
+
+    .hero__logo .wyw-brand__watch {
       -webkit-background-clip: text;
       background-clip: text;
       color: transparent;
-      text-shadow: 0 18px 60px rgba(255, 47, 76, 0.35);
+      text-shadow: 0 24px 70px rgba(255, 47, 76, 0.45);
+      flex-basis: 100%;
+      display: block;
+      margin-top: clamp(6px, 1vw, 12px);
     }
 
-    .logo-font2 {
-      background: linear-gradient(180deg, var(--wyw-red-300) 0%, var(--wyw-red-600) 85%);
-    }
-
-    .logo-font-y {
-      font-size: clamp(42px, 8vw, 72px);
-      color: var(--wyw-text);
-      opacity: 0.9;
-    }
-
-    .logo-eye {
-      width: clamp(38px, 7vw, 52px);
-      filter: drop-shadow(0 8px 24px rgba(255, 47, 76, 0.25));
+    .hero__logo .wyw-brand__eye {
+      filter: drop-shadow(0 18px 45px rgba(255, 47, 76, 0.5));
     }
 
     .tagline {
@@ -452,10 +432,11 @@
       position: absolute;
       inset: 18%;
       border-radius: inherit;
-      border: 1px solid rgba(255, 255, 255, 0.18);
-      background: radial-gradient(120% 80% at 80% 20%, rgba(255, 255, 255, 0.08), rgba(9, 8, 14, 0.1));
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: linear-gradient(145deg, rgba(255, 255, 255, 0.16), rgba(9, 8, 18, 0.05));
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
       z-index: 2;
-      opacity: 0.6;
+      opacity: 0.32;
     }
 
     .hero__floating {
@@ -464,8 +445,8 @@
       width: clamp(140px, 18vw, 220px);
       padding: 18px 22px;
       border-radius: var(--radius-lg);
-      background: linear-gradient(140deg, rgba(13, 12, 22, 0.9), rgba(13, 12, 22, 0.6));
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: linear-gradient(160deg, rgba(18, 17, 30, 0.85), rgba(18, 17, 30, 0.58));
+      border: 1px solid rgba(255, 255, 255, 0.1);
       box-shadow: var(--shadow-md);
       display: grid;
       gap: 6px;
@@ -514,10 +495,10 @@
 
     .panel {
       grid-column: span 6;
-      background: linear-gradient(180deg, rgba(17, 18, 32, 0.9), rgba(10, 9, 18, 0.6));
+      background: linear-gradient(180deg, rgba(19, 20, 34, 0.78), rgba(10, 9, 18, 0.48));
       border-radius: var(--radius-xl);
       border: 1px solid rgba(255, 255, 255, 0.08);
-      box-shadow: var(--shadow-md);
+      box-shadow: 0 28px 90px rgba(5, 4, 12, 0.45);
       padding: clamp(22px, 3vw, 34px);
       position: relative;
       overflow: hidden;
@@ -526,15 +507,15 @@
     .panel::after {
       content: "";
       position: absolute;
-      inset: -20% -40% 40% 30%;
-      background: radial-gradient(ellipse at top right, rgba(255, 88, 100, 0.26), transparent 70%);
-      opacity: 0.8;
+      inset: -20% -30% 42% 28%;
+      background: radial-gradient(ellipse at top right, rgba(255, 88, 100, 0.22), transparent 70%);
+      opacity: 0.65;
       pointer-events: none;
     }
 
     .panel--highlight {
       grid-column: span 7;
-      background: linear-gradient(145deg, rgba(255, 47, 76, 0.32), rgba(9, 7, 14, 0.92));
+      background: linear-gradient(150deg, rgba(255, 47, 76, 0.32), rgba(9, 7, 14, 0.7));
     }
 
     .panel--compact {
@@ -592,14 +573,14 @@
       align-items: center;
       padding: 14px 16px;
       border-radius: var(--radius-md);
-      background: rgba(9, 8, 16, 0.55);
-      border: 1px solid rgba(255, 255, 255, 0.04);
+      background: rgba(12, 11, 22, 0.55);
+      border: 1px solid rgba(255, 255, 255, 0.08);
       transition: transform 0.2s ease, border-color 0.2s ease;
     }
 
     .trend-item:hover {
       transform: translateY(-2px);
-      border-color: rgba(255, 255, 255, 0.14);
+      border-color: rgba(255, 255, 255, 0.22);
     }
 
     .trend-item__thumb {
@@ -686,9 +667,9 @@
     footer {
       border-top: 1px solid rgba(255, 255, 255, 0.08);
       color: var(--wyw-text-dim);
-      padding: clamp(28px, 4vw, 42px) var(--pad) clamp(40px, 6vw, 64px);
+      padding: clamp(32px, 5vw, 48px) var(--pad) clamp(48px, 6vw, 70px);
       font-size: 0.95rem;
-      background: linear-gradient(180deg, rgba(8, 8, 18, 0.2), rgba(8, 8, 18, 0.6));
+      background: linear-gradient(180deg, rgba(8, 8, 18, 0.1), rgba(8, 8, 18, 0.5));
     }
 
     .footwrap {
@@ -748,11 +729,6 @@
         border-bottom-color: rgba(0, 0, 0, 0.08);
       }
 
-      .brand {
-        background: rgba(0, 0, 0, 0.06);
-        border-color: rgba(0, 0, 0, 0.1);
-      }
-
       .cta--ghost {
         background: rgba(0, 0, 0, 0.06);
         color: #111222;
@@ -776,10 +752,12 @@
 <body>
   <header>
     <nav class="nav" aria-label="Navegação principal">
-      <a class="brand" href="/" aria-label="Where You Watch — ir para o início">
-        <span class="brand__where">Where</span>
-        <img src="imagens/eye-icon2.svg" alt="o" class="brand__eye" />
-        <span class="brand__watch">Watch</span>
+      <a class="wyw-brand wyw-brand--menu dashboard-logo home-header" href="index.php" aria-label="Where You Watch — ir para o início">
+        <span class="wyw-brand__where">where</span>
+        <span class="wyw-brand__where wyw-brand__where--y">y</span>
+        <img src="imagens/eye-icon2.svg" alt="o" class="wyw-brand__eye" />
+        <span class="wyw-brand__where wyw-brand__where--u">u</span>
+        <span class="wyw-brand__watch">WATCH</span>
       </a>
       <div class="nav__spacer" aria-hidden="true"></div>
       <div class="nav__links">
@@ -799,13 +777,18 @@
   <main>
     <section class="container hero" aria-labelledby="titulo">
       <div class="hero__content">
+        <picture class="asset asset--right">
+          <img src="imagens/camera.png" alt="Câmera WYWatch" />
+        </picture>
         <p class="hero__pill">Streaming Inteligente</p>
-        <h1 class="logo" id="titulo">
-          <span class="logo-font">where</span>
-          <span class="logo-font-y">y</span>
-          <img src="imagens/eye-icon2.svg" alt="o" class="logo-eye" />
-          <span class="logo-font">u</span>
-          <span class="logo-font2">watch</span>
+        <h1 class="hero__wordmark" id="titulo">
+          <span class="wyw-brand wyw-brand--xl hero__logo">
+            <span class="wyw-brand__where">where</span>
+            <span class="wyw-brand__where wyw-brand__where--y">y</span>
+            <img src="imagens/eye-icon2.svg" alt="o" class="wyw-brand__eye" />
+            <span class="wyw-brand__where wyw-brand__where--u">u</span>
+            <span class="wyw-brand__watch">WATCH</span>
+          </span>
         </h1>
         <p class="tagline" id="tagline">Seu guia definitivo de streamings. Descubra onde assistir sem perder tempo.</p>
         <p class="sub">Busca inteligente, trailers oficiais, elencos completos e links diretos para mais de 50 plataformas. Tudo com a estética premium do universo Where You Watch.</p>
@@ -830,7 +813,6 @@
       <figure class="card" aria-label="Prévia do aplicativo">
         <div class="hero__glass" aria-hidden="true"></div>
         <div class="hero__orb" aria-hidden="true"></div>
-        <img class="poster" src="imagens/couple_seated.png" alt="Casal assistindo a um filme no cinema, com balde de pipoca" />
         <div class="hero__floating">
           <span>Em alta agora</span>
           <strong>Novos lançamentos e listas personalizadas</strong>

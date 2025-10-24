@@ -64,6 +64,8 @@ $providerOptions = [
     ['id' => 350, 'label' => 'Apple TV+', 'logo' => 'https://image.tmdb.org/t/p/w154/2E03IAZsX4ZaUqM7tXlctEPMGWS.jpg'],
 ];
 
+$streamingProvidersCatalog = [];
+
 $userId = (int)($_SESSION['id'] ?? $_SESSION['id_user'] ?? 0);
 
 if (!function_exists('wyw_tmdb_image_url')) {
@@ -320,6 +322,44 @@ if ($isAuthenticated && $userId > 0) {
             $stmt = $pdo->prepare('SELECT provider_id FROM user_providers WHERE user_id = ? AND enabled = 1 ORDER BY provider_id');
             $stmt->execute([$userId]);
             $initialState['providers'] = array_map('intval', array_column($stmt->fetchAll(), 'provider_id'));
+            try {
+                $providersQuery = $pdo->query("SELECT provider_id, name, logo_path FROM providers WHERE kind = 'streaming' OR kind IS NULL ORDER BY name");
+                $seenProviderIds = [];
+                foreach ($providersQuery as $providerRow) {
+                    $providerId = isset($providerRow['provider_id']) ? (int) $providerRow['provider_id'] : 0;
+                    $providerLabel = is_string($providerRow['name'] ?? null) ? trim((string) $providerRow['name']) : '';
+                    if ($providerId <= 0 || $providerLabel === '') {
+                        continue;
+                    }
+                    if (isset($seenProviderIds[$providerId])) {
+                        continue;
+                    }
+                    $seenProviderIds[$providerId] = true;
+                    $logoPath = is_string($providerRow['logo_path'] ?? null) ? trim((string) $providerRow['logo_path']) : '';
+                    $logoUrl = $logoPath !== '' ? wyw_tmdb_image_url($logoPath) : null;
+                    $initial = wyw_initial_letter($providerLabel);
+                    if (!isset($streamingProvidersCatalog[$initial])) {
+                        $streamingProvidersCatalog[$initial] = [];
+                    }
+                    $streamingProvidersCatalog[$initial][] = [
+                        'id' => $providerId,
+                        'label' => $providerLabel,
+                        'logo' => $logoUrl,
+                    ];
+                }
+            } catch (Throwable $e) {
+                $streamingProvidersCatalog = [];
+            }
+
+            if (!empty($streamingProvidersCatalog)) {
+                ksort($streamingProvidersCatalog, SORT_NATURAL | SORT_FLAG_CASE);
+                foreach ($streamingProvidersCatalog as $key => $providersGroup) {
+                    usort($providersGroup, static function (array $a, array $b): int {
+                        return strcasecmp($a['label'], $b['label']);
+                    });
+                    $streamingProvidersCatalog[$key] = $providersGroup;
+                }
+            }
 
             $orderParts = [];
             if (wyw_table_has_column($pdo, 'user_favorite_titles', 'favorited_at')) {
@@ -662,13 +702,16 @@ $favoritesList = $favorites;
                         </div>
                         <div class="provider-grid" data-profile-providers>
                             <?php foreach ($providerOptions as $provider): ?>
-                                <button type="button" class="provider-card" data-provider-id="<?php echo (int) $provider['id']; ?>" aria-pressed="false" <?php echo $isAuthenticated ? '' : 'disabled'; ?>>
+                                <button type="button" class="provider-card" data-provider-id="<?php echo (int) $provider['id']; ?>" data-provider-label="<?php echo htmlspecialchars($provider['label'], ENT_QUOTES, 'UTF-8'); ?>" aria-pressed="false" <?php echo $isAuthenticated ? '' : 'disabled'; ?>>
                                     <span class="provider-card__logo" aria-hidden="true">
                                         <img src="<?php echo htmlspecialchars($provider['logo'], ENT_QUOTES, 'UTF-8'); ?>" alt="" loading="lazy">
                                     </span>
                                     <span class="provider-card__label"><?php echo htmlspecialchars($provider['label'], ENT_QUOTES, 'UTF-8'); ?></span>
                                 </button>
                             <?php endforeach; ?>
+                        </div>
+                        <div class="provider-grid__actions">
+                            <button type="button" class="profile-button profile-button--ghost profile-button--compact" data-profile-open-modal="providers-catalog" aria-controls="providersCatalogModal" <?php echo $isAuthenticated && $hasStreamingProvidersCatalog ? '' : 'disabled'; ?>>Outros provedores</button>
                         </div>
                     </section>
                 </div>
@@ -684,6 +727,52 @@ $favoritesList = $favorites;
             </footer>
         </div>
     </div>
+    <div class="profile-modal profile-modal--sidecar" data-profile-modal="providers-catalog" role="dialog" aria-modal="false" aria-labelledby="providersCatalogTitle" aria-hidden="true" id="providersCatalogModal">
+        <div class="profile-modal__window profile-modal__window--sidecar" role="document">
+            <header class="profile-modal__header profile-modal__header--sidecar">
+                <div class="profile-modal__heading">
+                    <h2 class="profile-modal__title" id="providersCatalogTitle">Outros provedores</h2>
+                    <p class="profile-modal__subtitle">Selecione outros serviços de streaming disponíveis para assinatura.</p>
+                </div>
+                <button type="button" class="profile-modal__close" data-profile-modal-close aria-label="Fechar">&times;</button>
+            </header>
+            <div class="profile-modal__body profile-modal__body--sidecar">
+                <?php if ($hasStreamingProvidersCatalog): ?>
+                    <div class="providers-catalog__search">
+                        <label for="providersCatalogSearch" class="sr-only">Buscar provedores</label>
+                        <input type="search" id="providersCatalogSearch" class="providers-catalog__search-field" placeholder="Buscar provedores" data-profile-providers-search <?php echo $isAuthenticated ? '' : 'disabled'; ?> data-profile-modal-focus>
+                    </div>
+                    <div class="providers-catalog" data-profile-providers-catalog>
+                        <?php foreach ($streamingProvidersCatalog as $initial => $providersGroup): ?>
+                            <?php $initialLabel = htmlspecialchars($initial, ENT_QUOTES, 'UTF-8'); ?>
+                            <section class="providers-catalog__group" data-provider-group aria-label="Provedores com inicial <?php echo $initialLabel; ?>">
+                                <h3 class="providers-catalog__group-title"><?php echo $initialLabel; ?></h3>
+                                <div class="providers-catalog__grid">
+                                    <?php foreach ($providersGroup as $provider): ?>
+                                        <?php $providerLabel = htmlspecialchars($provider['label'], ENT_QUOTES, 'UTF-8'); ?>
+                                        <button type="button" class="providers-catalog__item" data-provider-id="<?php echo (int) $provider['id']; ?>" data-provider-label="<?php echo $providerLabel; ?>" aria-pressed="false" <?php echo $isAuthenticated ? '' : 'disabled'; ?>>
+                                            <span class="providers-catalog__item-logo" aria-hidden="true">
+                                                <?php if (!empty($provider['logo'])): ?>
+                                                    <img src="<?php echo htmlspecialchars($provider['logo'], ENT_QUOTES, 'UTF-8'); ?>" alt="" loading="lazy">
+                                                <?php else: ?>
+                                                    <span class="providers-catalog__item-fallback"><?php echo htmlspecialchars(wyw_initial_letter($provider['label']), ENT_QUOTES, 'UTF-8'); ?></span>
+                                                <?php endif; ?>
+                                            </span>
+                                            <span class="providers-catalog__item-label"><?php echo $providerLabel; ?></span>
+                                        </button>
+                                    <?php endforeach; ?>
+                                </div>
+                            </section>
+                        <?php endforeach; ?>
+                    </div>
+                    <p class="providers-catalog__empty" data-profile-providers-empty hidden>Nenhum provedor encontrado com esse nome.</p>
+                <?php else: ?>
+                    <p class="providers-catalog__fallback">Não encontramos outros provedores de streaming no momento.</p>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
+
 
     <section class="profile-card profile-card--shortcuts" aria-labelledby="shortcutsTitle">
         <header class="profile-card__header">
