@@ -179,7 +179,26 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const params = new URLSearchParams(window.location.search);
     currentProviderQuery = (params.get('title') || params.get('original_title') || params.get('original_name') || '').trim();
-    const apiKey = 'dc3b4144ae24ddabacaeda024ff0585c';
+    const runtimeConfig = (typeof window !== 'undefined' && window.__WY_WATCH_CONFIG__) || {};
+    const apiKey = runtimeConfig.tmdbApiKey || '';
+    const tmdbBaseUrl = (runtimeConfig.tmdbBaseUrl || 'https://api.themoviedb.org/3').replace(/\/+$/, '');
+    const tmdbEndpoint = (path) => `${tmdbBaseUrl}${path.startsWith('/') ? '' : '/'}${path}`;
+    const tmdbUrl = (path, params = {}) => {
+        const url = new URL(tmdbEndpoint(path));
+        Object.entries(params).forEach(([key, value]) => {
+            if (value === undefined || value === null || value === '') {
+                return;
+            }
+            url.searchParams.set(key, value);
+        });
+        return url.toString();
+    };
+
+    if (!apiKey) {
+        console.error('[WYWatch] TMDB API key não configurada – página de filme não pode ser carregada.');
+        hideLoading();
+        return;
+    }
 
     let mediaType = params.get('mediaTp') || params.get('type') || (params.has('tv') ? 'tv' : 'movie');
     if (mediaType !== 'tv' && mediaType !== 'movie') {
@@ -277,7 +296,7 @@ async function fetchDetailsById(id, type, apiKey) {
     const append = type === 'tv'
         ? 'videos,images,keywords,watch/providers,content_ratings,credits'
         : 'videos,images,keywords,watch/providers,release_dates,credits';
-    const url = `https://api.themoviedb.org/3/${type}/${id}?api_key=${apiKey}&language=pt-BR&append_to_response=${append}`;
+    const url = tmdbUrl(`/${type}/${id}`, { api_key: apiKey, language: 'pt-BR', append_to_response: append });
     const response = await fetch(url);
     if (!response.ok) {
         throw new Error(`HTTP ${response.status} ao buscar detalhes`);

@@ -1,5 +1,13 @@
 (function () {
-    const API_KEY = 'dc3b4144ae24ddabacaeda024ff0585c';
+    const runtimeConfig = (typeof window !== 'undefined' && window.__WY_WATCH_CONFIG__) || {};
+    const API_KEY = runtimeConfig.tmdbApiKey || '';
+    const TMDB_BASE_URL = (runtimeConfig.tmdbBaseUrl || 'https://api.themoviedb.org/3').replace(/\/+$/, '');
+    const tmdbEndpoint = (path) => `${TMDB_BASE_URL}${path.startsWith('/') ? '' : '/'}${path}`;
+
+    if (!API_KEY) {
+        console.error('[WYWatch] TMDB API key não configurada – não é possível carregar a vitrine de provedores.');
+        return;
+    }
     const IMAGE_BASE = 'https://image.tmdb.org/t/p/';
     const PROVIDER_LOGO_SIZE = 'w92';
     const POSTER_SIZE = 'w500';
@@ -1000,7 +1008,7 @@ const updateResultsCaption = (count) => {
         const requests = Array.from({ length: POPULARITY_PAGES }, (_, index) => {
             const params = buildDiscoverParams(mediaType, index + 1);
             const endpoint = mediaType === 'tv' ? 'discover/tv' : 'discover/movie';
-            const url = `https://api.themoviedb.org/3/${endpoint}?${params.toString()}`;
+            const url = `${tmdbEndpoint(endpoint)}?${params.toString()}`;
             return fetch(url).then((response) => {
                 if (!response.ok) {
                     throw new Error(`Erro ao carregar ${mediaType} (HTTP ${response.status})`);
@@ -1200,7 +1208,7 @@ const updateResultsCaption = (count) => {
     };
 
     const fetchProviderCatalog = async () => {
-        const url = new URL('https://api.themoviedb.org/3/watch/providers/movie');
+        const url = new URL(tmdbEndpoint('/watch/providers/movie'));
         url.search = new URLSearchParams({
             api_key: API_KEY,
             language: 'pt-BR',
@@ -1263,7 +1271,7 @@ const updateResultsCaption = (count) => {
                 index += 1;
                 const { key, id, mediaType } = tasks[currentIndex];
                 try {
-                    const url = new URL(`https://api.themoviedb.org/3/${mediaType}/${id}/watch/providers`);
+                    const url = new URL(tmdbEndpoint(`${mediaType}/${id}/watch/providers`));
                     url.search = new URLSearchParams({ api_key: API_KEY });
                     const response = await fetch(url.toString());
                     if (!response.ok) {
@@ -1293,7 +1301,7 @@ const updateResultsCaption = (count) => {
         ];
 
         const requests = endpoints.map(([, path]) => {
-            const url = new URL(`https://api.themoviedb.org/3/${path}`);
+            const url = new URL(tmdbEndpoint(path));
             url.search = new URLSearchParams({
                 api_key: API_KEY,
                 language: 'pt-BR'

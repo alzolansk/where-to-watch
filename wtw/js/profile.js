@@ -4,6 +4,14 @@
     return;
   }
 
+  const runtimeConfig = (typeof window !== 'undefined' && window.__WY_WATCH_CONFIG__) || {};
+  const TMDB_API_KEY = runtimeConfig.tmdbApiKey || '';
+  const TMDB_BASE_URL = (runtimeConfig.tmdbBaseUrl || 'https://api.themoviedb.org/3').replace(/\/+$/, '');
+
+  if (!TMDB_API_KEY) {
+    console.warn('[WYWatch] TMDB API key não configurada – recursos de TMDB estão indisponíveis na página de perfil.');
+  }
+
   const isAuthenticated = root.dataset.authenticated === 'true';
   const apiUrl = root.dataset.apiUrl || 'api/onboarding.php';
 
@@ -178,7 +186,6 @@
     },
   };
 
-  const TMDB_API_KEY = 'dc3b4144ae24ddabacaeda024ff0585c';
   const FAVORITE_SEARCH_MIN_CHARS = 2;
   const favoriteSearchState = {
     items: [],
@@ -784,7 +791,7 @@
     setFavoriteSearchMessage('Buscando titulos...');
 
     try {
-      const url = new URL('https://api.themoviedb.org/3/search/multi');
+      const url = new URL(`${TMDB_BASE_URL}/search/multi`);
       url.searchParams.set('api_key', TMDB_API_KEY);
       url.searchParams.set('language', 'pt-BR');
       url.searchParams.set('query', query);

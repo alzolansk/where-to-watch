@@ -1,5 +1,13 @@
 (function () {
-    const API_KEY = 'dc3b4144ae24ddabacaeda024ff0585c';
+    const runtimeConfig = (typeof window !== 'undefined' && window.__WY_WATCH_CONFIG__) || {};
+    const API_KEY = runtimeConfig.tmdbApiKey || '';
+    const TMDB_BASE_URL = (runtimeConfig.tmdbBaseUrl || 'https://api.themoviedb.org/3').replace(/\/+$/, '');
+    const tmdbEndpoint = (path) => `${TMDB_BASE_URL}${path.startsWith('/') ? '' : '/'}${path}`;
+
+    if (!API_KEY) {
+        console.error('[WYWatch] TMDB API key não configurada – catálogo por gênero não pode ser carregado.');
+        return;
+    }
     const IMAGE_BASE = 'https://image.tmdb.org/t/p/';
     const POSTER_SIZE = 'w500';
     const PROVIDER_LOGO_SIZE = 'w92';
@@ -885,8 +893,8 @@
             return state.titleKeywordCache.get(cacheKey);
         }
         const endpoint = mediaType === 'tv'
-            ? `https://api.themoviedb.org/3/tv/${item.id}/keywords`
-            : `https://api.themoviedb.org/3/movie/${item.id}/keywords`;
+            ? tmdbEndpoint('tv/' + item.id + '/keywords')
+            : tmdbEndpoint('movie/' + item.id + '/keywords');
         const url = `${endpoint}?api_key=${API_KEY}`;
         try {
             const response = await fetch(url, { signal });
@@ -1559,7 +1567,7 @@
 
     const fetchGenreLists = async () => {
         const fetchList = async (type) => {
-            const url = `https://api.themoviedb.org/3/genre/${type}/list?api_key=${API_KEY}&language=pt-BR`;
+            const url = `${tmdbEndpoint('genre/' + type + '/list')}?api_key=${API_KEY}&language=pt-BR`;
             const response = await fetch(url);
             if (!response.ok) {
                 throw new Error(`Erro ao carregar gêneros de ${type} (HTTP ${response.status})`);

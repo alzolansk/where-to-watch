@@ -16,6 +16,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
   setLoadingState(true);
 
+  const runtimeConfig = (typeof window !== 'undefined' && window.__WY_WATCH_CONFIG__) || {};
+  const apiKey = runtimeConfig.tmdbApiKey || '';
+  const tmdbBaseUrl = (runtimeConfig.tmdbBaseUrl || 'https://api.themoviedb.org/3').replace(/\/+$/, '');
+  const tmdbEndpoint = (path) => `${tmdbBaseUrl}${path.startsWith('/') ? '' : '/'}${path}`;
+  const tmdbUrl = (path, params = {}) => {
+    const url = new URL(tmdbEndpoint(path));
+    Object.entries(params).forEach(([key, value]) => {
+      if (value === undefined || value === null || value === '') {
+        return;
+      }
+      url.searchParams.set(key, value);
+    });
+    return url;
+  };
+
+  if (!apiKey) {
+    setLoadingState(false);
+    console.error('[WYWatch] TMDB API key não configurada – página de pessoa não pode ser carregada.');
+    return;
+  }
+
   function waitForImages(container){
     return new Promise(resolve => {
       const scope = container || document;
@@ -45,7 +66,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
 
-  const apiKey = 'dc3b4144ae24ddabacaeda024ff0585c'; // use sua key
   const params = new URLSearchParams(location.search);
   const personId = params.get('personId');
 
@@ -56,8 +76,8 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // endpoints principais
-  const personUrl = `https://api.themoviedb.org/3/person/${personId}?api_key=${apiKey}&language=pt-BR&append_to_response=movie_credits,external_ids,images`;
-  const creditsUrl = `https://api.themoviedb.org/3/person/${personId}/movie_credits?api_key=${apiKey}&language=pt-BR`;
+  const personUrl = tmdbUrl(`/person/${personId}`, { api_key: apiKey, language: 'pt-BR', append_to_response: 'movie_credits,external_ids,images' });
+  const creditsUrl = tmdbUrl(`/person/${personId}/movie_credits`, { api_key: apiKey, language: 'pt-BR' });
 
   // helpers
   const img = (path, size='w500') => path ? `https://image.tmdb.org/t/p/${size}${path}` : '';
@@ -299,7 +319,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // tenta logo em pt/en
     let logoUrl = '';
     try{
-      const r = await fetch(`https://api.themoviedb.org/3/movie/${item.id}/images?api_key=${apiKey}`);
+      const r = await fetch(tmdbUrl(`/movie/${item.id}/images`, { api_key: apiKey }));
       if (r.ok){
         const data = await r.json();
         const logos = (data.logos||[]);
@@ -347,7 +367,7 @@ async function fetchCoworkersFromHighlights(highlights){
   const map = new Map();
   for (const it of highlights){
     try{
-      const r = await fetch(`https://api.themoviedb.org/3/movie/${it.id}/credits?api_key=${apiKey}&language=pt-BR`);
+      const r = await fetch(tmdbUrl(`/movie/${it.id}/credits`, { api_key: apiKey, language: 'pt-BR' }));
       if(!r.ok) continue;
       const data = await r.json();
       const pool = [...(data.cast||[]).slice(0,10), ...(data.crew||[]).slice(0,6)];

@@ -3,12 +3,25 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+require_once __DIR__ . '/includes/env.php';
+
+wyw_load_env(__DIR__);
+
+$clientConfig = [
+    'tmdbApiKey' => (string) wyw_env('TMDB_API_KEY', ''),
+    'tmdbBaseUrl' => rtrim((string) wyw_env('TMDB_API_BASE', 'https://api.themoviedb.org/3'), '/'),
+    'apiBaseUrl' => (string) wyw_env('APP_API_BASE_URL', '/api'),
+];
+
 $currentScript = basename($_SERVER['SCRIPT_NAME'] ?? 'index.php');
 $navStates = [
     'home' => $currentScript === 'index.php',
     'providers' => $currentScript === 'providers.php',
 ];
 ?>
+<script>
+  window.__WY_WATCH_CONFIG__ = Object.freeze(Object.assign({}, window.__WY_WATCH_CONFIG__ || {}, <?php echo json_encode($clientConfig, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>));
+</script>
 <nav id="menu">
     <filter id="glass-distortion" x="0%" y="0%" width="100%" height="100%">
     <div class="faixa">

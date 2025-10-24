@@ -1,5 +1,24 @@
 document.addEventListener('DOMContentLoaded', function() {
-    const apiKey = 'dc3b4144ae24ddabacaeda024ff0585c';
+    const runtimeConfig = (typeof window !== 'undefined' && window.__WY_WATCH_CONFIG__) || {};
+    const apiKey = runtimeConfig.tmdbApiKey || '';
+    const tmdbBaseUrl = (runtimeConfig.tmdbBaseUrl || 'https://api.themoviedb.org/3').replace(/\/+$/, '');
+    const tmdbEndpoint = (path) => `${tmdbBaseUrl}${path.startsWith('/') ? '' : '/'}${path}`;
+    const tmdbUrl = (path, params = {}) => {
+        const url = new URL(tmdbEndpoint(path));
+        Object.entries(params).forEach(([key, value]) => {
+            if (value === undefined || value === null || value === '') {
+                return;
+            }
+            url.searchParams.set(key, value);
+        });
+        return url.toString();
+    };
+
+    if (!apiKey) {
+        console.error('[WYWatch] TMDB API key não configurada – não é possível carregar a página inicial.');
+        showConnectionErrorPage();
+        return;
+    }
     let mediaType = 'movie'; // Inicialmente filmes
     const personalizationConfig = window.wtwPersonalization || null;
     const contentSection = document.querySelector(".media-section");
@@ -310,15 +329,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function defineMovieConstants(movie, mediaType, apiKey) {
         const imgUrl = movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : 'imagens/icon-cast.png';
-        const trailerUrl = `https://api.themoviedb.org/3/${mediaType}/${movie.id}/videos?api_key=${apiKey}&language=pt-BR&page=1`;
+        const trailerUrl = tmdbUrl(`/${mediaType}/${movie.id}/videos`, { api_key: apiKey, language: 'pt-BR', page: 1 });
         const rating = (typeof movie.vote_average === 'number' && movie.vote_average > 0)
             ? movie.vote_average.toFixed(1)
             : 'N/A';
-        const detailsUrl = `https://api.themoviedb.org/3/${mediaType}/${movie.id}?api_key=${apiKey}&language=pt-BR&page=1`;
-        const providerUrl = `https://api.themoviedb.org/3/${mediaType}/${movie.id}/watch/providers?api_key=${apiKey}&language=pt-BR&page=1&sort_by=display_priority.cresc`
+        const detailsUrl = tmdbUrl(`/${mediaType}/${movie.id}`, { api_key: apiKey, language: 'pt-BR', page: 1 });
+        const providerUrl = tmdbUrl(`/${mediaType}/${movie.id}/watch/providers`, { api_key: apiKey, language: 'pt-BR', page: 1, sort_by: 'display_priority.cresc' })
         const backdropUrl = movie.backdrop_path ? `https://image.tmdb.org/t/p/w1280/${movie.backdrop_path}` : 'imagens/icon-cast.png'
-        const movieLogoUrl = `https://api.themoviedb.org/3/${mediaType}/${movie.id}/images?api_key=${apiKey}&include_image_language=null,pt,en`
-        const creditsUrl = `https://api.themoviedb.org/3/${mediaType}/${movie.id}/credits?api_key=${apiKey}&language=pt-BR&page=1`
+        const movieLogoUrl = tmdbUrl(`/${mediaType}/${movie.id}/images`, { api_key: apiKey, include_image_language: 'null,pt,en' })
+        const creditsUrl = tmdbUrl(`/${mediaType}/${movie.id}/credits`, { api_key: apiKey, language: 'pt-BR', page: 1 })
 
         return { imgUrl, trailerUrl, rating, detailsUrl, providerUrl, backdropUrl, creditsUrl, movieLogoUrl };
     }
@@ -631,7 +650,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 brand: true
             },
             endpoint(context) {
-                return `https://api.themoviedb.org/3/trending/${context.mediaType}/week?api_key=${apiKey}&language=pt-BR&page=1`;
+                return tmdbUrl(`/trending/${context.mediaType}/week`, { api_key: apiKey, language: 'pt-BR', page: 1 });
             }
         },
         {
@@ -643,7 +662,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 tag: 'indica'
             },
             endpoint(context) {
-                return `https://api.themoviedb.org/3/${context.mediaType}/top_rated?api_key=${apiKey}&language=pt-BR&page=1&sort_by=popularity.desc`;
+                return tmdbUrl(`/${context.mediaType}/top_rated`, { api_key: apiKey, language: 'pt-BR', page: 1, sort_by: 'popularity.desc' });
             }
         },
         {
@@ -1198,7 +1217,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const context = {
             mediaType,
-            discoverBase: `https://api.themoviedb.org/3/discover/${mediaType}?api_key=${apiKey}&language=pt-BR`
+            discoverBase: tmdbUrl(`/discover/${mediaType}`, { api_key: apiKey, language: 'pt-BR' })
         };
 
         await Promise.all(
@@ -1234,7 +1253,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const cleanupHeroSkeleton = applyHeroSkeleton(heroContainer);
         resetHeroProgress();
 
-        const heroUrl = `https://api.themoviedb.org/3/trending/all/week?api_key=${apiKey}&language=pt-BR&page=1`;
+        const heroUrl = tmdbUrl('/trending/all/week', { api_key: apiKey, language: 'pt-BR', page: 1 });
         const heroPromise = fetchJson(heroUrl)
             .then(heroData => {
                 cleanupHeroSkeleton();

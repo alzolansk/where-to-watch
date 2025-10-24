@@ -1,5 +1,19 @@
-﻿document.addEventListener('DOMContentLoaded', () => {
-    const apiKey = 'dc3b4144ae24ddabacaeda024ff0585c';
+document.addEventListener('DOMContentLoaded', () => {
+    const runtimeConfig = (typeof window !== 'undefined' && window.__WY_WATCH_CONFIG__) || {};
+    const apiKey = runtimeConfig.tmdbApiKey || '';
+    const tmdbBaseUrl = (runtimeConfig.tmdbBaseUrl || 'https://api.themoviedb.org/3').replace(/\/+$/, '');
+
+    const tmdbEndpoint = (path) => {
+        if (!path) {
+            return tmdbBaseUrl;
+        }
+        return `${tmdbBaseUrl}${path.startsWith('/') ? '' : '/'}${path}`;
+    };
+
+    if (!apiKey) {
+        console.warn('[WYWatch] TMDB API key não configurada – a busca será desativada.');
+        return;
+    }
     const searchInput = document.getElementById('searchmovie');
     const resultsContainer = document.getElementById('results');
     const clearButton = document.getElementById('clearSearch');
@@ -176,8 +190,8 @@
             return trendingCache;
         }
         const endpoints = [
-            'https://api.themoviedb.org/3/trending/movie/week',
-            'https://api.themoviedb.org/3/trending/tv/week',
+            tmdbEndpoint('/trending/movie/week'),
+            tmdbEndpoint('/trending/tv/week'),
         ];
         const responses = await Promise.all(endpoints.map((endpoint) => {
             const url = new URL(endpoint);
@@ -207,7 +221,7 @@
         if (!trimmed) {
             return [];
         }
-        const url = new URL('https://api.themoviedb.org/3/search/multi');
+        const url = new URL(tmdbEndpoint('/search/multi'));
         url.searchParams.set('api_key', apiKey);
         url.searchParams.set('language', 'pt-BR');
         url.searchParams.set('include_adult', 'false');

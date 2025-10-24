@@ -1,5 +1,23 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const apiKey = 'dc3b4144ae24ddabacaeda024ff0585c';
+    const runtimeConfig = (typeof window !== 'undefined' && window.__WY_WATCH_CONFIG__) || {};
+    const apiKey = runtimeConfig.tmdbApiKey || '';
+    const tmdbBaseUrl = (runtimeConfig.tmdbBaseUrl || 'https://api.themoviedb.org/3').replace(/\/+$/, '');
+    const tmdbEndpoint = (path) => `${tmdbBaseUrl}${path.startsWith('/') ? '' : '/'}${path}`;
+    const tmdbUrl = (path, params = {}) => {
+        const url = new URL(tmdbEndpoint(path));
+        Object.entries(params).forEach(([key, value]) => {
+            if (value === undefined || value === null || value === '') {
+                return;
+            }
+            url.searchParams.set(key, value);
+        });
+        return url;
+    };
+
+    if (!apiKey) {
+        console.warn('[WYWatch] TMDB API key não configurada – resultados de busca desativados.');
+        return;
+    }
     const initialQuery = (window.__INITIAL_SEARCH_QUERY__ || '').trim();
     const resultsGrid = document.querySelector('[data-search-results]');
     const resultsSection = document.querySelector('.search-results');
@@ -118,7 +136,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 index += 1;
                 const { key, id, mediaType } = queue[currentIndex];
                 try {
-                    const url = new URL(`https://api.themoviedb.org/3/${mediaType}/${id}/watch/providers`);
+                    const url = new URL(tmdbEndpoint(`/${mediaType}/${id}/watch/providers`));
                     url.search = new URLSearchParams({ api_key: apiKey });
                     const response = await fetch(url.toString());
                     if (!response.ok) {
@@ -325,8 +343,8 @@ document.addEventListener('DOMContentLoaded', () => {
             return trendingCache;
         }
         const endpoints = [
-            'https://api.themoviedb.org/3/trending/movie/week',
-            'https://api.themoviedb.org/3/trending/tv/week',
+            tmdbEndpoint('/trending/movie/week'),
+            tmdbEndpoint('/trending/tv/week'),
         ];
         const responses = await Promise.all(endpoints.map((endpoint) => {
             const url = new URL(endpoint);
@@ -359,7 +377,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return [];
         }
         const promises = pages.map((page) => {
-            const url = new URL('https://api.themoviedb.org/3/search/multi');
+            const url = new URL(tmdbEndpoint('/search/multi'));
             url.searchParams.set('api_key', apiKey);
             url.searchParams.set('language', 'pt-BR');
             url.searchParams.set('include_adult', 'false');

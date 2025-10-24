@@ -1,6 +1,19 @@
-    <?php
-    const TMDB_KEY = 'dc3b4144ae24ddabacaeda024ff0585c';
-    const TMDB_BASE = 'https://api.themoviedb.org/3';
+<?php
+    declare(strict_types=1);
+
+    require_once __DIR__ . '/env.php';
+
+    wyw_load_env(__DIR__);
+
+    if (!defined('TMDB_KEY')) {
+        $tmdbKey = (string) wyw_env('TMDB_API_KEY', '');
+        define('TMDB_KEY', $tmdbKey);
+    }
+
+    if (!defined('TMDB_BASE')) {
+        $tmdbBase = (string) wyw_env('TMDB_API_BASE', 'https://api.themoviedb.org/3');
+        define('TMDB_BASE', rtrim($tmdbBase, '/'));
+    }
 
     // cache bobo em arquivo (pode trocar por Redis depois)
     function cache_get($key, $ttl = 3600)
@@ -31,7 +44,10 @@
         }
         ksort($params);
         $qs = http_build_query($params);
-        return TMDB_BASE . $path . ($qs !== '' ? '?' . $qs : '');
+        $base = rtrim(TMDB_BASE, '/');
+        $normalizedPath = '/' . ltrim($path, '/');
+
+        return $base . $normalizedPath . ($qs !== '' ? '?' . $qs : '');
     }
 
     function tmdb_get($path, $params = [])
