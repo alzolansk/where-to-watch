@@ -700,7 +700,8 @@ document.addEventListener('DOMContentLoaded', function() {
             containerId: 'personalized-movies-container',
             itemFetch: 'personalized',
             heading: {
-                highlight: 'Pensado para você'
+                highlight: 'Pensado para você',
+                theme: 'personalized'
             },
             mediaTypes: supportedMediaTypes,
             skeletonCount: 6,
@@ -764,8 +765,13 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function createHeadingElement(config) {
+        const theme = config?.theme || (config?.highlight === 'Pensado para você' ? 'personalized' : null);
+
         const heading = document.createElement('h2');
         heading.className = 'section-heading';
+        if (theme) {
+            heading.classList.add(`section-heading--${theme}`);
+        }
 
         const bar = document.createElement('span');
         bar.className = 'section-heading__bar';
@@ -787,6 +793,9 @@ document.addEventListener('DOMContentLoaded', function() {
         if (config?.highlight) {
             const highlight = document.createElement('span');
             highlight.className = 'section-heading__highlight';
+            if (theme) {
+                highlight.classList.add(`section-heading__highlight--${theme}`);
+            }
             highlight.textContent = config.highlight;
             heading.appendChild(highlight);
         }
@@ -827,9 +836,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
         sectionsList.forEach(section => {
             let wrapper = root.querySelector(`[data-section="${section.id}"]`);
+            const theme = section.heading?.theme
+                || (section.heading?.highlight === 'Pensado para você' ? 'personalized' : null);
+
             if (!wrapper) {
                 wrapper = document.createElement('section');
-                wrapper.className = 'media-section__group';
+                const wrapperClasses = ['media-section__group'];
+                if (theme) {
+                    wrapperClasses.push(`media-section__group--${theme}`);
+                }
+                wrapper.className = wrapperClasses.join(' ');
                 wrapper.dataset.section = section.id;
                 wrapper.id = section.id;
                 wrapper.tabIndex = -1;
@@ -860,11 +876,26 @@ document.addEventListener('DOMContentLoaded', function() {
                 wrapper.appendChild(carousel);
                 root.appendChild(wrapper);
             } else {
+                wrapper.classList.add('media-section__group');
+                if (theme) {
+                    wrapper.classList.add(`media-section__group--${theme}`);
+                }
                 if (!wrapper.id) {
                     wrapper.id = section.id;
                 }
                 if (!wrapper.hasAttribute('tabindex')) {
                     wrapper.tabIndex = -1;
+                }
+
+                if (theme) {
+                    const existingHeading = wrapper.querySelector('.section-heading');
+                    if (existingHeading) {
+                        existingHeading.classList.add(`section-heading--${theme}`);
+                        const highlightNode = existingHeading.querySelector('.section-heading__highlight');
+                        if (highlightNode) {
+                            highlightNode.classList.add(`section-heading__highlight--${theme}`);
+                        }
+                    }
                 }
             }
 
