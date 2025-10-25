@@ -254,7 +254,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     try {
-        const details = await fetchDetailsById(movieId, mediaType, apiKey);
+        const details = await fetchDetailsById(movieId, mediaType, apiKey, tmdbUrl);
         if (!details || details.success === false) {
             throw new Error('ID ou tipo invalido.');
         }
@@ -292,11 +292,13 @@ function createImageUrl(path, size = 'w500') {
     return `https://image.tmdb.org/t/p/${size}${path}`;
 }
 
-async function fetchDetailsById(id, type, apiKey) {
-    const append = type === 'tv'
+async function fetchDetailsById(id, type, apiKey, urlBuilder) {
+    if (typeof urlBuilder !== 'function') {
+        throw new Error('TMDB URL builder indisponivel.');
+    }    const append = type === 'tv'
         ? 'videos,images,keywords,watch/providers,content_ratings,credits'
         : 'videos,images,keywords,watch/providers,release_dates,credits';
-    const url = tmdbUrl(`/${type}/${id}`, { api_key: apiKey, language: 'pt-BR', append_to_response: append });
+    const url = urlBuilder(`/${type}/${id}`, { api_key: apiKey, language: 'pt-BR', append_to_response: append });
     const response = await fetch(url);
     if (!response.ok) {
         throw new Error(`HTTP ${response.status} ao buscar detalhes`);
