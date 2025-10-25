@@ -35,8 +35,10 @@ class Star {
     const px = (this.x / this.prevZ) * width + width / 2;
     const py = (this.y / this.prevZ) * height + height / 2;
     const alpha = Math.max(0, 1 - this.z / width);
-    const hue = warp ? 210 + Math.sin(this.x + this.y) * 50 : 200;
-    ctx.strokeStyle = `hsla(${hue}, 100%, 70%, ${alpha})`;
+    const hue = warp ? 210 + Math.sin(this.x + this.y) * 10 : 200;
+    const lightness = warp ? 80 : 9000;      // antes era 70
+    const a = Math.max(0.25, alpha);       // garante brilho mínimo
+    ctx.strokeStyle = `hsla(${hue}, 100%, ${lightness}%, ${a})`;
     ctx.lineWidth = warp ? 4 : 2;
     ctx.beginPath();
     ctx.moveTo(px, py);
@@ -53,7 +55,7 @@ function initStars() {
 }
 
 function animate() {
-  ctx.fillStyle = "rgba(3,6,20,0.4)";
+  ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
   ctx.fillRect(0, 0, width, height);
   const speed = warp ? 45 : 3; // velocidade normal/hiper
   for (const star of stars) {
@@ -128,7 +130,7 @@ const startHyperdrive = () => {
   }
   warp = true;
   btn.style.transform = 'scale(1.1)';
-  btn.style.boxShadow = '0 0 70px rgba(0,200,255,0.8)';
+  btn.style.boxShadow = '0 0 70px rgba(1, 3, 44, 0.8)';
   setTimeout(() => {
     btn.style.transform = '';
     btn.style.boxShadow = '';
