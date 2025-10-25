@@ -132,6 +132,44 @@ $clientConfig = [
     .brand small { font-weight: 600; opacity: .65; }
     .footer-hud { justify-self: center; align-self: end; opacity: .65; font-size: 12px; }
 
+  .status-message {
+    position: absolute;
+    bottom: 48px;
+    left: 50%;
+    transform: translate(-50%, 12px);
+    padding: 0.75rem 1.5rem;
+    border-radius: 999px;
+    background: rgba(6, 16, 36, 0.85);
+    color: #cde7ff;
+    font-size: 0.9rem;
+    letter-spacing: 0.08em;
+    z-index: 4;
+    min-width: 260px;
+    text-align: center;
+    box-shadow: 0 0 24px rgba(0, 200, 255, 0.28);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.35s ease, transform 0.35s ease;
+  }
+
+  .status-message.is-visible {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translate(-50%, 0);
+  }
+
+  .status-message.is-error {
+    color: #ffd3dc;
+    background: rgba(47, 5, 20, 0.82);
+    box-shadow: 0 0 32px rgba(255, 76, 102, 0.3);
+  }
+
+  .status-message.is-success {
+    color: #d0ffe3;
+    background: rgba(5, 36, 23, 0.85);
+    box-shadow: 0 0 32px rgba(0, 255, 170, 0.26);
+  }
+
 </style>
 </head>
 <body>
@@ -144,6 +182,10 @@ $clientConfig = [
     <div></div>
     <div class="footer-hud">Protótipo imersivo — “Hyperjump Experience”</div>
   </div>
+  <div id="statusMessage" class="status-message" role="status" aria-live="polite"></div>
+<script>
+window.wtwClientConfig = <?php echo json_encode($clientConfig, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
+</script>
 <script>
 const canvas = document.getElementById("space");
 const ctx = canvas.getContext("2d");
@@ -222,21 +264,155 @@ window.addEventListener("resize", () => {
   initStars();
 });
 
-// Botão ativa hipervelocidade
+// Botão ativa hipervelocidade e busca o título surpresa
 document.getElementById("trigger").addEventListener("click", async () => {
-  if (warp) return;
-  warp = true;
-
   const btn = document.getElementById("trigger");
-  btn.style.transform = "scale(1.1)";
-  btn.style.boxShadow = "0 0 70px rgba(0,200,255,0.8)";
-  setTimeout(() => {
-    btn.style.transform = "";
-    btn.style.boxShadow = "";
-  }, 800);
+  const statusEl = document.getElementById("statusMessage");
+  const config = window.wtwClientConfig || {};
 
-  await new Promise(r => setTimeout(r, 2500));
-  warp = false;
+  if (!btn || btn.disabled) {
+    return;
+  }
+
+  const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+  const setStatus = (message, state = 'info') => {
+    if (!statusEl) {
+      return;
+    }
+    if (!message) {
+      statusEl.textContent = '';
+      statusEl.classList.remove('is-visible', 'is-error', 'is-success');
+      return;
+    }
+    statusEl.innerHTML = message;
+    statusEl.classList.add('is-visible');
+    statusEl.classList.toggle('is-error', state === 'error');
+    statusEl.classList.toggle('is-success', state === 'success');
+  };
+
+  const startHyperdrive = () => {
+    warp = true;
+    btn.style.transform = "scale(1.1)";
+    btn.style.boxShadow = "0 0 70px rgba(0,200,255,0.8)";
+    setTimeout(() => {
+      btn.style.transform = "";
+      btn.style.boxShadow = "";
+    }, 800);
+  };
+
+  const stopHyperdrive = () => {
+    warp = false;
+  };
+
+  const getApiEndpoint = () => {
+    const base = (typeof config.apiBaseUrl === 'string' && config.apiBaseUrl !== '') ? config.apiBaseUrl : 'api';
+    return base.replace(/\/+$/, '') + '/surprise.php';
+  };
+
+  const requestSurprise = async () => {
+    const endpoint = getApiEndpoint();
+    const url = endpoint + '?media_type=movie';
+    let response;
+    try {
+      response = await fetch(url, { credentials: 'include' });
+    } catch (networkError) {
+      const error = new Error('network_error');
+      error.code = 'network';
+      throw error;
+    }
+
+    if (response.status === 204) {
+      const error = new Error('empty');
+      error.code = 'empty';
+      throw error;
+    }
+
+    let payload = null;
+    try {
+      payload = await response.json();
+    } catch (parseError) {
+      if (!response.ok) {
+        const error = new Error('http_error');
+        error.code = 'http';
+        error.status = response.status;
+        throw error;
+      }
+    }
+
+    if (response.status === 401) {
+      const error = new Error('unauthorized');
+      error.code = 'unauthorized';
+      throw error;
+    }
+
+    if (!response.ok) {
+      const error = new Error((payload && payload.message) || 'http_error');
+      error.code = (payload && payload.error) || 'http';
+      error.status = response.status;
+      throw error;
+    }
+
+    if (!payload || payload.status !== 'ok' || !payload.item || !payload.item.tmdb_id) {
+      const error = new Error('invalid');
+      error.code = 'invalid';
+      throw error;
+    }
+
+    return payload.item;
+  };
+
+  const redirectToDetails = (item) => {
+    const target = new URL('filme.php', window.location.href);
+    target.searchParams.set('id', item.tmdb_id);
+    target.searchParams.set('mediaTp', item.media_type === 'tv' ? 'tv' : 'movie');
+    setTimeout(() => {
+      window.location.href = target.toString();
+    }, 600);
+  };
+
+  if (!config.isAuthenticated) {
+    setStatus('Entre na sua conta para receber uma recomendação surpresa. <a href="login.php">Fazer login</a>', 'error');
+    return;
+  }
+
+  btn.disabled = true;
+  startHyperdrive();
+  setStatus('Buscando uma surpresa personalizada para você...', 'info');
+
+  let redirecting = false;
+
+  try {
+    const [item] = await Promise.all([
+      requestSurprise(),
+      delay(1500),
+    ]);
+
+    if (!item) {
+      const error = new Error('empty');
+      error.code = 'empty';
+      throw error;
+    }
+
+    setStatus('Encontramos algo especial para você! Prepare-se para o salto ✨', 'success');
+    redirecting = true;
+    redirectToDetails(item);
+  } catch (error) {
+    let message = 'Não foi possível encontrar uma recomendação surpresa agora. Tente novamente em instantes.';
+    if (error && error.code === 'unauthorized') {
+      message = 'Sua sessão expirou. <a href="login.php">Faça login novamente</a> para continuar.';
+    } else if (error && error.code === 'empty') {
+      message = 'Nenhum título inédito foi encontrado com o seu perfil. Experimente ajustar suas preferências!';
+    } else if (error && error.code === 'network') {
+      message = 'Erro de conexão. Verifique sua internet e tente novamente.';
+    }
+    setStatus(message, 'error');
+  } finally {
+    if (!redirecting) {
+      stopHyperdrive();
+      btn.disabled = false;
+    }
+  }
 });
 </script>
 
