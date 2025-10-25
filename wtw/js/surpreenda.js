@@ -285,6 +285,7 @@ const readClientConfig = () => {
 const config = readClientConfig();
 const btn = document.getElementById('trigger');
 const statusEl = document.getElementById('statusMessage');
+const statusTextEl = statusEl ? statusEl.querySelector('[data-status-text]') : null;
 const station = document.getElementById('rouletteStation');
 const shell = document.getElementById('rouletteShell');
 const track = document.getElementById('rouletteTrack');
@@ -373,19 +374,103 @@ let rouletteTimer = null;
 let storedSelection = null;
 let isProcessing = false;
 
+let statusTypingTimeout = null;
+let statusTypingActive = false;
+let statusTypingDirection = 1;
+let statusTypingIndex = 0;
+let statusTypingText = '';
+
+const clearStatusTyping = ({ keepText = false } = {}) => {
+  statusTypingActive = false;
+  statusTypingText = '';
+  statusTypingDirection = 1;
+  statusTypingIndex = 0;
+  if (statusTypingTimeout) {
+    clearTimeout(statusTypingTimeout);
+    statusTypingTimeout = null;
+  }
+  if (!keepText && statusTextEl) {
+    statusTextEl.textContent = '';
+  }
+};
+
+const startStatusTypingLoop = (message) => {
+  if (!statusTextEl) {
+    return;
+  }
+  const sanitized = typeof message === 'string' ? message.replace(/<[^>]*>/g, '').trim() : '';
+  clearStatusTyping();
+  if (!sanitized) {
+    return;
+  }
+
+  statusTypingActive = true;
+  statusTypingText = sanitized;
+  statusTypingDirection = 1;
+  statusTypingIndex = 0;
+  statusTextEl.textContent = '';
+
+  const tick = () => {
+    if (!statusTypingActive || !statusTextEl) {
+      return;
+    }
+
+    statusTextEl.textContent = statusTypingText.slice(0, statusTypingIndex);
+
+    if (statusTypingDirection > 0) {
+      if (statusTypingIndex < statusTypingText.length) {
+        statusTypingIndex += 1;
+        statusTypingTimeout = setTimeout(tick, 60 + Math.random() * 45);
+        return;
+      }
+      statusTypingDirection = -1;
+      statusTypingTimeout = setTimeout(tick, 1150);
+      return;
+    }
+
+    if (statusTypingIndex > 0) {
+      statusTypingIndex -= 1;
+      statusTypingTimeout = setTimeout(tick, 45 + Math.random() * 35);
+      return;
+    }
+
+    statusTypingDirection = 1;
+    statusTypingTimeout = setTimeout(tick, 780);
+  };
+
+  statusTypingTimeout = setTimeout(tick, 180);
+};
+
 const setStatus = (message, state = 'info') => {
   if (!statusEl) {
     return;
   }
-  if (!message) {
-    statusEl.textContent = '';
-    statusEl.classList.remove('is-visible', 'is-error', 'is-success');
+  const hasMessage = typeof message === 'string' && message.trim() !== '';
+  if (!hasMessage) {
+    clearStatusTyping();
+    if (statusTextEl) {
+      statusTextEl.textContent = '';
+    }
+    statusEl.classList.remove('is-visible', 'is-error', 'is-success', 'is-loading');
+    statusEl.removeAttribute('data-state');
     return;
   }
-  statusEl.innerHTML = message;
+
   statusEl.classList.add('is-visible');
+  statusEl.classList.toggle('is-loading', state === 'info');
   statusEl.classList.toggle('is-error', state === 'error');
   statusEl.classList.toggle('is-success', state === 'success');
+  statusEl.setAttribute('data-state', state);
+
+  if (state === 'info') {
+    startStatusTypingLoop(message);
+    return;
+  }
+
+  clearStatusTyping();
+  if (statusTextEl) {
+    statusTextEl.innerHTML = message;
+  }
 };
 
 const startHyperdrive = () => {

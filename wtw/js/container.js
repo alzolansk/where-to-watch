@@ -48,6 +48,143 @@ document.addEventListener('DOMContentLoaded', function() {
     let hasHandledInitialHash = false;
     // Cache para evitar duplicidade
     const fetchCache = {};
+
+    const CACHE_DB_NAME = 'wtw-cache';
+    const CACHE_STORE_NAME = 'responses';
+    const CACHE_DB_VERSION = 1;
+    const CACHE_MAX_AGE = 24 * 60 * 60 * 1000; // 1 dia
+    const supportsIndexedDb = typeof window !== 'undefined' && 'indexedDB' in window;
+    let cacheDbPromise = null;
+    let hasCleanedExpiredEntries = false;
+
+    const openCacheDb = () => {
+        if (!supportsIndexedDb) {
+            return Promise.resolve(null);
+        }
+
+        if (cacheDbPromise) {
+            return cacheDbPromise;
+        }
+
+        cacheDbPromise = new Promise((resolve) => {
+            const request = window.indexedDB.open(CACHE_DB_NAME, CACHE_DB_VERSION);
+
+            request.onupgradeneeded = () => {
+                const db = request.result;
+                if (!db.objectStoreNames.contains(CACHE_STORE_NAME)) {
+                    db.createObjectStore(CACHE_STORE_NAME, { keyPath: 'url' });
+                }
+            };
+
+            request.onsuccess = () => {
+                const db = request.result;
+                db.onversionchange = () => {
+                    db.close();
+                };
+
+                if (!hasCleanedExpiredEntries) {
+                    hasCleanedExpiredEntries = true;
+                    cleanupExpiredEntries(db);
+                }
+
+                resolve(db);
+            };
+
+            request.onerror = () => {
+                console.warn('[WYWatch] Falha ao abrir IndexedDB. Prosseguindo sem cache persistente.', request.error);
+                resolve(null);
+            };
+
+            request.onblocked = () => {
+                resolve(null);
+            };
+        });
+
+        return cacheDbPromise;
+    };
+
+    const cleanupExpiredEntries = (db) => {
+        if (!db) {
+            return;
+        }
+
+        try {
+            const tx = db.transaction(CACHE_STORE_NAME, 'readwrite');
+            const store = tx.objectStore(CACHE_STORE_NAME);
+            const request = store.openCursor();
+            request.onsuccess = (event) => {
+                const cursor = event.target.result;
+                if (!cursor) {
+                    return;
+                }
+
+                const entry = cursor.value;
+                if (!entry || !entry.timestamp || (Date.now() - entry.timestamp) > CACHE_MAX_AGE) {
+                    cursor.delete();
+                }
+                cursor.continue();
+            };
+        } catch (error) {
+            console.warn('[WYWatch] Não foi possível limpar o cache IndexedDB.', error);
+        }
+    };
+
+    const readCacheEntry = async (url) => {
+        const db = await openCacheDb();
+        if (!db) {
+            return null;
+        }
+
+        return new Promise((resolve) => {
+            try {
+                const tx = db.transaction(CACHE_STORE_NAME, 'readonly');
+                const store = tx.objectStore(CACHE_STORE_NAME);
+                const request = store.get(url);
+                request.onsuccess = () => {
+                    const result = request.result;
+                    if (!result) {
+                        resolve(null);
+                        return;
+                    }
+                    resolve({ data: result.data, timestamp: result.timestamp });
+                };
+                request.onerror = () => resolve(null);
+            } catch (error) {
+                console.warn('[WYWatch] Erro ao ler cache IndexedDB.', error);
+                resolve(null);
+            }
+        });
+    };
+
+    const writeCacheEntry = async (url, data) => {
+        const db = await openCacheDb();
+        if (!db) {
+            return;
+        }
+
+        try {
+            const tx = db.transaction(CACHE_STORE_NAME, 'readwrite');
+            const store = tx.objectStore(CACHE_STORE_NAME);
+            store.put({ url, data, timestamp: Date.now() });
+        } catch (error) {
+            console.warn('[WYWatch] Erro ao gravar no cache IndexedDB.', error);
+        }
+    };
+
+    const deleteCacheEntry = async (url) => {
+        const db = await openCacheDb();
+        if (!db) {
+            return;
+        }
+
+        try {
+            const tx = db.transaction(CACHE_STORE_NAME, 'readwrite');
+            const store = tx.objectStore(CACHE_STORE_NAME);
+            store.delete(url);
+        } catch (error) {
+            console.warn('[WYWatch] Erro ao remover item expirado do cache IndexedDB.', error);
+        }
+    };
     let hasShownConnectionError = false;
 
     function showConnectionErrorPage() {
@@ -114,15 +251,43 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!url || typeof url !== 'string') {
             return Promise.reject(new Error('fetchJson called with invalid url'));
         }
+
         if (!fetchCache[url]) {
-            fetchCache[url] = fetch(url).then(r => {
-                if (!r.ok) {
-                    throw new Error(`HTTP ${r.status} for ${url}`);
+            fetchCache[url] = (async () => {
+                const cachedEntry = await readCacheEntry(url);
+                const cacheIsFresh = cachedEntry && typeof cachedEntry.timestamp === 'number'
+                    ? (Date.now() - cachedEntry.timestamp) <= CACHE_MAX_AGE
+                    : false;
+
+                if (cacheIsFresh && cachedEntry) {
+                    return cachedEntry.data;
                 }
-                return r.json();
-            });
+
+                try {
+                    const response = await fetch(url);
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status} for ${url}`);
+                    }
+                    const data = await response.json();
+                    writeCacheEntry(url, data).catch(() => {});
+                    return data;
+                } catch (error) {
+                    if (cachedEntry) {
+                        console.warn('[WYWatch] Falha ao buscar dados atualizados. Utilizando cache local.', error);
+                        if (!cacheIsFresh) {
+                            deleteCacheEntry(url).catch(() => {});
+                        }
+                        return cachedEntry.data;
+                    }
+                    throw error;
+                }
+            })();
         }
-        return fetchCache[url];
+
+        return fetchCache[url].catch((error) => {
+            delete fetchCache[url];
+            throw error;
+        });
     };
 
     const HERO_SKELETON_CARDS = 4;

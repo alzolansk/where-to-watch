@@ -20,32 +20,13 @@ $navStates = [
 ];
 ?>
 <script>
-  window.__WY_WATCH_CONFIG__ = Object.freeze(Object.assign({}, window.__WY_WATCH_CONFIG__ || {}, <?php echo json_encode($clientConfig, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>));
-  
-    /*Estrelinhas da nav*/
-    const canvas = document.querySelector('.mini-stars');
-    const ctx = canvas.getContext('2d');
-    canvas.width = canvas.offsetWidth;
-    canvas.height = canvas.offsetHeight;
-    let stars = Array.from({ length: 50 }, () => ({
-    x: Math.random() * canvas.width,
-    y: Math.random() * canvas.height,
-    r: Math.random() * 1.2,
-    }));
-
-    function drawStars() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    stars.forEach(s => {
-        ctx.beginPath();
-        ctx.arc(s.x, s.y, s.r, 0, 2 * Math.PI);
-        ctx.fillStyle = `rgba(255,255,255,${Math.random()})`;
-        ctx.fill();
-    });
-    requestAnimationFrame(drawStars);
-    }
-
-    drawStars();
-
+  window.__WY_WATCH_CONFIG__ = Object.freeze(
+    Object.assign(
+      {},
+      window.__WY_WATCH_CONFIG__ || {},
+      <?php echo json_encode($clientConfig, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>
+    )
+  );
 </script>
 <nav id="menu">
     <filter id="glass-distortion" x="0%" y="0%" width="100%" height="100%">
@@ -773,41 +754,121 @@ $navStates = [
     align-items: center;
 }
 
-.menu-dropdown__label.surprise{
-    font-family: 'JetBrains Mono', sans-serif;
-}
+  .menu-dropdown__label.surprise {
+      font-family: 'JetBrains Mono', sans-serif;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+  }
 
-.menu-dropdown__link:has(.surprise) {
-  background-color: black;
-}
+  .menu-dropdown__link--surprise {
+      position: relative;
+      overflow: hidden;
+      background: #050509;
+      border: 1px solid rgba(148, 140, 255, 0.22);
+      color: #fff;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+      isolation: isolate;
+  }
 
-/* garante que o link é o contêiner do efeito */
-.menu-dropdown__link {
-  position: relative;
-  display: block;           /* cobre a área inteira clicável */
-  overflow: hidden;         /* esconde estrelas que escaparem */
-}
+  .menu-dropdown__link--surprise .menu-dropdown__label {
+      position: relative;
+      z-index: 2;
+      color: inherit;
+      text-shadow: none;
+      transition: text-shadow 0.4s ease;
+  }
 
-/* canvas das estrelinhas */
-.menu-dropdown__link .mini-stars {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity .25s ease;
-  z-index: 0;               /* abaixo do texto */
-}
+  @media (hover: hover) {
+      .menu-dropdown__link--surprise {
+          transition: transform 0.35s ease, border-color 0.35s ease, box-shadow 0.35s ease;
+      }
 
-/* liga/desliga no hover */
-.menu-dropdown__link.is-stars-on .mini-stars {
-  opacity: 1;
-}
+      .menu-dropdown__link--surprise::before {
+          content: "";
+          position: absolute;
+          inset: -40% -28%;
+          background:
+              radial-gradient(circle at 18% 22%, rgba(54, 240, 255, 0.55) 0%, rgba(54, 240, 255, 0) 60%),
+              radial-gradient(circle at 82% 30%, rgba(162, 61, 255, 0.5) 0%, rgba(162, 61, 255, 0) 62%),
+              radial-gradient(circle at 48% 86%, rgba(38, 104, 255, 0.45) 0%, rgba(38, 104, 255, 0) 58%);
+          opacity: 0;
+          transform: scale(0.92);
+          transition: opacity 0.45s ease, transform 0.45s ease;
+          z-index: 0;
+      }
 
-/* mantém o texto por cima do canvas */
-.menu-dropdown__link > .menu-dropdown__label {
-  position: relative;
-  z-index: 1;
-}
+      .menu-dropdown__link--surprise::after {
+          content: "";
+          position: absolute;
+          inset: -18%;
+          background-image:
+              radial-gradient(1.6px 1.6px at 18% 28%, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0)),
+              radial-gradient(1.2px 1.2px at 36% 74%, rgba(177, 220, 255, 0.9), rgba(177, 220, 255, 0)),
+              radial-gradient(2px 2px at 68% 32%, rgba(255, 132, 227, 0.85), rgba(255, 132, 227, 0)),
+              radial-gradient(1.3px 1.3px at 84% 78%, rgba(147, 236, 255, 0.82), rgba(147, 236, 255, 0)),
+              radial-gradient(1px 1px at 56% 46%, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0)),
+              radial-gradient(1.4px 1.4px at 28% 56%, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0));
+          opacity: 0;
+          mix-blend-mode: screen;
+          animation: surprise-stars 3.8s ease-in-out infinite alternate;
+          animation-play-state: paused;
+          z-index: 1;
+      }
+
+      .menu-dropdown__link--surprise:hover,
+      .menu-dropdown__link--surprise:focus-visible {
+          background: #050509;
+          transform: translateX(4px);
+          border-color: rgba(170, 160, 255, 0.65);
+          box-shadow: 0 22px 44px rgba(26, 20, 62, 0.55), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+      }
+
+      .menu-dropdown__link--surprise:hover::before,
+      .menu-dropdown__link--surprise:focus-visible::before {
+          opacity: 1;
+          transform: scale(1.02);
+      }
+
+      .menu-dropdown__link--surprise:hover::after,
+      .menu-dropdown__link--surprise:focus-visible::after {
+          opacity: 1;
+          animation-play-state: running;
+      }
+
+      .menu-dropdown__link--surprise:hover .menu-dropdown__label,
+      .menu-dropdown__link--surprise:focus-visible .menu-dropdown__label {
+          text-shadow: 0 0 12px rgba(164, 190, 255, 0.65), 0 0 22px rgba(255, 135, 222, 0.55);
+      }
+  }
+
+  @media (hover: hover) and (prefers-reduced-motion: reduce) {
+      .menu-dropdown__link--surprise,
+      .menu-dropdown__link--surprise::before,
+      .menu-dropdown__link--surprise::after {
+          transition-duration: 0s !important;
+      }
+
+      .menu-dropdown__link--surprise::after {
+          animation: none;
+      }
+  }
+
+  @keyframes surprise-stars {
+      0% {
+          transform: translate3d(-4px, -3px, 0) scale(0.96);
+          opacity: 0.8;
+      }
+
+      50% {
+          transform: translate3d(4px, 3px, 0) scale(1.04);
+          opacity: 1;
+      }
+
+      100% {
+          transform: translate3d(-3px, 4px, 0) scale(0.98);
+          opacity: 0.85;
+      }
+  }
 
 .menu-dropdown__badge {
     display: inline-flex;

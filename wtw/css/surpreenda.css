@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap');
 
 /* Neon noir palette tuned for the surprise experience */
@@ -408,21 +409,124 @@ canvas {
   bottom: 48px;
   left: 50%;
   transform: translate(-50%, 12px);
-  padding: 0.85rem 1.85rem;
-  border-radius: 999px;
-  background: var(--surprise-panel);
-  color: var(--surprise-text);
-  font-size: 0.85rem;
-  letter-spacing: 0.1em;
   z-index: 4;
-  min-width: 260px;
-  text-align: center;
-  box-shadow: 0 0 24px rgba(54, 240, 255, 0.2), 0 30px 60px rgba(0, 0, 0, 0.7);
+  min-width: 280px;
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.35s ease, transform 0.35s ease;
-  border: 1px solid rgba(54, 240, 255, 0.2);
+  color: var(--surprise-text);
+  font-family: 'Share Tech Mono', 'JetBrains Mono', 'Orbitron', monospace;
+  letter-spacing: 0.08em;
+}
+
+.status-message .status-frame {
+  position: relative;
+  display: block;
+  padding: 1.05rem 2.35rem 1.05rem 2rem;
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(3, 20, 30, 0.92), rgba(0, 8, 16, 0.88));
+  background-size: 220% 220%;
+  border: 1px solid rgba(54, 240, 255, 0.32);
+  box-shadow: 0 0 28px rgba(24, 198, 255, 0.32), 0 18px 48px rgba(0, 0, 0, 0.7);
+  overflow: hidden;
   backdrop-filter: blur(18px);
+  isolation: isolate;
+  will-change: transform, filter;
+  animation: statusGradient 12s ease infinite;
+}
+
+.status-message .status-scan {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(
+    110deg,
+    transparent 12%,
+    rgba(54, 240, 255, 0.04) 36%,
+    rgba(126, 255, 198, 0.22) 49%,
+    rgba(54, 240, 255, 0.08) 62%,
+    transparent 88%
+  );
+  mix-blend-mode: screen;
+  opacity: 0;
+  transform: translateX(-130%);
+  animation: statusScan 4.6s linear infinite;
+}
+
+.status-message .status-glow {
+  position: absolute;
+  inset: -45%;
+  z-index: 0;
+  background: radial-gradient(circle at 50% 50%, rgba(54, 240, 255, 0.26), transparent 68%);
+  filter: blur(16px);
+  opacity: 0.65;
+  animation: statusGlowPulse 6s ease-in-out infinite;
+}
+
+.status-message .status-inner {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  align-items: center;
+  grid-template-columns: auto 1fr;
+  gap: 1.1rem;
+}
+
+.status-message .status-spinner {
+  display: flex;
+  gap: 6px;
+  width: 28px;
+  height: 20px;
+  opacity: 0;
+  transform: translateY(6px) scaleX(0.85);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  pointer-events: none;
+}
+
+.status-message .status-spinner span {
+  flex: 1;
+  background: linear-gradient(to top, rgba(18, 255, 204, 0.15), rgba(126, 255, 198, 0.85));
+  border-radius: 999px;
+  box-shadow: 0 0 12px rgba(126, 255, 198, 0.35);
+  animation: statusSpinnerPulse 1.15s ease-in-out infinite;
+}
+
+.status-message .status-spinner span:nth-child(2) {
+  animation-delay: 0.18s;
+}
+
+.status-message .status-spinner span:nth-child(3) {
+  animation-delay: 0.36s;
+}
+
+.status-message .status-text {
+  min-height: 1.4em;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  letter-spacing: 0.12em;
+  color: rgba(220, 242, 255, 0.95);
+  text-transform: none;
+}
+
+.status-message .status-text a {
+  color: #82fff0;
+  text-decoration: none;
+  border-bottom: 1px dashed rgba(126, 255, 198, 0.6);
+  transition: color 0.3s ease, border-color 0.3s ease;
+}
+
+.status-message .status-text a:hover,
+.status-message .status-text a:focus-visible {
+  color: #c4f8ff;
+  border-color: rgba(180, 255, 238, 0.9);
+}
+
+.status-message:not(.is-loading) .status-inner {
+  grid-template-columns: 1fr;
+}
+
+.status-message:not(.is-loading) .status-spinner {
+  display: none;
 }
 
 .status-message.is-visible {
@@ -431,16 +535,173 @@ canvas {
   transform: translate(-50%, 0);
 }
 
-.status-message.is-error {
-  color: var(--surprise-error);
-  background: rgba(38, 4, 16, 0.92);
-  box-shadow: 0 0 32px rgba(255, 63, 164, 0.35);
+.status-message.is-visible .status-scan {
+  opacity: 0.85;
 }
 
-.status-message.is-success {
-  color: var(--surprise-success);
-  background: rgba(3, 32, 24, 0.92);
-  box-shadow: 0 0 32px rgba(126, 255, 198, 0.32);
+.status-message.is-loading .status-frame {
+  animation: statusGradient 12s ease infinite, statusFlicker 5.4s linear infinite;
+  box-shadow: 0 0 32px rgba(54, 240, 255, 0.32), 0 26px 54px rgba(0, 0, 0, 0.75);
+}
+
+.status-message.is-loading .status-inner {
+  animation: statusShake 7.2s ease-in-out infinite;
+}
+
+.status-message.is-loading .status-spinner {
+  opacity: 1;
+  transform: translateY(0) scaleX(1);
+}
+
+.status-message.is-loading .status-text {
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.status-message.is-error .status-frame {
+  background: linear-gradient(135deg, rgba(40, 4, 22, 0.95), rgba(20, 0, 12, 0.88));
+  border-color: rgba(255, 63, 164, 0.45);
+  box-shadow: 0 0 34px rgba(255, 63, 164, 0.35), 0 26px 60px rgba(0, 0, 0, 0.78);
+}
+
+.status-message.is-error .status-glow {
+  background: radial-gradient(circle at 50% 50%, rgba(255, 63, 164, 0.28), transparent 70%);
+}
+
+.status-message.is-error .status-text {
+  color: rgba(255, 199, 228, 0.95);
+}
+
+.status-message.is-error .status-text a {
+  color: #ff9ad0;
+  border-color: rgba(255, 154, 208, 0.5);
+}
+
+.status-message.is-error .status-text a:hover,
+.status-message.is-error .status-text a:focus-visible {
+  color: #ffd5ec;
+  border-color: rgba(255, 214, 236, 0.85);
+}
+
+.status-message.is-success .status-frame {
+  background: linear-gradient(135deg, rgba(6, 36, 26, 0.95), rgba(2, 18, 14, 0.88));
+  border-color: rgba(126, 255, 198, 0.45);
+  box-shadow: 0 0 34px rgba(126, 255, 198, 0.32), 0 26px 60px rgba(0, 0, 0, 0.75);
+}
+
+.status-message.is-success .status-glow {
+  background: radial-gradient(circle at 50% 50%, rgba(126, 255, 198, 0.3), transparent 70%);
+}
+
+.status-message.is-success .status-text {
+  color: rgba(184, 255, 228, 0.95);
+}
+
+.status-message.is-success .status-text a {
+  color: #7effc6;
+  border-color: rgba(126, 255, 198, 0.5);
+}
+
+.status-message.is-success .status-text a:hover,
+.status-message.is-success .status-text a:focus-visible {
+  color: #d4ffe9;
+  border-color: rgba(212, 255, 233, 0.8);
+}
+
+@keyframes statusGradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes statusScan {
+  0% {
+    transform: translateX(-140%);
+  }
+  100% {
+    transform: translateX(140%);
+  }
+}
+
+@keyframes statusSpinnerPulse {
+  0%,
+  100% {
+    opacity: 0.25;
+    transform: scaleY(0.4);
+  }
+  50% {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+}
+
+@keyframes statusFlicker {
+  0%,
+  100% {
+    filter: brightness(1);
+  }
+  42% {
+    filter: brightness(1.05);
+  }
+  44% {
+    filter: brightness(0.88);
+  }
+  46% {
+    filter: brightness(1.12);
+  }
+  48% {
+    filter: brightness(0.92);
+  }
+  50% {
+    filter: brightness(1.08);
+  }
+  75% {
+    filter: brightness(1.02);
+  }
+}
+
+@keyframes statusShake {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  12% {
+    transform: translate3d(1px, -1px, 0);
+  }
+  14% {
+    transform: translate3d(-1px, 1px, 0);
+  }
+  16% {
+    transform: translate3d(1px, 0, 0);
+  }
+  18% {
+    transform: translate3d(-1px, -1px, 0);
+  }
+  20% {
+    transform: translate3d(1px, 1px, 0);
+  }
+  22% {
+    transform: translate3d(-1px, 0, 0);
+  }
+  24% {
+    transform: translate3d(1px, -1px, 0);
+  }
+}
+
+@keyframes statusGlowPulse {
+  0%,
+  100% {
+    opacity: 0.48;
+  }
+  50% {
+    opacity: 0.82;
+  }
 }
 
 .roulette-shell {

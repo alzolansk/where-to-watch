@@ -148,7 +148,26 @@ $introRevealText = 'WYWATCH';
     <div></div>
     <div class="footer-hud">Protótipo imersivo — “Hyperjump Experience”</div>
   </div>
-  <div id="statusMessage" class="status-message" role="status" aria-live="polite"></div>
+  <div
+    id="statusMessage"
+    class="status-message"
+    role="status"
+    aria-live="polite"
+    aria-atomic="true"
+  >
+    <div class="status-frame">
+      <div class="status-scan" aria-hidden="true"></div>
+      <div class="status-glow" aria-hidden="true"></div>
+      <div class="status-inner">
+        <div class="status-spinner" data-status-spinner aria-hidden="true">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+        <div class="status-text" data-status-text></div>
+      </div>
+    </div>
+  </div>
   </div>
 <script id="wtw-client-config" type="application/json">
 <?php echo json_encode($clientConfig, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>
