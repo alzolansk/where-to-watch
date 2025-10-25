@@ -12,6 +12,8 @@ if (!isset($_SESSION['id_user'])) {
 
 header('Content-Type: application/json; charset=utf-8');
 
+require_once __DIR__ . '/../includes/personalization-cache.php';
+
 $userId = (int) $_SESSION['id_user'];
 
 // 2) Bootstrap da conexão PDO (tenta includes/db.php; se não der, usa config.php)
@@ -152,7 +154,7 @@ try {
     // normaliza people
     $people = [];
     if (is_array($peopleIn)) {
-      $isAssoc = array_keys($ In) !== range(0, count($peopleIn)-1);
+      $isAssoc = array_keys($peopleIn) !== range(0, count($peopleIn)-1);
       if ($isAssoc) {
         foreach ($peopleIn as $pid => $w) {
           $pid = (int)$pid; if ($pid<=0) continue;
@@ -193,6 +195,8 @@ try {
     }
 
     $pdo->commit();
+
+    wtw_bump_personalization_cache_token();
 
     echo json_encode(['ok' => true]);
     exit;

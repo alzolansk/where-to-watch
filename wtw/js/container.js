@@ -878,6 +878,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const personalizationEndpoint = typeof personalizationConfig.endpoint === 'string'
             ? personalizationConfig.endpoint
             : 'api/home-personalized.php';
+        const personalizationCacheToken = typeof personalizationConfig.cacheToken === 'string'
+            && personalizationConfig.cacheToken.trim() !== ''
+            ? personalizationConfig.cacheToken.trim()
+            : null;
 
         SECTION_CONFIGS.unshift({
             id: 'personalized',
@@ -891,6 +895,11 @@ document.addEventListener('DOMContentLoaded', function() {
             skeletonCount: 6,
             endpoint(context) {
                 const params = new URLSearchParams({ media_type: context.mediaType });
+                if (personalizationCacheToken) {
+                    params.set('cache_token', personalizationCacheToken);
+                } else if (typeof personalizationConfig.preferenceCount === 'number') {
+                    params.set('preference_count', String(personalizationConfig.preferenceCount));
+                }
                 if (typeof personalizationConfig.limit === 'number') {
                     params.set('limit', String(personalizationConfig.limit));
                 }

@@ -608,13 +608,26 @@ const requestSurprise = async (mediaType = currentMediaType) => {
     throw error;
   }
 
-  if (!payload || payload.status !== 'ok' || !payload.item || !payload.item.tmdb_id) {
+  if (!payload || payload.status !== 'ok') {
     const error = new Error('invalid');
     error.code = 'invalid';
     throw error;
   }
 
-  return payload.item;
+  let resolvedItem = null;
+  if (payload.item && payload.item.tmdb_id) {
+    resolvedItem = payload.item;
+  } else if (Array.isArray(payload.items)) {
+    resolvedItem = payload.items.find((entry) => entry && entry.tmdb_id);
+  }
+
+  if (!resolvedItem || !resolvedItem.tmdb_id) {
+    const error = new Error('invalid');
+    error.code = 'invalid';
+    throw error;
+  }
+
+  return resolvedItem;
 };
 
 const fetchRoulettePosterPool = async (mediaType = currentMediaType) => {

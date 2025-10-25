@@ -1386,11 +1386,14 @@ function buildResponse(int $userId, string $mediaType, array $items, array $diag
         ];
     }
 
+    $primaryItem = $payloadItems[0] ?? null;
+
     return [
         'status' => 'ok',
         'user_id' => $userId,
         'media_type' => $mediaType,
         'generated_at' => date(DATE_ATOM),
+        'item' => $primaryItem,
         'items' => $payloadItems,
         'diagnostics' => $diagnostics,
     ];

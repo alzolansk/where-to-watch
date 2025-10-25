@@ -22,9 +22,11 @@
     <?php
         include_once('dashboard.php');
         include_once('config/config.php');
+        require_once __DIR__ . '/includes/personalization-cache.php';
 
         $personalizedRowEnabled = false;
         $personalizedPreferenceCount = 0;
+        $personalizationCacheToken = null;
         $personalizationTables = [
             'SELECT COUNT(*) FROM user_genres WHERE user_id = ?',
             'SELECT COUNT(*) FROM user_keywords WHERE user_id = ?',
@@ -59,6 +61,9 @@
             }
 
             $personalizedRowEnabled = $personalizedPreferenceCount > 0;
+            if ($personalizedRowEnabled) {
+                $personalizationCacheToken = wtw_personalization_cache_token();
+            }
         }
 
         $genreOptions = [
@@ -264,6 +269,7 @@
             'mediaTypes' => ['movie'],
             'endpoint' => 'api/home-personalized.php',
             'preferenceCount' => $personalizedPreferenceCount,
+            'cacheToken' => $personalizationCacheToken,
         ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
     </script>
     <script>

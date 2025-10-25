@@ -5,6 +5,8 @@ session_start();
 
 header('Content-Type: application/json; charset=utf-8');
 
+require_once __DIR__ . '/../includes/personalization-cache.php';
+
 $userId = (int)($_SESSION['id'] ?? $_SESSION['id_user'] ?? 0);
 if ($userId <= 0) {
     http_response_code(401);
@@ -621,6 +623,7 @@ function persistPreferences(PDO $pdo, int $userId, array $payload): array
     $pdo->commit();
 
     markOnboardingSessionComplete();
+    wtw_bump_personalization_cache_token();
 
     return ['ok' => true];
 }
