@@ -538,7 +538,10 @@ function persistPreferences(PDO $pdo, int $userId, array $payload): array
     }
 
     if (!empty($favorites)) {
-        $favorites = enrich_favorite_selections($favorites, $genres, $keywords, $people);
+        $favorites = enrich_favorite_selections($favorites);
+        inject_favorite_genres($favorites, $genres);
+        inject_favorite_keywords($favorites, $keywords);
+        inject_favorite_people($favorites, $people);
     }
 
     $pdo->beginTransaction();
@@ -637,7 +640,7 @@ function markOnboardingSessionComplete(): void
     $_SESSION['onboarding_completed_at'] = date('c');
 }
 
-function enrich_favorite_selections(array $favorites, array &$genres, array &$keywords, array &$people): array
+function enrich_favorite_selections(array $favorites): array
 {
     foreach ($favorites as $key => &$favorite) {
         $details = load_favorite_details($favorite['media_type'], $favorite['tmdb_id']);
@@ -648,54 +651,15 @@ function enrich_favorite_selections(array $favorites, array &$genres, array &$ke
 
         if (!empty($details['genres']) && is_array($details['genres'])) {
             $favorite['genres'] = $details['genres'];
-            foreach ($details['genres'] as $genreId => $genreName) {
-                $genreId = (int) $genreId;
-                if ($genreId > 0) {
-                    $genres[$genreId] = 1.0;
-                }
-            }
         }
 
         if (!empty($details['keywords']) && is_array($details['keywords'])) {
             $favorite['keywords'] = $details['keywords'];
-            $favoriteKeywordKeys = [];
-            foreach ($details['keywords'] as $keyword) {
-                if (!is_array($keyword)) {
-                    continue;
-                }
-                $label = normalise_label((string) ($keyword['label'] ?? $keyword['name'] ?? ''));
-                if ($label === '') {
-                    continue;
-                }
-                $keywordId = isset($keyword['id']) && (int) $keyword['id'] > 0 ? (int) $keyword['id'] : null;
-                $keywordKey = ($keywordId !== null ? (string) $keywordId : 'tmdb') . ':' . mb_lower($label);
-                if (isset($favoriteKeywordKeys[$keywordKey])) {
-                    continue;
-                }
-                $favoriteKeywordKeys[$keywordKey] = true;
-
-                if (!isset($keywords[$keywordKey])) {
-                    $keywords[$keywordKey] = [
-                        'id' => $keywordId,
-                        'label' => mb_limit($label, 120),
-                        'weight' => 1.0,
-                    ];
-                } else {
-                    if ($keywordId !== null && ($keywords[$keywordKey]['id'] ?? null) === null) {
-                        $keywords[$keywordKey]['id'] = $keywordId;
-                    }
-                    if (($keywords[$keywordKey]['label'] ?? '') === '') {
-                        $keywords[$keywordKey]['label'] = mb_limit($label, 120);
-                    }
-                    $keywords[$keywordKey]['weight'] = ($keywords[$keywordKey]['weight'] ?? 0.0) + 1.0;
-                }
-            }
         }
 
         if (!empty($details['cast']) && is_array($details['cast'])) {
             $favoriteCast = [];
             $favoriteCastIds = [];
-            $weightMap = [1.0, 0.75, 0.5];
             foreach ($details['cast'] as $index => $member) {
                 if ($index >= 3) {
                     break;
@@ -716,8 +680,6 @@ function enrich_favorite_selections(array $favorites, array &$genres, array &$ke
                     'id' => $personId,
                     'name' => mb_limit($name, 120),
                 ];
-                $increment = $weightMap[$index] ?? max(0.25, 1.0 - 0.25 * $index);
-                $people[$personId] = ($people[$personId] ?? 0.0) + $increment;
             }
             if (!empty($favoriteCast)) {
                 $favorite['cast'] = $favoriteCast;
@@ -759,6 +721,92 @@ function enrich_favorite_selections(array $favorites, array &$genres, array &$ke
     unset($favorite);
 
     return $favorites;
+}
+
+function inject_favorite_genres(array $favorites, array &$genres): void
+{
+    foreach ($favorites as $favorite) {
+        if (empty($favorite['genres']) || !is_array($favorite['genres'])) {
+            continue;
+        }
+        foreach ($favorite['genres'] as $genreId => $genreName) {
+            $genreId = (int) $genreId;
+            if ($genreId <= 0) {
+                continue;
+            }
+            $genres[$genreId] = max($genres[$genreId] ?? 0.0, 1.0);
+        }
+    }
+}
+
+function inject_favorite_keywords(array $favorites, array &$keywords): void
+{
+    foreach ($favorites as $favorite) {
+        if (empty($favorite['keywords']) || !is_array($favorite['keywords'])) {
+            continue;
+        }
+
+        $favoriteKeywordKeys = [];
+        foreach ($favorite['keywords'] as $keyword) {
+            if (!is_array($keyword)) {
+                continue;
+            }
+            $label = normalise_label((string) ($keyword['label'] ?? $keyword['name'] ?? ''));
+            if ($label === '') {
+                continue;
+            }
+            $keywordId = isset($keyword['id']) && (int) $keyword['id'] > 0 ? (int) $keyword['id'] : null;
+            $keywordKey = ($keywordId !== null ? (string) $keywordId : 'tmdb') . ':' . mb_lower($label);
+            if (isset($favoriteKeywordKeys[$keywordKey])) {
+                continue;
+            }
+            $favoriteKeywordKeys[$keywordKey] = true;
+
+            if (!isset($keywords[$keywordKey])) {
+                $keywords[$keywordKey] = [
+                    'id' => $keywordId,
+                    'label' => mb_limit($label, 120),
+                    'weight' => 1.0,
+                ];
+                continue;
+            }
+
+            if ($keywordId !== null && ($keywords[$keywordKey]['id'] ?? null) === null) {
+                $keywords[$keywordKey]['id'] = $keywordId;
+            }
+            if (($keywords[$keywordKey]['label'] ?? '') === '') {
+                $keywords[$keywordKey]['label'] = mb_limit($label, 120);
+            }
+            $keywords[$keywordKey]['weight'] = ($keywords[$keywordKey]['weight'] ?? 0.0) + 1.0;
+        }
+    }
+}
+
+function inject_favorite_people(array $favorites, array &$people): void
+{
+    foreach ($favorites as $favorite) {
+        if (empty($favorite['cast']) || !is_array($favorite['cast'])) {
+            continue;
+        }
+
+        $weightMap = [1.0, 0.75, 0.5];
+        $favoriteCastIds = [];
+        foreach ($favorite['cast'] as $index => $member) {
+            if ($index >= 3) {
+                break;
+            }
+            if (!is_array($member)) {
+                continue;
+            }
+            $personId = isset($member['id']) ? (int) $member['id'] : 0;
+            if ($personId <= 0 || isset($favoriteCastIds[$personId])) {
+                continue;
+            }
+            $favoriteCastIds[$personId] = true;
+            $increment = $weightMap[$index] ?? max(0.25, 1.0 - 0.25 * $index);
+            $people[$personId] = ($people[$personId] ?? 0.0) + $increment;
+        }
+    }
 }
 
 function &favorite_details_cache(): array
