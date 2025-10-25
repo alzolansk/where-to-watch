@@ -21,6 +21,31 @@ $navStates = [
 ?>
 <script>
   window.__WY_WATCH_CONFIG__ = Object.freeze(Object.assign({}, window.__WY_WATCH_CONFIG__ || {}, <?php echo json_encode($clientConfig, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>));
+  
+    /*Estrelinhas da nav*/
+    const canvas = document.querySelector('.mini-stars');
+    const ctx = canvas.getContext('2d');
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+    let stars = Array.from({ length: 50 }, () => ({
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height,
+    r: Math.random() * 1.2,
+    }));
+
+    function drawStars() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    stars.forEach(s => {
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r, 0, 2 * Math.PI);
+        ctx.fillStyle = `rgba(255,255,255,${Math.random()})`;
+        ctx.fill();
+    });
+    requestAnimationFrame(drawStars);
+    }
+
+    drawStars();
+
 </script>
 <nav id="menu">
     <filter id="glass-distortion" x="0%" y="0%" width="100%" height="100%">
@@ -66,11 +91,11 @@ $navStates = [
                                 <?php endif; ?>
                             </a>
                             <a
-                                href="index.php#surprise-me"
-                                class="menu-dropdown__link"
-                                role="menuitem"
+                            href="surpreenda.php"
+                            class="menu-dropdown__link menu-dropdown__link--surprise"
+                            role="menuitem"
                             >
-                                <span class="menu-dropdown__label">Surpreenda-me</span>
+                            <span class="menu-dropdown__label surprise">Surpreenda-me</span>
                             </a>
                             <a
                                 href="providers.php"
@@ -193,7 +218,8 @@ $navStates = [
 
 
 <style>
-    
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap');
+   
 *{
     margin: 0;
     padding: 0;
@@ -745,6 +771,42 @@ $navStates = [
     flex: 1 1 auto;
     display: inline-flex;
     align-items: center;
+}
+
+.menu-dropdown__label.surprise{
+    font-family: 'JetBrains Mono', sans-serif;
+}
+
+.menu-dropdown__link:has(.surprise) {
+  background-color: black;
+}
+
+/* garante que o link é o contêiner do efeito */
+.menu-dropdown__link {
+  position: relative;
+  display: block;           /* cobre a área inteira clicável */
+  overflow: hidden;         /* esconde estrelas que escaparem */
+}
+
+/* canvas das estrelinhas */
+.menu-dropdown__link .mini-stars {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .25s ease;
+  z-index: 0;               /* abaixo do texto */
+}
+
+/* liga/desliga no hover */
+.menu-dropdown__link.is-stars-on .mini-stars {
+  opacity: 1;
+}
+
+/* mantém o texto por cima do canvas */
+.menu-dropdown__link > .menu-dropdown__label {
+  position: relative;
+  z-index: 1;
 }
 
 .menu-dropdown__badge {

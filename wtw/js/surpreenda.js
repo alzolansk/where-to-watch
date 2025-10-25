@@ -1,5 +1,10 @@
 const canvas = document.getElementById("space");
 const ctx = canvas.getContext("2d");
+const introContainer = document.getElementById('intro');
+const introTextElement = document.getElementById('intro-text');
+const mainContent = document.getElementById('main-content');
+const brandSlot = document.querySelector('[data-brand-slot]');
+const INTRO_STORAGE_KEY = 'wtw_surprise_intro_v1';
 
 let width = window.innerWidth;
 let height = window.innerHeight;
@@ -76,6 +81,194 @@ window.addEventListener("resize", () => {
   initStars();
 });
 
+const revealMainContent = () => {
+  if (mainContent && !mainContent.classList.contains('is-visible')) {
+    mainContent.classList.add('is-visible');
+  }
+};
+
+const hideIntroOverlay = () => {
+  if (!introContainer) {
+    return;
+  }
+  introContainer.classList.add('is-hidden');
+};
+
+const getStoredIntroState = () => {
+  try {
+    return window.sessionStorage.getItem(INTRO_STORAGE_KEY) === '1';
+  } catch (error) {
+    return false;
+  }
+};
+
+const setStoredIntroState = () => {
+  try {
+    window.sessionStorage.setItem(INTRO_STORAGE_KEY, '1');
+  } catch (error) {
+    // ignore storage failures
+  }
+};
+
+const shouldReduceMotion = () => {
+  if (!window.matchMedia) {
+    return false;
+  }
+  try {
+    return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  } catch (error) {
+    return false;
+  }
+};
+
+const prepareBrandSlot = (text) => {
+  if (!brandSlot) {
+    return;
+  }
+  if (typeof text === 'string' && text !== '') {
+    brandSlot.textContent = text;
+  }
+  brandSlot.classList.remove('is-active');
+  brandSlot.setAttribute('aria-hidden', 'true');
+};
+
+const activateBrandSlot = (text) => {
+  if (!brandSlot) {
+    return;
+  }
+  if (typeof text === 'string' && text !== '') {
+    brandSlot.textContent = text;
+  }
+  brandSlot.classList.add('is-active');
+  brandSlot.removeAttribute('aria-hidden');
+};
+
+const dockIntroTextToHud = (text) => {
+  if (!introTextElement) {
+    activateBrandSlot(text);
+    revealMainContent();
+    setStoredIntroState();
+    hideIntroOverlay();
+    return;
+  }
+
+  revealMainContent();
+
+  if (!brandSlot) {
+    introTextElement.classList.add('is-floating');
+    setStoredIntroState();
+    setTimeout(hideIntroOverlay, 400);
+    return;
+  }
+
+  const performDock = () => {
+    const introRect = introTextElement.getBoundingClientRect();
+    const brandRect = brandSlot.getBoundingClientRect();
+    const deltaX = (brandRect.left + brandRect.width / 2) - (introRect.left + introRect.width / 2);
+    const deltaY = (brandRect.top + brandRect.height / 2) - (introRect.top + introRect.height / 2);
+    const scale = Math.max(0.22, Math.min(0.55, brandRect.height / Math.max(introRect.height, 1)));
+
+    introTextElement.classList.add('is-docking');
+    introTextElement.style.transform = 'translate3d(0, 0, 0) scale(1)';
+    requestAnimationFrame(() => {
+      introTextElement.style.transform = `translate3d(${deltaX}px, ${deltaY}px, 0) scale(${scale})`;
+    });
+
+    const handleDockEnd = (event) => {
+      if (event.propertyName !== 'transform') {
+        return;
+      }
+      introTextElement.removeEventListener('transitionend', handleDockEnd);
+      activateBrandSlot(text);
+      introTextElement.classList.add('is-hidden');
+      setStoredIntroState();
+      setTimeout(hideIntroOverlay, 220);
+    };
+
+    introTextElement.addEventListener('transitionend', handleDockEnd);
+  };
+
+  requestAnimationFrame(performDock);
+};
+
+const runIntroSequence = () => {
+  const fallbackText = introTextElement
+    ? introTextElement.getAttribute('data-intro-text') || 'Where You Watch Surpreend'
+    : 'Where You Watch Surpreend';
+
+  if (!introContainer || !introTextElement || !mainContent) {
+    activateBrandSlot(fallbackText);
+    revealMainContent();
+    hideIntroOverlay();
+    return;
+  }
+
+  const introText = fallbackText;
+  prepareBrandSlot(introText);
+
+  const skipIntro = shouldReduceMotion() || getStoredIntroState();
+
+  if (skipIntro) {
+    introTextElement.textContent = introText;
+    introTextElement.classList.add('is-complete', 'is-hidden');
+    activateBrandSlot(introText);
+    revealMainContent();
+    setStoredIntroState();
+    hideIntroOverlay();
+    return;
+  }
+
+  introTextElement.textContent = '';
+  const characters = [...introText];
+  let index = 0;
+  let decoded = '';
+  const glyphPool = ['0', '1', '/', '\\', '-', '|'];
+
+  const randomGlyph = () => glyphPool[Math.floor(Math.random() * glyphPool.length)] || '0';
+
+  const decodeNext = () => {
+    if (index >= characters.length) {
+      introTextElement.textContent = decoded;
+      introTextElement.classList.add('is-complete');
+      setTimeout(() => dockIntroTextToHud(introText), 60);
+      return;
+    }
+
+    const targetChar = characters[index];
+
+    if (targetChar === ' ') {
+      decoded += ' ';
+      introTextElement.textContent = decoded;
+      index += 1;
+      setTimeout(decodeNext, 10);
+      return;
+    }
+
+    let cycles = 0;
+    const totalCycles = 3 + Math.floor(Math.random() * 4);
+
+    const scramble = () => {
+      if (cycles < totalCycles) {
+        introTextElement.textContent = decoded + randomGlyph();
+        cycles += 1;
+        setTimeout(scramble, 18 + Math.random() * 22);
+        return;
+      }
+
+      decoded += targetChar;
+      introTextElement.textContent = decoded;
+      index += 1;
+      setTimeout(decodeNext, 15 + Math.random() * 25);
+    };
+
+    scramble();
+  };
+
+  setTimeout(decodeNext, 150);
+};
+
+window.addEventListener('load', runIntroSequence);
+
 const readClientConfig = () => {
   const configElement = document.getElementById('wtw-client-config');
   if (!configElement) {
@@ -98,16 +291,87 @@ const track = document.getElementById('rouletteTrack');
 const posterEl = document.getElementById('roulettePoster');
 const detailsBtn = document.getElementById('rouletteDetails');
 const againBtn = document.getElementById('rouletteAgain');
+const mediaToggle = document.getElementById('mediaToggle');
+const mediaToggleLabel = document.getElementById('mediaToggleLabel');
+
+const MEDIA_TYPES = {
+  MOVIE: 'movie',
+  TV: 'tv',
+};
+
+const MEDIA_LABELS = {
+  movie: 'Filmes',
+  tv: 'Séries',
+};
+
+const MEDIA_STORAGE_KEY = 'wtw_surprise_media_type';
+
+const createPosterPoolState = () => ({
+  entries: [],
+  expiresAt: 0,
+  inflight: null,
+});
+
+const roulettePosterPool = {
+  [MEDIA_TYPES.MOVIE]: createPosterPoolState(),
+  [MEDIA_TYPES.TV]: createPosterPoolState(),
+};
+
+const normalizeMediaType = (value) => (value === MEDIA_TYPES.TV ? MEDIA_TYPES.TV : MEDIA_TYPES.MOVIE);
+
+const readStoredMediaPreference = () => {
+  if (typeof localStorage === 'undefined') {
+    return '';
+  }
+  try {
+    return localStorage.getItem(MEDIA_STORAGE_KEY) || '';
+  } catch (storageError) {
+    return '';
+  }
+};
+
+const persistMediaPreference = (value) => {
+  if (typeof localStorage === 'undefined') {
+    return;
+  }
+  try {
+    localStorage.setItem(MEDIA_STORAGE_KEY, value);
+  } catch (storageError) {
+    // armazenamento indisponível (modo privado, etc)
+  }
+};
+
+const getPosterPoolStore = (mediaType) => {
+  const normalized = normalizeMediaType(mediaType);
+  if (!roulettePosterPool[normalized]) {
+    roulettePosterPool[normalized] = createPosterPoolState();
+  }
+  return {
+    normalized,
+    store: roulettePosterPool[normalized],
+  };
+};
+
+let currentMediaType = normalizeMediaType(readStoredMediaPreference());
+
+const syncMediaToggleUI = () => {
+  if (!mediaToggle) {
+    return;
+  }
+  mediaToggle.dataset.media = currentMediaType;
+  mediaToggle.setAttribute('aria-pressed', currentMediaType === MEDIA_TYPES.TV ? 'true' : 'false');
+  mediaToggle.setAttribute('title', `Modo ${MEDIA_LABELS[currentMediaType]} - Clique para alternar`);
+  if (mediaToggleLabel) {
+    mediaToggleLabel.textContent = MEDIA_LABELS[currentMediaType];
+  }
+};
+
+syncMediaToggleUI();
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 let rouletteTimer = null;
 let storedSelection = null;
 let isProcessing = false;
-const roulettePosterPool = {
-  entries: [],
-  expiresAt: 0,
-  inflight: null,
-};
 
 const setStatus = (message, state = 'info') => {
   if (!statusEl) {
@@ -186,6 +450,22 @@ const resetStation = ({ focusButton = false } = {}) => {
   }
 };
 
+const setMediaType = (nextType, { skipReset = false } = {}) => {
+  const normalized = normalizeMediaType(nextType);
+  if (normalized === currentMediaType) {
+    syncMediaToggleUI();
+    return normalized;
+  }
+  currentMediaType = normalized;
+  syncMediaToggleUI();
+  if (!skipReset) {
+    resetStation({ focusButton: false });
+    setStatus('');
+  }
+  persistMediaPreference(normalized);
+  return normalized;
+};
+
 const resolveApiBase = () => {
   return (typeof config.apiBaseUrl === 'string' && config.apiBaseUrl !== '') ? config.apiBaseUrl : 'api';
 };
@@ -199,9 +479,10 @@ const buildApiUrl = (path) => {
 const getApiEndpoint = () => buildApiUrl('surprise.php');
 const getRoulettePostersEndpoint = () => buildApiUrl('roulette-posters.php');
 
-const requestSurprise = async () => {
+const requestSurprise = async (mediaType = currentMediaType) => {
+  const normalizedType = encodeURIComponent(normalizeMediaType(mediaType));
   const endpoint = getApiEndpoint();
-  const url = endpoint + '?media_type=movie';
+  const url = `${endpoint}?media_type=${normalizedType}`;
   let response;
   try {
     response = await fetch(url, { credentials: 'include' });
@@ -251,20 +532,22 @@ const requestSurprise = async () => {
   return payload.item;
 };
 
-const fetchRoulettePosterPool = async () => {
+const fetchRoulettePosterPool = async (mediaType = currentMediaType) => {
+  const { normalized, store } = getPosterPoolStore(mediaType);
   const now = Date.now();
-  if (Array.isArray(roulettePosterPool.entries) && roulettePosterPool.entries.length && roulettePosterPool.expiresAt > now) {
-    return roulettePosterPool.entries;
+  if (Array.isArray(store.entries) && store.entries.length && store.expiresAt > now) {
+    return store.entries;
   }
-  if (roulettePosterPool.inflight) {
-    return roulettePosterPool.inflight;
+  if (store.inflight) {
+    return store.inflight;
   }
 
   const endpoint = getRoulettePostersEndpoint();
+  const url = `${endpoint}?media_type=${encodeURIComponent(normalized)}`;
   const inflightRequest = (async () => {
     let response;
     try {
-      response = await fetch(endpoint, { credentials: 'include' });
+      response = await fetch(url, { credentials: 'include' });
     } catch (networkError) {
       const error = new Error('posters_network');
       error.code = 'posters_network';
@@ -315,20 +598,20 @@ const fetchRoulettePosterPool = async () => {
     const ttlSeconds = (typeof payload.ttl === 'number' && payload.ttl > 0) ? payload.ttl : 300;
     const fallbackExpiration = Date.now() + ttlSeconds * 1000;
     const parsedExpiration = payload.cache_expires_at ? Date.parse(payload.cache_expires_at) : fallbackExpiration;
-    roulettePosterPool.entries = payload.posters;
-    roulettePosterPool.expiresAt = Number.isFinite(parsedExpiration) ? parsedExpiration : fallbackExpiration;
-    return roulettePosterPool.entries;
+    store.entries = payload.posters;
+    store.expiresAt = Number.isFinite(parsedExpiration) ? parsedExpiration : fallbackExpiration;
+    return store.entries;
   })()
     .catch((error) => {
-      roulettePosterPool.entries = [];
-      roulettePosterPool.expiresAt = 0;
+      store.entries = [];
+      store.expiresAt = 0;
       throw error;
     })
     .finally(() => {
-      roulettePosterPool.inflight = null;
+      store.inflight = null;
     });
 
-  roulettePosterPool.inflight = inflightRequest;
+  store.inflight = inflightRequest;
   return inflightRequest;
 };
 
@@ -438,8 +721,8 @@ const applySelection = (selection) => {
   }
 };
 
-const gatherRouletteOptions = async () => {
-  const pool = await fetchRoulettePosterPool();
+const gatherRouletteOptions = async (mediaType = currentMediaType) => {
+  const pool = await fetchRoulettePosterPool(mediaType);
   if (!Array.isArray(pool) || !pool.length) {
     return [];
   }
@@ -475,18 +758,22 @@ const handleTrigger = async () => {
   if (againBtn) {
     againBtn.disabled = true;
   }
+  if (mediaToggle) {
+    mediaToggle.disabled = true;
+  }
 
   startHyperdrive();
   enterRoulette();
   setStatus('Buscando uma surpresa personalizada para você...', 'info');
 
-  const personalizedPromise = requestSurprise()
+  const activeMediaType = currentMediaType;
+  const personalizedPromise = requestSurprise(activeMediaType)
     .then((item) => ({ status: 'fulfilled', value: item }))
     .catch((reason) => ({ status: 'rejected', reason }));
 
   try {
     const [options] = await Promise.all([
-      gatherRouletteOptions(),
+      gatherRouletteOptions(activeMediaType),
       delay(900),
     ]);
 
@@ -532,6 +819,9 @@ const handleTrigger = async () => {
     if (againBtn) {
       againBtn.disabled = false;
     }
+    if (mediaToggle) {
+      mediaToggle.disabled = false;
+    }
   }
 };
 
@@ -546,6 +836,17 @@ if (againBtn) {
   againBtn.addEventListener('click', (event) => {
     event.preventDefault();
     handleTrigger();
+  });
+}
+
+if (mediaToggle) {
+  mediaToggle.addEventListener('click', (event) => {
+    event.preventDefault();
+    if (isProcessing) {
+      return;
+    }
+    const nextType = currentMediaType === MEDIA_TYPES.MOVIE ? MEDIA_TYPES.TV : MEDIA_TYPES.MOVIE;
+    setMediaType(nextType);
   });
 }
 

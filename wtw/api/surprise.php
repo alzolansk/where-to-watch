@@ -46,6 +46,25 @@ $region = strtoupper((string) ($_GET['region'] ?? 'BR'));
 $maxPages = max(1, min(3, (int) ($_GET['pages'] ?? 3)));
 $minVote = max(0.0, min(10.0, (float) ($_GET['min_vote'] ?? 0.0)));
 
+$sessionSurpriseKey = 'wtw_surprise_history';
+$sessionSurpriseLimit = 50;
+if (!isset($_SESSION[$sessionSurpriseKey]) || !is_array($_SESSION[$sessionSurpriseKey])) {
+    $_SESSION[$sessionSurpriseKey] = [];
+}
+if (!isset($_SESSION[$sessionSurpriseKey][$userId]) || !is_array($_SESSION[$sessionSurpriseKey][$userId])) {
+    $_SESSION[$sessionSurpriseKey][$userId] = [];
+}
+if (!isset($_SESSION[$sessionSurpriseKey][$userId][$mediaType]) || !is_array($_SESSION[$sessionSurpriseKey][$userId][$mediaType])) {
+    $_SESSION[$sessionSurpriseKey][$userId][$mediaType] = [];
+}
+$sessionSurpriseHistory = [];
+foreach ($_SESSION[$sessionSurpriseKey][$userId][$mediaType] as $historyValue) {
+    $value = (int) $historyValue;
+    if ($value > 0) {
+        $sessionSurpriseHistory[] = $value;
+    }
+}
+
 /**
  * @return array<int, array{value:int,weight:float}>
  */
@@ -144,6 +163,10 @@ try {
     } catch (Throwable $ignored) {
         $banList = [];
     }
+}
+
+foreach ($sessionSurpriseHistory as $recentId) {
+    $banList[$mediaType . ':' . $recentId] = true;
 }
 
 $discoverBase = [
@@ -411,6 +434,23 @@ foreach (($details['videos']['results'] ?? []) as $video) {
         $trailerUrl = 'https://www.youtube.com/watch?v=' . $key;
         break;
     }
+}
+
+$selectedId = isset($selected['id']) ? (int) $selected['id'] : 0;
+if ($selectedId > 0) {
+    $normalizedHistory = [];
+    foreach ($sessionSurpriseHistory as $historyId) {
+        $historyValue = (int) $historyId;
+        if ($historyValue > 0 && $historyValue !== $selectedId) {
+            $normalizedHistory[] = $historyValue;
+        }
+    }
+    $normalizedHistory[] = $selectedId;
+    if (count($normalizedHistory) > $sessionSurpriseLimit) {
+        $normalizedHistory = array_slice($normalizedHistory, -$sessionSurpriseLimit);
+    }
+    $sessionSurpriseHistory = $normalizedHistory;
+    $_SESSION[$sessionSurpriseKey][$userId][$mediaType] = $sessionSurpriseHistory;
 }
 
 $response = [

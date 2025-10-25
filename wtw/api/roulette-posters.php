@@ -111,6 +111,26 @@ $limit = max(6, min(30, $limit));
 $pages = (int) ($_GET['pages'] ?? 2);
 $pages = max(1, min(3, $pages));
 $poolTtl = 600;
+$posterHistoryLimit = max(30, $limit * 2);
+$posterHistoryKey = 'wtw_roulette_history';
+if (!isset($_SESSION[$posterHistoryKey]) || !is_array($_SESSION[$posterHistoryKey])) {
+    $_SESSION[$posterHistoryKey] = [];
+}
+if (!isset($_SESSION[$posterHistoryKey][$userId]) || !is_array($_SESSION[$posterHistoryKey][$userId])) {
+    $_SESSION[$posterHistoryKey][$userId] = [];
+}
+if (!isset($_SESSION[$posterHistoryKey][$userId][$mediaType]) || !is_array($_SESSION[$posterHistoryKey][$userId][$mediaType])) {
+    $_SESSION[$posterHistoryKey][$userId][$mediaType] = [];
+}
+$posterHistoryQueue = [];
+$posterHistorySet = [];
+foreach ($_SESSION[$posterHistoryKey][$userId][$mediaType] as $historyValue) {
+    $value = (int) $historyValue;
+    if ($value > 0 && !isset($posterHistorySet[$value])) {
+        $posterHistorySet[$value] = true;
+        $posterHistoryQueue[] = $value;
+    }
+}
 $providerSignature = implode('-', $providerIds);
 
 $cacheKey = sprintf(
@@ -122,10 +142,15 @@ $cacheKey = sprintf(
     md5($providerSignature !== '' ? $providerSignature : 'none')
 );
 
+$poolPayload = null;
 $cached = cache_get($cacheKey, $poolTtl);
-if (is_array($cached) && !empty($cached['posters'])) {
-    echo json_encode($cached, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-    exit;
+if (is_array($cached)) {
+    if (!empty($cached['pool']) && is_array($cached['pool'])) {
+        $poolPayload = $cached;
+    } elseif (!empty($cached['posters']) && is_array($cached['posters'])) {
+        $cached['pool'] = $cached['posters'];
+        $poolPayload = $cached;
+    }
 }
 
 $imageBase = rtrim((string) wyw_env('TMDB_IMAGE_BASE_URL', 'https://image.tmdb.org/t/p'), '/');
@@ -153,63 +178,146 @@ if ($mediaType === 'movie') {
     $discoverBase['region'] = $region;
 }
 
-for ($page = 1; $page <= $pages; $page++) {
-    $discoverBase['page'] = $page;
-    $response = tmdb_get($path, $discoverBase);
+if ($poolPayload === null) {
+    for ($page = 1; $page <= $pages; $page++) {
+        $discoverBase['page'] = $page;
+        $response = tmdb_get($path, $discoverBase);
 
-    if (!is_array($response)) {
-        continue;
+        if (!is_array($response)) {
+            continue;
+        }
+
+        foreach (($response['results'] ?? []) as $entry) {
+            if (!is_array($entry)) {
+                continue;
+            }
+            $tmdbId = isset($entry['id']) ? (int) $entry['id'] : 0;
+            $posterPath = $entry['poster_path'] ?? null;
+            if ($tmdbId <= 0 || $posterPath === null) {
+                continue;
+            }
+            $key = $mediaType . ':' . $tmdbId;
+            if (isset($pool[$key])) {
+                continue;
+            }
+            $title = (string) ($entry['title'] ?? $entry['name'] ?? '');
+            $pool[$key] = [
+                'tmdb_id' => $tmdbId,
+                'media_type' => $mediaType,
+                'title' => $title,
+                'poster_path' => $posterPath,
+                'poster_url' => sprintf('%s/%s%s', $imageBase, $posterSize, $posterPath),
+            ];
+        }
     }
 
-    foreach (($response['results'] ?? []) as $entry) {
-        if (!is_array($entry)) {
-            continue;
-        }
-        $tmdbId = isset($entry['id']) ? (int) $entry['id'] : 0;
-        $posterPath = $entry['poster_path'] ?? null;
-        if ($tmdbId <= 0 || $posterPath === null) {
-            continue;
-        }
-        $key = $mediaType . ':' . $tmdbId;
-        if (isset($pool[$key])) {
-            continue;
-        }
-        $title = (string) ($entry['title'] ?? $entry['name'] ?? '');
-        $pool[$key] = [
-            'tmdb_id' => $tmdbId,
-            'media_type' => $mediaType,
-            'title' => $title,
-            'poster_path' => $posterPath,
-            'poster_url' => sprintf('%s/%s%s', $imageBase, $posterSize, $posterPath),
-        ];
+    if (empty($pool)) {
+        http_response_code(204);
+        exit;
     }
+
+    $items = array_values($pool);
+    if (!empty($items)) {
+        shuffle($items);
+    }
+
+    $poolPayload = [
+        'status' => 'ok',
+        'media_type' => $mediaType,
+        'language' => $language,
+        'region' => $region,
+        'limit' => $limit,
+        'source' => $path,
+        'generated_at' => date(DATE_ATOM),
+        'ttl' => $poolTtl,
+        'cache_expires_at' => date(DATE_ATOM, time() + $poolTtl),
+        'providers' => $providerIds,
+        'pool' => $items,
+    ];
+
+    cache_set($cacheKey, $poolPayload);
 }
 
-if (empty($pool)) {
+if ($poolPayload === null || empty($poolPayload['pool']) || !is_array($poolPayload['pool'])) {
     http_response_code(204);
     exit;
 }
 
-$items = array_values($pool);
-shuffle($items);
-if (count($items) > $limit) {
-    $items = array_slice($items, 0, $limit);
+$allPosters = $poolPayload['pool'];
+$fresh = [];
+$stale = [];
+foreach ($allPosters as $entry) {
+    if (!is_array($entry)) {
+        continue;
+    }
+    $tmdbId = isset($entry['tmdb_id']) ? (int) $entry['tmdb_id'] : 0;
+    if ($tmdbId <= 0) {
+        continue;
+    }
+    if (!isset($posterHistorySet[$tmdbId])) {
+        $fresh[] = $entry;
+    } else {
+        $stale[] = $entry;
+    }
 }
 
-$payload = [
+if (!empty($fresh)) {
+    shuffle($fresh);
+}
+if (!empty($stale)) {
+    shuffle($stale);
+}
+
+$ordered = array_merge($fresh, $stale);
+if (empty($ordered)) {
+    http_response_code(204);
+    exit;
+}
+
+$responsePosters = array_slice($ordered, 0, min($limit, count($ordered)));
+if (empty($responsePosters)) {
+    http_response_code(204);
+    exit;
+}
+
+foreach ($responsePosters as $posterEntry) {
+    $posterId = isset($posterEntry['tmdb_id']) ? (int) $posterEntry['tmdb_id'] : 0;
+    if ($posterId <= 0) {
+        continue;
+    }
+    if (isset($posterHistorySet[$posterId])) {
+        $filteredQueue = [];
+        foreach ($posterHistoryQueue as $queuedId) {
+            if ($queuedId !== $posterId) {
+                $filteredQueue[] = $queuedId;
+            }
+        }
+        $posterHistoryQueue = $filteredQueue;
+    }
+    $posterHistoryQueue[] = $posterId;
+    $posterHistorySet[$posterId] = true;
+    while (count($posterHistoryQueue) > $posterHistoryLimit) {
+        $removed = array_shift($posterHistoryQueue);
+        if ($removed === null) {
+            break;
+        }
+        unset($posterHistorySet[$removed]);
+    }
+}
+$_SESSION[$posterHistoryKey][$userId][$mediaType] = $posterHistoryQueue;
+
+$response = [
     'status' => 'ok',
-    'media_type' => $mediaType,
-    'language' => $language,
-    'region' => $region,
+    'media_type' => $poolPayload['media_type'] ?? $mediaType,
+    'language' => $poolPayload['language'] ?? $language,
+    'region' => $poolPayload['region'] ?? $region,
     'limit' => $limit,
-    'source' => $path,
+    'source' => $poolPayload['source'] ?? $path,
     'generated_at' => date(DATE_ATOM),
-    'ttl' => $poolTtl,
-    'cache_expires_at' => date(DATE_ATOM, time() + $poolTtl),
-    'providers' => $providerIds,
-    'posters' => $items,
+    'ttl' => $poolPayload['ttl'] ?? $poolTtl,
+    'cache_expires_at' => $poolPayload['cache_expires_at'] ?? date(DATE_ATOM, time() + $poolTtl),
+    'providers' => $poolPayload['providers'] ?? $providerIds,
+    'posters' => $responsePosters,
 ];
 
-cache_set($cacheKey, $payload);
-
-echo json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+echo json_encode($response, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);

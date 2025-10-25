@@ -65,6 +65,7 @@ $clientConfig = [
 ];
 
 $assetBasePath = $appBasePath === '/' ? '' : rtrim($appBasePath, '/');
+$introRevealText = 'WYWATCH';
 ?>
 <!DOCTYPE html>
 <html lang="pt-br">
@@ -75,7 +76,53 @@ $assetBasePath = $appBasePath === '/' ? '' : rtrim($appBasePath, '/');
 <link rel="stylesheet" href="<?php echo htmlspecialchars($assetBasePath . '/css/surpreenda.css', ENT_QUOTES); ?>">
 </head>
 <body>
-  <canvas id="space"></canvas>
+  <div id="intro" aria-live="polite">
+    <h1
+      id="intro-text"
+      data-intro-text="<?php echo htmlspecialchars($introRevealText, ENT_QUOTES); ?>"
+    ></h1>
+  </div>
+  <div id="main-content" class="main-content">
+    <canvas id="space"></canvas>
+  <nav class="surprise-rail" aria-label="Atalhos surpresa">
+    <div class="rail-logo" aria-hidden="true">
+      <img
+        src="<?php echo htmlspecialchars($assetBasePath . '/imagens/Where-you-Watch Logo-neon.png', ENT_QUOTES); ?>"
+        alt="Where You Watch"
+        loading="lazy"
+      />
+    </div>
+    <a
+      class="rail-link"
+      href="<?php echo htmlspecialchars($assetBasePath . '/index.php', ENT_QUOTES); ?>"
+      aria-label="Página inicial"
+    >
+      <svg viewBox="0 0 24 24" role="presentation" focusable="false">
+        <path d="M4 11.3 12 4l8 7.3" />
+        <path d="M6.5 10.5v8.5h4.2v-4h2.6v4h4.2v-8.5" />
+      </svg>
+    </a>
+    <button
+      type="button"
+      class="rail-toggle"
+      id="mediaToggle"
+      data-media="movie"
+      aria-pressed="false"
+      title="Alternar entre filmes e séries"
+    >
+      <span class="rail-toggle-icon" aria-hidden="true">
+        <svg class="icon-movie" viewBox="0 0 24 24">
+          <path d="M4 7h16v10H4z" />
+          <path d="m4 7 2-3 3 3 2-3 3 3 2-3 3 3" />
+        </svg>
+        <svg class="icon-tv" viewBox="0 0 24 24">
+          <rect x="3.5" y="6.5" width="17" height="11" rx="2" />
+          <path d="M8 19h8" />
+        </svg>
+      </span>
+      <span class="sr-only">Modo atual: <span id="mediaToggleLabel">Filmes</span></span>
+    </button>
+  </nav>
   <div class="orb"></div>
   <div class="roulette-station" id="rouletteStation">
     <button class="btn" id="trigger">Surpreenda-me</button>
@@ -92,12 +139,17 @@ $assetBasePath = $appBasePath === '/' ? '' : rtrim($appBasePath, '/');
   </div>
 
   <div class="hud">
-    <div class="brand">WYWATCH <small>• O STREAMING DO IMPREVISÍVEL</small></div>
+    <div class="brand">
+      <span class="brand-slot" data-brand-slot aria-hidden="true">
+        <?php echo htmlspecialchars($introRevealText, ENT_QUOTES); ?>
+      </span>
+      <small>• O STREAMING DO IMPREVISÍVEL</small>
+    </div>
     <div></div>
     <div class="footer-hud">Protótipo imersivo — “Hyperjump Experience”</div>
   </div>
   <div id="statusMessage" class="status-message" role="status" aria-live="polite"></div>
-
+  </div>
 <script id="wtw-client-config" type="application/json">
 <?php echo json_encode($clientConfig, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>
 </script>
