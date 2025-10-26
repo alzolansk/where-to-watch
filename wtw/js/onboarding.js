@@ -51,6 +51,32 @@
     return String(label || '').trim().replace(/\s+/g, ' ');
   }
 
+  function collectFavoriteFilters() {
+    // genres: números inteiros > 0
+    const genres = Array.from(state.genres.values())
+      .map(v => Number(v))
+      .filter(v => Number.isFinite(v) && v > 0);
+
+    const keywordIds = [];
+    const keywordLabels = new Set();
+
+    state.keywords.forEach((item) => {
+      if (!item) return;
+      if (Number.isFinite(item.id) && item.id > 0) {
+        keywordIds.push(Number(item.id));
+      } else if (item.label) {
+        const label = normaliseLabel(item.label);
+        if (label) keywordLabels.add(label);
+      }
+    });
+
+    return {
+      genres: Array.from(new Set(genres)),
+      keywordIds: Array.from(new Set(keywordIds)),
+      keywordLabels: Array.from(keywordLabels.values()),
+    };
+  }
+
   function makeKeywordKey(id, label) {
     const normalised = normaliseLabel(label).toLowerCase();
     const keyId = Number.isFinite(id) && id > 0 ? String(id) : 'custom';
@@ -214,18 +240,16 @@
 
   function showStep(index) {
     state.stepIndex = Math.min(Math.max(index, 0), totalSteps - 1);
-    steps.forEach((step, i) => {
-      step.hidden = i !== state.stepIndex;
-    });
-    progressDots.forEach((dot, i) => {
-      dot.classList.toggle('is-active', i === state.stepIndex);
-    });
-    setError('');
-    updateNavigation();
-    if (!state.favoritesLoaded && steps[state.stepIndex] === modal.querySelector('[data-onboarding-step="favorites"]')) {
-      preloadFavorites();
+    steps.forEach((step, i) => { step.hidden = i !== state.stepIndex; });
+    progressDots.forEach((dot, i) => { dot.classList.toggle('is-active', i === state.stepIndex); });
+    setError(''); updateNavigation();
+
+    if (!state.favoritesLoaded && state.stepIndex === favoritesStepIndex) {
+      preloadFavorites(true); // força primeira busca com filtros atuais
     }
   }
+
+
 
   function goNext() {
     if (state.stepIndex < totalSteps - 1) {
@@ -267,6 +291,7 @@
       state.genres.add(id);
       button.classList.add('is-selected');
     }
+    handlePreferenceChange();
   }
 
   function toggleKeyword(button) {
@@ -287,6 +312,7 @@
       state.keywords.set(key, { id: id && id > 0 ? id : null, label });
       button.classList.add('is-selected');
     }
+    handlePreferenceChange();
   }
 
   function toggleProvider(button) {
@@ -408,20 +434,28 @@
   }
 
   function buildTitlesUrl(query) {
-    const endpoint = config.titlesEndpoint || (config.apiUrl ? `${config.apiUrl}${config.apiUrl.includes('?') ? '&' : '?'}resource=titles` : null);
-    if (!endpoint) {
-      return null;
-    }
+    const endpoint = config.titlesEndpoint || (
+      config.apiUrl ? `${config.apiUrl}${config.apiUrl.includes('?') ? '&' : '?'}resource=titles` : null
+    );
+    if (!endpoint) return null;
+
     try {
       const url = new URL(endpoint, window.location.href);
-      if (query) {
-        url.searchParams.set('q', query);
-      } else {
-        url.searchParams.delete('q');
-      }
+      if (query) url.searchParams.set('q', query); else url.searchParams.delete('q');
+
+      // ➜ aplica filtros coletados
+      const filters = collectFavoriteFilters();
+      ['genres', 'keyword_ids', 'keyword_labels'].forEach((k) => {
+        url.searchParams.delete(k);
+        url.searchParams.delete(`${k}[]`);
+      });
+      filters.genres.forEach(id => url.searchParams.append('genres[]', String(id)));
+      filters.keywordIds.forEach(id => url.searchParams.append('keyword_ids[]', String(id)));
+      filters.keywordLabels.forEach(label => url.searchParams.append('keyword_labels[]', label));
+
       return url.toString();
-    } catch (error) {
-      console.error('URL inválida para sugestões de títulos', error);
+    } catch (e) {
+      console.error('URL inválida para sugestões de títulos', e);
       return null;
     }
   }
@@ -702,7 +736,6 @@
       state.favoritesLoaded = false;
       state.favoritesQuery = '';
       showStep(0);
-      window.setTimeout(preloadFavorites, 200);
     });
   }
 
