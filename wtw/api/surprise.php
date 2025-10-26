@@ -39,6 +39,8 @@ if (!defined('TMDB_KEY') || TMDB_KEY === '') {
     exit;
 }
 
+wtw_ensure_recommendations_cache_schema($pdo);
+
 const CACHE_TTL_SECONDS = 600;
 const SHORTLIST_SIZE = 15;
 const HISTORY_LIMIT = 50;
@@ -184,6 +186,174 @@ $response = buildResponse($userId, $mediaType, $responseItems, [
 echo json_encode($response, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
 /**
+ * Ensure the recommendations_cache table exists with the columns that the Surprise logic expects.
+ */
+function wtw_ensure_recommendations_cache_schema(PDO $pdo): void
+{
+    static $ensured = false;
+
+    if ($ensured) {
+        return;
+    }
+
+    $ensured = true;
+
+    try {
+        $tableExists = false;
+        $tableCheck = $pdo->query("SHOW TABLES LIKE 'recommendations_cache'");
+        if ($tableCheck !== false && $tableCheck->fetchColumn() !== false) {
+            $tableExists = true;
+        }
+
+        if (!$tableExists) {
+            $createSql = <<<SQL
+CREATE TABLE IF NOT EXISTS recommendations_cache (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    user_id INT UNSIGNED NOT NULL,
+    cache_key VARCHAR(120) NOT NULL,
+    seed VARCHAR(64) NOT NULL,
+    payload JSON NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    expires_at DATETIME NOT NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_recommendations_cache_user_key (user_id, cache_key),
+    KEY idx_recommendations_cache_expires (expires_at),
+    CONSTRAINT fk_recommendations_cache_user
+        FOREIGN KEY (user_id) REFERENCES tb_users(id_user)
+        ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+SQL;
+            try {
+                $pdo->exec($createSql);
+            } catch (Throwable $creationError) {
+                $fallbackSql = str_replace('payload JSON NOT NULL', 'payload LONGTEXT NOT NULL', $createSql);
+                $pdo->exec($fallbackSql);
+            }
+            return;
+        }
+
+        $columns = wtw_recommendations_cache_columns($pdo);
+
+        if (!isset($columns['user_id']) && isset($columns['id_user'])) {
+            wtw_recommendations_cache_silent_exec($pdo, 'ALTER TABLE recommendations_cache CHANGE id_user user_id INT UNSIGNED NOT NULL');
+            $columns = wtw_recommendations_cache_columns($pdo);
+        }
+        if (!isset($columns['cache_key']) && isset($columns['algo'])) {
+            wtw_recommendations_cache_silent_exec($pdo, 'ALTER TABLE recommendations_cache CHANGE algo cache_key VARCHAR(120) NOT NULL');
+            $columns = wtw_recommendations_cache_columns($pdo);
+        }
+        if (!isset($columns['payload']) && isset($columns['items_json'])) {
+            wtw_recommendations_cache_silent_exec($pdo, 'ALTER TABLE recommendations_cache CHANGE items_json payload LONGTEXT NOT NULL');
+            $columns = wtw_recommendations_cache_columns($pdo);
+        }
+        if (!isset($columns['payload'])) {
+            wtw_recommendations_cache_silent_exec($pdo, "ALTER TABLE recommendations_cache ADD COLUMN payload LONGTEXT NOT NULL AFTER seed");
+            $columns = wtw_recommendations_cache_columns($pdo);
+        }
+        if (!isset($columns['seed'])) {
+            wtw_recommendations_cache_silent_exec($pdo, "ALTER TABLE recommendations_cache ADD COLUMN seed VARCHAR(64) NOT NULL DEFAULT '' AFTER cache_key");
+            $columns = wtw_recommendations_cache_columns($pdo);
+        } else {
+            wtw_recommendations_cache_silent_exec($pdo, "ALTER TABLE recommendations_cache MODIFY seed VARCHAR(64) NOT NULL DEFAULT ''");
+        }
+        if (!isset($columns['created_at'])) {
+            wtw_recommendations_cache_silent_exec($pdo, 'ALTER TABLE recommendations_cache ADD COLUMN created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP AFTER payload');
+            $columns = wtw_recommendations_cache_columns($pdo);
+        }
+        if (!isset($columns['expires_at'])) {
+            wtw_recommendations_cache_silent_exec($pdo, 'ALTER TABLE recommendations_cache ADD COLUMN expires_at DATETIME NOT NULL AFTER created_at');
+            $columns = wtw_recommendations_cache_columns($pdo);
+        }
+        if (!isset($columns['id'])) {
+            wtw_recommendations_cache_silent_exec($pdo, 'ALTER TABLE recommendations_cache DROP PRIMARY KEY');
+            wtw_recommendations_cache_silent_exec($pdo, 'ALTER TABLE recommendations_cache ADD COLUMN id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY FIRST');
+            $columns = wtw_recommendations_cache_columns($pdo);
+        }
+
+        // Attempt to upgrade payload column to JSON if the engine supports it.
+        if (isset($columns['payload']) && stripos((string) ($columns['payload']['Type'] ?? ''), 'json') === false) {
+            wtw_recommendations_cache_silent_exec($pdo, 'ALTER TABLE recommendations_cache MODIFY payload JSON NOT NULL');
+        }
+
+        if (!wtw_recommendations_cache_index_exists($pdo, 'uq_recommendations_cache_user_key')) {
+            wtw_recommendations_cache_silent_exec($pdo, 'ALTER TABLE recommendations_cache ADD UNIQUE KEY uq_recommendations_cache_user_key (user_id, cache_key)');
+        }
+        if (!wtw_recommendations_cache_index_exists($pdo, 'idx_recommendations_cache_expires')) {
+            wtw_recommendations_cache_silent_exec($pdo, 'ALTER TABLE recommendations_cache ADD KEY idx_recommendations_cache_expires (expires_at)');
+        }
+
+        $hasForeignKey = false;
+        $fkStmt = $pdo->prepare("
+            SELECT CONSTRAINT_NAME
+            FROM information_schema.TABLE_CONSTRAINTS
+            WHERE TABLE_SCHEMA = DATABASE()
+              AND TABLE_NAME = 'recommendations_cache'
+              AND CONSTRAINT_TYPE = 'FOREIGN KEY'
+              AND CONSTRAINT_NAME = 'fk_recommendations_cache_user'
+        ");
+        if ($fkStmt !== false && $fkStmt->execute()) {
+            $hasForeignKey = $fkStmt->fetch(PDO::FETCH_ASSOC) !== false;
+        }
+        if (!$hasForeignKey) {
+            wtw_recommendations_cache_silent_exec(
+                $pdo,
+                'ALTER TABLE recommendations_cache '
+                . 'ADD CONSTRAINT fk_recommendations_cache_user '
+                . 'FOREIGN KEY (user_id) REFERENCES tb_users(id_user) '
+                . 'ON DELETE CASCADE ON UPDATE CASCADE'
+            );
+        }
+    } catch (Throwable $exception) {
+        // Falha silenciosa: se n�o conseguirmos tocar na tabela, o cache apenas ser� ignorado.
+    }
+}
+
+/**
+ * @return array<string,array<string,mixed>>
+ */
+function wtw_recommendations_cache_columns(PDO $pdo): array
+{
+    $columns = [];
+    try {
+        $describe = $pdo->query('SHOW COLUMNS FROM recommendations_cache');
+        if ($describe !== false) {
+            foreach ($describe as $column) {
+                $field = (string) ($column['Field'] ?? '');
+                if ($field !== '') {
+                    $columns[$field] = $column;
+                }
+            }
+        }
+    } catch (Throwable $exception) {
+    }
+
+    return $columns;
+}
+
+function wtw_recommendations_cache_index_exists(PDO $pdo, string $name): bool
+{
+    try {
+        $stmt = $pdo->prepare('SHOW INDEX FROM recommendations_cache WHERE Key_name = :name');
+        if ($stmt === false) {
+            return false;
+        }
+        $stmt->execute([':name' => $name]);
+        return $stmt->fetch(PDO::FETCH_ASSOC) !== false;
+    } catch (Throwable $exception) {
+        return false;
+    }
+}
+
+function wtw_recommendations_cache_silent_exec(PDO $pdo, string $sql): void
+{
+    try {
+        $pdo->exec($sql);
+    } catch (Throwable $exception) {
+        // ignorado
+    }
+}
+
+/**
  * @return array{genres:array<int,float>,comfort_genres:array<int,float>,people:array<int,float>,keywords:array<int,float>,keyword_labels:array<string,float>,providers:array<int>}
  */
 function fetchUserPreferences(PDO $pdo, int $userId): array
@@ -301,7 +471,7 @@ function storeCachedShortlist(
 
     try {
         $stmt = $pdo->prepare(
-            'INSERT INTO recommendations_cache (user_id, cache_key, seed, payload, created_at, expires_at) '
+            'INSERT INTO recommendations_cache (id_user, cache_key, seed, payload, created_at, expires_at) '
             . 'VALUES (:u, :k, :s, :p, NOW(), :e) '
             . 'ON DUPLICATE KEY UPDATE seed = VALUES(seed), payload = VALUES(payload), expires_at = VALUES(expires_at), created_at = NOW()'
         );
