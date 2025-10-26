@@ -1047,6 +1047,58 @@ function normalise_label(string $value): string
     return $trimmed;
 }
 
+function parse_query_int_list($value): array
+{
+    if (is_array($value)) {
+        $items = $value;
+    } elseif (is_string($value) && $value !== '') {
+        $items = preg_split('/\s*,\s*/u', $value) ?: [];
+    } else {
+        return [];
+    }
+
+    $results = [];
+    foreach ($items as $item) {
+        if (is_array($item)) {
+            $candidate = $item['id'] ?? $item['value'] ?? null;
+        } else {
+            $candidate = $item;
+        }
+        $intVal = (int) $candidate;
+        if ($intVal > 0) {
+            $results[$intVal] = true;
+        }
+    }
+
+    return array_values(array_map('intval', array_keys($results)));
+}
+
+function parse_query_label_list($value): array
+{
+    $items = [];
+    if (is_array($value)) {
+        $items = $value;
+    } elseif (is_string($value) && $value !== '') {
+        $items = preg_split('/\s*,\s*/u', $value) ?: [];
+    } else {
+        return [];
+    }
+
+    $results = [];
+    foreach ($items as $item) {
+        if (is_array($item)) {
+            $label = normalise_label((string)($item['label'] ?? $item['name'] ?? $item['value'] ?? ''));
+        } else {
+            $label = normalise_label((string)$item);
+        }
+        if ($label !== '') {
+            $results[$label] = true;
+        }
+    }
+
+    return array_values(array_keys($results));
+}
+
 function mb_lower(string $value): string
 {
     return function_exists('mb_strtolower') ? mb_strtolower($value, 'UTF-8') : strtolower($value);
@@ -1084,6 +1136,198 @@ function tmdb_image_url(?string $path): ?string
         return $path;
     }
     return 'https://image.tmdb.org/t/p/w300' . ($path[0] === '/' ? $path : '/' . $path);
+}
+
+function resolve_keyword_labels(array $labels, int $limit = 5): array
+{
+    if (empty($labels)) {
+        return [];
+    }
+
+    $unique = [];
+    foreach ($labels as $label) {
+        $normalised = normalise_label((string) $label);
+        if ($normalised !== '') {
+            $unique[$normalised] = true;
+        }
+    }
+
+    if (empty($unique)) {
+        return [];
+    }
+
+    $selected = array_slice(array_keys($unique), 0, max(1, $limit));
+    $resolved = [];
+
+    foreach ($selected as $label) {
+        try {
+            $response = tmdb_get('/search/keyword', [
+                'query' => $label,
+                'page' => 1,
+            ]);
+        } catch (Throwable $e) {
+            error_log('onboarding_keyword_lookup_error: ' . $e->getMessage());
+            continue;
+        }
+
+        foreach (($response['results'] ?? []) as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $id = (int)($row['id'] ?? 0);
+            if ($id <= 0) {
+                continue;
+            }
+            $name = normalise_label((string)($row['name'] ?? ''));
+            if ($name === '') {
+                continue;
+            }
+            $resolved[$id] = true;
+            if (mb_lower($name) === mb_lower($label)) {
+                break;
+            }
+        }
+    }
+
+    return array_values(array_map('intval', array_keys($resolved)));
+}
+
+function load_discover_suggestions(array $genres, array $keywordIds): array
+{
+    $endpoints = [
+        ['path' => '/discover/movie', 'media_type' => 'movie'],
+        ['path' => '/discover/tv', 'media_type' => 'tv'],
+    ];
+
+    $results = [];
+    foreach ($endpoints as $endpoint) {
+        $params = [
+            'language' => 'pt-BR',
+            'page' => 1,
+            'sort_by' => 'popularity.desc',
+            'include_adult' => 'false',
+        ];
+        if (!empty($genres)) {
+            $params['with_genres'] = implode(',', array_map('intval', $genres));
+        }
+        if (!empty($keywordIds)) {
+            $params['with_keywords'] = implode(',', array_map('intval', $keywordIds));
+        }
+        if ($endpoint['media_type'] === 'movie') {
+            $params['vote_count.gte'] = 50;
+        } else {
+            $params['include_null_first_air_dates'] = 'false';
+            $params['vote_count.gte'] = 30;
+        }
+
+        $response = tmdb_get($endpoint['path'], $params);
+        $items = is_array($response['results'] ?? null) ? array_values($response['results']) : [];
+        foreach ($items as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $row['media_type'] = $endpoint['media_type'];
+            $results[] = $row;
+        }
+    }
+
+    usort($results, static function (array $left, array $right): int {
+        $leftPopularity = isset($left['popularity']) ? (float) $left['popularity'] : 0.0;
+        $rightPopularity = isset($right['popularity']) ? (float) $right['popularity'] : 0.0;
+        if ($leftPopularity === $rightPopularity) {
+            $leftVotes = isset($left['vote_count']) ? (int) $left['vote_count'] : 0;
+            $rightVotes = isset($right['vote_count']) ? (int) $right['vote_count'] : 0;
+            if ($leftVotes === $rightVotes) {
+                return 0;
+            }
+            return $rightVotes <=> $leftVotes;
+        }
+        return $rightPopularity <=> $leftPopularity;
+    });
+
+    return $results;
+}
+
+function load_keyword_label_suggestions(array $labels, array $genres = []): array
+{
+    $labels = array_values(array_unique(array_map('normalise_label', $labels)));
+    $labels = array_filter($labels, static fn(string $label): bool => $label !== '');
+    if (empty($labels)) {
+        return [];
+    }
+
+    $labels = array_slice($labels, 0, 5);
+    $candidates = [];
+
+    foreach ($labels as $labelIndex => $label) {
+        $response = tmdb_get('/search/multi', [
+            'query' => $label,
+            'include_adult' => 'false',
+            'language' => 'pt-BR',
+            'page' => 1,
+        ]);
+
+        $items = is_array($response['results'] ?? null) ? array_values($response['results']) : [];
+        foreach ($items as $position => $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $mediaType = strtolower((string)($row['media_type'] ?? ''));
+            if ($mediaType !== 'movie' && $mediaType !== 'tv') {
+                continue;
+            }
+            if (!empty($genres) && isset($row['genre_ids']) && is_array($row['genre_ids'])) {
+                $rowGenres = array_map('intval', $row['genre_ids']);
+                if (!array_intersect($genres, $rowGenres)) {
+                    continue;
+                }
+            }
+
+            $id = (int)($row['id'] ?? 0);
+            if ($id <= 0) {
+                continue;
+            }
+
+            $key = $mediaType . ':' . $id;
+            $score = 100 - ($labelIndex * 12) - ($position * 3);
+            if (isset($row['vote_average'])) {
+                $score += (float) $row['vote_average'] * 2.0;
+            }
+            if (isset($row['popularity'])) {
+                $score += (float) $row['popularity'] * 0.1;
+            }
+
+            $existing = $candidates[$key] ?? null;
+            if ($existing === null || $score > ($existing['score'] ?? -INF)) {
+                $row['media_type'] = $mediaType;
+                $row['_score'] = $score;
+                $candidates[$key] = $row;
+            }
+        }
+    }
+
+    if (empty($candidates)) {
+        return [];
+    }
+
+    $results = array_values($candidates);
+    usort($results, static function (array $left, array $right): int {
+        $leftScore = isset($left['_score']) ? (float) $left['_score'] : 0.0;
+        $rightScore = isset($right['_score']) ? (float) $right['_score'] : 0.0;
+        if ($leftScore === $rightScore) {
+            $leftPopularity = isset($left['popularity']) ? (float) $left['popularity'] : 0.0;
+            $rightPopularity = isset($right['popularity']) ? (float) $right['popularity'] : 0.0;
+            return $rightPopularity <=> $leftPopularity;
+        }
+        return $rightScore <=> $leftScore;
+    });
+
+    foreach ($results as &$row) {
+        unset($row['_score']);
+    }
+    unset($row);
+
+    return $results;
 }
 
 function onboardingTitleSuggestions(array $queryParams): array
@@ -1134,6 +1378,7 @@ function onboardingTitleSuggestions(array $queryParams): array
         return $combined;
     };
 
+    $items = [];
     if ($query !== '') {
         $response = tmdb_get('/search/multi', [
             'query' => $query,
@@ -1141,7 +1386,6 @@ function onboardingTitleSuggestions(array $queryParams): array
             'page' => 1,
             'language' => 'pt-BR',
         ]);
-        $items = [];
         foreach (($response['results'] ?? []) as $row) {
             $mediaType = strtolower((string)($row['media_type'] ?? ''));
             if ($mediaType === 'movie' || $mediaType === 'tv') {

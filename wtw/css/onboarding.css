@@ -193,7 +193,7 @@ body.onboarding-open {
 
 .onboarding-grid.is-loading {
     position: relative;
-    opacity: 0.6;
+    opacity: 0.75;
     pointer-events: none;
 }
 
@@ -202,7 +202,124 @@ body.onboarding-open {
     position: absolute;
     inset: 0;
     border-radius: 24px;
-    background: rgba(7, 9, 28, 0.35);
+    background: linear-gradient(90deg, rgba(7, 9, 28, 0.35) 0%, rgba(255, 255, 255, 0.12) 50%, rgba(7, 9, 28, 0.35) 100%);
+    background-size: 200% 100%;
+    animation: onboardingShimmer 1.6s ease-in-out infinite;
+}
+.onboarding-section--preview {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+.onboarding-preview__status {
+    font-size: 0.95rem;
+    color: rgba(255, 255, 255, 0.8);
+    line-height: 1.5;
+}
+.onboarding-preview__carousel {
+    overflow: hidden;
+}
+.onboarding-preview__list {
+    display: flex;
+    gap: 16px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: thin;
+}
+.onboarding-preview__list::-webkit-scrollbar {
+    height: 6px;
+}
+.onboarding-preview__list::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 999px;
+}
+.onboarding-preview__list::-webkit-scrollbar-track {
+    background: transparent;
+}
+.onboarding-preview__card {
+    flex: 0 0 160px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    scroll-snap-align: start;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 20px;
+    padding: 12px;
+    box-shadow: 0 10px 30px -20px rgba(0, 0, 0, 0.6);
+    transition: transform 180ms ease, box-shadow 180ms ease;
+}
+.onboarding-preview__card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 16px 28px -16px rgba(0, 0, 0, 0.65);
+}
+.onboarding-preview__poster {
+    width: 100%;
+    aspect-ratio: 2 / 3;
+    border-radius: 16px;
+    overflow: hidden;
+    background: rgba(7, 9, 28, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.onboarding-preview__poster img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.onboarding-preview__poster span {
+    color: rgba(255, 255, 255, 0.35);
+    font-weight: 700;
+    font-size: 2.4rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+.onboarding-preview__info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.onboarding-preview__title {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #ffffff;
+}
+.onboarding-preview__meta {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.65);
+}
+.onboarding-preview__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+}
+.onboarding-preview__list.is-empty {
+    display: grid;
+    place-items: center;
+    min-height: 120px;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.95rem;
+}
+.onboarding-preview__card--skeleton,
+.onboarding-preview__card--skeleton .onboarding-preview__poster,
+.onboarding-preview__card--skeleton .onboarding-preview__info span {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(90deg, rgba(7, 9, 28, 0.55) 0%, rgba(255, 255, 255, 0.15) 50%, rgba(7, 9, 28, 0.55) 100%);
+    background-size: 200% 100%;
+    animation: onboardingShimmer 1.6s ease-in-out infinite;
+}
+.onboarding-preview__card--skeleton .onboarding-preview__info {
+    gap: 6px;
+}
+.onboarding-preview__card--skeleton .onboarding-preview__info span {
+    height: 10px;
+    border-radius: 999px;
+}
+.onboarding-preview__card--skeleton .onboarding-preview__info span:last-child {
+    width: 70%;
 }
 
 .onboarding-card {
@@ -385,6 +502,18 @@ body.onboarding-open {
     }
 }
 
+@keyframes onboardingShimmer {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 120% 50%;
+    }
+    100% {
+        background-position: 200% 50%;
+    }
+}
+
 @media (max-width: 720px) {
     .onboarding-modal {
         border-radius: 20px;
@@ -406,6 +535,20 @@ body.onboarding-open {
         order: 3;
         width: 100%;
         justify-content: center;
+    }
+
+    .onboarding-preview__list {
+        gap: 12px;
+    }
+    .onboarding-preview__card {
+        flex: 0 0 140px;
+    }
+    .onboarding-preview__actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .onboarding-preview__actions .onboarding-button {
+        width: 100%;
     }
 
     .onboarding-progress {

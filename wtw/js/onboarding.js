@@ -7,6 +7,8 @@
   }
 
   const steps = Array.from(modal.querySelectorAll('[data-onboarding-step]'));
+  const favoritesStepElement = modal.querySelector('[data-onboarding-step="favorites"]');
+  const favoritesStepIndex = favoritesStepElement ? steps.indexOf(favoritesStepElement) : -1;
   const progressDots = Array.from(modal.querySelectorAll('[data-onboarding-progress-step]'));
   const backButton = modal.querySelector('[data-onboarding-action="back"]');
   const nextButton = modal.querySelector('[data-onboarding-action="next"]');
@@ -240,6 +242,17 @@
     }
   }
 
+  function handlePreferenceChange() {
+    if (favoritesStepIndex === -1) {
+      return;
+    }
+    if (state.stepIndex === favoritesStepIndex) {
+      preloadFavorites(true);
+    } else {
+      state.favoritesLoaded = false;
+    }
+  }
+
   function toggleGenre(button) {
     if (!button) return;
     if (state.stepIndex === 0) {
@@ -459,8 +472,8 @@
     }
   }
 
-  function preloadFavorites() {
-    if (state.favoritesLoaded) {
+  function preloadFavorites(force = false) {
+    if (state.favoritesLoaded && !force) {
       return;
     }
     state.favoritesLoaded = true;
@@ -686,6 +699,8 @@
       body.classList.add('onboarding-open');
       backdrop.setAttribute('aria-hidden', 'false');
       applyInitialSelections(config.existing);
+      state.favoritesLoaded = false;
+      state.favoritesQuery = '';
       showStep(0);
       window.setTimeout(preloadFavorites, 200);
     });

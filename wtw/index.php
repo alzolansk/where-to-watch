@@ -129,7 +129,7 @@
                         <h4 class="onboarding-section__title">Gêneros favoritos</h4>
                         <div class="onboarding-chip-grid" data-onboarding-genres>
                             <?php foreach ($genreOptions as $genre): ?>
-                                <button type="button" class="onboarding-chip" data-genre-id="<?php echo (int) $genre['id']; ?>">
+                                <button type="button" class="onboarding-chip" data-genre-id="<?php echo (int) $genre['id']; ?>" data-genre-label="<?php echo htmlspecialchars($genre['label'], ENT_QUOTES, 'UTF-8'); ?>">
                                     <?php echo htmlspecialchars($genre['label'], ENT_QUOTES, 'UTF-8'); ?>
                                 </button>
                             <?php endforeach; ?>
@@ -149,6 +149,23 @@
                             <input type="text" id="onboardingKeywordInput" class="onboarding-input" placeholder="Digite outra palavra-chave" data-onboarding-keyword-input>
                             <button type="submit" class="onboarding-button onboarding-button--inline onboarding-button--primary" data-onboarding-keyword-add>Adicionar</button>
                         </form>
+                    </div>
+                </section>
+
+                <section class="onboarding-step" data-onboarding-step="preview" aria-label="Veja algumas recomendações iniciais" hidden>
+                    <header class="onboarding-step__header">
+                        <h3>Gerando recomendações iniciais…</h3>
+                        <p>Com base nas suas escolhas, encontramos alguns títulos que podem ser o seu próximo vício.</p>
+                    </header>
+                    <div class="onboarding-section onboarding-section--preview">
+                        <p class="onboarding-preview__status" data-onboarding-preview-status aria-live="polite" role="status">Carregando recomendações personalizadas…</p>
+                        <div class="onboarding-preview__carousel" data-onboarding-preview-carousel>
+                            <div class="onboarding-preview__list" data-onboarding-preview-list></div>
+                        </div>
+                        <div class="onboarding-preview__actions">
+                            <button type="button" class="onboarding-button onboarding-button--ghost" data-onboarding-preview-refresh>Gerar novas recomendações</button>
+                            <p class="onboarding-helper-text">Curtiu o que viu? Clique em continuar para avançar ou gere outra combinação.</p>
+                        </div>
                     </div>
                 </section>
 
@@ -180,10 +197,10 @@
                             <input type="search" id="onboardingFavoriteSearch" class="onboarding-input" placeholder="Busque por filmes ou séries que você ama" data-onboarding-favorites-search>
                             <button type="button" class="onboarding-button onboarding-button--inline onboarding-button--primary" data-onboarding-favorites-refresh>Buscar</button>
                         </div>
-                        <p class="onboarding-helper-text">Mostramos opções populares automaticamente. Busque para encontrar qualquer título disponível na API.</p>
+                        <p class="onboarding-helper-text">Mostramos opções personalizadas automaticamente. Busque para encontrar qualquer título disponível na API.</p>
                         <div class="onboarding-grid onboarding-grid--favorites" data-onboarding-favorites></div>
                         <p class="onboarding-helper-text" data-onboarding-favorites-empty hidden>Nenhum título encontrado. Tente outra busca.</p>
-                        <p class="onboarding-helper-text" data-onboarding-favorites-loading hidden>Carregando opções…</p>
+                        <p class="onboarding-helper-text" data-onboarding-favorites-loading hidden aria-live="polite" role="status">Carregando recomendações personalizadas…</p>
                     </div>
                 </section>
             </div>
@@ -193,6 +210,7 @@
                 <div class="onboarding-progress" role="group" aria-label="Progresso">
                     <span class="onboarding-progress__dot is-active" data-onboarding-progress-step="0"></span>
                     <span class="onboarding-progress__dot" data-onboarding-progress-step="1"></span>
+                    <span class="onboarding-progress__dot" data-onboarding-progress-step="3"></span>
                     <span class="onboarding-progress__dot" data-onboarding-progress-step="2"></span>
                 </div>
                 <button type="button" class="onboarding-button onboarding-button--ghost" data-onboarding-action="skip">Pular por enquanto</button>
