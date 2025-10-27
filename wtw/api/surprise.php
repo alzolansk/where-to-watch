@@ -1131,11 +1131,15 @@ function scoreCandidates(
         $affinity = max(0.0, min(1.0, $genreAffinity + $peopleMatches + $keywordMatches));
 
         $voteAvg = (float) ($candidate['vote_average'] ?? 0.0);
-        $popularity = log((float) ($candidate['popularity'] ?? 0.0) + 1.0);
+        $rawPopularity = (float) ($candidate['popularity'] ?? 0.0);
+        $popularityScore = log($rawPopularity + 1.0);
         $voteNorm = ($voteAvg - $voteMin) / $voteRange;
-        $popNorm = ($popularity - $popMin) / $popRange;
+        $popNorm = ($popularityScore - $popMin) / $popRange;
         $quality = max(0.0, min(1.0, 0.7 * $voteNorm + 0.3 * $popNorm));
         $votes = (int)($candidate['vote_count'] ?? 0);
+
+        $fatigue = computeFatigue($candidateGenres, $candidatePeople, $candidate['collection'] ?? null, $recentHistory);
+        $bucketBoost = computeBucketBoost($candidate['buckets'] ?? []);
 
         $mainstreamPenalty = 0.0;
         if ($popNorm >= 0.90 && $votes >= 5000) {         // top 10% do seu pool + muitos votos
@@ -1181,18 +1185,14 @@ function scoreCandidates(
             $availabilityFit = 1.0;
         }
 
-        $fatigue = computeFatigue($candidateGenres, $candidatePeople, $candidate['collection'] ?? null, $recentHistory);
-        $bucketBoost = computeBucketBoost($candidate['buckets'] ?? []);
-        
         // penaliza títulos muito populares
-        $popularity = (float) ($candidate['popularity'] ?? 0);
         $popularityPenalty = 0.0;
 
-        if ($popularity > 3000) {         // superblockbusters
+        if ($rawPopularity > 3000) {         // superblockbusters
             $popularityPenalty = 0.25;
-        } elseif ($popularity > 1000) {   // hits globais
+        } elseif ($rawPopularity > 1000) {   // hits globais
             $popularityPenalty = 0.15;
-        } elseif ($popularity > 500) {    // medianamente populares
+        } elseif ($rawPopularity > 500) {    // medianamente populares
             $popularityPenalty = 0.08;
         }
 
