@@ -5,12 +5,15 @@ session_start();
 
 header('Content-Type: application/json; charset=utf-8');
 
+require_once __DIR__ . '/../includes/env.php';
+wyw_load_env(__DIR__ . '/..');
+
 if (!isset($_SESSION['id'])) {
     http_response_code(401);
-    echo json_encode([
+    echo wtw_json_out([
         'status' => 'error',
         'error' => 'unauthorized',
-    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    ]);
     exit;
 }
 
@@ -21,27 +24,27 @@ try {
     $pdo = get_pdo();
 } catch (Throwable $exception) {
     http_response_code(503);
-    echo json_encode([
+    echo wtw_json_out([
         'status' => 'error',
         'error' => 'database_unavailable',
         'message' => 'Não foi possível conectar ao banco de dados.',
-    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    ]);
     exit;
 }
 
 if (!defined('TMDB_KEY') || TMDB_KEY === '') {
     http_response_code(503);
-    echo json_encode([
+    echo wtw_json_out([
         'status' => 'error',
         'error' => 'tmdb_unconfigured',
         'message' => 'A integração com o TMDB não está configurada.',
-    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    ]);
     exit;
 }
 
 wtw_ensure_recommendations_cache_schema($pdo);
 
-const CACHE_TTL_SECONDS = 300;
+const CACHE_TTL_DEFAULT = 300;
 const SHORTLIST_SIZE = 15;
 const HISTORY_LIMIT = 50;
 const FATIGUE_WINDOW = 5;
@@ -74,7 +77,16 @@ $region = strtoupper((string) ($_GET['region'] ?? 'BR'));
 $now = new DateTimeImmutable('now');
 
 $preferences = fetchUserPreferences($pdo, $userId);
-$providerIds = $preferences['providers'];
+$providerIds = $preferences['providers'] ?? [];
+if (!is_array($providerIds)) {
+    $providerIds = [];
+}
+$providerIds = array_values(array_filter(
+    array_map(static fn ($value) => (int) $value, $providerIds),
+    static fn ($value) => $value > 0
+));
+
+$cacheTtlSeconds = wtw_cache_ttl_for_media($mediaType);
 
 $seedString = buildCacheSeed($now, $providerIds);
 $cacheKey = sprintf('surprise_v1:%s:%s', $mediaType, hash('sha1', $seedString));
@@ -93,7 +105,7 @@ if ($cachedPayload !== null) {
             'candidate_count' => $cachedPayload['diagnostics']['candidate_count'] ?? null,
             'pool_size' => $cachedPayload['diagnostics']['pool_size'] ?? null,
         ]);
-        echo json_encode($response, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        echo wtw_json_out($response);
         exit;
     }
 }
@@ -123,17 +135,15 @@ if (count($candidatePool) < MIN_POOL_THRESHOLD) {
 }
 
 if (empty($candidatePool)) {
-    http_response_code(204);
-    echo json_encode([
-        'status' => 'empty',
-        'message' => 'Nenhum candidato encontrado para as preferências atuais.',
-    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-    exit;
+    wtw_respond_empty('Nenhum candidato encontrado para as preferências atuais.');
 }
 
 $enriched = enrichCandidates($candidatePool, $mediaType, $language);
 $availability = fetchAvailability($pdo, $mediaType, $region, $providerIds, array_keys($enriched));
 $providerNames = fetchProviderNames($pdo, $providerIds);
+
+$poolCount = count($candidatePool);
+$enrichedCount = count($enriched);
 
 $scored = scoreCandidates(
     $enriched,
@@ -145,31 +155,21 @@ $scored = scoreCandidates(
 );
 
 if (empty($scored)) {
-    http_response_code(204);
-    echo json_encode([
-        'status' => 'empty',
-        'message' => 'Nenhum título elegível para surpresa.',
-    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-    exit;
+    wtw_respond_empty('Nenhum título elegível para surpresa.');
 }
 
 $reranked = mmrRerank($scored, DIVERSITY_LAMBDA, SHORTLIST_RERANK_SIZE);
 $shortlist = array_slice($reranked, 0, SHORTLIST_SIZE);
 
-storeCachedShortlist($pdo, $userId, $cacheKey, $seedString, $shortlist, $now, [
-    'candidate_count' => count($candidatePool),
-    'pool_size' => count($enriched),
+storeCachedShortlist($pdo, $userId, $cacheKey, $seedString, $shortlist, $now, $cacheTtlSeconds, [
+    'candidate_count' => $poolCount,
+    'pool_size' => $enrichedCount,
 ]);
 
 $responseItems = pickFinalItems($shortlist, $seedString, $providerIds);
 
 if (empty($responseItems)) {
-    http_response_code(204);
-    echo json_encode([
-        'status' => 'empty',
-        'message' => 'Nenhum título disponível após filtros de diversidade.',
-    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-    exit;
+    wtw_respond_empty('Nenhum título disponível após filtros de diversidade.');
 }
 
 logImpressions($pdo, $userId, $mediaType, $responseItems);
@@ -179,11 +179,11 @@ $response = buildResponse($userId, $mediaType, $responseItems, [
     'from_cache' => false,
     'cache_key' => $cacheKey,
     'seed' => $seedString,
-    'candidate_count' => count($candidatePool),
-    'pool_size' => count($enriched),
+    'candidate_count' => $poolCount,
+    'pool_size' => $enrichedCount,
 ]);
 
-echo json_encode($response, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+echo wtw_json_out($response);
 
 /**
  * Ensure the recommendations_cache table exists with the columns that the Surprise logic expects.
@@ -200,9 +200,13 @@ function wtw_ensure_recommendations_cache_schema(PDO $pdo): void
 
     try {
         $tableExists = false;
-        $tableCheck = $pdo->query("SHOW TABLES LIKE 'recommendations_cache'");
-        if ($tableCheck !== false && $tableCheck->fetchColumn() !== false) {
-            $tableExists = true;
+        try {
+            $tableCheck = $pdo->query("SHOW TABLES LIKE 'recommendations_cache'");
+            if ($tableCheck !== false && $tableCheck->fetchColumn() !== false) {
+                $tableExists = true;
+            }
+        } catch (Throwable $schemaCheckError) {
+            error_log('Cache schema detection failed: ' . $schemaCheckError->getMessage());
         }
 
         if (!$tableExists) {
@@ -236,38 +240,41 @@ SQL;
 
         if (!isset($columns['user_id']) && isset($columns['id_user'])) {
             wtw_recommendations_cache_silent_exec($pdo, 'ALTER TABLE recommendations_cache CHANGE id_user user_id INT UNSIGNED NOT NULL');
-            $columns = wtw_recommendations_cache_columns($pdo);
+            $columns['user_id'] = $columns['id_user'];
+            unset($columns['id_user']);
         }
         if (!isset($columns['cache_key']) && isset($columns['algo'])) {
             wtw_recommendations_cache_silent_exec($pdo, 'ALTER TABLE recommendations_cache CHANGE algo cache_key VARCHAR(120) NOT NULL');
-            $columns = wtw_recommendations_cache_columns($pdo);
+            $columns['cache_key'] = $columns['algo'];
+            unset($columns['algo']);
         }
         if (!isset($columns['payload']) && isset($columns['items_json'])) {
             wtw_recommendations_cache_silent_exec($pdo, 'ALTER TABLE recommendations_cache CHANGE items_json payload LONGTEXT NOT NULL');
-            $columns = wtw_recommendations_cache_columns($pdo);
+            $columns['payload'] = $columns['items_json'];
+            unset($columns['items_json']);
         }
         if (!isset($columns['payload'])) {
             wtw_recommendations_cache_silent_exec($pdo, "ALTER TABLE recommendations_cache ADD COLUMN payload LONGTEXT NOT NULL AFTER seed");
-            $columns = wtw_recommendations_cache_columns($pdo);
+            $columns['payload'] = ['Field' => 'payload'];
         }
         if (!isset($columns['seed'])) {
             wtw_recommendations_cache_silent_exec($pdo, "ALTER TABLE recommendations_cache ADD COLUMN seed VARCHAR(64) NOT NULL DEFAULT '' AFTER cache_key");
-            $columns = wtw_recommendations_cache_columns($pdo);
+            $columns['seed'] = ['Field' => 'seed'];
         } else {
             wtw_recommendations_cache_silent_exec($pdo, "ALTER TABLE recommendations_cache MODIFY seed VARCHAR(64) NOT NULL DEFAULT ''");
         }
         if (!isset($columns['created_at'])) {
             wtw_recommendations_cache_silent_exec($pdo, 'ALTER TABLE recommendations_cache ADD COLUMN created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP AFTER payload');
-            $columns = wtw_recommendations_cache_columns($pdo);
+            $columns['created_at'] = ['Field' => 'created_at'];
         }
         if (!isset($columns['expires_at'])) {
             wtw_recommendations_cache_silent_exec($pdo, 'ALTER TABLE recommendations_cache ADD COLUMN expires_at DATETIME NOT NULL AFTER created_at');
-            $columns = wtw_recommendations_cache_columns($pdo);
+            $columns['expires_at'] = ['Field' => 'expires_at'];
         }
         if (!isset($columns['id'])) {
             wtw_recommendations_cache_silent_exec($pdo, 'ALTER TABLE recommendations_cache DROP PRIMARY KEY');
             wtw_recommendations_cache_silent_exec($pdo, 'ALTER TABLE recommendations_cache ADD COLUMN id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY FIRST');
-            $columns = wtw_recommendations_cache_columns($pdo);
+            $columns['id'] = ['Field' => 'id'];
         }
 
         // Attempt to upgrade payload column to JSON if the engine supports it.
@@ -283,16 +290,13 @@ SQL;
         }
 
         $hasForeignKey = false;
-        $fkStmt = $pdo->prepare("
-            SELECT CONSTRAINT_NAME
-            FROM information_schema.TABLE_CONSTRAINTS
-            WHERE TABLE_SCHEMA = DATABASE()
-              AND TABLE_NAME = 'recommendations_cache'
-              AND CONSTRAINT_TYPE = 'FOREIGN KEY'
-              AND CONSTRAINT_NAME = 'fk_recommendations_cache_user'
-        ");
+        $fkStmt = $pdo->prepare(
+            'SELECT 1 FROM information_schema.TABLE_CONSTRAINTS '
+            . "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'recommendations_cache' "
+            . "AND CONSTRAINT_TYPE = 'FOREIGN KEY' AND CONSTRAINT_NAME = 'fk_recommendations_cache_user'"
+        );
         if ($fkStmt !== false && $fkStmt->execute()) {
-            $hasForeignKey = $fkStmt->fetch(PDO::FETCH_ASSOC) !== false;
+            $hasForeignKey = $fkStmt->fetchColumn() !== false;
         }
         if (!$hasForeignKey) {
             wtw_recommendations_cache_silent_exec(
@@ -304,7 +308,7 @@ SQL;
             );
         }
     } catch (Throwable $exception) {
-        // Falha silenciosa: se n�o conseguirmos tocar na tabela, o cache apenas ser� ignorado.
+        error_log('Cache schema ensure failed: ' . $exception->getMessage());
     }
 }
 
@@ -317,7 +321,8 @@ function wtw_recommendations_cache_columns(PDO $pdo): array
     try {
         $describe = $pdo->query('SHOW COLUMNS FROM recommendations_cache');
         if ($describe !== false) {
-            foreach ($describe as $column) {
+            $allColumns = $describe->fetchAll(PDO::FETCH_ASSOC);
+            foreach ($allColumns as $column) {
                 $field = (string) ($column['Field'] ?? '');
                 if ($field !== '') {
                     $columns[$field] = $column;
@@ -338,7 +343,7 @@ function wtw_recommendations_cache_index_exists(PDO $pdo, string $name): bool
             return false;
         }
         $stmt->execute([':name' => $name]);
-        return $stmt->fetch(PDO::FETCH_ASSOC) !== false;
+        return $stmt->fetchColumn() !== false;
     } catch (Throwable $exception) {
         return false;
     }
@@ -435,15 +440,11 @@ function loadCachedShortlist(PDO $pdo, int $userId, string $cacheKey, DateTimeIm
             ':k' => $cacheKey,
             ':now' => $now->format('Y-m-d H:i:s'),
         ]);
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
-        if ($row === false) {
+        $payload = $stmt->fetchColumn();
+        if ($payload === false) {
             return null;
         }
-        $payload = json_decode((string) $row['payload'], true);
-        if (!is_array($payload)) {
-            return null;
-        }
-        return $payload;
+        return wtw_cache_decode((string) $payload);
     } catch (Throwable $exception) {
         return null;
     }
@@ -460,6 +461,7 @@ function storeCachedShortlist(
     string $seed,
     array $shortlist,
     DateTimeImmutable $now,
+    int $ttlSeconds,
     array $diagnostics
 ): void {
     $payload = [
@@ -479,11 +481,11 @@ function storeCachedShortlist(
             ':u' => $userId,
             ':k' => $cacheKey,
             ':s' => $seed,
-            ':p' => json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
-            ':e' => $now->modify(sprintf('+%d seconds', CACHE_TTL_SECONDS))->format('Y-m-d H:i:s'),
+            ':p' => wtw_cache_encode($payload),
+            ':e' => $now->modify(sprintf('+%d seconds', max(1, $ttlSeconds)))->format('Y-m-d H:i:s'),
         ]);
     } catch (Throwable $exception) {
-        // ignora falhas de cache
+        error_log('Cache store failed: ' . $exception->getMessage());
     }
 }
 /**
@@ -1667,4 +1669,70 @@ function buildResponse(int $userId, string $mediaType, array $items, array $diag
         'items' => $payloadItems,
         'diagnostics' => $diagnostics,
     ];
+}
+
+function wtw_json_out(mixed $data): string
+{
+    $json = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    return $json === false ? 'null' : $json;
+}
+
+function wtw_respond_empty(string $message): void
+{
+    http_response_code(204);
+    echo wtw_json_out([
+        'status' => 'empty',
+        'message' => $message,
+    ]);
+    exit;
+}
+
+function wtw_cache_encode(array $payload): string
+{
+    return wtw_json_out($payload);
+}
+
+function wtw_cache_decode(string $payload): ?array
+{
+    $decoded = json_decode($payload, true);
+    return is_array($decoded) ? $decoded : null;
+}
+
+function wtw_cache_ttl_for_media(string $mediaType): int
+{
+    static $cache = null;
+
+    if ($cache === null) {
+        $cache = [
+            'movie' => wtw_normalize_ttl_value(wyw_env('CACHE_TTL_MOVIES')),
+            'tv' => wtw_normalize_ttl_value(wyw_env('CACHE_TTL_SERIES')),
+            'default' => wtw_normalize_ttl_value(wyw_env('CACHE_TTL_DEFAULT')),
+        ];
+    }
+
+    $normalizedType = $mediaType === 'tv' ? 'tv' : 'movie';
+    $ttl = $cache[$normalizedType] ?? null;
+
+    if ($ttl === null) {
+        $ttl = $cache['default'] ?? null;
+    }
+
+    return $ttl ?? CACHE_TTL_DEFAULT;
+}
+
+function wtw_normalize_ttl_value(mixed $value): ?int
+{
+    if ($value === null) {
+        return null;
+    }
+
+    if (is_string($value)) {
+        $value = trim($value);
+        if ($value === '') {
+            return null;
+        }
+    }
+
+    $intValue = (int) $value;
+    return $intValue > 0 ? $intValue : null;
 }
