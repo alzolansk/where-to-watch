@@ -126,11 +126,35 @@ $introRevealText = 'WYWATCH';
   <div class="orb"></div>
   <div class="roulette-station" id="rouletteStation">
     <button class="btn" id="trigger">Surpreenda-me</button>
-    <div class="roulette-shell" id="rouletteShell" aria-hidden="true">
-      <div class="roulette-wheel" >
-        <div class="roulette-track" id="rouletteTrack" aria-hidden="true"></div>
+      <div class="roulette-shell" id="rouletteShell" aria-hidden="true">
+        <div class="roulette-wheel" >
+          <div class="roulette-track" id="rouletteTrack" aria-hidden="true"></div>
+        </div>
+      <div class="surprise-display" id="surpriseDisplay">
+        <div class="surprise-display-poster" aria-hidden="true">
+          <img id="roulettePoster" alt="Poster da recomendação surpresa" hidden>
+        </div>
+        <aside
+          class="surprise-info-panel"
+          id="surprisePanel"
+          aria-live="polite"
+          aria-hidden="true"
+          hidden
+        >
+          <div class="surprise-panel-boot" id="surprisePanelBoot" aria-hidden="true">
+            <div class="surprise-panel-scan" aria-hidden="true"></div>
+            <pre id="surpriseBootText" aria-hidden="true"></pre>
+            <span class="surprise-panel-cursor" id="surpriseBootCursor" aria-hidden="true">&nbsp;</span>
+          </div>
+          <div class="surprise-panel-content" id="surprisePanelContent">
+            <p class="surprise-panel-meta" id="surpriseMeta"></p>
+            <h2 class="surprise-panel-title" id="surpriseTitle"></h2>
+            <p class="surprise-panel-desc" id="surpriseOverview"></p>
+            <div class="surprise-panel-insight" id="surpriseInsight"></div>
+            <div class="surprise-panel-tags" id="surpriseTags" aria-live="polite"></div>
+          </div>
+        </aside>
       </div>
-      <img id="roulettePoster" alt="Poster da recomendação surpresa" hidden>
       <div class="roulette-actions" id="rouletteActions">
         <button class="roulette-button" id="rouletteDetails">Ver detalhes</button>
         <button class="roulette-button is-ghost" id="rouletteAgain">Nova surpresa</button>

@@ -7,7 +7,13 @@
   }
 
   const steps = Array.from(modal.querySelectorAll('[data-onboarding-step]'));
+  const genresStepElement = modal.querySelector('[data-onboarding-step="genres"]');
+  const previewStepElement = modal.querySelector('[data-onboarding-step="preview"]');
+  const providersStepElement = modal.querySelector('[data-onboarding-step="providers"]');
   const favoritesStepElement = modal.querySelector('[data-onboarding-step="favorites"]');
+  const genresStepIndex = genresStepElement ? steps.indexOf(genresStepElement) : 0;
+  const previewStepIndex = previewStepElement ? steps.indexOf(previewStepElement) : -1;
+  const providersStepIndex = providersStepElement ? steps.indexOf(providersStepElement) : -1;
   const favoritesStepIndex = favoritesStepElement ? steps.indexOf(favoritesStepElement) : -1;
   const progressDots = Array.from(modal.querySelectorAll('[data-onboarding-progress-step]'));
   const backButton = modal.querySelector('[data-onboarding-action="back"]');
@@ -15,6 +21,9 @@
   const finishButton = modal.querySelector('[data-onboarding-action="finish"]');
   const skipButton = modal.querySelector('[data-onboarding-action="skip"]');
   const errorBox = modal.querySelector('[data-onboarding-error]');
+  const previewStatus = modal.querySelector('[data-onboarding-preview-status]');
+  const previewList = modal.querySelector('[data-onboarding-preview-list]');
+  const previewRefreshButton = modal.querySelector('[data-onboarding-preview-refresh]');
   const genresGrid = modal.querySelector('[data-onboarding-genres]');
   const keywordsGrid = modal.querySelector('[data-onboarding-keywords]');
   const keywordForm = modal.querySelector('[data-onboarding-keyword-form]');
@@ -44,6 +53,10 @@
     favoritesQuery: '',
     favoritesDebounce: null,
     favoriteAbortController: null,
+    previewLoaded: false,
+    previewLoading: false,
+    previewResults: [],
+    previewAbortController: null,
     initialised: false,
   };
 
@@ -98,6 +111,21 @@
     return `${tmdbImageBase}${defaultLogoSize}${normalisedPath}`;
   }
 
+  function extractYear(value) {
+    if (!value) return '';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      const match = String(value).match(/\d{4}/);
+      return match ? match[0] : '';
+    }
+    return String(date.getUTCFullYear());
+  }
+
+  function normaliseMediaType(type) {
+    const normalised = String(type || 'movie').toLowerCase();
+    return normalised === 'tv' ? 'tv' : 'movie';
+  }
+
   function setError(message) {
     if (!errorBox) return;
     if (message) {
@@ -107,6 +135,319 @@
       errorBox.textContent = '';
       errorBox.hidden = true;
     }
+  }
+
+  function setPreviewStatus(message) {
+    if (!previewStatus) return;
+    if (message) {
+      previewStatus.textContent = message;
+      previewStatus.hidden = false;
+    } else {
+      previewStatus.textContent = '';
+      previewStatus.hidden = true;
+    }
+  }
+
+  function updatePreviewControls() {
+    if (previewRefreshButton) {
+      previewRefreshButton.disabled = state.submitting || state.previewLoading;
+    }
+  }
+
+  function buildPreviewMeta(item) {
+    if (!item) return '';
+    const parts = [];
+    const mediaLabel = item.mediaType === 'tv' ? 'Série' : 'Filme';
+    parts.push(mediaLabel);
+    const year = extractYear(item.releaseDate);
+    if (year) {
+      parts.push(year);
+    }
+    if (Array.isArray(item.reasons) && item.reasons.length > 0) {
+      parts.push(`Baseado em ${item.reasons.slice(0, 3).join(', ')}`);
+    }
+    return parts.filter(Boolean).join(' • ');
+  }
+
+  function createPreviewSkeletonCard() {
+    const card = document.createElement('div');
+    card.className = 'onboarding-preview__card onboarding-preview__card--skeleton';
+
+    const poster = document.createElement('div');
+    poster.className = 'onboarding-preview__poster';
+    card.appendChild(poster);
+
+    const info = document.createElement('div');
+    info.className = 'onboarding-preview__info';
+    const line1 = document.createElement('span');
+    const line2 = document.createElement('span');
+    info.appendChild(line1);
+    info.appendChild(line2);
+    card.appendChild(info);
+
+    return card;
+  }
+
+  function renderPreviewSkeleton(count = 6) {
+    if (!previewList) return;
+    previewList.classList.remove('is-empty');
+    previewList.innerHTML = '';
+    const fragment = document.createDocumentFragment();
+    for (let i = 0; i < count; i += 1) {
+      fragment.appendChild(createPreviewSkeletonCard());
+    }
+    previewList.appendChild(fragment);
+  }
+
+  function normalisePreviewItem(raw) {
+    if (!raw || typeof raw !== 'object') {
+      return null;
+    }
+    const id = Number(raw.tmdb_id ?? raw.id ?? 0);
+    if (!Number.isFinite(id) || id <= 0) {
+      return null;
+    }
+    const mediaType = normaliseMediaType(raw.media_type ?? raw.type);
+    const title = normaliseLabel(raw.title ?? raw.name ?? raw.label ?? '');
+    if (!title) {
+      return null;
+    }
+    const posterPath = raw.poster_path ?? raw.posterPath ?? raw.backdrop_path ?? null;
+    const posterUrl = raw.poster_url ?? raw.posterUrl ?? buildImageUrl(posterPath);
+    const releaseDate = raw.release_date ?? raw.first_air_date ?? raw.release_year ?? raw.year ?? '';
+
+    const reasons = [];
+    if (raw.match && typeof raw.match === 'object' && raw.match.reasons && typeof raw.match.reasons === 'object') {
+      ['genres', 'keywords', 'cast'].forEach((key) => {
+        const values = raw.match.reasons[key];
+        if (!Array.isArray(values)) {
+          return;
+        }
+        values.slice(0, 3).forEach((value) => {
+          const label = normaliseLabel(value);
+          if (label) {
+            reasons.push(label);
+          }
+        });
+      });
+    }
+
+    return {
+      id,
+      mediaType,
+      title,
+      posterUrl,
+      releaseDate,
+      reasons: Array.from(new Set(reasons)),
+    };
+  }
+
+  function createPreviewCard(item) {
+    if (!item) return null;
+    const card = document.createElement('article');
+    card.className = 'onboarding-preview__card';
+    card.dataset.previewId = String(item.id);
+    card.dataset.previewMediaType = item.mediaType;
+
+    const poster = document.createElement('div');
+    poster.className = 'onboarding-preview__poster';
+    if (item.posterUrl) {
+      const img = document.createElement('img');
+      img.src = item.posterUrl;
+      img.alt = '';
+      poster.appendChild(img);
+    } else {
+      const fallback = document.createElement('span');
+      fallback.textContent = item.title.slice(0, 1).toUpperCase();
+      poster.appendChild(fallback);
+    }
+    card.appendChild(poster);
+
+    const info = document.createElement('div');
+    info.className = 'onboarding-preview__info';
+    const titleSpan = document.createElement('span');
+    titleSpan.className = 'onboarding-preview__title';
+    titleSpan.textContent = item.title;
+    info.appendChild(titleSpan);
+
+    const metaSpan = document.createElement('span');
+    metaSpan.className = 'onboarding-preview__meta';
+    metaSpan.textContent = buildPreviewMeta(item) || 'Recomendação personalizada';
+    info.appendChild(metaSpan);
+
+    card.appendChild(info);
+
+    return card;
+  }
+
+  function renderPreviewResults(items) {
+    if (!previewList) return [];
+    previewList.innerHTML = '';
+    previewList.classList.remove('is-empty');
+
+    if (!Array.isArray(items) || items.length === 0) {
+      previewList.classList.add('is-empty');
+      previewList.textContent = 'Não encontramos recomendações no momento. Tente outra combinação.';
+      return [];
+    }
+
+    const fragment = document.createDocumentFragment();
+    const normalisedItems = [];
+    items.forEach((rawItem) => {
+      const normalised = normalisePreviewItem(rawItem);
+      if (!normalised) {
+        return;
+      }
+      const card = createPreviewCard(normalised);
+      if (card) {
+        fragment.appendChild(card);
+        normalisedItems.push(normalised);
+      }
+    });
+
+    if (normalisedItems.length === 0) {
+      previewList.classList.add('is-empty');
+      previewList.textContent = 'Não encontramos recomendações no momento. Tente outra combinação.';
+      return [];
+    }
+
+    previewList.appendChild(fragment);
+    return normalisedItems;
+  }
+
+  function setPreviewLoading(value, { showSkeleton = false } = {}) {
+    state.previewLoading = Boolean(value);
+    if (showSkeleton) {
+      renderPreviewSkeleton();
+    }
+    updatePreviewControls();
+    updateNavigation();
+  }
+
+  function pickPreviewAnchor() {
+    if (!Array.isArray(state.previewResults) || state.previewResults.length === 0) {
+      return null;
+    }
+    const index = Math.floor(Math.random() * state.previewResults.length);
+    const candidate = state.previewResults[index];
+    if (!candidate) {
+      return null;
+    }
+    const id = Number(candidate.id ?? 0);
+    if (!Number.isFinite(id) || id <= 0) {
+      return null;
+    }
+    const mediaType = normaliseMediaType(candidate.mediaType);
+    return `${mediaType}:${id}`;
+  }
+
+  function buildRecommendationsUrl({ anchor = null, level = null } = {}) {
+    const endpoint = config.recommendationsEndpoint || (
+      config.apiUrl ? `${config.apiUrl}${config.apiUrl.includes('?') ? '&' : '?'}resource=recommendations` : null
+    );
+    if (!endpoint) return null;
+
+    try {
+      const url = new URL(endpoint, window.location.href);
+      if (anchor) {
+        url.searchParams.set('anchor', anchor);
+      } else {
+        url.searchParams.delete('anchor');
+      }
+      if (Number.isFinite(level)) {
+        url.searchParams.set('level', String(level));
+      } else {
+        url.searchParams.delete('level');
+      }
+      return url.toString();
+    } catch (error) {
+      console.error('URL inválida para recomendações do onboarding', error);
+      return null;
+    }
+  }
+
+  async function loadPreviewRecommendations({ anchor = null, level = null, reset = false } = {}) {
+    const url = buildRecommendationsUrl({ anchor, level });
+    if (!url) {
+      state.previewLoaded = true;
+      if (!state.previewResults.length) {
+        setPreviewStatus('As recomendações estão indisponíveis no momento.');
+      }
+      return;
+    }
+
+    if (state.previewAbortController) {
+      state.previewAbortController.abort();
+    }
+
+    const controller = new AbortController();
+    state.previewAbortController = controller;
+
+    if (reset) {
+      state.previewLoaded = false;
+      state.previewResults = [];
+    }
+
+    setPreviewStatus(anchor ? 'Gerando novas recomendações…' : 'Carregando recomendações personalizadas…');
+    setPreviewLoading(true, { showSkeleton: true });
+
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        credentials: 'same-origin',
+        signal: controller.signal,
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      const data = await response.json();
+      if (!data || data.ok !== true) {
+        throw new Error(data && data.error ? data.error : 'invalid_response');
+      }
+
+      const results = Array.isArray(data.results) ? data.results : [];
+      const normalisedResults = renderPreviewResults(results);
+      state.previewResults = normalisedResults;
+      state.previewLoaded = true;
+
+      if (normalisedResults.length > 0) {
+        setPreviewStatus('Veja o que encontramos para você:');
+      } else {
+        setPreviewStatus('Não encontramos recomendações no momento. Experimente ajustar suas preferências.');
+      }
+    } catch (error) {
+      if (error.name === 'AbortError') {
+        return;
+      }
+      console.error('Falha ao carregar recomendações do onboarding', error);
+      state.previewLoaded = false;
+      state.previewResults = [];
+      if (previewList) {
+        previewList.classList.add('is-empty');
+        previewList.textContent = 'Não foi possível carregar as recomendações agora.';
+      }
+      setPreviewStatus('Não foi possível carregar as recomendações agora. Tente novamente.');
+    } finally {
+      setPreviewLoading(false);
+      state.previewAbortController = null;
+    }
+  }
+
+  function preloadPreview(force = false) {
+    if (state.previewLoading) {
+      if (!force) {
+        return;
+      }
+      if (state.previewAbortController) {
+        state.previewAbortController.abort();
+      }
+    }
+    if (!force && state.previewLoaded) {
+      return;
+    }
+    state.previewLoaded = false;
+    state.previewResults = [];
+    loadPreviewRecommendations({ reset: true });
   }
 
   function registerKeywordButtons() {
@@ -219,23 +560,26 @@
   function updateNavigation() {
     const isFirst = state.stepIndex === 0;
     const isLast = state.stepIndex === totalSteps - 1;
+    const isPreviewStep = previewStepIndex !== -1 && state.stepIndex === previewStepIndex;
+    const disableForward = state.submitting || (isPreviewStep && state.previewLoading);
 
     if (backButton) {
       backButton.disabled = isFirst || state.submitting;
     }
     if (nextButton) {
       nextButton.hidden = isLast;
-      nextButton.disabled = state.submitting;
+      nextButton.disabled = disableForward;
     }
     if (finishButton) {
       const showFinish = isLast;
       finishButton.hidden = !showFinish;
       finishButton.classList.toggle('is-visible', showFinish);
-      finishButton.disabled = state.submitting;
+      finishButton.disabled = disableForward;
     }
     if (skipButton) {
       skipButton.disabled = state.submitting;
     }
+    updatePreviewControls();
   }
 
   function showStep(index) {
@@ -243,6 +587,10 @@
     steps.forEach((step, i) => { step.hidden = i !== state.stepIndex; });
     progressDots.forEach((dot, i) => { dot.classList.toggle('is-active', i === state.stepIndex); });
     setError(''); updateNavigation();
+
+    if (state.stepIndex === previewStepIndex) {
+      preloadPreview();
+    }
 
     if (!state.favoritesLoaded && state.stepIndex === favoritesStepIndex) {
       preloadFavorites(true); // força primeira busca com filtros atuais
@@ -267,13 +615,21 @@
   }
 
   function handlePreferenceChange() {
-    if (favoritesStepIndex === -1) {
-      return;
+    if (previewStepIndex !== -1) {
+      if (state.stepIndex === previewStepIndex) {
+        preloadPreview(true);
+      } else {
+        state.previewLoaded = false;
+        state.previewResults = [];
+      }
     }
-    if (state.stepIndex === favoritesStepIndex) {
-      preloadFavorites(true);
-    } else {
-      state.favoritesLoaded = false;
+
+    if (favoritesStepIndex !== -1) {
+      if (state.stepIndex === favoritesStepIndex) {
+        preloadFavorites(true);
+      } else {
+        state.favoritesLoaded = false;
+      }
     }
   }
 
@@ -600,6 +956,13 @@
     });
   }
 
+  if (previewRefreshButton) {
+    previewRefreshButton.addEventListener('click', () => {
+      const anchor = pickPreviewAnchor();
+      loadPreviewRecommendations(anchor ? { anchor, reset: true } : { reset: true });
+    });
+  }
+
   if (favoritesGrid) {
     favoritesGrid.addEventListener('click', (event) => {
       const target = event.target.closest('[data-favorite-id]');
@@ -631,28 +994,34 @@
   }
 
   function validateStep(index) {
-    switch (index) {
-      case 0:
-        if (state.genres.size === 0 && state.keywords.size === 0) {
-          setError('Selecione pelo menos um gênero ou palavra-chave para continuar.');
-          return false;
-        }
-        break;
-      case 1:
-        if (state.providers.size === 0) {
-          setError('Escolha pelo menos um provedor disponível para você.');
-          return false;
-        }
-        break;
-      case 2:
-        if (state.favorites.size === 0) {
-          setError('Selecione ao menos um título favorito.');
-          return false;
-        }
-        break;
-      default:
-        break;
+    if (index === genresStepIndex) {
+      if (state.genres.size === 0 && state.keywords.size === 0) {
+        setError('Selecione pelo menos um gênero ou palavra-chave para continuar.');
+        return false;
+      }
+      return true;
     }
+
+    if (index === previewStepIndex) {
+      return true;
+    }
+
+    if (index === providersStepIndex) {
+      if (state.providers.size === 0) {
+        setError('Escolha pelo menos um provedor disponível para você.');
+        return false;
+      }
+      return true;
+    }
+
+    if (index === favoritesStepIndex) {
+      if (state.favorites.size === 0) {
+        setError('Selecione ao menos um título favorito.');
+        return false;
+      }
+      return true;
+    }
+
     return true;
   }
 
@@ -733,6 +1102,8 @@
       body.classList.add('onboarding-open');
       backdrop.setAttribute('aria-hidden', 'false');
       applyInitialSelections(config.existing);
+      state.previewLoaded = false;
+      state.previewResults = [];
       state.favoritesLoaded = false;
       state.favoritesQuery = '';
       showStep(0);

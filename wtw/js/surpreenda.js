@@ -290,6 +290,16 @@ const station = document.getElementById('rouletteStation');
 const shell = document.getElementById('rouletteShell');
 const track = document.getElementById('rouletteTrack');
 const posterEl = document.getElementById('roulettePoster');
+const displayWrapper = document.getElementById('surpriseDisplay');
+const infoPanel = document.getElementById('surprisePanel');
+const infoMeta = document.getElementById('surpriseMeta');
+const infoTitle = document.getElementById('surpriseTitle');
+const infoOverview = document.getElementById('surpriseOverview');
+const infoInsight = document.getElementById('surpriseInsight');
+const infoTags = document.getElementById('surpriseTags');
+const bootPanel = document.getElementById('surprisePanelBoot');
+const bootText = document.getElementById('surpriseBootText');
+const bootCursor = document.getElementById('surpriseBootCursor');
 const detailsBtn = document.getElementById('rouletteDetails');
 const againBtn = document.getElementById('rouletteAgain');
 const mediaToggle = document.getElementById('mediaToggle');
@@ -372,6 +382,238 @@ syncMediaToggleUI();
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 let rouletteTimer = null;
 let storedSelection = null;
+let bootTimers = [];
+
+if (displayWrapper) {
+  displayWrapper.setAttribute('aria-hidden', 'true');
+}
+
+const markEmptyState = (element, isEmpty) => {
+  if (!element) {
+    return;
+  }
+  if (isEmpty) {
+    element.classList.add('is-empty');
+  } else {
+    element.classList.remove('is-empty');
+  }
+};
+
+const setTextContentOrEmpty = (element, value) => {
+  if (!element) {
+    return;
+  }
+  const text = typeof value === 'string' ? value.trim() : '';
+  if (text) {
+    element.textContent = text;
+    markEmptyState(element, false);
+  } else {
+    element.textContent = '';
+    markEmptyState(element, true);
+  }
+};
+
+const clearBootTimers = () => {
+  if (!bootTimers.length) {
+    return;
+  }
+  for (const timer of bootTimers) {
+    clearTimeout(timer);
+  }
+  bootTimers = [];
+};
+
+const scheduleBootTick = (fn, delay) => {
+  const id = window.setTimeout(fn, delay);
+  bootTimers.push(id);
+  return id;
+};
+
+const escapeHtml = (value) => {
+  if (value === null || value === undefined) {
+    return '';
+  }
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+};
+
+const hideSurprisePanel = () => {
+  clearBootTimers();
+  if (bootText) {
+    bootText.innerHTML = '';
+  }
+  if (bootCursor) {
+    bootCursor.style.display = 'none';
+  }
+  if (infoTags) {
+    infoTags.innerHTML = '';
+    markEmptyState(infoTags, true);
+  }
+  setTextContentOrEmpty(infoMeta, '');
+  setTextContentOrEmpty(infoTitle, '');
+  setTextContentOrEmpty(infoOverview, '');
+  setTextContentOrEmpty(infoInsight, '');
+  if (infoPanel) {
+    infoPanel.classList.remove('is-open', 'is-ready');
+    infoPanel.setAttribute('aria-hidden', 'true');
+    infoPanel.hidden = true;
+  }
+  if (displayWrapper) {
+    displayWrapper.setAttribute('aria-hidden', 'true');
+  }
+};
+
+const formatPanelMeta = (item) => {
+  if (!item) {
+    return '';
+  }
+  const parts = [];
+  if (item.release_date) {
+    const year = item.release_date.slice(0, 4);
+    if (year) {
+      parts.push(year);
+    }
+  }
+  if (Array.isArray(item.genres) && item.genres.length) {
+    parts.push(item.genres.slice(0, 3).join(' • '));
+  }
+  return parts.join('  •  ');
+};
+
+const buildPanelTags = (item) => {
+  const tags = [];
+  if (item) {
+    if (typeof item.providers_note === 'string' && item.providers_note.trim() !== '') {
+      tags.push(item.providers_note.trim());
+    }
+    if (Array.isArray(item.reasons)) {
+      item.reasons.forEach((reason, index) => {
+        const normalized = typeof reason === 'string' ? reason.trim() : '';
+        if (!normalized) {
+          return;
+        }
+        if (index === 0) {
+          return;
+        }
+        if (!tags.includes(normalized)) {
+          tags.push(normalized);
+        }
+      });
+    }
+  }
+  return tags.slice(0, 5);
+};
+
+const renderPanelTags = (tags) => {
+  if (!infoTags) {
+    return;
+  }
+  infoTags.innerHTML = '';
+  if (!tags || !tags.length) {
+    markEmptyState(infoTags, true);
+    return;
+  }
+  markEmptyState(infoTags, false);
+  for (const tag of tags) {
+    const chip = document.createElement('span');
+    chip.className = 'surprise-panel-tag';
+    chip.textContent = tag;
+    infoTags.appendChild(chip);
+  }
+};
+
+const buildBootLines = (item) => {
+  const title = item && item.title ? item.title : 'Título surpresa';
+  const genreLine = Array.isArray(item && item.genres) && item.genres.length
+    ? item.genres.slice(0, 3).join(' · ')
+    : 'multi-heurística';
+  const reason = Array.isArray(item && item.reasons) && item.reasons.length ? item.reasons[0] : null;
+  const providerNote = item && typeof item.providers_note === 'string' && item.providers_note.trim() !== ''
+    ? item.providers_note.trim()
+    : 'mapa de provedores pronto';
+  const score = typeof (item && item.score) === 'number' && Number.isFinite(item.score)
+    ? item.score.toFixed(2)
+    : '??';
+  return [
+    '>>> INIT SURPRISE_MODULE v2.0',
+    '>>> handshake: ok',
+    `>>> alvo: ${title.toUpperCase()}`,
+    `>>> heurística: ${genreLine}`,
+    reason ? `>>> insight: ${reason}` : '>>> insight: alinhado ao seu perfil',
+    `>>> providers: ${providerNote}`,
+    `>>> score: ${score}`,
+    '>>> construindo painel…',
+  ];
+};
+
+const runPanelBootSequence = (lines) => {
+  if (!infoPanel || !bootText || !bootCursor || !bootPanel) {
+    if (infoPanel) {
+      infoPanel.classList.add('is-ready');
+    }
+    return;
+  }
+  clearBootTimers();
+  infoPanel.classList.remove('is-ready');
+  bootText.innerHTML = '';
+  bootCursor.style.display = 'inline-block';
+  const doneLines = [];
+  let lineIndex = 0;
+  let charIndex = 0;
+
+  const render = (partial) => {
+    const head = doneLines.length ? `${doneLines.join('<br>')}<br>` : '';
+    bootText.innerHTML = head + escapeHtml(partial);
+  };
+
+  const typeNext = () => {
+    if (!Array.isArray(lines) || lineIndex >= lines.length) {
+      bootCursor.style.display = 'none';
+      infoPanel.classList.add('is-ready');
+      return;
+    }
+    const current = lines[lineIndex] || '';
+    if (charIndex <= current.length) {
+      render(current.slice(0, charIndex));
+      charIndex += 1;
+      scheduleBootTick(typeNext, 10 + Math.random() * 15);
+    } else {
+      doneLines.push(escapeHtml(current));
+      lineIndex += 1;
+      charIndex = 0;
+      scheduleBootTick(typeNext, 80 + Math.random() * 40);
+    }
+  };
+
+  scheduleBootTick(typeNext, 200);
+};
+
+const openSurprisePanel = (item) => {
+  if (!infoPanel) {
+    return;
+  }
+  if (displayWrapper) {
+    displayWrapper.removeAttribute('aria-hidden');
+  }
+  infoPanel.hidden = false;
+  infoPanel.setAttribute('aria-hidden', 'false');
+  infoPanel.classList.add('is-open');
+  const meta = formatPanelMeta(item);
+  const insight = Array.isArray(item && item.reasons) && item.reasons.length ? item.reasons[0] : '';
+  const overview = item && item.overview ? item.overview : '';
+  const title = item && item.title ? item.title : 'Recomendação surpresa';
+  setTextContentOrEmpty(infoMeta, meta);
+  setTextContentOrEmpty(infoTitle, title);
+  setTextContentOrEmpty(infoOverview, overview);
+  const insightText = insight ? `✨ ${insight}` : '';
+  setTextContentOrEmpty(infoInsight, insightText);
+  renderPanelTags(buildPanelTags(item));
+  runPanelBootSequence(buildBootLines(item));
+};
 let isProcessing = false;
 
 let statusTypingTimeout = null;
@@ -510,6 +752,7 @@ const enterRoulette = () => {
     posterEl.removeAttribute('src');
     posterEl.classList.remove('is-visible');
   }
+  hideSurprisePanel();
   storedSelection = null;
 };
 
@@ -529,6 +772,7 @@ const resetStation = ({ focusButton = false } = {}) => {
     posterEl.removeAttribute('src');
     posterEl.classList.remove('is-visible');
   }
+  hideSurprisePanel();
   storedSelection = null;
   if (focusButton && btn) {
     btn.focus();
@@ -817,6 +1061,7 @@ const applySelection = (selection) => {
   if (shell) {
     shell.setAttribute('aria-hidden', 'false');
   }
+  openSurprisePanel(item);
 };
 
 const gatherRouletteOptions = async (mediaType = currentMediaType) => {

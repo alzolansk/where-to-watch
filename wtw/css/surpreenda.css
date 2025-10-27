@@ -726,6 +726,15 @@ canvas {
 .roulette-station.has-selection .roulette-shell {
   opacity: 1;
   transform: translateY(0) scale(1);
+  align-items: stretch;
+  width: min(96vw, 1080px);
+  padding: clamp(1.4rem, 2.4vw, 2.6rem);
+  gap: clamp(1.6rem, 2.8vw, 3rem);
+  background:
+    linear-gradient(140deg, rgba(4, 8, 20, 0.95), rgba(5, 6, 16, 0.78));
+  box-shadow:
+    0 28px 90px rgba(2, 6, 20, 0.85),
+    0 0 60px rgba(54, 240, 255, 0.18);
 }
 
 .roulette-station.is-rolling .roulette-shell {
@@ -823,7 +832,7 @@ canvas {
 
 #roulettePoster {
   display: block;
-  width: clamp(250px, 350px, 400px);
+  width: clamp(220px, 24vw, 360px);
   aspect-ratio: 2 / 3;
   border-radius: 24px;
   box-shadow: 0 26px 48px rgba(0, 0, 0, 0.55), 0 0 60px rgba(255, 63, 164, 0.2);
@@ -832,11 +841,240 @@ canvas {
   transform: translateY(16px) scale(0.94);
   transition: opacity 0.35s ease, transform 0.35s ease;
   background: rgba(0, 0, 0, 0.35);
+  flex-shrink: 0;
 }
 
 #roulettePoster.is-visible {
   opacity: 1;
   transform: translateY(0) scale(1);
+}
+
+.surprise-display {
+  display: none;
+  width: 100%;
+  gap: clamp(1.4rem, 2.8vw, 3.2rem);
+  align-items: stretch;
+  justify-content: center;
+  flex-direction: column;
+}
+
+.surprise-display-poster {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.roulette-station.has-selection .surprise-display {
+  display: flex;
+}
+
+@media (min-width: 880px) {
+  .surprise-display {
+    flex-direction: row;
+  }
+  .surprise-display-poster {
+    justify-content: flex-start;
+  }
+}
+
+.surprise-info-panel {
+  position: relative;
+  flex: 1 1 0;
+  border-radius: 24px;
+  border: 1px solid rgba(54, 240, 255, 0.18);
+  padding: clamp(1.4rem, 2.4vw, 2.4rem) clamp(1.6rem, 3vw, 3rem);
+  background: rgba(10, 18, 32, 0.55);
+  box-shadow:
+    inset 0 0 22px rgba(0, 180, 255, 0.12),
+    0 20px 60px rgba(2, 6, 20, 0.65);
+  backdrop-filter: blur(12px);
+  overflow: hidden;
+  transform: scaleX(0.7);
+  transform-origin: left center;
+  opacity: 0;
+  transition:
+    transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1),
+    opacity 0.7s ease;
+  display: flex;
+  align-items: stretch;
+}
+
+.surprise-info-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 1px solid rgba(0, 255, 255, 0.15);
+  box-shadow: 0 0 22px rgba(0, 255, 255, 0.15);
+  pointer-events: none;
+}
+
+.surprise-info-panel::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  background: conic-gradient(from 0deg, transparent 0 12%, rgba(0, 255, 255, 0.45) 12% 14%, transparent 14% 100%);
+  filter: blur(0.6px) drop-shadow(0 0 10px rgba(0, 255, 255, 0.35));
+  animation: surpriseTrace 2.4s linear 0.45s infinite;
+  pointer-events: none;
+}
+
+.surprise-info-panel.is-open {
+  opacity: 1;
+  transform: scaleX(1);
+}
+
+.surprise-panel-boot {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(180deg, rgba(6, 10, 20, 0.78), rgba(6, 10, 18, 0.45));
+  color: #9be7ff;
+  font-family: 'Share Tech Mono', 'JetBrains Mono', monospace;
+  border-radius: inherit;
+  border: 1px solid rgba(0, 255, 255, 0.1);
+  padding: clamp(1.1rem, 2.2vw, 1.8rem);
+  overflow: hidden;
+  transition: opacity 0.35s ease;
+  z-index: 1;
+}
+
+.surprise-panel-scan {
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 48px;
+  top: -48px;
+  background: linear-gradient(to bottom, transparent, rgba(0, 255, 255, 0.14), transparent);
+  animation: surpriseScan 2.6s ease-in-out 0.4s infinite;
+  filter: blur(0.6px);
+}
+
+.surprise-panel-boot pre {
+  margin: 0;
+  white-space: pre-wrap;
+  line-height: 1.35;
+  letter-spacing: 0.04em;
+  font-size: 0.85rem;
+}
+
+.surprise-panel-cursor {
+  display: inline-block;
+  width: 0.6ch;
+  background: #9be7ff;
+  margin-top: 0.35rem;
+  align-self: flex-start;
+  animation: surpriseBlink 1s steps(1) infinite;
+}
+
+.surprise-info-panel.is-ready .surprise-panel-boot {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.surprise-panel-content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.75rem, 1.4vw, 1.4rem);
+  opacity: 0;
+  transition: opacity 0.35s ease 0.15s;
+  z-index: 2;
+}
+
+.surprise-info-panel.is-ready .surprise-panel-content {
+  opacity: 1;
+}
+
+.surprise-panel-meta {
+  font-size: 0.8rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(155, 231, 255, 0.85);
+  margin: 0;
+}
+
+.surprise-panel-title {
+  margin: 0;
+  font-size: clamp(1.35rem, 2.6vw, 1.85rem);
+  font-weight: 700;
+  color: #7fffd4;
+  text-shadow: 0 0 10px rgba(0, 255, 255, 0.55);
+}
+
+.surprise-panel-desc {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: #cdddee;
+}
+
+.surprise-panel-desc.is-empty,
+.surprise-panel-meta.is-empty,
+.surprise-panel-insight.is-empty,
+.surprise-panel-tags.is-empty {
+  display: none;
+}
+
+.surprise-panel-insight {
+  border-left: 3px solid rgba(127, 255, 212, 0.35);
+  padding-left: 12px;
+  font-style: italic;
+  color: #a6e3ff;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.surprise-panel-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.surprise-panel-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  background: rgba(0, 255, 255, 0.08);
+  color: #00ffff;
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  transition: background 0.25s ease;
+}
+
+.surprise-panel-tag:hover,
+.surprise-panel-tag:focus {
+  background: rgba(0, 255, 255, 0.18);
+}
+
+@keyframes surpriseTrace {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+@keyframes surpriseScan {
+  50% {
+    top: calc(100%);
+  }
+  100% {
+    top: -48px;
+  }
+}
+
+@keyframes surpriseBlink {
+  50% {
+    opacity: 0;
+  }
 }
 
 .roulette-actions {

@@ -41,7 +41,7 @@ if (!defined('TMDB_KEY') || TMDB_KEY === '') {
 
 wtw_ensure_recommendations_cache_schema($pdo);
 
-const CACHE_TTL_SECONDS = 600;
+const CACHE_TTL_SECONDS = 300;
 const SHORTLIST_SIZE = 15;
 const HISTORY_LIMIT = 50;
 const FATIGUE_WINDOW = 5;
@@ -772,7 +772,7 @@ function buildHiddenGemsBucket(
         'language' => $language,
         'sort_by' => 'vote_average.desc',
         'vote_average.gte' => 7.2,
-        'vote_count.gte' => 40,
+        'vote_count.gte' => 80,    // de 40 -> 80
         'page' => 1,
     ];
     if ($mediaType === 'movie') {
@@ -782,7 +782,7 @@ function buildHiddenGemsBucket(
     $filtered = [];
     foreach (($data['results'] ?? []) as $entry) {
         $popularity = (float) ($entry['popularity'] ?? 0.0);
-        if ($popularity > 120.0) {
+        if ($popularity > 120.0 || $popularity < 20.0) { 
             continue;
         }
         $filtered[] = $entry;
@@ -850,6 +850,23 @@ function appendBucketResults(array &$results, array $items, string $mediaType, s
 /**
  * @return array<string,mixed>|null
  */
+
+function isLikelyLiveShow(array $entry): bool
+{
+    $genres = array_map('intval', $entry['genre_ids'] ?? []);
+    $text = mb_strtolower(trim(
+        (string)($entry['title'] ?? $entry['name'] ?? '') . ' ' .
+        (string)($entry['overview'] ?? '')
+    ));
+
+    $hasMusicOrDoc = in_array(10402, $genres, true) || in_array(99, $genres, true);
+
+    $hitsTitle = (bool)preg_match('/\b(live|ao vivo|en vivo|en directo|en concierto|tour|concert|show)\b/u', $text);
+
+    // Heurística conservadora: só bloqueia quando bate gênero + texto
+    return $hasMusicOrDoc && $hitsTitle;
+}
+
 function normalizeCandidate(array $entry, string $mediaType, string $bucket): ?array
 {
     if (!is_array($entry)) {
@@ -861,6 +878,9 @@ function normalizeCandidate(array $entry, string $mediaType, string $bucket): ?a
     }
     $title = $mediaType === 'movie' ? ($entry['title'] ?? $entry['name'] ?? '') : ($entry['name'] ?? $entry['title'] ?? '');
     $release = $entry['release_date'] ?? $entry['first_air_date'] ?? null;
+    if (isLikelyLiveShow($entry)) {
+        return null; // não entra na pool
+    }
     return [
         'id' => $id,
         'media_type' => $mediaType,
@@ -1115,6 +1135,23 @@ function scoreCandidates(
         $voteNorm = ($voteAvg - $voteMin) / $voteRange;
         $popNorm = ($popularity - $popMin) / $popRange;
         $quality = max(0.0, min(1.0, 0.7 * $voteNorm + 0.3 * $popNorm));
+        $votes = (int)($candidate['vote_count'] ?? 0);
+
+        $mainstreamPenalty = 0.0;
+        if ($popNorm >= 0.90 && $votes >= 5000) {         // top 10% do seu pool + muitos votos
+            $mainstreamPenalty = 0.22;
+        } elseif ($popNorm >= 0.80 && $votes >= 2000) {   // top 20% + bem votado
+            $mainstreamPenalty = 0.14;
+        } elseif ($popNorm >= 0.70 && $votes >= 800) {    // top 30% + moderado
+            $mainstreamPenalty = 0.08;
+        }
+
+        $fatigue += $mainstreamPenalty * min(1.0, $affinity * 1.1);
+
+        // (opcional) pequeno empurrão em descobertas promissoras
+        if ($popNorm <= 0.25 && $quality >= 0.70 && $votes >= 150) {
+            $bucketBoost += 0.02; 
+        }
 
         $historyOverlap = computeHistoryOverlap($candidateGenres, $candidatePeople, $recentHistory);
         $novelty = max(0.0, min(1.0, 1.0 - $historyOverlap));
@@ -1146,7 +1183,25 @@ function scoreCandidates(
 
         $fatigue = computeFatigue($candidateGenres, $candidatePeople, $candidate['collection'] ?? null, $recentHistory);
         $bucketBoost = computeBucketBoost($candidate['buckets'] ?? []);
+        
+        // penaliza títulos muito populares
+        $popularity = (float) ($candidate['popularity'] ?? 0);
+        $popularityPenalty = 0.0;
 
+        if ($popularity > 3000) {         // superblockbusters
+            $popularityPenalty = 0.25;
+        } elseif ($popularity > 1000) {   // hits globais
+            $popularityPenalty = 0.15;
+        } elseif ($popularity > 500) {    // medianamente populares
+            $popularityPenalty = 0.08;
+        }
+
+        $fatigue += $popularityPenalty * min(1.0, $affinity * 1.2);
+
+
+        if (!empty($candidate['buckets']['hidden_gem']) && $affinity < 0.35) {
+            $bucketBoost *= 0.5; // só ajuda se ainda for razoavelmente alinhado
+        }
         $score = (0.40 * $affinity)
             + (0.25 * $quality)
             + (0.20 * $novelty)
@@ -1255,7 +1310,8 @@ function computeBucketBoost(array $buckets): float
 {
     $boost = 0.0;
     if (isset($buckets['hidden_gem'])) {
-        $boost = max($boost, 0.07);
+        // de 0.07 -> 0.03
+        $boost = max($boost, 0.03);
     }
     if (isset($buckets['adjacent'])) {
         $boost = max($boost, 0.05);
@@ -1416,8 +1472,15 @@ function pickFinalItems(array $shortlist, string $seedString, array $providerIds
     if (empty($shortlist)) {
         return [];
     }
-    $seed = crc32($seedString . '|pick');
+
+    if (!isset($_SESSION['wtw_surprise_salt'])) {
+        $_SESSION['wtw_surprise_salt'] = random_int(1, PHP_INT_MAX);
+    }
+    $_SESSION['wtw_surprise_spin'] = ($_SESSION['wtw_surprise_spin'] ?? 0) + 1;
+
+    $seed = crc32($seedString . '|pick|' . $_SESSION['wtw_surprise_salt'] . '|' . $_SESSION['wtw_surprise_spin']);
     mt_srand($seed);
+
     $targetCount = min(3, max(1, mt_rand(1, 3)));
     $shouldExplore = (mt_rand() / mt_getrandmax()) <= EPSILON;
 
@@ -1434,6 +1497,43 @@ function pickFinalItems(array $shortlist, string $seedString, array $providerIds
             }
         }
     }
+
+    // limite de 1 hidden gem
+    $hiddenCount = 0;
+    foreach ($selected as $i => $c) {
+        $b = array_keys($c['buckets'] ?? []);
+        if (in_array('hidden_gem', $b, true)) {
+            $hiddenCount++;
+            if ($hiddenCount > 1) {
+                // troca por um candidato não-hidden da shortlist
+                foreach ($shortlist as $alt) {
+                    if (!isset($usedIds[$alt['id']])) {
+                        $altB = array_keys($alt['buckets'] ?? []);
+                        if (!in_array('hidden_gem', $altB, true)) {
+                            $selected[$i] = $alt;
+                            $usedIds[$alt['id']] = true;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // ao menos um com disponibilidade confirmada
+    $hasFit = false;
+    foreach ($selected as $c) {
+        if (!empty($c['available_providers'])) { $hasFit = true; break; }
+    }
+    if (!$hasFit) {
+        foreach ($shortlist as $alt) {
+            if (!isset($usedIds[$alt['id']]) && !empty($alt['available_providers'])) {
+                $selected[array_key_first($selected)] = $alt;
+                break;
+            }
+        }
+    }
+
 
     foreach ($shortlist as $candidate) {
         if (count($selected) >= $targetCount) {
