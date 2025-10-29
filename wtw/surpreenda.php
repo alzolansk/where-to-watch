@@ -141,17 +141,25 @@ $introRevealText = 'WYWATCH';
           aria-hidden="true"
           hidden
         >
-          <div class="surprise-panel-boot" id="surprisePanelBoot" aria-hidden="true">
-            <div class="surprise-panel-scan" aria-hidden="true"></div>
-            <pre id="surpriseBootText" aria-hidden="true"></pre>
-            <span class="surprise-panel-cursor" id="surpriseBootCursor" aria-hidden="true">&nbsp;</span>
+          <div class="surprise-panel-entrance" aria-hidden="true">
+            <div class="surprise-panel-bars">
+              <span class="surprise-panel-bar is-left"></span>
+              <span class="surprise-panel-bar is-right"></span>
+            </div>
           </div>
-          <div class="surprise-panel-content" id="surprisePanelContent">
-            <p class="surprise-panel-meta" id="surpriseMeta"></p>
-            <h2 class="surprise-panel-title" id="surpriseTitle"></h2>
-            <p class="surprise-panel-desc" id="surpriseOverview"></p>
-            <div class="surprise-panel-insight" id="surpriseInsight"></div>
-            <div class="surprise-panel-tags" id="surpriseTags" aria-live="polite"></div>
+          <div class="surprise-panel-body">
+            <div class="surprise-panel-boot" id="surprisePanelBoot" aria-hidden="true">
+              <div class="surprise-panel-scan" aria-hidden="true"></div>
+              <pre id="surpriseBootText" aria-hidden="true"></pre>
+              <span class="surprise-panel-cursor" id="surpriseBootCursor" aria-hidden="true">&nbsp;</span>
+            </div>
+            <div class="surprise-panel-content" id="surprisePanelContent">
+              <p class="surprise-panel-meta" id="surpriseMeta"></p>
+              <h2 class="surprise-panel-title" id="surpriseTitle"></h2>
+              <p class="surprise-panel-desc" id="surpriseOverview"></p>
+              <div class="surprise-panel-insight" id="surpriseInsight"></div>
+              <div class="surprise-panel-tags" id="surpriseTags" aria-live="polite"></div>
+            </div>
           </div>
         </aside>
       </div>

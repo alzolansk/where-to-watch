@@ -1,4 +1,5 @@
 <?php
+session_start();
 include_once('config/config.php');
 
 if (!function_exists('wywEnsureOnboardingColumn')) {
@@ -40,6 +41,9 @@ if (isset($_POST['submit'])) {
         if (!$email) {
             $title_error = 'Email invalido';
             $error_message = 'Insira um endereco de email valido.';
+        } elseif (strlen($senha) < 6 || !preg_match('/\d/', $senha)) {
+            $title_error = 'Senha invalida';
+            $error_message = 'A senha deve ter pelo menos 6 caracteres e conter ao menos um numero.';
         } elseif ($senha !== $confirm_senha) {
             $title_error = 'Senhas diferentes';
             $error_message = 'A confirmacao de senha precisa corresponder a senha informada.';
@@ -62,7 +66,14 @@ if (isset($_POST['submit'])) {
                     if ($insert_stmt) {
                         $insert_stmt->bind_param('sss', $name_value, $email, $hashed_password);
                         if ($insert_stmt->execute()) {
-                            header('Location: login.php');
+                            $user_id = $insert_stmt->insert_id ?: $conexao->insert_id;
+                            $_SESSION['id'] = $user_id;
+                            $_SESSION['id_user'] = $user_id;
+                            $_SESSION['nome'] = $name_value;
+                            $_SESSION['onboarding_pending'] = true;
+                            unset($_SESSION['onboarding_completed_at']);
+
+                            header('Location: index.php');
                             exit();
                         } else {
                             $title_error = 'Erro ao cadastrar';

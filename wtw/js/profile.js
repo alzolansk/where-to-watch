@@ -186,6 +186,16 @@
     },
   };
 
+  const MAX_CONCURRENT_POSTER_REQUESTS = 3;
+  const posterHydrationState = {
+    queue: [],
+    enqueued: new Set(),
+    controllers: new Map(),
+    running: 0,
+    frameId: null,
+    token: Symbol('posterHydration'),
+  };
+
   const FAVORITE_SEARCH_MIN_CHARS = 2;
   const favoriteSearchState = {
     items: [],
@@ -1122,6 +1132,208 @@
     refreshFavoriteSearchResults();
   };
 
+  let favoritesRenderRequest = null;
+  const scheduleFavoritesRenderUpdate = () => {
+    if (favoritesRenderRequest !== null) {
+      return;
+    }
+    favoritesRenderRequest = requestAnimationFrame(() => {
+      favoritesRenderRequest = null;
+      renderFavorites();
+    });
+  };
+
+  const resetPosterHydrationState = () => {
+    posterHydrationState.token = Symbol('posterHydration');
+    posterHydrationState.queue.length = 0;
+    posterHydrationState.enqueued.clear();
+    posterHydrationState.controllers.forEach((controller) => controller.abort());
+    posterHydrationState.controllers.clear();
+    posterHydrationState.running = 0;
+    if (posterHydrationState.frameId !== null) {
+      cancelAnimationFrame(posterHydrationState.frameId);
+      posterHydrationState.frameId = null;
+    }
+  };
+
+  const cancelPosterHydrationForKey = (key) => {
+    if (!key) {
+      return;
+    }
+    posterHydrationState.queue = posterHydrationState.queue.filter((task) => task.key !== key);
+    const controller = posterHydrationState.controllers.get(key);
+    if (controller) {
+      controller.abort();
+      posterHydrationState.controllers.delete(key);
+    }
+    posterHydrationState.enqueued.delete(key);
+    if (posterHydrationState.running === 0) {
+      runPosterHydrationQueue();
+    }
+  };
+
+  const fetchPosterDetails = async (favorite, signal) => {
+    if (!favorite || !TMDB_API_KEY) {
+      return null;
+    }
+    const id = parseInt(favorite.tmdb_id ?? favorite.id ?? 0, 10);
+    if (!id) {
+      return null;
+    }
+    const mediaType = (favorite.media_type || favorite.type || 'movie').toLowerCase() === 'tv' ? 'tv' : 'movie';
+    const url = new URL(`${TMDB_BASE_URL}/${mediaType}/${id}`);
+    url.searchParams.set('api_key', TMDB_API_KEY);
+    url.searchParams.set('language', 'pt-BR');
+
+    const response = await fetch(url.toString(), { signal });
+    if (!response.ok) {
+      return null;
+    }
+
+    const data = await response.json();
+    const posterInfo = extractPosterInfo(data);
+
+    if (!posterInfo.poster_path && typeof data.poster_path === 'string' && data.poster_path.trim() !== '') {
+      posterInfo.poster_path = data.poster_path.trim();
+    }
+
+    if (!posterInfo.backdrop_path && typeof data.backdrop_path === 'string' && data.backdrop_path.trim() !== '') {
+      const trimmedBackdrop = data.backdrop_path.trim();
+      if (trimmedBackdrop.startsWith('http')) {
+        posterInfo.poster_url = posterInfo.poster_url || trimmedBackdrop;
+        posterInfo.backdrop_path = null;
+      } else {
+        posterInfo.backdrop_path = trimmedBackdrop;
+      }
+    }
+
+    if (!posterInfo.poster_url && posterInfo.poster_path) {
+      posterInfo.poster_url = buildTmdbImage(posterInfo.poster_path, 'w342');
+    }
+
+    if (!posterInfo.poster_url && posterInfo.backdrop_path) {
+      posterInfo.poster_url = buildTmdbImage(posterInfo.backdrop_path, 'w342');
+    }
+
+    return posterInfo;
+  };
+
+  const applyPosterUpdate = (key, info) => {
+    if (!key || !info) {
+      return;
+    }
+
+    let changed = false;
+    const favorites = Array.isArray(state.favorites) ? state.favorites : [];
+    favorites.forEach((favorite) => {
+      if (favoriteKey(favorite.tmdb_id, favorite.media_type) !== key) {
+        return;
+      }
+      if (!favorite.poster_path && info.poster_path) {
+        favorite.poster_path = info.poster_path;
+        changed = true;
+      }
+      if (!favorite.poster_url && info.poster_url) {
+        favorite.poster_url = info.poster_url;
+        changed = true;
+      }
+      if (!favorite.backdrop_path && info.backdrop_path) {
+        favorite.backdrop_path = info.backdrop_path;
+        changed = true;
+      }
+    });
+
+    if (changed) {
+      scheduleFavoritesRenderUpdate();
+    }
+  };
+
+  const runPosterHydrationQueue = () => {
+    if (!TMDB_API_KEY) {
+      posterHydrationState.queue.length = 0;
+      posterHydrationState.enqueued.clear();
+      return;
+    }
+
+    const currentToken = posterHydrationState.token;
+
+    while (posterHydrationState.queue.length > 0 && posterHydrationState.running < MAX_CONCURRENT_POSTER_REQUESTS) {
+      const task = posterHydrationState.queue.shift();
+      if (!task) {
+        continue;
+      }
+
+      const { key } = task;
+      const favorites = Array.isArray(state.favorites) ? state.favorites : [];
+      const currentFavorite = favorites.find((favorite) => favoriteKey(favorite.tmdb_id, favorite.media_type) === key);
+      if (!currentFavorite) {
+        posterHydrationState.enqueued.delete(key);
+        continue;
+      }
+
+      if (resolvePosterUrl(currentFavorite, 'w342')) {
+        posterHydrationState.enqueued.delete(key);
+        continue;
+      }
+
+      posterHydrationState.running += 1;
+      const controller = new AbortController();
+      posterHydrationState.controllers.set(key, controller);
+
+      fetchPosterDetails(currentFavorite, controller.signal)
+        .then((info) => {
+          if (info) {
+            applyPosterUpdate(key, info);
+          }
+        })
+        .catch((error) => {
+          if (error && error.name !== 'AbortError') {
+            console.error('favorite_poster_hydration_error', error);
+          }
+        })
+        .finally(() => {
+          posterHydrationState.controllers.delete(key);
+          if (posterHydrationState.token !== currentToken) {
+            return;
+          }
+          posterHydrationState.running = Math.max(0, posterHydrationState.running - 1);
+          posterHydrationState.enqueued.delete(key);
+          runPosterHydrationQueue();
+        });
+    }
+  };
+
+  const schedulePosterHydration = () => {
+    if (!TMDB_API_KEY) {
+      return;
+    }
+
+    if (posterHydrationState.frameId !== null) {
+      return;
+    }
+
+    posterHydrationState.frameId = requestAnimationFrame(() => {
+      posterHydrationState.frameId = null;
+      const favorites = Array.isArray(state.favorites) ? state.favorites : [];
+      favorites.forEach((favorite) => {
+        const key = favoriteKey(favorite.tmdb_id, favorite.media_type);
+        if (!key) {
+          return;
+        }
+        if (resolvePosterUrl(favorite, 'w342')) {
+          posterHydrationState.enqueued.delete(key);
+          return;
+        }
+        if (posterHydrationState.enqueued.has(key)) {
+          return;
+        }
+        posterHydrationState.enqueued.add(key);
+        posterHydrationState.queue.push({ key, favorite });
+      });
+      runPosterHydrationQueue();
+    });
+  };
+
   const scheduleRecommendationsRefresh = (options = {}) => {
     if (!isAuthenticated) {
       return;
@@ -1413,6 +1625,7 @@
       poster_url: posterInfo.poster_url,
       backdrop_path: posterInfo.backdrop_path,
     });
+    schedulePosterHydration();
     state.recommendations = state.recommendations.filter((item) => favoriteKey(item.tmdb_id, item.media_type) !== key);
     suggestionStore.level1 = state.recommendations.slice();
     renderFavorites();
@@ -1423,6 +1636,7 @@
 
   const removeFavorite = (id, mediaType) => {
     const key = favoriteKey(id, mediaType);
+    cancelPosterHydrationForKey(key);
     const nextFavorites = state.favorites.filter((favorite) => favoriteKey(favorite.tmdb_id, favorite.media_type) !== key);
     state.favorites = nextFavorites;
     renderFavorites();
@@ -1453,6 +1667,7 @@
   };
 
   const applyPreferences = (payload) => {
+    resetPosterHydrationState();
     if (payload.genres) {
       state.genres = new Set(payload.genres.map((value) => parseInt(value, 10)).filter((value) => value > 0));
     }
@@ -1501,6 +1716,7 @@
     renderSelectedKeywords();
     renderProviders();
     renderFavorites();
+    schedulePosterHydration();
     scheduleRecommendationsRefresh({ delay: 0 });
     updateStats();
   };

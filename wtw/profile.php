@@ -142,6 +142,12 @@ if (!function_exists('wyw_fetch_favorite_posters')) {
             return [];
         }
 
+        $maxRequests = 24;
+        if (count($requests) > $maxRequests) {
+            // Skip expensive poster hydration when too many favorites require it.
+            return [];
+        }
+
         try {
             require_once __DIR__ . '/includes/tmdb.php';
         } catch (Throwable $e) {
