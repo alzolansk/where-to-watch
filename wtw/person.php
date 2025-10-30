@@ -142,7 +142,6 @@ include_once("dashboard.php")
           <button type="button" class="timeline-mode-toggle" id="timelineModeToggle" aria-pressed="false" aria-label="Ativar modo timeline imersivo">
             <span class="toggle-icon toggle-icon--grid" aria-hidden="true">📄</span>
             <span class="toggle-icon toggle-icon--timeline" aria-hidden="true">🕓</span>
-            <span class="toggle-label" id="timelineModeLabel">Modo grade</span>
           </button>
         </div>
       </div>

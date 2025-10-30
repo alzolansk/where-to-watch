@@ -275,88 +275,112 @@ body::after {
 }
 
 .timeline-heading {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 18px;
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: clamp(18px, 4vw, 48px);
+  align-items: flex-start;
+  margin-bottom: clamp(18px, 4vw, 32px);
 }
 
 .timeline-heading__text {
-  max-width: min(560px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 320px;
 }
 
 .timeline-heading__actions {
   display: flex;
+  justify-content: flex-end;
   align-items: center;
   gap: 12px;
 }
-
 .timeline-mode-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 22px;
+  position: relative;
+  display: inline-grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  padding: 6px;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.16);
-  background: rgba(255, 255, 255, 0.05);
-  color: #ffe6ff;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-weight: 700;
+  background: rgba(22, 0, 32, 0.65);
   cursor: pointer;
-  position: relative;
-  overflow: hidden;
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.42);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  transition: background .3s ease, box-shadow .3s ease, transform .3s ease;
+  transition: box-shadow .3s ease, background .3s ease;
+  min-width: 110px;
+}
+
+.timeline-mode-toggle::before {
+  content: "";
+  position: absolute;
+  top: 6px;
+  bottom: 6px;
+  left: 6px;
+  width: calc((100% - 18px) / 2);
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(255, 0, 120, 0.78), rgba(114, 0, 255, 0.6));
+  transform: translateX(0);
+  transition: transform .3s ease, background .3s ease;
+  z-index: 0;
 }
 
 .timeline-mode-toggle::after {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgba(255, 0, 120, 0.48), rgba(114, 0, 255, 0.38));
+  border-radius: 999px;
+  background: radial-gradient(circle at 50% 50%, rgba(255, 0, 140, 0.22), transparent 75%);
   opacity: 0;
   transition: opacity .3s ease;
-  z-index: -1;
+  pointer-events: none;
 }
 
 .timeline-mode-toggle:hover,
 .timeline-mode-toggle:focus-visible {
-  transform: translateY(-2px);
-  box-shadow: 0 18px 38px rgba(255, 0, 120, 0.35);
+  box-shadow: 0 18px 44px rgba(255, 0, 120, 0.35);
 }
 
-.timeline-mode-toggle[aria-pressed="true"]::after {
+.timeline-mode-toggle:hover::after,
+.timeline-mode-toggle:focus-visible::after {
   opacity: 1;
 }
 
-.timeline-mode-toggle[aria-pressed="true"] {
-  color: #fff;
+.timeline-mode-toggle:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(255, 68, 178, 0.4), 0 18px 44px rgba(255, 0, 120, 0.35);
+}
+
+.timeline-mode-toggle[aria-pressed="true"]::before {
+  transform: translateX(calc(100% + 6px));
+  background: linear-gradient(135deg, rgba(120, 0, 255, 0.82), rgba(255, 0, 150, 0.7));
 }
 
 .toggle-icon {
-  font-size: 1.2rem;
-}
-
-.toggle-label {
   position: relative;
-  padding-left: 12px;
-  font-size: .75rem;
-  letter-spacing: .16em;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  min-width: 40px;
+  border-radius: 999px;
+  font-size: 1.2rem;
+  color: rgba(255, 230, 255, 0.65);
+  transition: color .25s ease, transform .25s ease;
 }
 
-.toggle-label::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 50%;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.6);
-  transform: translateY(-50%);
+.timeline-mode-toggle[aria-pressed="false"] .toggle-icon--grid,
+.timeline-mode-toggle[aria-pressed="true"] .toggle-icon--timeline {
+  color: #fff;
+  transform: scale(1.08);
+}
+
+.timeline-mode-toggle[aria-pressed="true"] .toggle-icon--grid,
+.timeline-mode-toggle[aria-pressed="false"] .toggle-icon--timeline {
+  color: rgba(255, 230, 255, 0.5);
+  transform: scale(0.94);
 }
 
 .timeline-layout {
@@ -437,9 +461,9 @@ body::after {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0) 45%, rgba(255, 255, 255, 0.15) 90%);
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.4) 50%, rgba(255, 255, 255, 0) 100%);
   transform: translateX(-100%);
-  transition: transform .6s ease;
+  transition: transform .6s ease; 
 }
 
 #watchlistActorBtn:hover::after,

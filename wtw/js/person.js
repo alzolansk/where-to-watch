@@ -348,6 +348,48 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
+  const syncRoleFilterChips = () => {
+    if (!dom.timelineRoleFilter) return;
+    Array.from(dom.timelineRoleFilter.querySelectorAll('.filter-chip')).forEach((chip) => {
+      const role = chip.dataset.role || 'all';
+      const isActive = role === filmographyState.roleFilter;
+      chip.classList.toggle('is-active', isActive);
+      chip.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+    });
+  };
+
+  const updateTimelineRoleChips = (entries = []) => {
+    if (!dom.timelineRoleFilter) return;
+    const availableRoles = new Set();
+    entries.forEach((entry) => {
+      if (!entry || !entry.roleCategories) return;
+      entry.roleCategories.forEach((role) => {
+        if (role && role !== 'all') {
+          availableRoles.add(role);
+        }
+      });
+    });
+    let desiredFilter = filmographyState.roleFilter;
+    Array.from(dom.timelineRoleFilter.querySelectorAll('.filter-chip')).forEach((chip) => {
+      const role = chip.dataset.role || 'all';
+      if (role === 'all') {
+        chip.classList.remove('is-hidden');
+        chip.setAttribute('aria-hidden', 'false');
+        return;
+      }
+      const hasRole = availableRoles.has(role);
+      chip.classList.toggle('is-hidden', !hasRole);
+      chip.setAttribute('aria-hidden', hasRole ? 'false' : 'true');
+      if (!hasRole && desiredFilter === role) {
+        desiredFilter = 'all';
+      }
+    });
+    if (desiredFilter !== filmographyState.roleFilter) {
+      filmographyState.roleFilter = desiredFilter;
+    }
+    syncRoleFilterChips();
+  };
+
   const buildTimelineTooltip = (entry) => {
     if (!entry) return '';
     const roleLabel = pickRoleLabel(entry);
@@ -819,6 +861,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const renderTimeline = () => {
+    updateTimelineRoleChips(filmographyState.allEntries || []);
     if (!dom.timelineContent) return;
     entryDomRegistry.forEach((refs) => {
       if (refs && Array.isArray(refs.timeline)) {
@@ -1506,23 +1549,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
+
   const setupEventListeners = () => {
     if (dom.timelineRoleFilter) {
-      Array.from(dom.timelineRoleFilter.querySelectorAll('.filter-chip')).forEach((chip) => {
-        const isActive = chip.classList.contains('is-active');
-        chip.setAttribute('aria-pressed', isActive ? 'true' : 'false');
-      });
+      syncRoleFilterChips();
       dom.timelineRoleFilter.addEventListener('click', (event) => {
         const button = event.target.closest('.filter-chip');
-        if (!button) return;
+        if (!button || button.classList.contains('is-hidden')) return;
         const role = button.dataset.role || 'all';
         if (filmographyState.roleFilter === role) return;
         filmographyState.roleFilter = role;
-        Array.from(dom.timelineRoleFilter.querySelectorAll('.filter-chip')).forEach((chip) => {
-          const isActive = chip.dataset.role === role;
-          chip.classList.toggle('is-active', isActive);
-          chip.setAttribute('aria-pressed', isActive ? 'true' : 'false');
-        });
+        syncRoleFilterChips();
         renderTimeline();
       });
     }
