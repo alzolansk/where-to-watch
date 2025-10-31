@@ -538,84 +538,8 @@ if (userAccountMenu) {
         }
     });
 }
-//Carregando...
-const loadingOverlayPlacement = {
-    originalParent: null,
-    originalNextSibling: null,
-    isMountedInSection: false
-};
-
-function getLoadingOverlay() {
-    return document.getElementById('loadingOverlay') || document.getElementById('loading');
-}
-
 function getMediaSectionHost() {
     return document.querySelector('.media-section .container') || document.querySelector('.media-section');
-}
-
-function mountOverlayInMediaSection(overlay) {
-    if (!overlay) {
-        return;
-    }
-
-    const host = getMediaSectionHost();
-    if (!host) {
-        return;
-    }
-
-    if (!loadingOverlayPlacement.originalParent) {
-        loadingOverlayPlacement.originalParent = overlay.parentNode;
-        loadingOverlayPlacement.originalNextSibling = overlay.nextSibling;
-    }
-
-    if (overlay.parentNode !== host) {
-        host.appendChild(overlay);
-    }
-
-    overlay.classList.add('loading-overlay--section');
-    loadingOverlayPlacement.isMountedInSection = true;
-}
-
-function restoreOverlayPlacement(overlay) {
-    if (!overlay || !loadingOverlayPlacement.isMountedInSection) {
-        return;
-    }
-
-    overlay.classList.remove('loading-overlay--section');
-
-    const { originalParent, originalNextSibling } = loadingOverlayPlacement;
-    const targetParent = (originalParent && originalParent.isConnected) ? originalParent : document.body;
-    if (targetParent) {
-        const referenceNode = targetParent === originalParent ? (originalNextSibling || null) : null;
-        targetParent.insertBefore(overlay, referenceNode);
-    }
-
-    loadingOverlayPlacement.isMountedInSection = false;
-}
-
-function toggleLoadingOverlay(isVisible) {
-    const overlay = getLoadingOverlay();
-    if (!overlay) {
-        return;
-    }
-    overlay.classList.toggle('is-hidden', !isVisible);
-    overlay.setAttribute('aria-hidden', String(!isVisible));
-}
-
-function showLoading() {
-    const overlay = getLoadingOverlay();
-    if (overlay) {
-        mountOverlayInMediaSection(overlay);
-    }
-    toggleLoadingOverlay(true);
-}
-
-function hideLoading() {
-    const overlay = getLoadingOverlay();
-    toggleLoadingOverlay(false);
-    if (overlay) {
-        restoreOverlayPlacement(overlay);
-    }
 }
 
 function updateCarouselNav(containerId) {

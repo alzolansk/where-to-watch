@@ -169,35 +169,6 @@ $navStates = [
 
 <div id="searchResults" style="display: none;"></div>
 
-<div id="loadingOverlay" class="loading-overlay is-hidden" role="status" aria-live="polite" aria-hidden="true">
-    <div class="loading-content">
-        <div class="iris">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1036.96 1068.64">
-                <defs>
-                    <style>
-                        .fil1 {fill:#FEFEFE;}
-                        .fil0 {fill:#D80814;}
-                        .eyelid { transform-origin: center; animation: blink 1s infinite; }
-                        @keyframes blink {
-                            0%, 90%, 100% { transform: scaleY(1); }
-                            95% { transform: scaleY(0.1); }
-                        }
-                    </style>
-                </defs>
-                <g id="Camada_1">
-                    <g class="eyelid">
-                        <path class="fil0" d="M532.42 0.03c-322.51,-0.12 -481.5,242.15 -531.95,492.2 347.34,-325.33 697.1,-320.9 1036.48,2.01 -30.69,-257.9 -229.35,-497.39 -504.53,-494.21z"/>
-                    </g>
-                    <path class="fil1" d="M531.95 1068.61c-322.51,0.12 -481.5,-242.15 -531.95,-492.2 347.34,325.33 697.1,320.9 1036.49,-2.01 -30.69,257.9 -229.36,497.39 -504.53,494.21z"/>
-                    <ellipse class="fil0" cx="512.12" cy="527.36" rx="191.4" ry="191.94"/>
-                </g>
-            </svg>
-        </div>
-        <p>Carregando...</p>
-    </div>
-</div>
-
-
 <style>
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap');
    

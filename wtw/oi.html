@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Barras Futuristas → Revelar Div</title>
+<style>
+  :root{
+    --bar-h: 8px;
+    --bar-w: 38vmin;
+    --bar-glow: #11f7ff;
+    --bar-core: #6cf9ff;
+    --accent: #ff2e72;
+    --bg: #0a0d12;
+    --t-enter: 800ms;   /* entra e encontra */
+    --t-spin: 650ms;    /* gira 360° */
+    --t-split: 700ms;   /* separa e revela conteúdo */
+    --delay-reveal: calc(var(--t-enter) + var(--t-spin) * 0.85);
+    --radius: 16px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important }
+  }
+
+  html,body{
+    height:100%;
+    background: radial-gradient(1200px 600px at 50% -10%, #101626 0%, #0b0f18 40%, var(--bg) 100%);
+    color:#cfe6ff;
+    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter, "Helvetica Neue", Arial;
+    letter-spacing:.2px;
+  }
+
+  .stage{
+    height:100%;
+    display:grid;
+    place-items:center;
+    overflow:hidden;
+    position:relative;
+    isolation:isolate;
+  }
+
+  /* leve “scanlines/ruído” */
+  .stage::after{
+    content:"";
+    position:absolute; inset:0;
+    background: repeating-linear-gradient(transparent 0 2px, rgba(255,255,255,.02) 2px 3px);
+    mix-blend-mode: soft-light;
+    pointer-events:none;
+  }
+
+  .bars{
+    position:absolute; inset:0;
+    display:grid; place-items:center;
+    z-index:2;
+  }
+
+  .bar{
+    position:absolute;
+    height:var(--bar-h);
+    width:var(--bar-w);
+    border-radius: 999px;
+    background: linear-gradient(90deg, transparent, var(--bar-core), transparent);
+    box-shadow:
+      0 0 10px var(--bar-glow),
+      0 0 30px color-mix(in oklab, var(--bar-glow), transparent 40%),
+      0 0 80px color-mix(in oklab, var(--bar-glow), transparent 55%);
+    filter: saturate(1.1);
+  }
+  .bar::before{
+    content:"";
+    position:absolute; inset:-8px;
+    border-radius:inherit;
+    background: radial-gradient(closest-side, color-mix(in oklab, var(--bar-core), transparent 55%) 30%, transparent 70%);
+    opacity:.6; filter: blur(6px);
+  }
+
+  /* posições iniciais (fora da tela, horizontal) */
+  .bar.left   { transform: translateX(-55vw) rotate(0deg); }
+  .bar.right  { transform: translateX( 55vw) rotate(0deg); }
+
+  /* timeline: entrar → girar → separar */
+  .bar.left{
+    animation:
+      meet-left var(--t-enter) cubic-bezier(.22,.95,.48,1) forwards,
+      spin      var(--t-spin)  linear var(--t-enter) forwards,
+      split-l   var(--t-split) cubic-bezier(.2,.7,.2,1) calc(var(--t-enter) + var(--t-spin)) forwards;
+  }
+  .bar.right{
+    animation:
+      meet-right var(--t-enter) cubic-bezier(.22,.95,.48,1) forwards,
+      spin       var(--t-spin)  linear var(--t-enter) forwards,
+      split-r    var(--t-split) cubic-bezier(.2,.7,.2,1) calc(var(--t-enter) + var(--t-spin)) forwards;
+  }
+
+  @keyframes meet-left  { to { transform: translateX(0) } }
+  @keyframes meet-right { to { transform: translateX(0) } }
+
+  @keyframes spin { to { transform: rotate(360deg) } }
+
+  /* separam horizontalmente e “somem” um pouco */
+  @keyframes split-l {
+    from { transform: rotate(360deg) translateX(0);   opacity:1 }
+    to   { transform: translateX(-60vw);             opacity:.25 }
+  }
+  @keyframes split-r {
+    from { transform: rotate(360deg) translateX(0);   opacity:1 }
+    to   { transform: translateX( 60vw);              opacity:.25 }
+  }
+
+  /* Conteúdo revelado */
+  .reveal{
+    position:relative;
+    z-index:1;
+    width:min(880px, 88vw);
+    border-radius: var(--radius);
+    padding: 28px;
+    background:
+      linear-gradient( to bottom right, rgba(255,255,255,.06), rgba(255,255,255,.02) ),
+      linear-gradient( to right, color-mix(in oklab, var(--accent), transparent 70%), transparent );
+    border: 1px solid rgba(255,255,255,.08);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.08),
+      0 10px 30px rgba(0,0,0,.45),
+      0 0 60px color-mix(in oklab, var(--accent), transparent 80%);
+    transform-origin: center;
+    transform: scaleX(0);
+    opacity:0;
+    animation: revealX var(--t-split) cubic-bezier(.22,.95,.48,1) var(--delay-reveal) forwards;
+    backdrop-filter: blur(8px) saturate(120%);
+  }
+
+  @keyframes revealX {
+    50%  { opacity:.9 }
+    100% { transform: scaleX(1); opacity:1 }
+  }
+
+  .reveal h2{
+    margin: 0 0 8px;
+    font-weight:700; letter-spacing:.4px;
+  }
+  .reveal p{
+    margin:0; opacity:.9; line-height:1.55;
+  }
+
+  /* Botão para “replay” (opcional) */
+  .controls{
+    position:fixed; inset:auto 16px 16px auto; z-index:3;
+  }
+  button{
+    background: #141a24; color:#e8f3ff;
+    border:1px solid rgba(255,255,255,.12);
+    padding:10px 14px; border-radius:10px; cursor:pointer;
+    transition: transform .15s ease;
+  }
+  button:hover{ transform: translateY(-1px) }
+</style>
+</head>
+<body>
+  <div class="stage">
+    <div class="bars" id="bars">
+      <div class="bar left"></div>
+      <div class="bar right"></div>
+    </div>
+
+    <section class="reveal" id="panel">
+      <h2>Interface Revelada</h2>
+      <p>
+        Aqui entra a sua div de conteúdo — cards, botões, texto, o que quiser.
+        O efeito é: <em>encontrar → girar 360° → separar</em> e revelar.
+      </p>
+    </section>
+
+    <div class="controls">
+      <button id="replay">Repetir animação</button>
+    </div>
+  </div>
+
+<script>
+  // “Replay” simples: clona os nós para resetar as animações CSS
+  const replayBtn = document.getElementById('replay');
+  replayBtn.addEventListener('click', () => {
+    const bars = document.getElementById('bars');
+    const panel = document.getElementById('panel');
+    const barsClone = bars.cloneNode(true);
+    const panelClone = panel.cloneNode(true);
+    bars.replaceWith(barsClone);
+    panel.replaceWith(panelClone);
+    // Reata o listener no novo botão (DOM foi recriado)
+    document.getElementById('replay').addEventListener('click', () => location.reload());
+  });
+</script>
+</body>
+</html>

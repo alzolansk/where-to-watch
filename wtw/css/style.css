@@ -56,68 +56,12 @@ body{
     background-color: #0a0b11;                 /* fallback */
     background-attachment: fixed, fixed, scroll;
 }
-/*Loading*/
-
-.loading-overlay {
-    position: fixed;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.72);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 10;
-    padding: 0 24px;
-}
-
-.loading-overlay.is-hidden {
-    display: none !important;
-}
-
-.loading-content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 16px;
-}
-
-.loading-overlay--section {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    border-radius: 24px;
-    background:
-        linear-gradient(160deg, rgba(18,20,28,.60), rgba(12,14,22,.60)); /* base */
-    backdrop-filter: blur(26px) saturate(180%);
-    -webkit-backdrop-filter: blur(26px) saturate(180%);    
-}
-
-.loading-overlay--section::before{
-    content:"";
-    position:absolute; inset:-1px -1px auto -1px; height:60%;
-    background:
-    radial-gradient(120% 140% at 20% -10%, rgba(255, 255, 255, 0.116) 0%, rgba(255,255,255,0) 55%),
-    radial-gradient(120% 140% at 100% -20%, rgba(150, 150, 150, 0.16) 0%, rgba(255,255,255,0) 60%);
-    pointer-events:none; z-index:0;
-    mix-blend-mode: screen;
-    border-radius: 24px;
-
-}
 
 .media-section,
 .media-section .container {
     position: relative;
 }
 
-.media-section.is-loading-rows .container {
-    min-height: clamp(260px, 50vh, 520px);
-}
-
-.media-section .container > .loading-overlay--section {
-    border-radius: 28px;
-}
 
 .spinner {
     width: 48px;
@@ -155,13 +99,6 @@ body{
 }
 
 */ 
-.loading-overlay p {
-    margin-top: 10px;
-    color: white;
-    font-size: 18px;
-    font-weight: bold;
-    padding-left: 10px;
-}
 
 
 .iris ellipse {

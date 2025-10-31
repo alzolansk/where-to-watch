@@ -8,8 +8,6 @@ include_once("dashboard.php");
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Where You Watch - Linha do tempo do artista</title>
   <link rel="stylesheet" href="css/brand.css">
-  <link rel="stylesheet" href="css/movie.css">
-  <link rel="stylesheet" href="css/person.css">
   <link rel="stylesheet" href="css/timeline.css">
 </head>
 <body class="has-fixed-header">
@@ -66,20 +64,6 @@ include_once("dashboard.php");
             <a id="timelineProfileLink" class="action-btn action-btn--primary" href="#">Ver perfil completo</a>
           </div>
         </div>
-        <dl class="timeline-page__stats timeline-page__stats--inline" aria-label="Estatisticas rapidas do artista">
-          <div class="timeline-page__stat">
-            <dt class="visually-hidden">Produções</dt>
-            <dd id="timelineStatWorks">-</dd>
-          </div>
-          <div class="timeline-page__stat">
-            <dt class="visually-hidden">Nota média TMDB</dt>
-            <dd id="timelineStatRating">-</dd>
-          </div>
-          <div class="timeline-page__stat">
-            <dt class="visually-hidden">Tempo de carreira</dt>
-            <dd id="timelineStatCareer">-</dd>
-          </div>
-        </dl>
       </header>
 
       <div class="timeline-page__filters" id="timelineRoleFilter" role="radiogroup" aria-label="Filtrar por papel">
