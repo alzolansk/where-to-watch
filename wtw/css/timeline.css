@@ -3,6 +3,7 @@
   --timeline-year-track-height: 360px;
   --timeline-page-line-offset: clamp(38px, 5vw, 60px);
   --timeline-page-orb-size: clamp(18px, 2.6vw, 24px);
+  --wy-gradient: linear-gradient(180deg, #1a001a 0%, #2a0018 50%, #47001a 100%);
 }
 
 /* --- Sizing base: evita que padding/borda somem largura além do pai --- */
@@ -12,6 +13,22 @@ html { box-sizing: border-box; }
 /* Nunca queremos horizontal overflow global */
 html, body { overflow-x: hidden; }
 
+body::before,
+body::after {
+  content: "";
+  position: fixed;
+  inset: -20% -10% auto;
+  height: 60vh;
+  background: radial-gradient(45% 60% at 20% 20%, rgba(255, 0, 120, 0.18), transparent 65%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+body::after {
+  inset: auto -15% -10% -10%;
+  height: 70vh;
+  background: radial-gradient(50% 50% at 70% 80%, rgba(60, 0, 90, 0.28), transparent 70%);
+}
 
 .timeline-page {
   padding: clamp(20px, 3vh, 80px) clamp(16px, 6vw, 64px) clamp(64px, 10vh, 120px);
@@ -61,9 +78,10 @@ html, body { overflow-x: hidden; }
   display: grid;
   gap: clamp(12px, 1vw, 25px);
   position: relative;
-  overflow: clip; 
-  contain: layout paint; 
+  overflow: clip; /* melhor que hidden p/ layout moderno */
+  contain: layout paint; /* isola cálculo de layout/paint do painel */
 }
+
 
 .timeline-page__content::before {
   content: "";
@@ -646,4 +664,38 @@ section.timeline-page__years::before {
     flex: 1;
     justify-content: center;
   }
+}
+/* --- Filhos diretos do painel nunca podem exceder 100% --- */
+.timeline-page__header,
+.timeline-page__filters,
+.timeline-page__controls,
+section.timeline-page__years {
+  max-width: 100%;
+  min-width: 0;       
+  overflow: clip;     
+  position: relative; 
+}
+
+.timeline-year-block {
+  max-width: 100%;
+  overflow: clip;     /* evita “sangrar” para fora do painel */
+  contain: layout paint;
+}
+
+.timeline-year-track {
+  max-width: 100%;
+  overflow-x: auto;   /* ok ter scroll interno, mas sem crescer o painel */
+}
+
+.timeline-page__year-nav {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.timeline-page__header {
+  min-width: 0;
+}
+
+section.timeline-page__years::before {
+  pointer-events: none;
 }
