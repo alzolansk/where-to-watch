@@ -96,8 +96,11 @@ const dom = {
   roleFilter: document.getElementById('timelineRoleFilter'),
   compactBtn: document.getElementById('toggleCompactYearsBtn'),
   yearNav: document.getElementById('timelineYearNav'),
-  yearsContainer: document.getElementById('timelineYearsContainer')
+  yearsContainer: document.getElementById('timelineYearsContainer'),
+  yearsContent: document.getElementById('timelineYearsContent')
 };
+
+const getYearsHost = () => dom.yearsContent || dom.yearsContainer;
 
 const state = {
   entries: [],
@@ -352,7 +355,8 @@ const observeProviderCards = () => {
   if (providerObserver) {
     providerObserver.disconnect();
   }
-  const cards = dom.yearsContainer ? Array.from(dom.yearsContainer.querySelectorAll('.timeline-card')) : [];
+  const host = getYearsHost();
+  const cards = host ? Array.from(host.querySelectorAll('.timeline-card')) : [];
   if (!cards.length) return;
   providerObserver = new IntersectionObserver((entries) => {
     entries.forEach((entryItem) => {
@@ -394,7 +398,8 @@ const applyCollapsedState = (section, collapsed) => {
 };
 
 const refreshCollapsedStates = () => {
-  const sections = dom.yearsContainer ? Array.from(dom.yearsContainer.querySelectorAll('.timeline-year-block')) : [];
+  const host = getYearsHost();
+  const sections = host ? Array.from(host.querySelectorAll('.timeline-year-block')) : [];
   sections.forEach((section) => {
     const year = Number(section.dataset.year);
     const collapsed = state.collapsedYears.has(year);
@@ -557,8 +562,9 @@ const updateRoleChips = () => {
 };
 
 const buildTimeline = () => {
-  if (!dom.yearsContainer) return;
-  dom.yearsContainer.innerHTML = '';
+  const host = getYearsHost();
+  if (!host) return;
+  host.innerHTML = '';
   entryRegistry.clear();
   const visibleYears = [];
   state.sortedYears.forEach((year) => {
@@ -680,7 +686,7 @@ const buildTimeline = () => {
 
     section.appendChild(header);
     section.appendChild(track);
-    dom.yearsContainer.appendChild(section);
+    host.appendChild(section);
   });
 
   dom.content?.setAttribute('data-empty', visibleYears.length ? 'false' : 'true');

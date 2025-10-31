@@ -95,7 +95,9 @@ include_once("dashboard.php");
         <nav id="timelineYearNav" class="timeline-page__year-nav" aria-label="Navegar por ano"></nav>
       </div>
 
-      <section id="timelineYearsContainer" class="timeline-page__years" aria-label="Linha do tempo do artista"></section>
+      <section id="timelineYearsContainer" class="timeline-page__years" aria-label="Linha do tempo do artista">
+        <div id="timelineYearsContent" class="timeline-content"></div>
+      </section>
     </section>
   </main>
 

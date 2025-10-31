@@ -36,14 +36,12 @@ a {
 body {
     background: linear-gradient(200deg, rgba(206, 6, 6, 0.336), rgba(42, 75, 146, 0.7)),
     radial-gradient(circle at 50% 40%,rgba(150, 3, 25, 0.507),transparent 70%);
-;
     color: var(--color-text);
     background-repeat:no-repeat; background-size: 160% 160%, 160% 160%, cover;
     font-family: var(--font-body);
     min-height: 100vh;
     overflow-x: hidden;
     background-color: #0a0b11;         
-
     box-shadow: var(--shadow, 0 10px 30px rgba(0, 0, 0, .35));
     background-attachment: fixed, fixed, scroll;
 }
