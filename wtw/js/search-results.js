@@ -96,7 +96,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return providerIds;
     };
 
-    const fetchAvailabilityForItems = async (items) => {
+    const fetchAvailabilityForItems = async (items, { signal } = {}) => {
         const availability = new Map();
         if (!items.length) {
             return availability;
@@ -132,13 +132,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const runWorker = async () => {
             while (index < queue.length) {
+                if (signal?.aborted) {
+                    return;
+                }
                 const currentIndex = index;
                 index += 1;
                 const { key, id, mediaType } = queue[currentIndex];
                 try {
                     const url = new URL(tmdbEndpoint(`/${mediaType}/${id}/watch/providers`));
                     url.search = new URLSearchParams({ api_key: apiKey });
-                    const response = await fetch(url.toString());
+                    const response = await fetch(url.toString(), { signal });
                     if (!response.ok) {
                         console.error(`Falha ao carregar provedores para ${mediaType} ${id}: ${response.status}`);
                         availabilityCache.set(key, []);
@@ -153,6 +156,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         availability.set(key, providers);
                     }
                 } catch (error) {
+                    if (error.name === 'AbortError') {
+                        return;
+                    }
                     console.error('Erro ao consultar provedores:', error);
                     availabilityCache.set(key, []);
                 }
@@ -164,17 +170,16 @@ document.addEventListener('DOMContentLoaded', () => {
         return availability;
     };
 
-    const filterItemsByAvailability = async (items) => {
+    const filterItemsByAvailability = async (items, { signal } = {}) => {
         if (!items.length) {
-            cache.availability = new Map();
-            return [];
+            return { items: [], availability: new Map() };
         }
-        const availability = await fetchAvailabilityForItems(items);
-        cache.availability = availability;
-        return items.filter((item) => {
+        const availability = await fetchAvailabilityForItems(items, { signal });
+        const filteredItems = items.filter((item) => {
             const key = buildAvailabilityKey(item);
             return key && availability.has(key);
         });
+        return { items: filteredItems, availability };
     };
 
     const hasCustomActiveChip = (section) => section.querySelector('.search-chip.is-active:not([data-default-active])') !== null;
@@ -336,9 +341,11 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     let trendingCache = null;
+    let resultsRequestToken = 0;
+    let searchResultsController = null;
     const FUZZY_SIMILARITY_THRESHOLD = 0.35;
 
-    const fetchTrendingCandidates = async () => {
+    const fetchTrendingCandidates = async ({ signal } = {}) => {
         if (trendingCache) {
             return trendingCache;
         }
@@ -346,13 +353,22 @@ document.addEventListener('DOMContentLoaded', () => {
             tmdbEndpoint('/trending/movie/week'),
             tmdbEndpoint('/trending/tv/week'),
         ];
-        const responses = await Promise.all(endpoints.map((endpoint) => {
+        const responses = await Promise.all(endpoints.map(async (endpoint) => {
             const url = new URL(endpoint);
             url.searchParams.set('api_key', apiKey);
             url.searchParams.set('language', 'pt-BR');
-            return fetch(url)
-                .then((response) => (response.ok ? response.json() : { results: [] }))
-                .catch(() => ({ results: [] }));
+            try {
+                const response = await fetch(url, { signal });
+                if (!response.ok) {
+                    return { results: [] };
+                }
+                return await response.json();
+            } catch (error) {
+                if (error.name === 'AbortError') {
+                    throw error;
+                }
+                return { results: [] };
+            }
         }));
 
         const combined = [];
@@ -371,7 +387,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return trendingCache;
     };
 
-    const fetchMultiSearch = async (query, pages = [1]) => {
+    const fetchMultiSearch = async (query, pages = [1], { signal } = {}) => {
         const trimmed = (query || '').trim();
         if (!trimmed) {
             return [];
@@ -383,9 +399,14 @@ document.addEventListener('DOMContentLoaded', () => {
             url.searchParams.set('include_adult', 'false');
             url.searchParams.set('page', page.toString());
             url.searchParams.set('query', trimmed);
-            return fetch(url)
+            return fetch(url, { signal })
                 .then((response) => (response.ok ? response.json() : { results: [] }))
-                .catch(() => ({ results: [] }));
+                .catch((error) => {
+                    if (error.name === 'AbortError') {
+                        throw error;
+                    }
+                    return { results: [] };
+                });
         });
         const responses = await Promise.all(promises);
         const collected = [];
@@ -400,8 +421,8 @@ document.addEventListener('DOMContentLoaded', () => {
         return dedupeItems(collected);
     };
 
-    const collectCandidatesWithFallback = async (query) => {
-        const primary = await fetchMultiSearch(query, [1, 2, 3, 4, 5]);
+    const collectCandidatesWithFallback = async (query, { signal } = {}) => {
+        const primary = await fetchMultiSearch(query, [1, 2, 3, 4, 5], { signal });
         if (primary.length) {
             return { items: primary.slice(0, 80), source: 'primary' };
         }
@@ -410,7 +431,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (variants.length) {
             const fallback = [];
             for (const variant of variants) {
-                const entries = await fetchMultiSearch(variant, [1, 2]);
+                if (signal?.aborted) {
+                    break;
+                }
+                const entries = await fetchMultiSearch(variant, [1, 2], { signal });
                 fallback.push(...entries);
             }
             const deduped = dedupeItems(fallback);
@@ -419,7 +443,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        const trending = await fetchTrendingCandidates();
+        const trending = await fetchTrendingCandidates({ signal });
         return { items: trending.slice(0, 60), source: 'trending' };
     };
 
@@ -842,9 +866,18 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const fetchResults = async (query) => {
+        if (searchResultsController) {
+            searchResultsController.abort();
+        }
+        const controller = new AbortController();
+        searchResultsController = controller;
+        const { signal } = controller;
+        const requestToken = ++resultsRequestToken;
+
         state.query = query;
         state.fuzzyActive = false;
         cache.availability = new Map();
+
         if (!query) {
             cache.rawResults = [];
             updateCount(0);
@@ -855,14 +888,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 resultsSection.setAttribute('aria-busy', 'false');
             }
             toggleEmptyState(true);
-            setEmptyStateContent('Digite algo para pesquisar', 'Use a busca no topo para encontrar filmes e s\u00E9ries.');
+            setEmptyStateContent('Digite algo para pesquisar', 'Use a busca no topo para encontrar filmes e séries.');
+            searchResultsController = null;
             return;
         }
 
         showLoader();
 
         try {
-            const { items: candidates, source } = await collectCandidatesWithFallback(query);
+            const { items: candidates, source } = await collectCandidatesWithFallback(query, { signal });
+            if (requestToken !== resultsRequestToken) {
+                return;
+            }
             state.fuzzyActive = source !== 'primary';
 
             const normalizedQuery = normalizeText(query);
@@ -892,12 +929,16 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!preparedCandidates.length) {
                 cache.rawResults = [];
                 if (state.fuzzyActive) {
-                    setEmptyStateContent('Nenhum t\u00EDtulo encontrado', 'Tente ajustar a grafia ou experimentar outras palavras-chave.');
+                    setEmptyStateContent('Nenhum título encontrado', 'Tente ajustar a grafia ou experimentar outras palavras-chave.');
                 } else {
-                    setEmptyStateContent('Nenhum provedor encontrado', 'Nenhum servi\u00E7o de streaming no Brasil oferece este t\u00EDtulo no momento.');
+                    setEmptyStateContent('Nenhum provedor encontrado', 'Nenhum serviço de streaming no Brasil oferece este título no momento.');
                 }
             } else {
-                const availableItems = await filterItemsByAvailability(preparedCandidates);
+                const { items: availableItems, availability } = await filterItemsByAvailability(preparedCandidates, { signal });
+                if (requestToken !== resultsRequestToken) {
+                    return;
+                }
+                cache.availability = availability;
                 const scoredItems = applyRelevanceScores(availableItems, query);
                 cache.rawResults = state.fuzzyActive
                     ? scoredItems.filter((item) => (item._wtwFuzzyScore || 0) >= FUZZY_SIMILARITY_THRESHOLD)
@@ -906,31 +947,38 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!cache.rawResults.length) {
                     setEmptyStateContent(
                         state.fuzzyActive
-                            ? 'Nenhum t\u00EDtulo encontrado'
+                            ? 'Nenhum título encontrado'
                             : 'Nenhum provedor encontrado',
                         state.fuzzyActive
-                            ? 'Nenhum servi\u00E7o de streaming no Brasil oferece este t\u00EDtulo no momento.'
-                            : 'Nenhum servi\u00E7o de streaming no Brasil oferece este t\u00EDtulo no momento.',
+                            ? 'Nenhum serviço de streaming no Brasil oferece este título no momento.'
+                            : 'Nenhum serviço de streaming no Brasil oferece este título no momento.',
                     );
                 } else if (state.fuzzyActive) {
-                    setEmptyStateContent('Resultados da busca', 'Mostrando t\u00EDtulos encontrados para sua pesquisa.');
+                    setEmptyStateContent('Resultados da busca', 'Mostrando títulos encontrados para sua pesquisa.');
                 } else {
                     setEmptyStateContent('Nenhum resultado encontrado', 'Tente ajustar os filtros ou realizar uma nova pesquisa.');
                 }
             }
         } catch (error) {
+            if (error.name === 'AbortError' || requestToken !== resultsRequestToken) {
+                return;
+            }
             console.error('Erro ao carregar resultados:', error);
             cache.rawResults = [];
             cache.availability = new Map();
             resultsGrid.hidden = true;
             toggleEmptyState(true);
-            setEmptyStateContent('Algo deu errado', 'N\u00E3o foi poss\u00EDvel carregar os resultados agora. Tente novamente em instantes.');
+            setEmptyStateContent('Algo deu errado', 'Não foi possível carregar os resultados agora. Tente novamente em instantes.');
         } finally {
-            hideLoader();
-            applyFilters();
+            if (requestToken === resultsRequestToken) {
+                hideLoader();
+                applyFilters();
+                if (searchResultsController === controller) {
+                    searchResultsController = null;
+                }
+            }
         }
     };
-
     const updateActiveMedia = (value) => {
         state.media = value;
         toggleActiveChip(mediaButtons, value, 'data-media-filter');

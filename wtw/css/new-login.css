@@ -24,6 +24,12 @@
   gap: 12px;
 }
 
+.register-form .error {
+  color: var(--brand-red);
+  font-size: 0.875rem;
+  margin-top: 4px;
+}
+
 .register-form .login-primary {
   margin-top: 12px;
 }

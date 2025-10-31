@@ -29,9 +29,9 @@
     border-radius: clamp(26px, 4vw, 38px);
     background:
         radial-gradient(140% 120% at 8% -20%, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0) 55%),
-        linear-gradient(140deg, rgba(71, 9, 29, 0.9), rgba(13, 5, 29, 0.9));
+        linear-gradient(140deg, rgba(71, 9, 29, 0.9), rgba(95, 23, 23, 0.9));
     border: 1px solid rgba(255, 255, 255, 0.06);
-    box-shadow: 0 35px 60px rgba(4, 6, 18, 0.55);
+    box-shadow: 0 35px 60px rgba(4, 6, 18, 0.123);
     overflow: hidden;
 }
 
@@ -92,8 +92,8 @@
     margin-top: clamp(26px, 3vw, 38px);
     padding: clamp(10px, 2vw, 16px);
     border-radius: clamp(18px, 3vw, 28px);
-    background: rgba(12, 13, 20, 0.55);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.05));
+    border: 0.3px solid rgba(255, 255, 255, 0.18);
     box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02), 0 18px 36px rgba(5, 7, 16, 0.45);
 }
 
@@ -130,7 +130,7 @@
     overflow-x: auto;
     padding: 4px;
     scrollbar-width: thin;
-    scrollbar-color: rgba(255, 255, 255, 0.24) rgba(17, 14, 26, 0.45);
+    scrollbar-color: rgba(255, 255, 255, 0.24) rgba(17, 14, 26, 0.082);
     flex: 1 1 auto;
 }
 

@@ -183,9 +183,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let trendingCache = null;
     let lastRequestToken = 0;
+    let searchController = null;
     const FUZZY_SIMILARITY_THRESHOLD = 0.35;
 
-    const fetchTrendingCandidates = async () => {
+    const fetchTrendingCandidates = async ({ signal } = {}) => {
         if (trendingCache) {
             return trendingCache;
         }
@@ -193,13 +194,22 @@ document.addEventListener('DOMContentLoaded', () => {
             tmdbEndpoint('/trending/movie/week'),
             tmdbEndpoint('/trending/tv/week'),
         ];
-        const responses = await Promise.all(endpoints.map((endpoint) => {
+        const responses = await Promise.all(endpoints.map(async (endpoint) => {
             const url = new URL(endpoint);
             url.searchParams.set('api_key', apiKey);
             url.searchParams.set('language', 'pt-BR');
-            return fetch(url)
-                .then((response) => (response.ok ? response.json() : { results: [] }))
-                .catch(() => ({ results: [] }));
+            try {
+                const response = await fetch(url, { signal });
+                if (!response.ok) {
+                    return { results: [] };
+                }
+                return await response.json();
+            } catch (error) {
+                if (error.name === 'AbortError') {
+                    throw error;
+                }
+                return { results: [] };
+            }
         }));
         const combined = [];
         responses.forEach((payload, index) => {
@@ -216,7 +226,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return trendingCache;
     };
 
-    const fetchMultiSearch = async (query, page = 1) => {
+    const fetchMultiSearch = async (query, page = 1, { signal } = {}) => {
         const trimmed = (query || '').trim();
         if (!trimmed) {
             return [];
@@ -228,7 +238,7 @@ document.addEventListener('DOMContentLoaded', () => {
         url.searchParams.set('page', page.toString());
         url.searchParams.set('query', trimmed);
         try {
-            const response = await fetch(url);
+            const response = await fetch(url, { signal });
             if (!response.ok) {
                 return [];
             }
@@ -237,13 +247,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 (payload.results || []).filter((item) => item.media_type === 'movie' || item.media_type === 'tv'),
             );
         } catch (error) {
+            if (error.name === 'AbortError') {
+                throw error;
+            }
             console.error('Erro ao buscar dados TMDB:', error);
             return [];
         }
     };
 
-    const collectCandidatesWithFallback = async (query) => {
-        const primary = await fetchMultiSearch(query, 1);
+    const collectCandidatesWithFallback = async (query, { signal } = {}) => {
+        const primary = await fetchMultiSearch(query, 1, { signal });
         if (primary.length) {
             return { items: primary, source: 'primary' };
         }
@@ -252,7 +265,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (variants.length) {
             const aggregated = [];
             for (const variant of variants.slice(0, 3)) {
-                const entries = await fetchMultiSearch(variant, 1);
+                if (signal?.aborted) {
+                    break;
+                }
+                const entries = await fetchMultiSearch(variant, 1, { signal });
                 aggregated.push(...entries);
             }
             const deduped = dedupeItems(aggregated);
@@ -261,7 +277,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        const trending = await fetchTrendingCandidates();
+        const trending = await fetchTrendingCandidates({ signal });
         return { items: trending, source: 'trending' };
     };
 
@@ -420,6 +436,32 @@ document.addEventListener('DOMContentLoaded', () => {
         resultsContainer.style.display = 'block';
     };
 
+    const setDropdownLoading = (isLoading) => {
+        if (!dropdownEnabled || !resultsContainer) {
+            return;
+        }
+        resultsContainer.classList.toggle('is-loading', Boolean(isLoading));
+        if (isLoading) {
+            resultsContainer.setAttribute('data-loading', 'true');
+            resultsContainer.setAttribute('aria-busy', 'true');
+        } else {
+            resultsContainer.removeAttribute('data-loading');
+            resultsContainer.removeAttribute('aria-busy');
+        }
+    };
+
+    const showLoadingIndicator = () => {
+        if (!dropdownEnabled || !resultsContainer) {
+            return;
+        }
+        resultsContainer.innerHTML = '';
+        const loading = document.createElement('p');
+        loading.className = 'search-loading';
+        loading.textContent = 'Carregando...';
+        resultsContainer.appendChild(loading);
+        resultsContainer.style.display = 'block';
+    };
+
     if (clearButton) {
         clearButton.addEventListener('click', () => {
             searchInput.value = '';
@@ -447,8 +489,16 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        if (searchController) {
+            searchController.abort();
+        }
+        const controller = new AbortController();
+        searchController = controller;
+
         if (query.length === 0) {
             lastRequestToken += 1;
+            searchController = null;
+            setDropdownLoading(false);
             resultsContainer.innerHTML = '';
             resultsContainer.style.display = 'none';
             renderViewAllAction('');
@@ -456,10 +506,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const requestToken = ++lastRequestToken;
-        resultsContainer.innerHTML = '';
+        setDropdownLoading(true);
+        showLoadingIndicator();
+        renderViewAllAction('');
 
         try {
-            const { items: candidates, source } = await collectCandidatesWithFallback(query);
+            const { items: candidates, source } = await collectCandidatesWithFallback(query, { signal: controller.signal });
             if (requestToken !== lastRequestToken) {
                 return;
             }
@@ -487,8 +539,19 @@ document.addEventListener('DOMContentLoaded', () => {
             if (requestToken !== lastRequestToken) {
                 return;
             }
+            if (error.name === 'AbortError') {
+                return;
+            }
             console.error('Erro:', error);
             showEmptyState('Nao foi possivel carregar os resultados agora.');
+        } finally {
+            if (requestToken !== lastRequestToken) {
+                return;
+            }
+            setDropdownLoading(false);
+            if (searchController === controller) {
+                searchController = null;
+            }
         }
     });
 

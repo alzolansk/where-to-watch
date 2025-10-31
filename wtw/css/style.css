@@ -24,7 +24,7 @@
 }
 
 :root{
-    --bg0:#0a0b11; --bg1:#07070d; --bg2:#14070b;
+    --bg0:#121a2e; --bg1:#101737; --bg2:#1b1336;
     --red: #e11d48; /* rosa/vermelho WYWatch */
     --blue: #3b82f6;
     --glass: 16,18,28;      /* base rgb for glass panels */
@@ -49,7 +49,7 @@
 }
 
 body{
-    background: linear-gradient(140deg, rgba(167, 23, 23, 0.22), rgba(35, 38, 71, 0.7));
+    background: linear-gradient(140deg, rgba(206, 6, 6, 0.336), rgba(42, 75, 146, 0.7));
     border: 1px solid rgba(255, 255, 255, 0.06);
     box-shadow: var(--shadow, 0 10px 30px rgba(0, 0, 0, .35));
     background-repeat:no-repeat; background-size: 160% 160%, 160% 160%, cover;

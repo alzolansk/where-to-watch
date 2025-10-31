@@ -144,7 +144,7 @@ if (isset($_POST['submit'])) {
                     <div class="input-group">
                         <label for="senha">Senha</label>
                         <div class="password-field">
-                            <input type="password" name="senha" id="senha" class="input-control" placeholder="Crie uma senha segura" required>
+                            <input type="password" name="senha" id="senha" class="input-control" placeholder="Crie uma senha segura" aria-describedby="passwordError" required>
                             <button type="button" class="password-toggle" data-target="senha" aria-label="Mostrar senha">
                                 <svg class="icon-eye icon-eye-show" viewBox="0 0 24 24" aria-hidden="true">
                                     <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"></path>
@@ -163,7 +163,7 @@ if (isset($_POST['submit'])) {
                     <div class="input-group">
                         <label for="confirma_senha">Confirme a senha</label>
                         <div class="password-field">
-                            <input type="password" name="confirmasenha" id="confirma_senha" class="input-control" placeholder="Repita sua senha" required>
+                            <input type="password" name="confirmasenha" id="confirma_senha" class="input-control" placeholder="Repita sua senha" aria-describedby="passwordError" required>
                             <button type="button" class="password-toggle" data-target="confirma_senha" aria-label="Mostrar senha">
                                 <svg class="icon-eye icon-eye-show" viewBox="0 0 24 24" aria-hidden="true">
                                     <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"></path>
@@ -177,6 +177,7 @@ if (isset($_POST['submit'])) {
                                 </svg>
                             </button>
                         </div>
+                        <p id="passwordError" role="alert" aria-live="polite" class="error" hidden></p>
                     </div>
 
                     <button type="submit" value="Sign in" name="submit" id="submit" class="login-primary">Cadastrar</button>
@@ -202,6 +203,7 @@ if (isset($_POST['submit'])) {
         </footer>
     </div>
 
+    <script src="js/script.js"></script>
     <script>
         const loginInvalidDialog = document.getElementById('loginInvalid');
         const errorMessageElement = document.querySelector('.dialog-message');

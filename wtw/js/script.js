@@ -2,21 +2,131 @@ const buttonClose = document.getElementById("close-trailer");
 const trailerDialog = document.getElementById('dialog');
 const trailerFrame = document.getElementById('trailerFrame');
 
-function mudaFoto (foto){
-   document.getElementById('trailer').src = foto
+const PASSWORD_MIN_LENGTH = 8;
+const PASSWORD_LETTER_REGEX = /[A-Za-z]/;
+const PASSWORD_DIGIT_REGEX = /\d/;
+
+function mudaFoto(foto) {
+    document.getElementById('trailer').src = foto;
 }
 
-function senhaError (senha){
-   document.getElementById('senha')
-   document.getElementById('confirma_senha')
+function getPasswordElements() {
+    const passwordInput = document.querySelector('#password') || document.querySelector('#senha');
+    const confirmInput = document.querySelector('#confirmPassword') || document.querySelector('#confirma_senha');
+    const errorElement = document.getElementById('passwordError');
 
-   senha = 'senha'
-   confirmasenha = 'confirma_senha'
-
-   if(senha !== confirmasenha){
-      print('Senhas incorretas')
-   }
+    return {
+        passwordInput,
+        confirmInput,
+        errorElement
+    };
 }
+
+function validatePassword() {
+    const { passwordInput, confirmInput, errorElement } = getPasswordElements();
+
+    if (!passwordInput) {
+        if (errorElement) {
+            errorElement.textContent = '';
+            errorElement.hidden = true;
+        }
+        return true;
+    }
+
+    const passwordValue = (passwordInput.value || '').trim();
+    const confirmValue = confirmInput ? (confirmInput.value || '').trim() : '';
+
+    const errors = [];
+    let focusTarget = null;
+
+    if (passwordValue.length < PASSWORD_MIN_LENGTH) {
+        errors.push('A senha deve ter pelo menos 8 caracteres.');
+        focusTarget = focusTarget || passwordInput;
+    }
+
+    if (!PASSWORD_LETTER_REGEX.test(passwordValue) || !PASSWORD_DIGIT_REGEX.test(passwordValue)) {
+        errors.push('A senha deve conter letras e números.');
+        focusTarget = focusTarget || passwordInput;
+    }
+
+    if (confirmInput && passwordValue !== confirmValue) {
+        errors.push('A confirmação não confere.');
+        focusTarget = focusTarget || confirmInput;
+    }
+
+    if (errors.length) {
+        if (errorElement) {
+            errorElement.textContent = errors[0];
+            errorElement.hidden = false;
+        }
+        (focusTarget || passwordInput).focus();
+        return false;
+    }
+
+    if (errorElement) {
+        errorElement.textContent = '';
+        errorElement.hidden = true;
+    }
+
+    return true;
+}
+
+function setupPasswordValidation() {
+    const { passwordInput, confirmInput, errorElement } = getPasswordElements();
+
+    if (!passwordInput || !confirmInput) {
+        return;
+    }
+
+    const forms = new Set();
+    if (passwordInput.form) {
+        forms.add(passwordInput.form);
+    }
+    if (confirmInput.form) {
+        forms.add(confirmInput.form);
+    }
+
+    const handleSubmit = (event) => {
+        if (!validatePassword()) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+    };
+
+    forms.forEach((form) => {
+        form.addEventListener('submit', handleSubmit);
+    });
+
+    const clearErrorMessage = () => {
+        if (!errorElement || errorElement.hidden) {
+            return;
+        }
+        errorElement.textContent = '';
+        errorElement.hidden = true;
+    };
+
+    [passwordInput, confirmInput].forEach((input) => {
+        if (!input) {
+            return;
+        }
+        input.addEventListener('input', clearErrorMessage);
+    });
+}
+
+function runWhenDocumentIsReady(callback) {
+    if (typeof callback !== 'function') {
+        return;
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', callback, { once: true });
+    } else {
+        callback();
+    }
+}
+
+runWhenDocumentIsReady(setupPasswordValidation);
+window.validatePassword = validatePassword;
 
 //Funcoes dos Trailers
 function showTrailer(trailerUrl) {
