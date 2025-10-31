@@ -37,6 +37,25 @@ const refreshCarouselNav = (id) => {
     }
 };
 
+const setMovieLoadingState = (isLoading) => {
+    const pageShell = document.querySelector('.page-shell');
+    const skeleton = document.getElementById('movieSkeleton');
+    const content = document.getElementById('movieContent');
+
+    if (pageShell) {
+        pageShell.classList.toggle('is-loading', Boolean(isLoading));
+        pageShell.setAttribute('aria-busy', String(Boolean(isLoading)));
+    }
+
+    if (skeleton) {
+        skeleton.setAttribute('aria-hidden', String(!isLoading));
+    }
+
+    if (content) {
+        content.setAttribute('aria-hidden', String(isLoading));
+    }
+};
+
 function normalizeProviderName(value) {
     return value
         ? value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
@@ -175,7 +194,7 @@ function resolveHomepageProvider(homepage, providersData) {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-    showLoading();
+    setMovieLoadingState(true);
 
     const params = new URLSearchParams(window.location.search);
     currentProviderQuery = (params.get('title') || params.get('original_title') || params.get('original_name') || '').trim();
@@ -196,7 +215,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (!apiKey) {
         console.error('[WYWatch] TMDB API key não configurada – página de filme não pode ser carregada.');
-        hideLoading();
+        setMovieLoadingState(false);
         return;
     }
 
@@ -208,7 +227,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const movieId = params.get('id');
     if (!movieId) {
         console.error('Missing media identifier in filme.js');
-        hideLoading();
+        setMovieLoadingState(false);
         return;
     }
 
@@ -280,7 +299,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.error('Erro ao carregar detalhes do titulo:', error);
     } finally {
         await waitForImages(document);
-        hideLoading();
+        setMovieLoadingState(false);
         window.history.replaceState({}, '', `filme.php?id=${movieId}&type=${mediaType}`);
     }
 });

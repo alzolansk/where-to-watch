@@ -16,7 +16,169 @@
     <?php include_once('dashboard.php'); ?>
 
     <main class="interface-section movie-page">
-        <div class="page-shell">
+        <div class="page-shell is-loading">
+            <div id="movieSkeleton" class="movie-skeleton" aria-hidden="true">
+                <section class="movie-skeleton__hero">
+                    <span class="movie-skeleton__hero-backdrop" aria-hidden="true"></span>
+                    <div class="movie-skeleton__hero-grid">
+                        <div class="movie-skeleton__poster-column">
+                            <span class="skeleton-block movie-skeleton__poster"></span>
+                            <div class="movie-skeleton__provider-chips">
+                                <span class="skeleton-block skeleton-chip skeleton-chip--lg"></span>
+                                <span class="skeleton-block skeleton-chip skeleton-chip--lg"></span>
+                                <span class="skeleton-block skeleton-chip skeleton-chip--lg"></span>
+                                <span class="skeleton-block skeleton-chip skeleton-chip--lg"></span>
+                            </div>
+                        </div>
+                        <div class="movie-skeleton__hero-body">
+                            <div class="movie-skeleton__title-group">
+                                <span class="skeleton-block skeleton-line movie-skeleton__title"></span>
+                                <span class="skeleton-block skeleton-line movie-skeleton__subtitle"></span>
+                            </div>
+                            <div class="movie-skeleton__meta-chips">
+                                <span class="skeleton-block skeleton-chip"></span>
+                                <span class="skeleton-block skeleton-chip"></span>
+                                <span class="skeleton-block skeleton-chip"></span>
+                                <span class="skeleton-block skeleton-chip"></span>
+                            </div>
+                            <div class="movie-skeleton__overview">
+                                <span class="skeleton-block skeleton-line skeleton-line--lg"></span>
+                                <span class="skeleton-block skeleton-line skeleton-line--md"></span>
+                                <span class="skeleton-block skeleton-line skeleton-line--sm"></span>
+                                <span class="skeleton-block skeleton-line skeleton-line--xs"></span>
+                            </div>
+                            <div class="movie-skeleton__tag-cloud">
+                                <span class="skeleton-block skeleton-chip skeleton-chip--lg"></span>
+                                <span class="skeleton-block skeleton-chip skeleton-chip--lg"></span>
+                                <span class="skeleton-block skeleton-chip skeleton-chip--lg"></span>
+                                <span class="skeleton-block skeleton-chip skeleton-chip--lg"></span>
+                            </div>
+                            <div class="movie-skeleton__actions">
+                                <span class="skeleton-block skeleton-button skeleton-button--primary"></span>
+                                <span class="skeleton-block skeleton-button"></span>
+                            </div>
+                            <div class="movie-skeleton__highlight-grid">
+                                <span class="skeleton-block movie-skeleton__highlight-card"></span>
+                                <span class="skeleton-block movie-skeleton__highlight-card"></span>
+                                <span class="skeleton-block movie-skeleton__highlight-card"></span>
+                            </div>
+                            <div class="movie-skeleton__crew">
+                                <span class="skeleton-block skeleton-line skeleton-line--md"></span>
+                                <span class="skeleton-block skeleton-line skeleton-line--sm"></span>
+                                <span class="skeleton-block skeleton-line skeleton-line--xs"></span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="movie-skeleton__section movie-skeleton__section--providers">
+                    <div class="movie-skeleton__section-heading">
+                        <span class="skeleton-block skeleton-line skeleton-line--lg"></span>
+                        <span class="skeleton-block skeleton-line skeleton-line--sm"></span>
+                    </div>
+                    <div class="movie-skeleton__providers-grid">
+                        <div class="movie-skeleton__providers-column">
+                            <span class="skeleton-block skeleton-line skeleton-line--md movie-skeleton__section-title"></span>
+                            <div class="movie-skeleton__pill-group">
+                                <span class="skeleton-block skeleton-chip skeleton-chip--lg"></span>
+                                <span class="skeleton-block skeleton-chip skeleton-chip--lg"></span>
+                                <span class="skeleton-block skeleton-chip skeleton-chip--lg"></span>
+                                <span class="skeleton-block skeleton-chip skeleton-chip--lg"></span>
+                            </div>
+                        </div>
+                        <div class="movie-skeleton__providers-column">
+                            <span class="skeleton-block skeleton-line skeleton-line--md movie-skeleton__section-title"></span>
+                            <div class="movie-skeleton__pill-group">
+                                <span class="skeleton-block skeleton-chip skeleton-chip--lg"></span>
+                                <span class="skeleton-block skeleton-chip skeleton-chip--lg"></span>
+                                <span class="skeleton-block skeleton-chip skeleton-chip--lg"></span>
+                                <span class="skeleton-block skeleton-chip skeleton-chip--lg"></span>
+                            </div>
+                        </div>
+                        <div class="movie-skeleton__providers-column">
+                            <span class="skeleton-block skeleton-line skeleton-line--md movie-skeleton__section-title"></span>
+                            <div class="movie-skeleton__pill-group">
+                                <span class="skeleton-block skeleton-chip skeleton-chip--lg"></span>
+                                <span class="skeleton-block skeleton-chip skeleton-chip--lg"></span>
+                                <span class="skeleton-block skeleton-chip skeleton-chip--lg"></span>
+                                <span class="skeleton-block skeleton-chip skeleton-chip--lg"></span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="movie-skeleton__section movie-skeleton__section--seasons">
+                    <div class="movie-skeleton__section-heading">
+                        <span class="skeleton-block skeleton-line skeleton-line--lg"></span>
+                        <span class="skeleton-block skeleton-line skeleton-line--sm"></span>
+                    </div>
+                    <div class="movie-skeleton__carousel movie-skeleton__carousel--seasons">
+                        <span class="skeleton-block movie-skeleton__nav-pill"></span>
+                        <div class="movie-skeleton__carousel-track">
+                            <span class="skeleton-block movie-skeleton__season-card"></span>
+                            <span class="skeleton-block movie-skeleton__season-card"></span>
+                            <span class="skeleton-block movie-skeleton__season-card"></span>
+                            <span class="skeleton-block movie-skeleton__season-card"></span>
+                            <span class="skeleton-block movie-skeleton__season-card"></span>
+                        </div>
+                        <span class="skeleton-block movie-skeleton__nav-pill"></span>
+                    </div>
+                </section>
+
+                <section class="movie-skeleton__section movie-skeleton__section--cast">
+                    <div class="movie-skeleton__section-heading">
+                        <span class="skeleton-block skeleton-line skeleton-line--lg"></span>
+                        <span class="skeleton-block skeleton-line skeleton-line--sm"></span>
+                    </div>
+                    <div class="movie-skeleton__cast-grid">
+                        <div class="movie-skeleton__cast-card">
+                            <span class="skeleton-block movie-skeleton__cast-avatar"></span>
+                            <span class="skeleton-block skeleton-line movie-skeleton__cast-name"></span>
+                            <span class="skeleton-block skeleton-line skeleton-line--xs movie-skeleton__cast-role"></span>
+                        </div>
+                        <div class="movie-skeleton__cast-card">
+                            <span class="skeleton-block movie-skeleton__cast-avatar"></span>
+                            <span class="skeleton-block skeleton-line movie-skeleton__cast-name"></span>
+                            <span class="skeleton-block skeleton-line skeleton-line--xs movie-skeleton__cast-role"></span>
+                        </div>
+                        <div class="movie-skeleton__cast-card">
+                            <span class="skeleton-block movie-skeleton__cast-avatar"></span>
+                            <span class="skeleton-block skeleton-line movie-skeleton__cast-name"></span>
+                            <span class="skeleton-block skeleton-line skeleton-line--xs movie-skeleton__cast-role"></span>
+                        </div>
+                        <div class="movie-skeleton__cast-card">
+                            <span class="skeleton-block movie-skeleton__cast-avatar"></span>
+                            <span class="skeleton-block skeleton-line movie-skeleton__cast-name"></span>
+                            <span class="skeleton-block skeleton-line skeleton-line--xs movie-skeleton__cast-role"></span>
+                        </div>
+                        <div class="movie-skeleton__cast-card">
+                            <span class="skeleton-block movie-skeleton__cast-avatar"></span>
+                            <span class="skeleton-block skeleton-line movie-skeleton__cast-name"></span>
+                            <span class="skeleton-block skeleton-line skeleton-line--xs movie-skeleton__cast-role"></span>
+                        </div>
+                        <div class="movie-skeleton__cast-card">
+                            <span class="skeleton-block movie-skeleton__cast-avatar"></span>
+                            <span class="skeleton-block skeleton-line movie-skeleton__cast-name"></span>
+                            <span class="skeleton-block skeleton-line skeleton-line--xs movie-skeleton__cast-role"></span>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="movie-skeleton__section movie-skeleton__section--gallery">
+                    <div class="movie-skeleton__section-heading">
+                        <span class="skeleton-block skeleton-line skeleton-line--lg"></span>
+                        <span class="skeleton-block skeleton-line skeleton-line--sm"></span>
+                    </div>
+                    <div class="movie-skeleton__gallery-grid">
+                        <span class="skeleton-block movie-skeleton__gallery-card"></span>
+                        <span class="skeleton-block movie-skeleton__gallery-card"></span>
+                        <span class="skeleton-block movie-skeleton__gallery-card"></span>
+                        <span class="skeleton-block movie-skeleton__gallery-card"></span>
+                    </div>
+                </section>
+            </div>
+
+            <div id="movieContent" class="movie-content" aria-live="polite" aria-hidden="true">
             <dialog id="dialog" class="dialog">
                 <iframe id="trailerFrame" src="" title="Trailer" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
                 <button id="close-trailer" onclick="closeTrailer()">X</button>
@@ -161,6 +323,7 @@
                 </div>
                 <div class="overlay-modal"></div>
             </dialog>
+        </div>
         </div>
     </main>
 

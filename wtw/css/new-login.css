@@ -61,6 +61,89 @@
   }
 }
 
+/* Cleaner hero/container aesthetic for register page */
+.login-body--register .wyw-brand__watch {
+  background: none !important;
+  -webkit-background-clip: initial;
+  background-clip: initial;
+  color: rgba(248, 250, 252, 0.96);
+  text-shadow: none;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.login-shell--register .login-card {
+  background: rgba(18, 19, 25, 0.56);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(18px);
+}
+
+.login-shell--register .login-card::before {
+  opacity: 0.24;
+}
+
+.login-shell--register .card-title {
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+.login-shell--register .card-subtitle {
+  color: rgba(244, 244, 245, 0.78);
+}
+
+.login-shell--register .input-control {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.login-shell--register .input-control:focus,
+.login-shell--register .input-control:focus-visible {
+  box-shadow: 0 0 0 3px rgba(225, 29, 72, 0.18);
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(225, 29, 72, 0.55);
+}
+
+.login-shell--register .password-toggle {
+  background: transparent;
+  border-color: transparent;
+  color: var(--text-muted);
+}
+
+.login-shell--register .password-toggle:hover,
+.login-shell--register .password-toggle:focus-visible {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.10);
+  color: #f4f4f5;
+}
+
+.login-shell--register .login-primary {
+  background: var(--brand-red);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  box-shadow: none;
+  transform: none;
+}
+
+.login-shell--register .login-primary:hover {
+  background: var(--brand-red-hover);
+  box-shadow: none;
+  transform: none;
+}
+
+.login-shell--register .login-primary:active {
+  background: var(--brand-red-press);
+}
+
+.login-shell--register .link-accent {
+  color: #e5e7eb;
+  font-weight: 500;
+}
+
+.login-body--register::before {
+  opacity: 0.78;
+}
+
 @media (max-width: 480px) {
   .login-shell--register .login-logo {
     --wyw-brand-size: clamp(1.8rem, 8vw, 2.4rem);
