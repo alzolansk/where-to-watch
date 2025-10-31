@@ -50,32 +50,34 @@ include_once("dashboard.php");
       </div>
     </div>
 
-    <section id="timelinePageContent" class="timeline-page__content glass-panel" data-content hidden>
+    <section id="timelinePageContent" class="timeline-page__content" data-content hidden>
       <header class="timeline-page__header" id="timelineFloatingHeader">
-        <div class="timeline-page__identity">
-          <img id="timelineActorAvatar" class="timeline-page__avatar" src="" alt="Foto do(a) artista" loading="lazy">
-          <div class="timeline-page__identity-text">
-            <h1 id="timelineActorName" class="timeline-page__name">-</h1>
-            <p id="timelineActorYears" class="timeline-page__years">Carregando...</p>
+        <div class="timeline-page__header-top">
+          <div class="timeline-page__identity">
+            <img id="timelineActorAvatar" class="timeline-page__avatar" src="" alt="Foto do(a) artista" loading="lazy">
+            <div class="timeline-page__identity-text">
+              <h1 id="timelineActorName" class="timeline-page__name">-</h1>
+              <p id="timelineActorYears" class="timeline-page__years">Carregando...</p>
+            </div>
+          </div>
+          <div class="timeline-page__actions" role="group" aria-label="Acoes rapidas">
+            <button type="button" class="action-btn action-btn--glass" id="timelineFollowBtn">Seguir</button>
+            <button type="button" class="action-btn action-btn--glass" id="timelineFavoriteBtn">Favoritar</button>
+            <a id="timelineProfileLink" class="action-btn action-btn--primary" href="#">Ver perfil completo</a>
           </div>
         </div>
-        <div class="timeline-page__actions" role="group" aria-label="Acoes rapidas">
-          <button type="button" class="action-btn action-btn--glass" id="timelineFollowBtn">Seguir</button>
-          <button type="button" class="action-btn action-btn--glass" id="timelineFavoriteBtn">Favoritar</button>
-          <a id="timelineProfileLink" class="action-btn action-btn--primary" href="#">Ver perfil completo</a>
-        </div>
-        <dl class="timeline-page__stats" aria-label="Estatisticas rapidas do artista">
+        <dl class="timeline-page__stats timeline-page__stats--inline" aria-label="Estatisticas rapidas do artista">
           <div class="timeline-page__stat">
-            <dt>Producoes</dt>
+            <dt class="visually-hidden">Produções</dt>
             <dd id="timelineStatWorks">-</dd>
           </div>
           <div class="timeline-page__stat">
-            <dt>Nota media TMDB</dt>
+            <dt class="visually-hidden">Nota média TMDB</dt>
             <dd id="timelineStatRating">-</dd>
           </div>
           <div class="timeline-page__stat">
-            <dt>Colaborador recorrente</dt>
-            <dd id="timelineStatPartner">Em breve</dd>
+            <dt class="visually-hidden">Tempo de carreira</dt>
+            <dd id="timelineStatCareer">-</dd>
           </div>
         </dl>
       </header>

@@ -92,7 +92,7 @@ const dom = {
   profileLink: document.getElementById('timelineProfileLink'),
   statWorks: document.getElementById('timelineStatWorks'),
   statRating: document.getElementById('timelineStatRating'),
-  statPartner: document.getElementById('timelineStatPartner'),
+  statCareer: document.getElementById('timelineStatCareer'),
   roleFilter: document.getElementById('timelineRoleFilter'),
   compactBtn: document.getElementById('toggleCompactYearsBtn'),
   yearNav: document.getElementById('timelineYearNav'),
@@ -468,9 +468,14 @@ const formatActivityRange = (entries) => {
   if (!years.length) return null;
   const min = Math.min(...years);
   const max = Math.max(...years);
-  if (min === max) return `${min}`;
-  const span = max - min + 1;
-  return `${min} — ${max} (${span} anos de carreira)`;
+  const span = Math.max(1, max - min + 1);
+  const range = min === max ? `${min}` : `${min} — ${max}`;
+  const yearsLabel = `${span} ${span === 1 ? 'ano' : 'anos'} de carreira`;
+  return {
+    range,
+    span,
+    summary: `${range} (${yearsLabel})`
+  };
 };
 
 const renderHeader = (person, entries) => {
@@ -485,19 +490,37 @@ const renderHeader = (person, entries) => {
   if (dom.profileLink) {
     dom.profileLink.href = `person.php?personId=${personId}`;
   }
-  const activityRange = formatActivityRange(entries);
+  const activity = formatActivityRange(entries);
   const department = person.known_for_department ? ` • ${person.known_for_department}` : '';
   if (dom.actorYears) {
-    dom.actorYears.textContent = activityRange ? `Ativo(a) em ${activityRange}${department}` : (department ? department.slice(3) : 'Atividade não informada');
+    if (activity) {
+      const summary = activity.summary || activity.range;
+      dom.actorYears.textContent = `Ativo(a) em ${summary}${department}`;
+    } else {
+      dom.actorYears.textContent = department ? department.slice(3) : 'Atividade não informada';
+    }
   }
   const totalWorks = entries.length;
   if (dom.statWorks) {
-    dom.statWorks.textContent = totalWorks ? String(totalWorks) : '-';
+    if (totalWorks) {
+      const label = totalWorks === 1 ? 'produção' : 'produções';
+      dom.statWorks.textContent = `${totalWorks} ${label}`;
+    } else {
+      dom.statWorks.textContent = 'Produções não informadas';
+    }
   }
   const rated = entries.filter((entry) => Number(entry.voteCount) > 0 && Number.isFinite(entry.voteAverage));
   const average = rated.length ? rated.reduce((sum, entry) => sum + entry.voteAverage, 0) / rated.length : null;
   if (dom.statRating) {
-    dom.statRating.textContent = average ? average.toFixed(1).replace('.', ',') : '-';
+    dom.statRating.textContent = average ? `Nota ${average.toFixed(1).replace('.', ',')}` : 'Nota não avaliada';
+  }
+  if (dom.statCareer) {
+    if (activity && activity.span) {
+      const yearsLabel = activity.span === 1 ? 'ano' : 'anos';
+      dom.statCareer.textContent = `${activity.span} ${yearsLabel} de carreira`;
+    } else {
+      dom.statCareer.textContent = 'Carreira não informada';
+    }
   }
 };
 
