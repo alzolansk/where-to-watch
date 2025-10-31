@@ -71,6 +71,20 @@ body {
     gap: 56px;
 }
 
+.movie-skeleton[aria-hidden="true"],
+.movie-content[aria-hidden="true"] {
+    display: none;
+}
+
+.page-shell.is-loading #movieContent {
+    opacity: 0;
+    transform: translateY(8px);
+}
+
+.page-shell.is-loading #movieSkeleton[aria-hidden="false"] {
+    display: flex;
+}
+
 .movie-hero {
     position: relative;
     border-radius: 32px;
@@ -1107,5 +1121,357 @@ body {
     flex-direction: column;
     align-items: center;
     gap: 16px;
+}
+
+/* Movie loading skeleton -------------------------------------------------- */
+
+.movie-skeleton {
+    display: none;
+    flex-direction: column;
+    gap: 56px;
+}
+
+.movie-skeleton__hero {
+    position: relative;
+    border-radius: 32px;
+    overflow: hidden;
+    background: linear-gradient(160deg, rgba(17, 20, 32, 0.94), rgba(12, 15, 28, 0.72));
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    min-height: 520px;
+    box-shadow: 0 28px 48px rgba(6, 8, 20, 0.42);
+}
+
+.movie-skeleton__hero-backdrop {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(10, 14, 26, 0.92) 12%, rgba(14, 18, 32, 0.65) 52%, rgba(18, 22, 42, 0.32) 100%);
+}
+
+.movie-skeleton__hero-grid {
+    position: relative;
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 48px;
+    padding: 64px clamp(32px, 4vw, 64px) 56px;
+}
+
+.movie-skeleton__poster-column {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+}
+
+.movie-skeleton__poster {
+    width: 100%;
+    height: 480px;
+    border-radius: 28px;
+}
+
+.movie-skeleton__provider-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.movie-skeleton__hero-body {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.movie-skeleton__title-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.movie-skeleton__meta-chips,
+.movie-skeleton__tag-cloud,
+.movie-skeleton__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.movie-skeleton__overview,
+.movie-skeleton__crew {
+    display: grid;
+    gap: 12px;
+}
+
+.movie-skeleton__highlight-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.movie-skeleton__highlight-card {
+    height: 120px;
+    border-radius: 24px;
+}
+
+.movie-skeleton__section {
+    border-radius: 32px;
+    background: linear-gradient(160deg, rgba(17, 20, 32, 0.94), rgba(12, 15, 28, 0.72));
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    padding: 44px clamp(24px, 4vw, 48px);
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+}
+
+.movie-skeleton__section-heading {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-width: 420px;
+}
+
+.movie-skeleton__providers-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 32px;
+}
+
+.movie-skeleton__providers-column {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.movie-skeleton__pill-group {
+    display: grid;
+    gap: 12px;
+}
+
+.movie-skeleton__carousel {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+}
+
+.movie-skeleton__carousel-track {
+    display: flex;
+    gap: 18px;
+    flex: 1;
+}
+
+.movie-skeleton__season-card {
+    width: 200px;
+    height: 260px;
+    border-radius: 24px;
+}
+
+.movie-skeleton__nav-pill {
+    width: 64px;
+    height: 12px;
+    border-radius: 999px;
+}
+
+.movie-skeleton__cast-grid {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 20px;
+}
+
+.movie-skeleton__cast-card {
+    display: grid;
+    gap: 12px;
+    justify-items: center;
+}
+
+.movie-skeleton__cast-avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+}
+
+.movie-skeleton__gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 20px;
+}
+
+.movie-skeleton__gallery-card {
+    height: 220px;
+    border-radius: 24px;
+}
+
+.skeleton-block {
+    position: relative;
+    display: block;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.08);
+    overflow: hidden;
+}
+
+.skeleton-block::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(110deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0));
+    transform: translateX(-100%);
+    animation: movie-skeleton-shimmer 1.6s ease-in-out infinite;
+}
+
+@keyframes movie-skeleton-shimmer {
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+.skeleton-line {
+    height: 16px;
+    border-radius: 8px;
+}
+
+.skeleton-line--xl {
+    width: clamp(220px, 52vw, 420px);
+    height: 42px;
+}
+
+.skeleton-line--lg {
+    width: clamp(180px, 38vw, 320px);
+    height: 28px;
+}
+
+.skeleton-line--md {
+    width: clamp(160px, 32vw, 280px);
+    height: 22px;
+}
+
+.skeleton-line--sm {
+    width: clamp(120px, 26vw, 220px);
+}
+
+.skeleton-line--xs {
+    width: clamp(80px, 18vw, 160px);
+}
+
+.skeleton-line--lg,
+.skeleton-line--xl {
+    border-radius: 12px;
+}
+
+.skeleton-chip {
+    width: 120px;
+    height: 36px;
+    border-radius: 999px;
+}
+
+.skeleton-chip--lg {
+    width: 160px;
+}
+
+.skeleton-button {
+    width: 160px;
+    height: 48px;
+    border-radius: 999px;
+}
+
+.skeleton-button--primary {
+    width: 200px;
+}
+
+.movie-skeleton__section-title {
+    height: 24px;
+}
+
+@media (max-width: 1100px) {
+    .movie-skeleton__hero-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .movie-skeleton__poster-column {
+        max-width: 320px;
+    }
+
+    .movie-skeleton__highlight-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .movie-skeleton__providers-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .movie-skeleton__cast-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .movie-skeleton__gallery-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .movie-skeleton {
+        gap: 40px;
+    }
+
+    .movie-skeleton__hero-grid {
+        padding: 48px 28px;
+        gap: 32px;
+    }
+
+    .movie-skeleton__poster {
+        height: 380px;
+    }
+
+    .movie-skeleton__section {
+        padding: 36px 24px;
+    }
+
+    .movie-skeleton__highlight-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .movie-skeleton__carousel-track {
+        overflow: hidden;
+    }
+
+    .movie-skeleton__season-card {
+        width: 180px;
+    }
+
+    .movie-skeleton__cast-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .movie-skeleton__gallery-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 520px) {
+    .movie-skeleton__hero {
+        border-radius: 28px;
+    }
+
+    .movie-skeleton__hero-grid {
+        padding: 40px 20px;
+    }
+
+    .movie-skeleton__poster {
+        height: 320px;
+    }
+
+    .movie-skeleton__provider-chips,
+    .movie-skeleton__meta-chips,
+    .movie-skeleton__tag-cloud,
+    .movie-skeleton__actions {
+        gap: 10px;
+    }
+
+    .movie-skeleton__providers-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .movie-skeleton__cast-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .movie-skeleton__gallery-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
 }
 
