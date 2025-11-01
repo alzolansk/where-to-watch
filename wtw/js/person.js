@@ -141,7 +141,6 @@ document.addEventListener('DOMContentLoaded', () => {
     moviesList: document.getElementById('moviesList'),
     tvList: document.getElementById('tvList'),
     crewList: document.getElementById('crewList'),
-    expandedTimelineLink: document.getElementById('openExpandedTimeline'),
     loadMoreButtons: Array.from(document.querySelectorAll('.load-more-btn')),
     timelineSection: document.getElementById('timeline-container') ? document.getElementById('timeline-container').closest('.card-section') : null,
     coworkersGrid: document.getElementById('coworkersGrid'),
@@ -933,10 +932,6 @@ document.addEventListener('DOMContentLoaded', () => {
         wrapper.classList.toggle('is-hidden', !hasEntries);
       }
     }
-    if (dom.expandedTimelineLink) {
-      dom.expandedTimelineLink.classList.toggle('is-hidden', !hasEntries);
-      dom.expandedTimelineLink.setAttribute('aria-hidden', hasEntries ? 'false' : 'true');
-    }
 
     if (dom.timelineContent) {
       dom.timelineContent.scrollTo({ top: 0, left: 0, behavior: 'auto' });
@@ -1708,13 +1703,7 @@ document.addEventListener('DOMContentLoaded', () => {
       filmographyState.groupedTimeline = buildTimelineGroups(aggregated);
       filmographyState.sortedYears = Array.from(filmographyState.groupedTimeline.keys()).sort((a, b) => b - a);
       filmographyState.decades = computeDecades(filmographyState.sortedYears);
-      if (dom.expandedTimelineLink) {
-        const targetUrl = `timeline.php?personId=${personId}`;
-        dom.expandedTimelineLink.href = targetUrl;
-        dom.expandedTimelineLink.setAttribute('aria-label', person.name ? `Abrir timeline expandida de ${person.name}` : 'Abrir timeline expandida do artista');
-        dom.expandedTimelineLink.classList.remove('is-hidden');
-        dom.expandedTimelineLink.setAttribute('aria-hidden', 'false');
-      }
+
       filmographyState.filmographyCollections = {
         movies: aggregated.filter((entry) => entry.mediaType === 'movie'),
         tv: aggregated.filter((entry) => entry.mediaType === 'tv'),

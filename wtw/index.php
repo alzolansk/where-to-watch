@@ -284,7 +284,7 @@
     <script>
         window.wtwPersonalization = <?php echo json_encode([
             'enabled' => $personalizedRowEnabled,
-            'mediaTypes' => ['movie'],
+            'mediaTypes' => ['movie', 'tv'],
             'endpoint' => 'api/home-personalized.php',
             'preferenceCount' => $personalizedPreferenceCount,
             'cacheToken' => $personalizationCacheToken,

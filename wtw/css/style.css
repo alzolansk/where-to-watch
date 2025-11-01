@@ -1728,7 +1728,7 @@ button.prev:active, button.next:active {
     position: absolute;
     inset: 0;
     border-radius: inherit;
-    background: linear-gradient(120deg, rgba(128, 22, 45, 0.16), rgba(59, 131, 246, 0.082));
+    background: linear-gradient(120deg, rgba(177, 12, 48, 0.16), rgba(59, 131, 246, 0.082));
     z-index: -1;
 }
 

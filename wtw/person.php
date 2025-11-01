@@ -143,7 +143,6 @@ include_once("dashboard.php")
             <span class="toggle-icon toggle-icon--grid" aria-hidden="true">📄</span>
             <span class="toggle-icon toggle-icon--timeline" aria-hidden="true">🕓</span>
           </button>
-          <a id="openExpandedTimeline" class="action-btn action-btn--outline" href="#">Timeline expandida</a>
         </div>
       </div>
 
