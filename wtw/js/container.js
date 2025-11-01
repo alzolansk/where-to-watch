@@ -1210,7 +1210,25 @@ document.addEventListener('DOMContentLoaded', function() {
             const site = (video?.site || '').toLowerCase();
             return site === 'youtube' && (type === 'trailer' || type === 'teaser');
         }) || results[0];
-        return trailer?.key ? `https://www.youtube.com/watch?v=${trailer.key}` : '';
+        if (!trailer) {
+            return '';
+        }
+
+        const getYouTubeIdFn = typeof window !== 'undefined' && typeof window.getYouTubeId === 'function'
+            ? window.getYouTubeId
+            : null;
+        const candidateUrl = trailer.key
+            ? `https://www.youtube.com/watch?v=${trailer.key}`
+            : (trailer.url || '');
+
+        if (getYouTubeIdFn) {
+            const videoId = getYouTubeIdFn(candidateUrl || trailer.key);
+            if (videoId) {
+                return `https://www.youtube.com/watch?v=${videoId}`;
+            }
+        }
+
+        return candidateUrl;
     }
 
     async function createMediaCard(movie, section, mediaType) {

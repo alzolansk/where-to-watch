@@ -9,7 +9,7 @@
 </head>
 <body class="has-fixed-header">
   <?php include_once('dashboard.php'); ?>
-  <main class="timeline-page interface-section is-loading">
+  <main class="body timeline-page interface-section is-loading">
     <div id="timelinePageSkeleton" class="timeline-page__skeleton" aria-hidden="true">
       <div class="timeline-page__skeleton-header glass-panel">
         <span class="skeleton-block skeleton-avatar"></span>

@@ -180,8 +180,8 @@
 
             <div id="movieContent" class="movie-content" aria-live="polite" aria-hidden="true">
             <dialog id="dialog" class="dialog">
-                <iframe id="trailerFrame" src="" title="Trailer" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-                <button id="close-trailer" onclick="closeTrailer()">X</button>
+                <iframe id="trailerFrame" src="" title="Trailer" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>
+                <button id="close-trailer" type="button" aria-label="Fechar trailer" data-dialog-initial-focus>X</button>
             </dialog>
 
             <section class="movie-hero">

@@ -340,6 +340,13 @@ function hydrateHero(details, params, dom, mediaType) {
     const providersForRegion = details['watch/providers']?.results?.BR;
     const homepageProvider = resolveHomepageProvider(homepage, providersForRegion);
     const trailerUrl = resolveTrailerUrl(details, params);
+    const getYouTubeIdFn = typeof window !== 'undefined' && typeof window.getYouTubeId === 'function'
+        ? window.getYouTubeId
+        : null;
+    const trailerId = getYouTubeIdFn ? getYouTubeIdFn(trailerUrl) : '';
+    const normalizedTrailerUrl = trailerId
+        ? `https://www.youtube.com/watch?v=${trailerId}`
+        : (trailerUrl && trailerUrl !== '#' ? trailerUrl : '');
 
     const releaseDate = details.release_date || details.first_air_date || params.get('release_date') || '';
     const runtimeText = formatRuntime(details, mediaType);
@@ -399,22 +406,28 @@ function hydrateHero(details, params, dom, mediaType) {
     }
 
     if (dom.trailerLink) {
-        const hasTrailer = Boolean(trailerUrl && trailerUrl !== '#');
+        const hasTrailer = Boolean(normalizedTrailerUrl);
         if (hasTrailer) {
             dom.trailerLink.classList.remove('is-hidden');
-            dom.trailerLink.href = trailerUrl;
-            dom.trailerLink.dataset.trailerUrl = trailerUrl;
+            dom.trailerLink.href = normalizedTrailerUrl;
+            dom.trailerLink.dataset.trailerUrl = normalizedTrailerUrl;
+            if (trailerId) {
+                dom.trailerLink.dataset.trailerId = trailerId;
+            } else {
+                delete dom.trailerLink.dataset.trailerId;
+            }
             dom.trailerLink.classList.remove('is-disabled');
             dom.trailerLink.removeAttribute('aria-disabled');
             dom.trailerLink.removeAttribute('target');
             if (!dom.trailerLink.dataset.boundModal) {
                 dom.trailerLink.addEventListener('click', event => {
-                    const targetUrl = dom.trailerLink.dataset.trailerUrl;
-                    if (!targetUrl) {
+                    const targetUrl = dom.trailerLink.dataset.trailerUrl || '';
+                    const targetId = dom.trailerLink.dataset.trailerId || '';
+                    if (!targetUrl && !targetId) {
                         return;
                     }
                     event.preventDefault();
-                    showTrailer(targetUrl);
+                    showTrailer(targetUrl || `https://www.youtube.com/watch?v=${targetId}`);
                 });
                 dom.trailerLink.dataset.boundModal = 'true';
             }
@@ -422,14 +435,19 @@ function hydrateHero(details, params, dom, mediaType) {
             dom.trailerLink.classList.add('is-hidden');
             dom.trailerLink.removeAttribute('href');
             dom.trailerLink.dataset.trailerUrl = '';
+            delete dom.trailerLink.dataset.trailerId;
             dom.trailerLink.classList.remove('is-disabled');
             dom.trailerLink.removeAttribute('aria-disabled');
         }
     }
 
     if (dom.trailerFrame) {
-        const safeUrl = trailerUrl && trailerUrl !== '#' ? trailerUrl : '';
-        dom.trailerFrame.dataset.trailerUrl = safeUrl;
+        dom.trailerFrame.dataset.trailerUrl = normalizedTrailerUrl;
+        if (trailerId) {
+            dom.trailerFrame.dataset.trailerId = trailerId;
+        } else {
+            delete dom.trailerFrame.dataset.trailerId;
+        }
         dom.trailerFrame.removeAttribute('src');
     }
 
@@ -437,15 +455,37 @@ function hydrateHero(details, params, dom, mediaType) {
 }
 
 function resolveTrailerUrl(details, params) {
+    const getYouTubeIdFn = typeof window !== 'undefined' && typeof window.getYouTubeId === 'function'
+        ? window.getYouTubeId
+        : null;
+
     const trailerFromParams = params.get('trailerUrl');
     if (trailerFromParams && trailerFromParams !== '#') {
+        if (getYouTubeIdFn) {
+            const paramId = getYouTubeIdFn(trailerFromParams);
+            if (paramId) {
+                return `https://www.youtube.com/watch?v=${paramId}`;
+            }
+        }
         return trailerFromParams;
     }
 
     const videos = details.videos?.results || [];
     const trailer = videos.find(video => video.type === 'Trailer' && video.site === 'YouTube')
         || videos.find(video => video.site === 'YouTube');
-    return trailer ? `https://www.youtube.com/watch?v=${trailer.key}` : '#';
+    if (!trailer || !trailer.key) {
+        return '#';
+    }
+
+    const candidateUrl = `https://www.youtube.com/watch?v=${trailer.key}`;
+    if (getYouTubeIdFn) {
+        const videoId = getYouTubeIdFn(candidateUrl);
+        if (videoId) {
+            return `https://www.youtube.com/watch?v=${videoId}`;
+        }
+    }
+
+    return candidateUrl;
 }
 
 function toggleText(element, text) {
