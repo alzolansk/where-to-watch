@@ -172,12 +172,19 @@ document.addEventListener('DOMContentLoaded', () => {
   let providersPrefetched = false;
   const genreMaps = { movie: new Map(), tv: new Map() };
   let timelineObserver = null;
+  let timelineLazyObserver = null;
+  let timelineLazySentinel = null;
+  const TIMELINE_INITIAL_BATCH = 6;
+  const TIMELINE_BATCH_SIZE = 4;
 
   const filmographyState = {
     allEntries: [],
     groupedTimeline: new Map(),
     sortedYears: [],
     decades: [],
+    timelineAvailableYears: [],
+    timelineFilteredByYear: new Map(),
+    timelineRenderedCount: 0,
     roleFilter: 'all',
     activeYear: null,
     timelineMode: 'grid',
@@ -860,47 +867,154 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   };
 
+  const teardownTimelineLazyLoading = () => {
+    if (timelineLazyObserver) {
+      timelineLazyObserver.disconnect();
+      timelineLazyObserver = null;
+    }
+    if (timelineLazySentinel && timelineLazySentinel.parentElement) {
+      timelineLazySentinel.parentElement.removeChild(timelineLazySentinel);
+    }
+  };
+
+  const insertTimelineSection = (section) => {
+    if (!dom.timelineContent) return;
+    if (timelineLazySentinel && timelineLazySentinel.parentElement === dom.timelineContent) {
+      dom.timelineContent.insertBefore(section, timelineLazySentinel);
+    } else {
+      dom.timelineContent.appendChild(section);
+    }
+  };
+
+  const buildTimelineYearGroup = (year, entries) => {
+    const section = document.createElement('section');
+    section.className = 'timeline-year-group';
+    section.id = `timeline-year-${year}`;
+    section.dataset.year = String(year);
+    section.setAttribute('role', 'group');
+    const head = document.createElement('div');
+    head.className = 'timeline-year-head';
+    const label = document.createElement('h3');
+    label.className = 'timeline-year-label';
+    label.textContent = year;
+    const count = document.createElement('span');
+    count.className = 'timeline-year-count';
+    count.textContent = `${entries.length} titulo${entries.length === 1 ? '' : 's'}`;
+    head.append(label, count);
+    const row = document.createElement('div');
+    row.className = 'timeline-row';
+    entries.forEach((entry) => {
+      const card = buildTimelineCard(entry);
+      row.appendChild(card);
+    });
+    section.append(head, row);
+    return section;
+  };
+
+  const renderTimelineBatch = ({ initial = false } = {}) => {
+    if (!dom.timelineContent) return false;
+    const availableYears = filmographyState.timelineAvailableYears || [];
+    const total = availableYears.length;
+    const rendered = filmographyState.timelineRenderedCount || 0;
+    if (rendered >= total) return false;
+    const batchSize = initial ? TIMELINE_INITIAL_BATCH : TIMELINE_BATCH_SIZE;
+    const yearsToRender = availableYears.slice(rendered, rendered + batchSize);
+    let appended = 0;
+    yearsToRender.forEach((year) => {
+      const entries = (filmographyState.timelineFilteredByYear && filmographyState.timelineFilteredByYear.get(year)) || [];
+      if (!entries.length) return;
+      const section = buildTimelineYearGroup(year, entries);
+      insertTimelineSection(section);
+      appended += 1;
+    });
+    filmographyState.timelineRenderedCount += appended;
+    return appended > 0;
+  };
+
+  const setupTimelineLazyLoading = () => {
+    if (!dom.timelineContent) return;
+    const total = filmographyState.timelineAvailableYears.length;
+    const rendered = filmographyState.timelineRenderedCount;
+    if (rendered >= total) {
+      teardownTimelineLazyLoading();
+      return;
+    }
+    if (!('IntersectionObserver' in window)) {
+      while (renderTimelineBatch()) {}
+      return;
+    }
+    if (!timelineLazySentinel) {
+      timelineLazySentinel = document.createElement('div');
+      timelineLazySentinel.className = 'timeline-lazy-sentinel';
+      timelineLazySentinel.setAttribute('aria-hidden', 'true');
+      timelineLazySentinel.style.cssText = 'width:100%;height:1px;margin-top:16px;pointer-events:none;';
+    }
+    if (timelineLazySentinel.parentElement !== dom.timelineContent) {
+      dom.timelineContent.appendChild(timelineLazySentinel);
+    }
+    if (timelineLazyObserver) {
+      timelineLazyObserver.disconnect();
+    }
+    timelineLazyObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        const appended = renderTimelineBatch();
+        if (appended) {
+          highlightTimelineSection(filmographyState.activeYear);
+          setupTimelinePrefetch();
+        }
+        if (filmographyState.timelineRenderedCount >= filmographyState.timelineAvailableYears.length) {
+          teardownTimelineLazyLoading();
+        }
+      });
+    }, {
+      root: dom.timelineContent,
+      rootMargin: '0px 0px 400px 0px',
+      threshold: 0
+    });
+    timelineLazyObserver.observe(timelineLazySentinel);
+  };
+
+  const ensureYearRendered = (year) => {
+    const availableYears = filmographyState.timelineAvailableYears || [];
+    const index = availableYears.indexOf(year);
+    if (index === -1) return;
+    let appended = false;
+    while (filmographyState.timelineRenderedCount <= index) {
+      const didAppend = renderTimelineBatch();
+      if (!didAppend) break;
+      appended = true;
+    }
+    if (appended) {
+      setupTimelineLazyLoading();
+      setupTimelinePrefetch();
+    }
+  };
+
   const renderTimeline = () => {
     updateTimelineRoleChips(filmographyState.allEntries || []);
     if (!dom.timelineContent) return;
+    teardownTimelineLazyLoading();
     entryDomRegistry.forEach((refs) => {
       if (refs && Array.isArray(refs.timeline)) {
         refs.timeline.length = 0;
       }
     });
     const years = filmographyState.sortedYears;
-    const fragment = document.createDocumentFragment();
     const availableYears = [];
-    dom.timelineContent.innerHTML = '';
+    const filteredByYear = new Map();
     years.forEach((year) => {
       const entries = filmographyState.groupedTimeline.get(year) || [];
       const filtered = entries.filter((entry) => roleMatchesFilter(entry, filmographyState.roleFilter));
       if (!filtered.length) return;
       availableYears.push(year);
-      const section = document.createElement('section');
-      section.className = 'timeline-year-group';
-      section.id = `timeline-year-${year}`;
-      section.dataset.year = String(year);
-      section.setAttribute('role', 'group');
-      const head = document.createElement('div');
-      head.className = 'timeline-year-head';
-      const label = document.createElement('h3');
-      label.className = 'timeline-year-label';
-      label.textContent = year;
-      const count = document.createElement('span');
-      count.className = 'timeline-year-count';
-      count.textContent = `${filtered.length} título${filtered.length === 1 ? '' : 's'}`;
-      head.append(label, count);
-      const row = document.createElement('div');
-      row.className = 'timeline-row';
-      filtered.forEach((entry) => {
-        const card = buildTimelineCard(entry);
-        row.appendChild(card);
-      });
-      section.append(head, row);
-      fragment.appendChild(section);
+      filteredByYear.set(year, filtered);
     });
-    dom.timelineContent.appendChild(fragment);
+    filmographyState.timelineAvailableYears = availableYears;
+    filmographyState.timelineFilteredByYear = filteredByYear;
+    filmographyState.timelineRenderedCount = 0;
+    dom.timelineContent.innerHTML = '';
+    renderTimelineBatch({ initial: true });
     renderTimelineNav(availableYears);
     renderTimelineDecades(availableYears);
     if (availableYears.length) {
@@ -916,15 +1030,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (dom.timelineMiniMeta) {
       dom.timelineMiniMeta.textContent = availableYears.length
         ? `${availableYears.length} ano${availableYears.length === 1 ? '' : 's'} de destaques`
-        : 'Nenhum destaque disponível';
+        : 'Nenhum destaque disponivel';
     }
     if (dom.timelineSection) {
       dom.timelineSection.classList.toggle('is-hidden', !availableYears.length);
     }
     const hasEntries = filmographyState.allEntries && filmographyState.allEntries.length;
-
     if (dom.allBtn) {
-      const hasEntries = filmographyState.allEntries && filmographyState.allEntries.length;
       dom.allBtn.toggleAttribute('disabled', !hasEntries);
       dom.allBtn.setAttribute('aria-hidden', hasEntries ? 'false' : 'true');
       const wrapper = dom.allBtn.closest('.show-movies');
@@ -932,11 +1044,11 @@ document.addEventListener('DOMContentLoaded', () => {
         wrapper.classList.toggle('is-hidden', !hasEntries);
       }
     }
-
     if (dom.timelineContent) {
       dom.timelineContent.scrollTo({ top: 0, left: 0, behavior: 'auto' });
     }
     applyTimelineMode(filmographyState.timelineMode, { persist: false, force: true });
+    setupTimelineLazyLoading();
     setupTimelinePrefetch();
   };
 
@@ -1003,7 +1115,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!entry) return;
     const params = new URLSearchParams({
       id: entry.id,
-      mediaType: entry.mediaType
+      mediaType: entry.mediaType,
+      type: entry.mediaType,
+      mediaTp: entry.mediaType
     });
     location.href = `filme.php?${params.toString()}`;
   };
@@ -1062,6 +1176,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const isTimelineMode = () => filmographyState.timelineMode === 'timeline';
 
   const scrollToYear = (year) => {
+    ensureYearRendered(year);
     const target = document.getElementById(`timeline-year-${year}`);
     if (!target) return;
     if (isTimelineMode()) {
@@ -1399,7 +1514,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const buildFilmographyCard = (entry, tab) => {
     const anchor = document.createElement('a');
-    anchor.href = `filme.php?${new URLSearchParams({ id: entry.id, mediaType: entry.mediaType }).toString()}`;
+    anchor.href = `filme.php?${new URLSearchParams({
+      id: entry.id,
+      mediaType: entry.mediaType,
+      type: entry.mediaType,
+      mediaTp: entry.mediaType
+    }).toString()}`;
     anchor.className = 'filmography-card';
     anchor.tabIndex = 0;
     anchor.setAttribute('aria-label', buildTimelineAria(entry));
