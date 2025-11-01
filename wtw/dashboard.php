@@ -38,7 +38,7 @@ $navStates = [
         <a href="index.php" class="wyw-brand wyw-brand--menu dashboard-logo home-header" aria-label="Ir para a pagina inicial">
             <span class="wyw-brand__where">where</span>
             <span class="wyw-brand__where wyw-brand__where--y">y</span>
-            <img src="imagens/eye-icon2.svg" alt="o" class="wyw-brand__eye" />
+            <img src="imagens/wywatch-favicon-iris-png.png" alt="o" class="wyw-brand__eye" />
             <span class="wyw-brand__where wyw-brand__where--u">u</span>
             <span class="wyw-brand__watch">WATCH</span>
         </a>

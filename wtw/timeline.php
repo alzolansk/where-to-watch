@@ -1,6 +1,3 @@
-<?php
-include_once("dashboard.php");
-?>
 <!doctype html>
 <html lang="pt-BR">
 <head>
@@ -11,6 +8,7 @@ include_once("dashboard.php");
   <link rel="stylesheet" href="css/timeline.css">
 </head>
 <body class="has-fixed-header">
+  <?php include_once('dashboard.php'); ?>
   <main class="timeline-page interface-section is-loading">
     <div id="timelinePageSkeleton" class="timeline-page__skeleton" aria-hidden="true">
       <div class="timeline-page__skeleton-header glass-panel">
