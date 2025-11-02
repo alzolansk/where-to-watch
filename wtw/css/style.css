@@ -1130,71 +1130,149 @@ body{
 
 /* Trailer Dialog Window */
 
-#dialog{
+.dialog {
+    position: relative;
     margin: auto;
-    height: 100%;
-    max-height: 465px;
-    max-width: 809px;
+    padding: clamp(14px, 3vw, 22px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 24px;
+    background: linear-gradient(145deg, rgba(13, 16, 26, 0.96), rgba(7, 9, 16, 0.92));
+    box-shadow: 0 48px 120px rgba(5, 7, 14, 0.75);
+    width: min(960px, calc(100vw - 32px));
+    max-height: min(80vh, 620px);
+    overflow: hidden;
+    align-items: stretch;
+    transform-origin: center;
+}
+
+.dialog:not([open]) {
+    display: none;
+}
+
+@supports (aspect-ratio: 16 / 9) {
+    .dialog {
+        aspect-ratio: 16 / 9;
+        max-height: unset;
+    }
+}
+
+.dialog::backdrop {
+    background: rgba(4, 6, 12, 0.78);
+    backdrop-filter: blur(18px) saturate(120%);
+    -webkit-backdrop-filter: blur(18px) saturate(120%);
+}
+
+.dialog[open] {
+    display: grid;
+    animation: trailerModalEnter 0.48s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.dialog.is-closing {
+    animation: trailerModalLeave 0.32s cubic-bezier(0.55, 0.06, 0.68, 0.19) forwards;
+}
+
+@keyframes trailerModalEnter {
+    from {
+        opacity: 0;
+        transform: translateY(28px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes trailerModalLeave {
+    from {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(32px) scale(0.9);
+    }
+}
+
+#dialog iframe {
     width: 100%;
-    border-radius: 25px;
-    overflow-x: hidden;
-    overflow-y: hidden;
-    box-shadow:  2px 2px 5000px 1000px rgba(0, 0, 0, 0.507);
-}
-
-.dialog[open]{
-    animation: fadein 0.2s ease-in forwards;
-}
-
-@keyframes fadein{
-    0%{
-      bottom: 400px;
-      opacity:0;
-    }
-    100%{
-      opacity:1;
-      background-color: rgb(0, 0, 0, 0.1);
-    }
-  }
-
-#dialog iframe{
-    max-width: 809px;
-    width: 100%;
-    max-height: 465px;
     height: 100%;
+    border: 0;
+    border-radius: clamp(16px, 3vw, 20px);
+    box-shadow: 0 24px 64px rgba(5, 7, 14, 0.6);
+    background: #000;
 }
 
-
-@media (max-width: 800px) {
-    #dialog{
-        width: 80%;
-        height: 400px;
-    }
-
-}
-
-@media (max-width: 500px) {
-    #dialog{
-        width: 80%;
-        height: 200px;
-    }
-}
-
-#close-trailer{
-    border-radius: 50%;
-    outline: none;
-    align-items: center;
-    border: none;
-    font-family: Nunito;
-    background: #0000006b;
-    font-size: 1.5em;
-    width: 40px;
-    height: 40px;
+#close-trailer {
     position: absolute;
-    top: 5px;
-    right: 5px;
-    color:#D7171E;
-}   
+    top: clamp(10px, 2.8vw, 18px);
+    right: clamp(10px, 2.8vw, 18px);
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    background: rgba(10, 12, 22, 0.82);
+    color: #f7f9ff;
+    font-family: 'Nunito', sans-serif;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: transform 0.25s ease, background 0.25s ease, border-color 0.25s ease;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+}
+
+#close-trailer:hover {
+    transform: translateY(-2px) scale(1.03);
+    background: rgba(215, 23, 30, 0.28);
+    border-color: rgba(255, 255, 255, 0.38);
+}
+
+#close-trailer:focus-visible {
+    outline: 2px solid rgba(255, 255, 255, 0.75);
+    outline-offset: 3px;
+}
+
+body.trailer-modal-open {
+    overflow: hidden;
+    touch-action: none;
+}
+
+@media (max-width: 900px) {
+    .dialog {
+        padding: clamp(12px, 4vw, 18px);
+        border-radius: 20px;
+    }
+
+    #close-trailer {
+        width: 40px;
+        height: 40px;
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 600px) {
+    .dialog {
+        width: min(96vw, 520px);
+        border-radius: 18px;
+    }
+
+    #dialog iframe {
+        border-radius: 14px;
+    }
+
+    #close-trailer {
+        width: 36px;
+        height: 36px;
+        font-size: 0.95rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .dialog {
+        width: min(96vw, 420px);
+    }
+}
 
 /*Arrows*/
 

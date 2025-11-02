@@ -14,6 +14,7 @@ let bodyScrollRestoreState = null;
 const requestTrailerAnimationFrame = (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function')
     ? window.requestAnimationFrame.bind(window)
     : (callback) => setTimeout(callback, 0);
+let trailerCloseFallbackTimeout = null;
 
 function sanitizeYouTubeId(rawId) {
     if (!rawId) {
@@ -182,19 +183,41 @@ function lockBodyScroll() {
     if (bodyScrollRestoreState || !document || !document.body) {
         return;
     }
+    const { body } = document;
     bodyScrollRestoreState = {
-        overflow: document.body.style.overflow
+        overflow: body.style.overflow,
+        hadClass: body.classList.contains('trailer-modal-open')
     };
-    document.body.style.overflow = 'hidden';
+    body.style.overflow = 'hidden';
+    body.classList.add('trailer-modal-open');
 }
 
 function unlockBodyScroll() {
-    if (!bodyScrollRestoreState || !document || !document.body) {
+    if (!document || !document.body) {
         bodyScrollRestoreState = null;
         return;
     }
-    document.body.style.overflow = bodyScrollRestoreState.overflow || '';
+
+    const { body } = document;
+
+    if (bodyScrollRestoreState) {
+        body.style.overflow = bodyScrollRestoreState.overflow || '';
+        if (!bodyScrollRestoreState.hadClass) {
+            body.classList.remove('trailer-modal-open');
+        }
+    } else {
+        body.style.overflow = '';
+        body.classList.remove('trailer-modal-open');
+    }
+
     bodyScrollRestoreState = null;
+}
+
+function clearTrailerCloseFallback() {
+    if (trailerCloseFallbackTimeout) {
+        clearTimeout(trailerCloseFallbackTimeout);
+        trailerCloseFallbackTimeout = null;
+    }
 }
 
 function handleTrailerDialogClose() {
@@ -202,6 +225,8 @@ function handleTrailerDialogClose() {
         return;
     }
     unbindTrailerFocusTrap();
+    clearTrailerCloseFallback();
+    trailerDialog.classList.remove('is-closing');
     trailerDialog.classList.remove('show');
     if (trailerFrame) {
         trailerFrame.removeAttribute('src');
@@ -378,6 +403,7 @@ function showTrailer(trailerUrl) {
     if (!trailerDialog.open) {
         trailerDialog.showModal();
     }
+    trailerDialog.classList.remove('is-closing');
     trailerDialog.classList.add('show');
     lockBodyScroll();
     bindTrailerFocusTrap();
@@ -389,11 +415,31 @@ function closeTrailer() {
         return;
     }
 
-    if (trailerDialog.open) {
-        trailerDialog.close();
-    } else {
+    if (!trailerDialog.open) {
         handleTrailerDialogClose();
+        return;
     }
+
+    if (trailerDialog.classList.contains('is-closing')) {
+        return;
+    }
+
+    const finishClose = () => {
+        trailerDialog.removeEventListener('animationend', finishClose);
+        trailerDialog.removeEventListener('animationcancel', finishClose);
+        clearTrailerCloseFallback();
+        trailerDialog.classList.remove('is-closing');
+        if (trailerDialog.open) {
+            trailerDialog.close();
+        }
+    };
+
+    trailerDialog.addEventListener('animationend', finishClose);
+    trailerDialog.addEventListener('animationcancel', finishClose);
+
+    clearTrailerCloseFallback();
+    trailerCloseFallbackTimeout = setTimeout(finishClose, 420);
+    trailerDialog.classList.add('is-closing');
 }
 
 if (buttonClose) {
