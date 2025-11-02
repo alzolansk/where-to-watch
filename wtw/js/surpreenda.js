@@ -947,6 +947,9 @@ const buildRouletteItems = (items) => {
       const img = document.createElement('img');
       img.src = item.poster_url;
       img.alt = item.title || 'Título surpresa';
+      img.loading = 'lazy';
+      img.decoding = 'async';
+      img.setAttribute('decoding', 'async');
       element.appendChild(img);
     }
     track.appendChild(element);

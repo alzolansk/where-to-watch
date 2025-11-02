@@ -927,3 +927,11 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeCarouselNav();
     initProviderShortcut();
 });
+
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch((error) => {
+            console.warn('[WYWatch] Falha ao registrar o Service Worker:', error);
+        });
+    });
+}

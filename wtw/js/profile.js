@@ -555,6 +555,10 @@
         img.src = poster;
         img.alt = '';
         img.loading = 'lazy';
+        if ('decoding' in img) {
+          img.decoding = 'async';
+        }
+        img.setAttribute('decoding', 'async');
         img.className = 'favorite-tile__image';
         figure.appendChild(img);
       } else {
@@ -649,6 +653,7 @@
       if ('decoding' in img) {
         img.decoding = 'async';
       }
+      img.setAttribute('decoding', 'async');
       if ('fetchPriority' in img) {
         img.fetchPriority = 'low';
       }
@@ -707,6 +712,7 @@
       if ('decoding' in img) {
         img.decoding = 'async';
       }
+      img.setAttribute('decoding', 'async');
       if ('fetchPriority' in img) {
         img.fetchPriority = 'low';
       }
@@ -975,6 +981,7 @@
         if ('decoding' in img) {
           img.decoding = 'async';
         }
+        img.setAttribute('decoding', 'async');
         if ('fetchPriority' in img) {
           img.fetchPriority = 'low';
         }

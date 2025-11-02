@@ -615,6 +615,8 @@ document.addEventListener('DOMContentLoaded', () => {
             : 'imagens/icon-cast.png';
         img.alt = item.title || item.name || 'Sem t\u00EDtulo';
         img.loading = 'lazy';
+        img.decoding = 'async';
+        img.setAttribute('decoding', 'async');
         media.appendChild(img);
 
         const overlay = document.createElement('figcaption');
@@ -708,22 +710,7 @@ document.addEventListener('DOMContentLoaded', () => {
         poster.className = 'search-card__skeleton-poster';
         media.appendChild(poster);
 
-        const body = document.createElement('div');
-        body.className = 'search-card__skeleton-body';
-
-        const typePill = document.createElement('div');
-        typePill.className = 'search-card__skeleton-pill';
-        const titleLine = document.createElement('div');
-        titleLine.className = 'search-card__skeleton-line search-card__skeleton-line--title';
-        const metaLine = document.createElement('div');
-        metaLine.className = 'search-card__skeleton-line search-card__skeleton-line--meta';
-        const metaLineShort = document.createElement('div');
-        metaLineShort.className = 'search-card__skeleton-line search-card__skeleton-line--short';
-        const ctaLine = document.createElement('div');
-        ctaLine.className = 'search-card__skeleton-line search-card__skeleton-line--cta';
-
-        body.append(typePill, titleLine, metaLine, metaLineShort, ctaLine);
-        card.append(media, body);
+        card.append(media);
 
         return card;
     };

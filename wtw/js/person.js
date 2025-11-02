@@ -456,6 +456,9 @@ document.addEventListener('DOMContentLoaded', () => {
           const logoImg = document.createElement('img');
           logoImg.src = provider.logo;
           logoImg.alt = '';
+          logoImg.loading = 'lazy';
+          logoImg.decoding = 'async';
+          logoImg.setAttribute('decoding', 'async');
           providerNode.appendChild(logoImg);
         }
         const label = document.createElement('span');
@@ -1065,6 +1068,8 @@ document.addEventListener('DOMContentLoaded', () => {
     poster.src = img(entry.posterPath, 'w342') || 'imagens/icon-cast.png';
     poster.alt = `${entry.title}`;
     poster.loading = 'lazy';
+    poster.decoding = 'async';
+    poster.setAttribute('decoding', 'async');
     card.appendChild(poster);
     const body = document.createElement('div');
     body.className = 'timeline-card__body';
@@ -1372,7 +1377,7 @@ document.addEventListener('DOMContentLoaded', () => {
       anchor.href = `person.php?personId=${encodeURIComponent(person.id)}`;
       anchor.className = 'person-chip person-chip--featured';
       anchor.innerHTML = `
-        <img src="${img(person.profile, 'w185') || 'imagens/icon-cast.png'}" alt="">
+        <img src="${img(person.profile, 'w185') || 'imagens/icon-cast.png'}" alt="" loading="lazy" decoding="async">
         <div class="chip-text">
           <div class="pname">${person.name}</div>
           <div class="prole">${person.role || 'Colaborador(a)'}</div>
@@ -1523,6 +1528,8 @@ document.addEventListener('DOMContentLoaded', () => {
     poster.src = img(entry.posterPath, 'w342') || 'imagens/icon-cast.png';
     poster.alt = entry.title;
     poster.loading = 'lazy';
+    poster.decoding = 'async';
+    poster.setAttribute('decoding', 'async');
     anchor.appendChild(poster);
     const body = document.createElement('div');
     body.className = 'filmography-card__body';

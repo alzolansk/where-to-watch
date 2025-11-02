@@ -789,6 +789,8 @@ const updateResultsCaption = (count) => {
             img.src = provider.logo || 'imagens/icon-cast.png';
             img.alt = provider.name;
             img.loading = 'lazy';
+            img.decoding = 'async';
+            img.setAttribute('decoding', 'async');
             button.appendChild(img);
 
             const sr = document.createElement('span');
@@ -817,7 +819,7 @@ const updateResultsCaption = (count) => {
         return `
             <button type="button" class="media-card__watch-link" data-watch-url="${escapeHtml(providerWatchUrl)}" data-provider-name="${escapeHtml(providerName)}">
                 <span>Assistir em</span>
-                ${providerLogo ? `<img src="${escapeHtml(providerLogo)}" alt="${escapeHtml(providerName)}" loading="lazy">` : `<strong>${escapeHtml(providerName)}</strong>`}
+                ${providerLogo ? `<img src="${escapeHtml(providerLogo)}" alt="${escapeHtml(providerName)}" loading="lazy" decoding="async">` : `<strong>${escapeHtml(providerName)}</strong>`}
             </button>
         `;
     };
@@ -915,7 +917,7 @@ const updateResultsCaption = (count) => {
             card.setAttribute('tabindex', '0');
             card.innerHTML = `
                 <figure class="media-card__poster">
-                    <img src="${escapeHtml(posterUrl)}" alt="${escapeHtml(`Poster de ${title}`)}" loading="lazy">
+                    <img src="${escapeHtml(posterUrl)}" alt="${escapeHtml(`Poster de ${title}`)}" loading="lazy" decoding="async">
                     <figcaption class="media-card__overlay">
                         <span class="media-card__badge">${escapeHtml(typeLabel)}</span>
                         <h3 class="media-card__title">${escapeHtml(title)}</h3>

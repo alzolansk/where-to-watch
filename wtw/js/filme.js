@@ -915,6 +915,9 @@ function renderProviderBadges(providers, dom, homepageProvider) {
             const img = document.createElement('img');
             img.src = createImageUrl(provider.logo_path, 'w92');
             img.alt = provider.provider_name;
+            img.loading = 'lazy';
+            img.decoding = 'async';
+            img.setAttribute('decoding', 'async');
             badge.appendChild(img);
         }
 
@@ -981,6 +984,9 @@ function populateProviderColumn(column, container, providers) {
             const img = document.createElement('img');
             img.src = createImageUrl(provider.logo_path, 'w92');
             img.alt = provider.provider_name;
+            img.loading = 'lazy';
+            img.decoding = 'async';
+            img.setAttribute('decoding', 'async');
             pill.appendChild(img);
         }
 
@@ -1016,7 +1022,7 @@ function renderSeasons(details, dom, mediaType) {
         card.className = 'season-item';
 
         card.innerHTML = `
-            <img src="${poster}" alt="${season.name || 'Temporada'}" loading="lazy">
+            <img src="${poster}" alt="${season.name || 'Temporada'}" loading="lazy" decoding="async">
             <div class="season-details">
                 <p class="season-name">${season.name || 'Temporada'}</p>
                 <span class="year-season">${[year, `${season.episode_count || 0} episodios`].filter(Boolean).join(' - ')}</span>
@@ -1084,6 +1090,9 @@ function openSeasonDialog(season, dom) {
                 const img = document.createElement('img');
                 img.src = createImageUrl(provider.logo_path, 'w92');
                 img.alt = provider.provider_name;
+                img.loading = 'lazy';
+                img.decoding = 'async';
+                img.setAttribute('decoding', 'async');
                 link.appendChild(img);
             }
 
@@ -1149,7 +1158,7 @@ function renderCast(castArray, castContainer) {
         card.dataset.castId = member.id;
 
         card.innerHTML = `
-            <img src="${profile}" alt="${member.name}" class="actor-img" loading="lazy">
+            <img src="${profile}" alt="${member.name}" class="actor-img" loading="lazy" decoding="async">
             <div class="p-div">
                 <span class="actor-name">${member.name}</span>
                 <p class="actor-role">${member.character || ''}</p>
@@ -1199,6 +1208,8 @@ function renderGallery(images, dom) {
         img.src = createImageUrl(item.file_path, size);
         img.alt = isBackdrop ? `Backdrop ${index + 1}` : `Poster ${index + 1}`;
         img.loading = 'lazy';
+        img.decoding = 'async';
+        img.setAttribute('decoding', 'async');
         card.appendChild(img);
 
         const caption = document.createElement('span');
