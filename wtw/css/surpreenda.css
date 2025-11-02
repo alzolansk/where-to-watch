@@ -730,11 +730,6 @@ canvas {
   width: min(96vw, 1080px);
   padding: clamp(1.4rem, 2.4vw, 2.6rem);
   gap: clamp(1.6rem, 2.8vw, 3rem);
-  background:
-    linear-gradient(140deg, rgba(4, 8, 20, 0.95), rgba(5, 6, 16, 0.78));
-  box-shadow:
-    0 28px 90px rgba(2, 6, 20, 0.85),
-    0 0 60px rgba(54, 240, 255, 0.18);
 }
 
 .roulette-station.is-rolling .roulette-shell {
@@ -1309,10 +1304,151 @@ canvas {
   color: var(--surprise-text);
 }
 
+@media (max-width: 640px) {
+  body {
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: stretch;
+    overflow-y: auto;
+    height: auto;
+    min-height: 100vh;
+  }
+
+  .main-content {
+    width: 100%;
+    height: auto;
+    min-height: 100vh;
+    padding: 112px 16px 96px;
+    justify-content: flex-start;
+    align-items: stretch;
+    gap: 28px;
+  }
+
+  .surprise-rail {
+    top: 16px;
+    left: 50%;
+    right: auto;
+    transform: translate(-50%, 0);
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    width: calc(100% - 32px);
+    max-width: 360px;
+    gap: 18px;
+    padding: 10px 18px;
+    background: rgba(6, 6, 18, 0.9);
+    border-radius: 999px;
+    border: 1px solid rgba(54, 240, 255, 0.25);
+    box-shadow: 0 18px 38px rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(14px);
+  }
+
+  .surprise-rail .rail-logo img {
+    width: 32px;
+  }
+
+  .rail-link,
+  .rail-toggle {
+    width: 34px;
+    height: 34px;
+  }
+
+  .rail-link:hover,
+  .rail-toggle:hover {
+    transform: scale(1.05);
+    filter: drop-shadow(0 0 14px rgba(54, 240, 255, 0.55));
+  }
+
+  .roulette-station {
+    width: 100%;
+    align-items: stretch;
+    gap: 24px;
+  }
+
+  .btn {
+    width: 100%;
+    max-width: 340px;
+    align-self: center;
+    padding: 0.9rem 1.6rem;
+  }
+
+  .orb {
+    width: 320px;
+    height: 320px;
+  }
+
+  .roulette-shell {
+    width: 100%;
+    padding: 20px;
+    border-radius: 28px;
+  }
+
+  .roulette-station.has-selection .roulette-shell {
+    padding: 20px;
+  }
+
+  .surprise-display {
+    width: 100%;
+  }
+
+  .surprise-display-poster {
+    justify-content: center;
+  }
+
+  .surprise-info-panel {
+    padding: 1.2rem 1.4rem;
+  }
+
+  .roulette-actions {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .roulette-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1 1 150px;
+    min-width: 0;
+  }
+
+  .status-message {
+    width: min(92vw, 360px);
+    min-width: auto;
+    bottom: 32px;
+  }
+
+  .hud {
+    padding: 16px;
+    row-gap: 12px;
+  }
+
+  .hud > div:nth-child(2) {
+    display: none;
+  }
+
+  .brand {
+    align-items: center;
+    text-align: center;
+    gap: 4px;
+  }
+
+  .brand small {
+    letter-spacing: 0.14em;
+  }
+
+  .footer-hud {
+    justify-self: center;
+    text-align: center;
+    font-size: 10px;
+  }
+}
+
 @media (max-width: 480px) {
   .roulette-shell {
     gap: 16px;
-    padding: 16px 18px;
+    padding: 18px 16px;
   }
 
   .roulette-item {
@@ -1323,61 +1459,8 @@ canvas {
   .btn {
     letter-spacing: 0.12em;
   }
+
+  .status-message {
+    bottom: 24px;
+  }
 }
-
-  .roulette-button.is-ghost:hover {
-    box-shadow: inset 0 0 0 1px rgba(0, 200, 255, 0.45);
-  }
-
-  @media (max-width: 480px) {
-    .roulette-shell {
-      gap: 16px;
-    }
-    .roulette-item {
-      width: 48px;
-      height: 70px;
-    }
-  }
-
-
-  .roulette-button.is-ghost:hover {
-    box-shadow: inset 0 0 0 1px rgba(0, 200, 255, 0.45);
-  }
-
-  @media (max-width: 480px) {
-    .roulette-shell {
-      gap: 16px;
-    }
-    .roulette-item {
-      width: 48px;
-      height: 70px;
-    }
-  }
-
-  .roulette-button.is-ghost:hover {
-    box-shadow: inset 0 0 0 1px rgba(0, 200, 255, 0.45);
-  }
-
-  @media (max-width: 480px) {
-    .roulette-shell {
-      gap: 16px;
-    }
-    .roulette-item {
-      width: 48px;
-      height: 70px;
-    }
-  }
-
-  .roulette-button.is-ghost:hover {
-    box-shadow: inset 0 0 0 1px rgba(0, 200, 255, 0.45);
-  }
-
-  @media (max-width: 480px) {
-    .roulette-shell {
-      gap: 16px;
-    }
-    .roulette-item {
-      width: 48px;
-      height: 70px;
-    }
-  }

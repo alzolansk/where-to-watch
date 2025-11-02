@@ -327,9 +327,9 @@
         </div>
     </main>
 
-    <script src="js/filme.js"></script>
+    <script type="module" src="js/filme.js"></script>
     <script src="js/script.js"></script>
-    <script src="js/search.js"></script>
+    <script type="module" src="js/search.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.2/color-thief.umd.js"></script>
 </body>
 </html>

@@ -1,3 +1,5 @@
+import { normalizeText } from './utils.js';
+
 document.addEventListener('DOMContentLoaded', function() {
     const runtimeConfig = (typeof window !== 'undefined' && window.__WY_WATCH_CONFIG__) || {};
     const apiKey = runtimeConfig.tmdbApiKey || '';
@@ -508,10 +510,11 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function slugify(text) {
-        return text.toLowerCase()
-            .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-            .replace(/[^a-z0-9]+/g, '-')
-            .replace(/^-+|-+$/g, '');
+        const normalized = normalizeText(text);
+        if (!normalized) {
+            return '';
+        }
+        return normalized.replace(/\s+/g, '-');
     }
 
     function activateBackdropContainer(element) {

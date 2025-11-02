@@ -1,3 +1,5 @@
+import { dedupeByKey, levenshtein, normalizeText } from './utils.js';
+
 document.addEventListener('DOMContentLoaded', () => {
     const runtimeConfig = (typeof window !== 'undefined' && window.__WY_WATCH_CONFIG__) || {};
     const apiKey = runtimeConfig.tmdbApiKey || '';
@@ -217,55 +219,6 @@ document.addEventListener('DOMContentLoaded', () => {
     setupFilterSections();
     syncFilterSectionIndicators();
 
-    const normalizeText = (value) => {
-        if (!value) return '';
-        let normalized = `${value}`;
-        if (typeof normalized.normalize === 'function') {
-            normalized = normalized.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-        }
-        return normalized
-            .toLowerCase()
-            .replace(/[^\w\s]/g, ' ')
-            .replace(/\s+/g, ' ')
-            .trim();
-    };
-
-    const levenshtein = (source, target) => {
-        if (source === target) {
-            return 0;
-        }
-        if (!source) {
-            return target.length;
-        }
-        if (!target) {
-            return source.length;
-        }
-
-        const sourceLength = source.length;
-        const targetLength = target.length;
-        let previous = new Array(targetLength + 1);
-        let current = new Array(targetLength + 1);
-
-        for (let index = 0; index <= targetLength; index += 1) {
-            previous[index] = index;
-        }
-
-        for (let i = 0; i < sourceLength; i += 1) {
-            current[0] = i + 1;
-            const sourceCode = source.charCodeAt(i);
-            for (let j = 0; j < targetLength; j += 1) {
-                const cost = sourceCode === target.charCodeAt(j) ? 0 : 1;
-                const insertion = current[j] + 1;
-                const deletion = previous[j + 1] + 1;
-                const substitution = previous[j] + cost;
-                current[j + 1] = Math.min(insertion, deletion, substitution);
-            }
-            [previous, current] = [current, previous];
-        }
-
-        return previous[targetLength];
-    };
-
     const computeFuzzySimilarity = (query, target) => {
         if (!query || !target) {
             return 0;
@@ -322,23 +275,13 @@ document.addEventListener('DOMContentLoaded', () => {
         return Array.from(variants).slice(0, 4);
     };
 
-    const dedupeItems = (items) => {
-        const seen = new Set();
-        const deduped = [];
-        items.forEach((item) => {
-            if (!item || typeof item.id === 'undefined') {
-                return;
-            }
-            const mediaType = (item.media_type === 'tv' ? 'tv' : 'movie');
-            const key = `${mediaType}-${item.id}`;
-            if (seen.has(key)) {
-                return;
-            }
-            seen.add(key);
-            deduped.push(item);
-        });
-        return deduped;
-    };
+    const dedupeItems = (items) => dedupeByKey(Array.isArray(items) ? items : [], (item) => {
+        if (!item || typeof item.id === 'undefined') {
+            return null;
+        }
+        const mediaType = item.media_type === 'tv' ? 'tv' : 'movie';
+        return `${mediaType}-${item.id}`;
+    });
 
     let trendingCache = null;
     let resultsRequestToken = 0;

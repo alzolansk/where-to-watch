@@ -385,14 +385,19 @@ body::after {
 
 .timeline-layout {
   display: grid;
-  grid-template-columns: 320px 1fr;
+  --timeline-panel-height: 620px;
+  grid-template-columns: 320px minmax(0, 1fr);
   gap: clamp(20px, 4vw, 42px);
+  align-items: stretch;
+  min-height: var(--timeline-panel-height);
 }
-
 .timeline-sidebar {
   position: sticky;
   top: 110px;
-  align-self: start;
+  align-self: stretch;
+  height: var(--timeline-panel-height);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   display: flex;
   flex-direction: column;
   gap: 18px;
@@ -579,7 +584,8 @@ body::after {
   display: flex;
   flex-direction: column;
   gap: 28px;
-  max-height: 620px;
+  height: var(--timeline-panel-height);
+  max-height: var(--timeline-panel-height);
   overflow-y: auto;
   padding: 12px 16px 12px 70px;
   scroll-behavior: smooth;
@@ -609,7 +615,6 @@ body::after {
   border-radius: 26px;
   padding: 22px 24px 30px 34px;
   box-shadow: 0 20px 45px rgba(0, 0, 0, .42);
-  scroll-snap-align: start;
   transition: border .3s ease, box-shadow .3s ease, transform .3s ease;
 }
 
@@ -907,7 +912,6 @@ body::after {
   overflow-y: hidden;
   gap: 36px;
   padding: 24px 48px 48px;
-  scroll-snap-type: x mandatory;
 }
 
 .timeline-shell[data-mode="timeline"] .timeline-content::before {
@@ -926,7 +930,6 @@ body::after {
 .timeline-shell[data-mode="timeline"] .timeline-year-group {
   min-width: clamp(260px, 48vw, 360px);
   padding: 26px 26px 34px;
-  scroll-snap-align: center;
 }
 
 .timeline-shell[data-mode="timeline"] .timeline-year-group::before {
@@ -1669,66 +1672,33 @@ body.modal-is-open {
   .people-grid { grid-template-columns: repeat(3, 1fr); }
   .info-grid { grid-template-columns: 1fr 1fr; }
   .filmography-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-  .timeline-layout { grid-template-columns: 1fr; }
-  .timeline-sidebar { position: static; }
+  .timeline-layout {
+    grid-template-columns: 1fr;
+    --timeline-panel-height: auto;
+    min-height: 0;
+  }
+  .timeline-sidebar {
+    position: static;
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+  }
   .timeline-year-nav { display: none; }
   .timeline-decade-chips { display: flex; }
   .timeline-row { grid-template-columns: repeat(2, minmax(160px, 1fr)); }
+  .timeline-content {
+    height: auto;
+    max-height: none;
+  }
 }
-
 @media (max-width: 620px) {
   .people-grid { grid-template-columns: repeat(2, 1fr); }
   .filmography-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .movie-dialog[open] { padding: 16px; }
   .movie-dialog .modal-inner {
     width: calc(100vw - 24px);
-    height: max(360px, calc(100vh - 48px));
-    padding: 22px 20px 24px;
-    border-radius: 24px;
-    gap: 18px;
-  }
-  .movie-dialog .modal-body {
-    padding-right: 4px;
-    padding-bottom: 10px;
-  }
-  .movie-dialog .modal-head { flex-direction: column; align-items: flex-start; }
-  .modal-identity { width: 100%; }
-  .modal-close-btn { width: 100%; }
-  .modal-tabs { width: 100%; justify-content: space-between; }
-  .modal-filters { grid-template-columns: 1fr; }
-  #modalFilterControls select { background-position: calc(100% - 22px) calc(50% - 4px), calc(100% - 16px) calc(50% - 4px); }
-  .timeline-shell[data-mode="grid"] .timeline-content {
-    flex-direction: row;
-    overflow-x: auto;
-    overflow-y: hidden;
-    gap: 24px;
-    padding: 22px 24px 38px;
-    scroll-snap-type: x mandatory;
-  }
-  .timeline-shell[data-mode="grid"] .timeline-content::before {
-    display: none;
-  }
-  .timeline-shell[data-mode="grid"] .timeline-year-group {
-    min-width: clamp(220px, 82vw, 280px);
-    padding: 22px 22px 32px;
-    scroll-snap-align: center;
-  }
-  .timeline-shell[data-mode="grid"] .timeline-year-group::before,
-  .timeline-shell[data-mode="grid"] .timeline-year-group::after {
-    display: none;
-  }
-  .timeline-shell[data-mode="grid"] .timeline-row {
-    display: flex;
-    gap: 16px;
-  }
-  .timeline-shell[data-mode="grid"] .timeline-card {
-    min-width: 160px;
-  }
-  .timeline-content { max-height: none; padding-right: 0; }
+  scrollbar-color: rgba(255,255,255,.28) transparent;
 }
-
-.page-shell.is-loading [data-person-content] {
-  display: none !important;
 }
 
 .person-skeleton {
@@ -1938,30 +1908,31 @@ body.modal-is-open {
 
 /* timeline ja recebe o estilo */
 .timeline-content,
-.timeline-content.wyw-scroll {
+.timeline-content.wyw-scroll,
+.timeline-sidebar {
   scrollbar-width: thin;
   scrollbar-color: rgba(255,255,255,.28) transparent;
 }
-
 /* webkit (chrome/edge/opera/safari) */
 .wyw-scroll::-webkit-scrollbar,
-.timeline-content::-webkit-scrollbar {
+.timeline-content::-webkit-scrollbar,
+.timeline-sidebar::-webkit-scrollbar {
   height: 10px;         /* horizontal */
   width: 10px;          /* vertical (se usar em outras areas) */
   background: transparent;
 }
-
 .wyw-scroll::-webkit-scrollbar-track,
-.timeline-content::-webkit-scrollbar-track {
+.timeline-content::-webkit-scrollbar-track,
+.timeline-sidebar::-webkit-scrollbar-track {
   background:
     linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
   border: 1px solid rgba(255,255,255,.12);
   border-radius: 999px;
   box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
 }
-
 .wyw-scroll::-webkit-scrollbar-thumb,
-.timeline-content::-webkit-scrollbar-thumb {
+.timeline-content::-webkit-scrollbar-thumb,
+.timeline-sidebar::-webkit-scrollbar-thumb {
   border-radius: 999px;
   background:
     linear-gradient(180deg, #ef4444, #d7171e);            /* accent WYWatch */
@@ -1970,22 +1941,22 @@ body.modal-is-open {
     inset 0 0 0 1px rgba(0,0,0,.25),
     0 6px 16px rgba(239,68,68,.25);
 }
-
 .wyw-scroll::-webkit-scrollbar-thumb:hover,
-.timeline-content::-webkit-scrollbar-thumb:hover {
+.timeline-content::-webkit-scrollbar-thumb:hover,
+.timeline-sidebar::-webkit-scrollbar-thumb:hover {
   filter: brightness(1.05);
   box-shadow:
     inset 0 0 0 1px rgba(0,0,0,.25),
     0 8px 22px rgba(239,68,68,.35);
 }
-
 .wyw-scroll::-webkit-scrollbar-thumb:active,
-.timeline-content::-webkit-scrollbar-thumb:active {
+.timeline-content::-webkit-scrollbar-thumb:active,
+.timeline-sidebar::-webkit-scrollbar-thumb:active {
   filter: brightness(1.1);
 }
-
 /* cantos (quando aparece cruzado) */
 .wyw-scroll::-webkit-scrollbar-corner,
-.timeline-content::-webkit-scrollbar-corner {
+.timeline-content::-webkit-scrollbar-corner,
+.timeline-sidebar::-webkit-scrollbar-corner {
   background: transparent;
 }

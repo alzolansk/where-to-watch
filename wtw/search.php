@@ -195,8 +195,8 @@ $sortOptions = [
     window.__INITIAL_SEARCH_QUERY__ = <?php echo $queryForScript; ?>;
 </script>
 <script src="js/script.js"></script>
-<script src="js/search.js"></script>
-<script src="js/search-results.js"></script>
+<script type="module" src="js/search.js"></script>
+<script type="module" src="js/search-results.js"></script>
 </body>
 </html>
 

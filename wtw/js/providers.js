@@ -1,3 +1,5 @@
+import { escapeHtml, normalizeText } from './utils.js';
+
 (function () {
     const runtimeConfig = (typeof window !== 'undefined' && window.__WY_WATCH_CONFIG__) || {};
     const API_KEY = runtimeConfig.tmdbApiKey || '';
@@ -323,13 +325,6 @@ const updateProviderRailNav = () => {
         return `https://www.google.com/search?q=${encodeURIComponent(name)}`;
     };
 
-    const normalize = (value) => (value || '')
-        .toString()
-        .toLowerCase()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .trim();
-
     const formatList = (items) => {
         if (!items.length) {
             return '';
@@ -341,13 +336,6 @@ const updateProviderRailNav = () => {
     };
 
     const buildImageUrl = (path, size) => (path ? `${IMAGE_BASE}${size}${path}` : '');
-
-    const escapeHtml = (value) => (value || '')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
 
     const parseInitialProviders = () => {
         const params = new URLSearchParams(window.location.search);
@@ -782,7 +770,7 @@ const updateResultsCaption = (count) => {
                 if (priorityA !== priorityB) {
                     return priorityA - priorityB;
                 }
-                return normalize(a.name).localeCompare(normalize(b.name));
+                return normalizeText(a.name).localeCompare(normalizeText(b.name));
             });
 
         const fragment = document.createDocumentFragment();

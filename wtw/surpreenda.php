@@ -204,7 +204,7 @@ $introRevealText = 'WYWATCH';
 <script id="wtw-client-config" type="application/json">
 <?php echo json_encode($clientConfig, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>
 </script>
-<script src="<?php echo htmlspecialchars($assetBasePath . '/js/surpreenda.js', ENT_QUOTES); ?>" defer></script>
+<script type="module" src="<?php echo htmlspecialchars($assetBasePath . '/js/surpreenda.js', ENT_QUOTES); ?>"></script>
 
 </body>
 </html>

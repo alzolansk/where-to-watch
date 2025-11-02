@@ -176,10 +176,6 @@ include_once("dashboard.php")
 
         <div class="timeline-content" id="timeline-container" role="list" tabindex="0" aria-label="Lista de obras na timeline"></div>
       </div>
-
-      <div class="show-movies">
-        <button id="show-all-movies" class="action-btn action-btn--glass">Abrir filmografia completa</button>
-      </div>
     </section>
 
 
@@ -205,7 +201,6 @@ include_once("dashboard.php")
       </div>
 
       <div class="info-grid glass-panel" id="infoGrid">
-        <!-- preenchido via JS -->
       </div>
 
       <div class="awards-wrap">
@@ -221,85 +216,8 @@ include_once("dashboard.php")
   <button type="button" class="back-to-top" id="backToTopButton" aria-label="Voltar ao topo">
     <span aria-hidden="true">↑</span>
   </button>
-
-  <!-- ========== MODAL: TODOS OS TRABALHOS ========== -->
-  <dialog id="moviesModal" class="movie-dialog" role="dialog" aria-modal="true" aria-labelledby="moviesModalTitle">
-    <div class="modal-inner" role="document">
-      <header class="modal-head">
-        <div class="modal-identity">
-          <img id="modalActorPhoto" class="modal-actor-photo" src="" alt="Foto do(a) artista" loading="lazy">
-          <div class="modal-titles">
-            <h3 id="moviesModalTitle">Todos os trabalhos</h3>
-            <p id="modalResultCount" class="modal-result-count">&nbsp;</p>
-          </div>
-        </div>
-        <button id="closeMoviesModal" class="modal-close-btn" type="button">Fechar</button>
-      </header>
-
-      <div class="modal-controls" role="presentation">
-        <div class="modal-tabs" role="tablist" aria-label="Categorias da filmografia">
-          <button type="button" class="modal-tab is-active" role="tab" aria-selected="true" aria-controls="filmographyMovies" id="tabMovies">Filmes</button>
-          <button type="button" class="modal-tab" role="tab" aria-selected="false" aria-controls="filmographyTv" id="tabTv">TV</button>
-          <button type="button" class="modal-tab" role="tab" aria-selected="false" aria-controls="filmographyCrew" id="tabCrew">Equipe</button>
-        </div>
-
-        <div class="modal-filters" id="modalFilterControls">
-          <label class="visually-hidden" for="modalFilmographySearch">Buscar na filmografia</label>
-          <input type="search" id="modalFilmographySearch" placeholder="Buscar na filmografia" autocomplete="off">
-
-          <label class="visually-hidden" for="modalSortSelect">Ordenar por</label>
-          <select id="modalSortSelect">
-            <option value="yearDesc">Ano (mais recente)</option>
-            <option value="yearAsc">Ano (mais antigo)</option>
-            <option value="popularity">Popularidade (TMDB)</option>
-            <option value="rating">Nota média</option>
-            <option value="availability">Onde assistir primeiro</option>
-          </select>
-
-          <label class="visually-hidden" for="modalRoleSelect">Filtrar papel</label>
-          <select id="modalRoleSelect">
-            <option value="all">Todos os papéis</option>
-            <option value="acting">Atuação</option>
-            <option value="directing">Direção</option>
-            <option value="production">Produção</option>
-            <option value="crew">Outros (equipe)</option>
-          </select>
-
-          <label class="visually-hidden" for="modalProviderSelect">Filtrar provedor</label>
-          <select id="modalProviderSelect">
-            <option value="all">Todos os provedores</option>
-          </select>
-
-          <label class="visually-hidden" for="modalGenreSelect">Filtrar gênero</label>
-          <select id="modalGenreSelect">
-            <option value="all">Todos os gêneros</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="modal-body wyw-scroll" id="filmographyModalBody">
-        <p id="modalEmptyState" class="modal-empty is-hidden">Nenhum título encontrado.</p>
-
-        <div class="filmography-panel is-active" id="filmographyMovies" role="tabpanel" aria-labelledby="tabMovies">
-          <div class="filmography-grid" id="moviesList"></div>
-          <button type="button" class="load-more-btn is-hidden" data-target="moviesList">Carregar mais</button>
-        </div>
-
-        <div class="filmography-panel" id="filmographyTv" role="tabpanel" aria-labelledby="tabTv" hidden>
-          <div class="filmography-grid" id="tvList"></div>
-          <button type="button" class="load-more-btn is-hidden" data-target="tvList">Carregar mais</button>
-        </div>
-
-        <div class="filmography-panel" id="filmographyCrew" role="tabpanel" aria-labelledby="tabCrew" hidden>
-          <div class="filmography-grid" id="crewList"></div>
-          <button type="button" class="load-more-btn is-hidden" data-target="crewList">Carregar mais</button>
-        </div>
-      </div>
-    </div>
-  </dialog>
-
-  <script src="js/person.js"></script>
+  <script type="module" src="js/person.js"></script>
   <script src="js/script.js"></script>
-  <script src="js/search.js"></script>
+  <script type="module" src="js/search.js"></script>
 </body>
 </html>

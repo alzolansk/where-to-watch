@@ -1,3 +1,5 @@
+import { normalizeText } from './utils.js';
+
 // person.js – nova experiência de timeline e filmografia com caching, filtros e acessibilidade
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -222,12 +224,6 @@ document.addEventListener('DOMContentLoaded', () => {
     previousActive: null
   };
 
-  const normalize = (value = '') => value
-    .toString()
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '');
-
   const img = (path, size = 'w500') => (path ? `https://image.tmdb.org/t/p/${size}${path}` : '');
 
   const safeParseDate = (value) => {
@@ -305,7 +301,7 @@ document.addEventListener('DOMContentLoaded', () => {
             ...(parsed.pagination || {})
           }
         };
-        filmographyState.modal.searchNormalized = normalize(filmographyState.modal.search || '');
+        filmographyState.modal.searchNormalized = normalizeText(filmographyState.modal.search || '');
         if (!filmographyState.modal.genre) {
           filmographyState.modal.genre = 'all';
         }
@@ -680,7 +676,7 @@ document.addEventListener('DOMContentLoaded', () => {
           voteCount: item.vote_count || 0,
           roles: [],
           roleCategories: new Set(),
-          normalizedTitle: normalize(item.title || item.name || ''),
+          normalizedTitle: normalizeText(item.title || item.name || ''),
           providerInfo: null,
           providerPrimary: null,
           providerIds: new Set(),
@@ -1584,49 +1580,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  const activateFocusTrap = (dialog) => {
-    if (!dialog) return;
-    focusTrap.previousActive = document.activeElement;
-    const focusableSelectors = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
-    const handler = (event) => {
-      if (event.key !== 'Tab') return;
-      const focusable = Array.from(dialog.querySelectorAll(focusableSelectors)).filter((el) => !el.hasAttribute('disabled') && el.getAttribute('aria-hidden') !== 'true');
-      if (!focusable.length) {
-        event.preventDefault();
-        return;
-      }
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-      if (event.shiftKey) {
-        if (document.activeElement === first) {
-          event.preventDefault();
-          last.focus();
-        }
-      } else if (document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    };
-    dialog.addEventListener('keydown', handler);
-    focusTrap.handler = handler;
-    const focusable = Array.from(dialog.querySelectorAll(focusableSelectors)).filter((el) => !el.hasAttribute('disabled'));
-    if (focusable.length) {
-      focusable[0].focus();
-    }
-  };
-
-  const deactivateFocusTrap = (dialog) => {
-    if (!dialog) return;
-    if (focusTrap.handler) {
-      dialog.removeEventListener('keydown', focusTrap.handler);
-      focusTrap.handler = null;
-    }
-    if (focusTrap.previousActive && typeof focusTrap.previousActive.focus === 'function') {
-      focusTrap.previousActive.focus();
-    }
-    focusTrap.previousActive = null;
-  };
-
   const openFilmographyModal = async () => {
     if (!dom.allModal) return;
     loadModalPreferences();
@@ -1741,7 +1694,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (dom.modalSearch) {
       dom.modalSearch.addEventListener('input', async () => {
         filmographyState.modal.search = dom.modalSearch.value;
-        filmographyState.modal.searchNormalized = normalize(dom.modalSearch.value);
+        filmographyState.modal.searchNormalized = normalizeText(dom.modalSearch.value);
         filmographyState.modal.pagination[filmographyState.modal.activeTab] = filmographyState.modal.itemsPerPage;
         await renderModalTab(filmographyState.modal.activeTab);
       });

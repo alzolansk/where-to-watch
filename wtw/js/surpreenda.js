@@ -1,3 +1,5 @@
+import { escapeHtml } from './utils.js';
+
 const canvas = document.getElementById("space");
 const ctx = canvas.getContext("2d");
 const introContainer = document.getElementById('intro');
@@ -318,9 +320,7 @@ const MEDIA_LABELS = {
 const MEDIA_STORAGE_KEY = 'wtw_surprise_media_type';
 
 const createPosterPoolState = () => ({
-  entries: [],
-  expiresAt: 0,
-  inflight: null,
+  inflight: null
 });
 
 const roulettePosterPool = {
@@ -427,18 +427,6 @@ const scheduleBootTick = (fn, delay) => {
   const id = window.setTimeout(fn, delay);
   bootTimers.push(id);
   return id;
-};
-
-const escapeHtml = (value) => {
-  if (value === null || value === undefined) {
-    return '';
-  }
-  return String(value)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
 };
 
 const hideSurprisePanel = () => {
@@ -876,10 +864,6 @@ const requestSurprise = async (mediaType = currentMediaType) => {
 
 const fetchRoulettePosterPool = async (mediaType = currentMediaType) => {
   const { normalized, store } = getPosterPoolStore(mediaType);
-  const now = Date.now();
-  if (Array.isArray(store.entries) && store.entries.length && store.expiresAt > now) {
-    return store.entries;
-  }
   if (store.inflight) {
     return store.inflight;
   }
@@ -887,71 +871,62 @@ const fetchRoulettePosterPool = async (mediaType = currentMediaType) => {
   const endpoint = getRoulettePostersEndpoint();
   const url = `${endpoint}?media_type=${encodeURIComponent(normalized)}`;
   const inflightRequest = (async () => {
-    let response;
     try {
-      response = await fetch(url, { credentials: 'include' });
-    } catch (networkError) {
-      const error = new Error('posters_network');
-      error.code = 'posters_network';
-      throw error;
-    }
-
-    if (response.status === 204) {
-      const error = new Error('shuffle_empty');
-      error.code = 'shuffle_empty';
-      throw error;
-    }
-
-    let payload = null;
-    if (response.status !== 204) {
+      let response;
       try {
-        payload = await response.json();
-      } catch (parseError) {
-        payload = null;
+        response = await fetch(url, { credentials: 'include' });
+      } catch (networkError) {
+        const error = new Error('posters_network');
+        error.code = 'posters_network';
+        throw error;
       }
-    }
 
-    if (response.status === 401) {
-      const error = new Error('posters_unauthorized');
-      error.code = 'posters_unauthorized';
-      throw error;
-    }
+      if (response.status === 204) {
+        const error = new Error('shuffle_empty');
+        error.code = 'shuffle_empty';
+        throw error;
+      }
 
-    if (response.status === 412) {
-      const error = new Error((payload && payload.message) || 'posters_missing_providers');
-      error.code = 'posters_missing_providers';
-      error.payload = payload;
-      throw error;
-    }
+      let payload = null;
+      if (response.status !== 204) {
+        try {
+          payload = await response.json();
+        } catch (parseError) {
+          payload = null;
+        }
+      }
 
-    if (!response.ok) {
-      const error = new Error((payload && payload.message) || 'posters_fetch_failed');
-      error.code = (payload && payload.error) || 'posters_fetch_failed';
-      error.status = response.status;
-      throw error;
-    }
+      if (response.status === 401) {
+        const error = new Error('posters_unauthorized');
+        error.code = 'posters_unauthorized';
+        throw error;
+      }
 
-    if (!payload || payload.status !== 'ok' || !Array.isArray(payload.posters)) {
-      const error = new Error('posters_invalid');
-      error.code = 'posters_invalid';
-      throw error;
-    }
+      if (response.status === 412) {
+        const error = new Error((payload && payload.message) || 'posters_missing_providers');
+        error.code = 'posters_missing_providers';
+        error.payload = payload;
+        throw error;
+      }
 
-    const ttlSeconds = (typeof payload.ttl === 'number' && payload.ttl > 0) ? payload.ttl : 300;
-    const fallbackExpiration = Date.now() + ttlSeconds * 1000;
-    const parsedExpiration = payload.cache_expires_at ? Date.parse(payload.cache_expires_at) : fallbackExpiration;
-    store.entries = payload.posters;
-    store.expiresAt = Number.isFinite(parsedExpiration) ? parsedExpiration : fallbackExpiration;
-    return store.entries;
-  })()
-    .catch((error) => {
-      store.entries = [];
-      store.expiresAt = 0;
-      throw error;
-    })
-    .finally(() => {
+      if (!response.ok) {
+        const error = new Error((payload && payload.message) || 'posters_fetch_failed');
+        error.code = (payload && payload.error) || 'posters_fetch_failed';
+        error.status = response.status;
+        throw error;
+      }
+
+      if (!payload || payload.status !== 'ok' || !Array.isArray(payload.posters)) {
+        const error = new Error('posters_invalid');
+        error.code = 'posters_invalid';
+        throw error;
+      }
+
+      return payload.posters;
+    } finally {
       store.inflight = null;
-    });
+    }
+  })();
 
   store.inflight = inflightRequest;
   return inflightRequest;

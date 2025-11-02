@@ -1,3 +1,5 @@
+import { dedupeByKey, normalizeText } from './utils.js';
+
 const waitForImages = (container) => new Promise(resolve => {
     const root = container || document;
     const allImages = root ? root.querySelectorAll('img') : [];
@@ -57,9 +59,7 @@ const setMovieLoadingState = (isLoading) => {
 };
 
 function normalizeProviderName(value) {
-    return value
-        ? value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-        : '';
+    return normalizeText(value || '');
 }
 
 const HOMEPAGE_DOMAIN_MAP = [
@@ -869,21 +869,22 @@ function prepareStreamingProviders(originalList, homepageProvider) {
 
 
 function dedupeProviders(list) {
-    const result = [];
-    const seen = new Set();
-    (list || []).forEach(provider => {
-        const id = provider.provider_id || provider.providerId || provider.provider_name;
-        if (!id || seen.has(id)) {
-            return;
+    const filtered = dedupeByKey(Array.isArray(list) ? list : [], (provider) => {
+        if (!provider) {
+            return null;
         }
         const normalizedName = normalizeProviderName(provider.provider_name);
         if (!normalizedName || ignoredProviders.some(term => normalizedName.includes(term))) {
-            return;
+            return null;
         }
-        seen.add(id);
-        result.push(provider);
+        const providerId = provider.provider_id ?? provider.providerId;
+        if (providerId) {
+            return `id:${providerId}`;
+        }
+        return `name:${normalizedName}`;
     });
-    return result.sort((a, b) => (a.display_priority || 1000) - (b.display_priority || 1000));
+
+    return filtered.sort((a, b) => (a.display_priority || 1000) - (b.display_priority || 1000));
 }
 
 

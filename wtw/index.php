@@ -304,9 +304,9 @@
         ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
     </script>
     <script src="js/onboarding.js"></script>
-    <script src="js/container.js"></script>
+    <script type="module" src="js/container.js"></script>
     <script src="js/script.js"></script>
-    <script src="js/search.js"></script>
+    <script type="module" src="js/search.js"></script>
 </body>
 
 </html>
