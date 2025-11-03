@@ -1,4 +1,8 @@
 <?php
+// ========== API DE INTERAÇÕES DO USUÁRIO ==========
+// Registra ações do usuário com conteúdo (like, dislike, visualização, etc.)
+// Usado para telemetria e personalização de recomendações
+
 session_start();
 if (!isset($_SESSION['id'])) {
   http_response_code(401);
@@ -9,6 +13,8 @@ if (!isset($_SESSION['id'])) {
 header('Content-Type: application/json');
 require __DIR__.'/../includes/db.php';
 
+// ========== PROCESSAMENTO DOS DADOS DE ENTRADA ==========
+
 $body = json_decode(file_get_contents('php://input'), true) ?? [];
 
 $userId    = (int) $_SESSION['id'];
@@ -16,6 +22,8 @@ $tmdbId    = (int) ($body['tmdb_id'] ?? 0);
 $mediaType = in_array(($body['media_type'] ?? 'movie'), ['movie', 'tv'], true) ? $body['media_type'] : 'movie';
 $type      = $body['type'] ?? null;
 $weight    = isset($body['weight']) ? (float) $body['weight'] : 1.0; // opcional
+
+// ========== TIPOS DE INTERAÇÃO PERMITIDOS ==========
 
 $allowed = [
     'view',
@@ -30,6 +38,8 @@ $allowed = [
     'surprise_impression',
 ];
 
+// ========== VALIDAÇÃO DOS DADOS ==========
+
 if ($tmdbId <= 0 || !in_array($type, $allowed, true)) {
     http_response_code(400);
     echo json_encode(['error' => 'bad_request']);
@@ -39,9 +49,13 @@ if ($tmdbId <= 0 || !in_array($type, $allowed, true)) {
 $pdo = get_pdo();
 $isState = in_array($type, ['like','dislike','seen','watchlist'], true);
 
+// ========== REGISTRO DA INTERAÇÃO ==========
+
 try {
   if ($isState) {
+    // ========== ESTADOS ÚNICOS ==========
     // UPSERT: mantém no máximo 1 linha por (user, item, tipo de estado)
+    
     $stmt = $pdo->prepare(
         'INSERT INTO interactions (user_id, tmdb_id, media_type, type, weight, created_at)'
         . ' VALUES (:u, :t, :m, :ty, :w, NOW())'
@@ -55,7 +69,9 @@ try {
         ':w' => $weight,
     ]);
   } else {
+    // ========== TELEMETRIA ==========
     // Telemetria: pode ter várias linhas (INSERT puro)
+    
     $stmt = $pdo->prepare(
         'INSERT INTO interactions (user_id, tmdb_id, media_type, type, weight, created_at)'
         . ' VALUES (:u, :t, :m, :ty, :w, NOW())'

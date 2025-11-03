@@ -1,45 +1,49 @@
-.login-shell--register {
+.auth-shell {
+  width: min(460px, 100%);
+}
+
+.auth-shell--register {
   width: min(520px, 100%);
 }
 
-.login-shell--register .login-logo {
+.auth-shell .login-logo {
   --wyw-brand-size: clamp(2rem, 3.5vw, 3rem);
   --wyw-brand-eye-scale: 0.68;
   margin-bottom: 32px;
 }
 
-.register-card {
+.auth-card {
   gap: 32px;
 }
 
-.register-card .card-subtitle {
+.auth-card .card-subtitle {
   max-width: 36ch;
 }
 
-.register-form {
+.auth-form {
   gap: 24px;
 }
 
-.register-form .input-group {
+.auth-form .input-group {
   gap: 12px;
 }
 
-.register-form .error {
+.auth-form .error {
   color: var(--brand-red);
   font-size: 0.875rem;
   margin-top: 4px;
 }
 
-.register-form .login-primary {
+.auth-form .login-primary {
   margin-top: 12px;
 }
 
-.register-form .terms-note a {
+.auth-form .terms-note a {
   color: var(--brand-red-hover);
 }
 
-.register-form .terms-note a:hover,
-.register-form .terms-note a:focus-visible {
+.auth-form .terms-note a:hover,
+.auth-form .terms-note a:focus-visible {
   color: var(--brand-red);
   outline: none;
 }
@@ -56,13 +60,16 @@
 }
 
 @media (max-width: 768px) {
-  .login-shell--register {
+  .auth-shell {
+    width: min(420px, 100%);
+  }
+
+  .auth-shell--register {
     width: min(460px, 100%);
   }
 }
 
-/* Cleaner hero/container aesthetic for register page */
-.login-body--register .wyw-brand__watch {
+.login-body--auth .wyw-brand__watch {
   background: none !important;
   -webkit-background-clip: initial;
   background-clip: initial;
@@ -72,52 +79,52 @@
   letter-spacing: 0.08em;
 }
 
-.login-shell--register .login-card {
+.auth-shell .login-card {
   background: rgba(18, 19, 25, 0.56);
   border: 1px solid rgba(255, 255, 255, 0.06);
   box-shadow: 0 24px 48px rgba(0, 0, 0, 0.35);
   backdrop-filter: blur(18px);
 }
 
-.login-shell--register .login-card::before {
+.auth-shell .login-card::before {
   opacity: 0.24;
 }
 
-.login-shell--register .card-title {
+.auth-shell .card-title {
   font-weight: 500;
   letter-spacing: 0.01em;
 }
 
-.login-shell--register .card-subtitle {
+.auth-shell .card-subtitle {
   color: rgba(244, 244, 245, 0.78);
 }
 
-.login-shell--register .input-control {
+.auth-shell .input-control {
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.login-shell--register .input-control:focus,
-.login-shell--register .input-control:focus-visible {
+.auth-shell .input-control:focus,
+.auth-shell .input-control:focus-visible {
   box-shadow: 0 0 0 3px rgba(225, 29, 72, 0.18);
   background: rgba(255, 255, 255, 0.05);
   border-color: rgba(225, 29, 72, 0.55);
 }
 
-.login-shell--register .password-toggle {
+.auth-shell .password-toggle {
   background: transparent;
   border-color: transparent;
   color: var(--text-muted);
 }
 
-.login-shell--register .password-toggle:hover,
-.login-shell--register .password-toggle:focus-visible {
+.auth-shell .password-toggle:hover,
+.auth-shell .password-toggle:focus-visible {
   background: rgba(255, 255, 255, 0.06);
   border-color: rgba(255, 255, 255, 0.10);
   color: #f4f4f5;
 }
 
-.login-shell--register .login-primary {
+.auth-shell .login-primary {
   background: var(--brand-red);
   font-weight: 500;
   letter-spacing: 0.02em;
@@ -125,32 +132,32 @@
   transform: none;
 }
 
-.login-shell--register .login-primary:hover {
+.auth-shell .login-primary:hover {
   background: var(--brand-red-hover);
   box-shadow: none;
   transform: none;
 }
 
-.login-shell--register .login-primary:active {
+.auth-shell .login-primary:active {
   background: var(--brand-red-press);
 }
 
-.login-shell--register .link-accent {
+.auth-shell .link-accent {
   color: #e5e7eb;
   font-weight: 500;
 }
 
-.login-body--register::before {
+.login-body--auth::before {
   opacity: 0.78;
 }
 
 @media (max-width: 480px) {
-  .login-shell--register .login-logo {
+  .auth-shell .login-logo {
     --wyw-brand-size: clamp(1.8rem, 8vw, 2.4rem);
     margin-bottom: 24px;
   }
 
-  .register-card {
+  .auth-card {
     gap: 28px;
   }
 }

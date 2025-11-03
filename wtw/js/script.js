@@ -1,3 +1,8 @@
+// ========== SCRIPT PRINCIPAL DO WHERETOWATCH ==========
+// Gerencia trailers, navegação, menus e funcionalidades principais da aplicação
+
+// ========== CONFIGURAÇÃO DO MODAL DE TRAILER ==========
+
 const buttonClose = document.getElementById("close-trailer");
 const trailerDialog = document.getElementById('dialog');
 const trailerFrame = document.getElementById('trailerFrame');
@@ -16,6 +21,9 @@ const requestTrailerAnimationFrame = (typeof window !== 'undefined' && typeof wi
     : (callback) => setTimeout(callback, 0);
 let trailerCloseFallbackTimeout = null;
 
+// ========== FUNÇÕES DE MANIPULAÇÃO DO YOUTUBE ==========
+
+// Remove caracteres não válidos do ID do YouTube
 function sanitizeYouTubeId(rawId) {
     if (!rawId) {
         return '';
@@ -31,6 +39,7 @@ function sanitizeYouTubeId(rawId) {
     return cleaned.length > 11 ? cleaned.slice(0, 11) : cleaned;
 }
 
+// Extrai ID do YouTube de diversos formatos de URL
 function getYouTubeId(inputUrl) {
     if (!inputUrl) {
         return '';
@@ -96,6 +105,9 @@ function getYouTubeId(inputUrl) {
     }
 }
 
+// ========== GESTÃO DE FOCO NO MODAL ==========
+
+// Obtém elementos focáveis dentro do modal de trailer
 function getFocusableElements(container) {
     if (!container) {
         return [];
@@ -238,14 +250,18 @@ function handleTrailerDialogClose() {
     trailerLastFocusedElement = null;
 }
 
+// ========== VALIDAÇÃO DE SENHAS ==========
+
 const PASSWORD_MIN_LENGTH = 8;
 const PASSWORD_LETTER_REGEX = /[A-Za-z]/;
 const PASSWORD_DIGIT_REGEX = /\d/;
 
+// Altera foto de fundo ou thumb do trailer
 function mudaFoto(foto) {
     document.getElementById('trailer').src = foto;
 }
 
+// Obtém elementos relacionados à validação de senha
 function getPasswordElements() {
     const passwordInput = document.querySelector('#password') || document.querySelector('#senha');
     const confirmInput = document.querySelector('#confirmPassword') || document.querySelector('#confirma_senha');
@@ -258,6 +274,7 @@ function getPasswordElements() {
     };
 }
 
+// Valida senha com critérios de segurança
 function validatePassword() {
     const { passwordInput, confirmInput, errorElement } = getPasswordElements();
 
@@ -364,7 +381,9 @@ function runWhenDocumentIsReady(callback) {
 runWhenDocumentIsReady(setupPasswordValidation);
 window.validatePassword = validatePassword;
 
-//Funcoes dos Trailers
+// ========== FUNÇÕES DOS TRAILERS ==========
+
+//Abre modal de trailer do YouTube
 function showTrailer(trailerUrl) {
     if (!trailerDialog || !trailerFrame || typeof trailerDialog.showModal !== 'function') {
         return;
@@ -410,6 +429,7 @@ function showTrailer(trailerUrl) {
     focusTrailerDialog();
 }
 
+// Fecha modal de trailer com animação
 function closeTrailer() {
     if (!trailerDialog) {
         return;
@@ -468,7 +488,9 @@ window.getYouTubeId = getYouTubeId;
 window.showTrailer = showTrailer;
 window.closeTrailer = closeTrailer;
 
-//Funcao setinhas de navegacao
+// ========== NAVEGAÇÃO DOS CARROSSÉIS ==========
+
+// Navega para próximo item do carrossel principal
 function scrollToNextItem(direction = 'right') {
     const items = document.querySelectorAll('.backdropContainer');
     if (!items.length) {
@@ -520,6 +542,7 @@ function scrollRight() {
     scrollToNextItem('right');
 }
 
+// ========== MENU DE NAVEGAÇÃO ==========
 
 /* Menu */
 let closeMenuDropdowns = () => {};
@@ -610,6 +633,8 @@ if (menuTrigger && menuPanel && menuIcon) {
         }
     });
 }
+
+// ========== MENU DROPDOWN ==========
 
 const menuDropdownNodes = Array.from(document.querySelectorAll('[data-menu-dropdown]'));
 if (menuDropdownNodes.length) {
@@ -793,6 +818,8 @@ if (menuDropdownNodes.length) {
     });
 }
 
+// ========== MENU DE CONTA DO USUÁRIO ==========
+
 /* User account menu */
 const userAccountMenu = document.querySelector('[data-user-menu]');
 if (userAccountMenu) {
@@ -847,10 +874,14 @@ if (userAccountMenu) {
         }
     });
 }
+
+// ========== GESTÃO DE SEÇÕES DE MÍDIA ==========
+
 function getMediaSectionHost() {
     return document.querySelector('.media-section .container') || document.querySelector('.media-section');
 }
 
+// Atualiza visibilidade dos botões de navegação do carrossel
 function updateCarouselNav(containerId) {
     const container = document.getElementById(containerId);
     if (!container) {
@@ -877,6 +908,7 @@ window.updateCarouselNav = updateCarouselNav;
 
 const carouselRegistry = new Map();
 
+// Registra container de carrossel para navegação automática
 function registerCarouselContainer(containerId) {
     if (!containerId) {
         return;
@@ -909,6 +941,7 @@ function initializeCarouselNav() {
 window.registerCarouselContainer = registerCarouselContainer;
 window.initializeCarouselNav = initializeCarouselNav;
 
+// Rola linha horizontal de conteúdo
 function scrollRow(containerId, direction = 'right') {
     const row = document.getElementById(containerId);
     if (!row) return;
@@ -933,6 +966,9 @@ document.addEventListener('click', event => {
     scrollRow(target, direction === 'left' ? 'left' : 'right');
 });
 
+// ========== ATALHOS DE PROVEDOR ==========
+
+// Inicializa atalhos de provedor para navegação rápida
 function initProviderShortcut() {
     const picker = document.querySelector('[data-provider-picker]');
     if (!picker) {
@@ -969,10 +1005,14 @@ function initProviderShortcut() {
     });
 }
 
+// ========== INICIALIZAÇÃO ==========
+
 document.addEventListener('DOMContentLoaded', () => {
     initializeCarouselNav();
     initProviderShortcut();
 });
+
+// ========== SERVICE WORKER ==========
 
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {

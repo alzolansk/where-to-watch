@@ -105,7 +105,7 @@ if (isset($_POST['submit'])) {
     <link rel="stylesheet" href="css/login.css">
     <link rel="stylesheet" href="css/new-login.css">
 </head>
-<body class="login-body login-body--register">
+<body class="login-body login-body--auth">
     <dialog id="loginInvalid" class="alert-dialog">
         <div class="dialog-content">
             <p class="dialog-title"><?php echo $title_error; ?></p>
@@ -115,7 +115,7 @@ if (isset($_POST['submit'])) {
     </dialog>
 
     <div class="login-page">
-        <div class="login-shell login-shell--register">
+        <div class="login-shell auth-shell auth-shell--register">
             <a href="index.php" class="wyw-brand wyw-brand--badge wyw-brand--lg login-logo" aria-label="Ir para a pagina inicial">
                 <span class="wyw-brand__where">where</span>
                 <span class="wyw-brand__where wyw-brand__where--y">y</span>
@@ -124,13 +124,13 @@ if (isset($_POST['submit'])) {
                 <span class="wyw-brand__watch">WATCH</span>
             </a>
 
-            <div class="login-card register-card">
+            <div class="login-card auth-card">
                 <div class="card-header">
                     <h1 class="card-title">Criar conta</h1>
                     <p class="card-subtitle">Cadastre-se para salvar favoritos e descobrir onde assistir seus filmes e series.</p>
                 </div>
 
-                <form action="new-login.php" method="POST" class="login-form register-form">
+                <form action="new-login.php" method="POST" class="login-form auth-form">
                     <div class="input-group">
                         <label for="nome">Nome</label>
                         <input type="text" name="nome" id="nome" class="input-control" placeholder="Seu nome de usuário" value="<?php echo htmlspecialchars($name_value, ENT_QUOTES, 'UTF-8'); ?>" required>
@@ -188,7 +188,7 @@ if (isset($_POST['submit'])) {
                     </div>
 
                     <p class="terms-note">
-                        Ao criar sua conta, voce concorda com os <a href="#" class="terms-link">Termos de uso</a> e com a <a href="#">Politica de privacidade</a>.
+                        Ao criar sua conta, voce concorda com os <a href="#" class="terms-link">Termos de uso</a> e com a <a href="#" class="privacy-link">Politica de privacidade</a>.
                     </p>
                 </form>
             </div>
@@ -241,6 +241,60 @@ if (isset($_POST['submit'])) {
             </div>
         </div>
 
+        <div id="privacyModal" class="terms-modal" role="dialog" aria-modal="true" aria-labelledby="privacyModalTitle" aria-hidden="true">
+            <div class="terms-modal__content">
+                <div class="terms-modal__body">
+                    <h2 id="privacyModalTitle">🔒 <strong>Política de Privacidade — WYWatch</strong></h2>
+                    <p><strong>Última atualização:</strong> outubro de 2025</p>
+                    <p>O WYWatch valoriza sua privacidade e transparência. Este documento explica <strong>como coletamos, usamos e protegemos seus dados pessoais</strong> ao utilizar o site.</p>
+                    <hr>
+                    <h3>1. Dados que coletamos</h3>
+                    <p>Ao criar uma conta ou interagir com o site, podemos coletar:</p>
+                    <ul>
+                        <li><strong>Nome e e-mail</strong> (para identificação do usuário).</li>
+                        <li><strong>Senha</strong>, armazenada de forma criptografada (hash).</li>
+                        <li><strong>Preferências</strong> de filmes, séries, gêneros, atores e provedores, para gerar recomendações personalizadas.</li>
+                    </ul>
+                    <p>Não coletamos dados sensíveis, financeiros ou biométricos.</p>
+                    <hr>
+                    <h3>2. Uso das informações</h3>
+                    <p>Seus dados são utilizados para:</p>
+                    <ul>
+                        <li>Personalizar sua experiência no site.</li>
+                        <li>Exibir recomendações de filmes e séries.</li>
+                        <li>Manter e melhorar o funcionamento do WYWatch.</li>
+                        <li>Enviar comunicações pontuais, caso aplicável (ex: aviso de manutenção ou mudanças).</li>
+                    </ul>
+                    <p>Nunca vendemos ou compartilhamos seus dados pessoais com terceiros.</p>
+                    <hr>
+                    <h3>3. Armazenamento e segurança</h3>
+                    <p>Os dados são armazenados em servidores do <strong>InfinityFree</strong>, com medidas de segurança padrão de mercado.</p>
+                    <p>A senha é criptografada, e o acesso ao banco de dados é restrito apenas ao desenvolvedor responsável.</p>
+                    <hr>
+                    <h3>4. Cookies e tecnologias similares</h3>
+                    <p>O WYWatch <strong>pode utilizar cookies ou armazenamento local</strong> para lembrar suas preferências e melhorar a navegação.</p>
+                    <p>Você pode limpar ou desativar cookies a qualquer momento no seu navegador.</p>
+                    <hr>
+                    <h3>5. Direitos do usuário</h3>
+                    <p>Você pode, a qualquer momento:</p>
+                    <ul>
+                        <li>Solicitar a <strong>exclusão da sua conta</strong> e de todos os dados associados.</li>
+                        <li>Solicitar <strong>acesso ou correção</strong> das informações cadastradas.</li>
+                    </ul>
+                    <p>Essas solicitações podem ser feitas pelo LinkedIn do desenvolvedor.</p>
+                    <hr>
+                    <h3>6. Alterações nesta política</h3>
+                    <p>Esta política pode ser atualizada para refletir melhorias no site ou exigências legais.</p>
+                    <p>A versão mais recente estará sempre disponível no WYWatch.</p>
+                    <hr>
+                    <h3>7. Contato</h3>
+                    <p>Para dúvidas ou solicitações sobre privacidade, entre em contato:</p>
+                    <p><a href="https://www.linkedin.com/in/joaoalvesz" target="_blank" rel="noopener noreferrer">linkedin.com/in/joaoalvesz</a></p>
+                </div>
+                <button type="button" class="terms-modal__close" id="privacyModalClose">Entendi a política de privacidade</button>
+            </div>
+        </div>
+
         <footer class="login-footer">
             <nav class="footer-links" aria-label="Links institucionais">
                 <a href="#">Termos</a>
@@ -255,36 +309,72 @@ if (isset($_POST['submit'])) {
         const loginInvalidDialog = document.getElementById('loginInvalid');
         const errorMessageElement = document.querySelector('.dialog-message');
         const closeDialogButton = document.getElementById('closeDialog');
-        const termsModal = document.getElementById('termsModal');
-        const termsModalClose = document.getElementById('termsModalClose');
-        const termsLinks = document.querySelectorAll('.terms-link');
-        let lastFocusedElement = null;
+        let activeModalHideHandler = null;
 
-        const showTermsModal = () => {
-            if (!termsModal) {
-                return;
-            }
-
-            lastFocusedElement = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-            termsModal.classList.add('is-visible');
-            termsModal.setAttribute('aria-hidden', 'false');
-            document.body.classList.add('modal-open');
-            if (termsModalClose) {
-                termsModalClose.focus();
+        const removeBodyModalStateIfNoModalVisible = () => {
+            if (!document.querySelector('.terms-modal.is-visible')) {
+                document.body.classList.remove('modal-open');
             }
         };
 
-        const hideTermsModal = () => {
-            if (!termsModal) {
-                return;
+        const createModalController = (modalId, closeButtonId, triggerSelector) => {
+            const modal = document.getElementById(modalId);
+            const closeButton = closeButtonId ? document.getElementById(closeButtonId) : null;
+            const triggers = triggerSelector ? document.querySelectorAll(triggerSelector) : [];
+
+            if (!modal) {
+                return null;
             }
 
-            termsModal.classList.remove('is-visible');
-            termsModal.setAttribute('aria-hidden', 'true');
-            document.body.classList.remove('modal-open');
-            if (lastFocusedElement) {
-                lastFocusedElement.focus();
+            let previouslyFocusedElement = null;
+
+            const hide = () => {
+                modal.classList.remove('is-visible');
+                modal.setAttribute('aria-hidden', 'true');
+                removeBodyModalStateIfNoModalVisible();
+
+                if (previouslyFocusedElement) {
+                    previouslyFocusedElement.focus();
+                }
+
+                if (activeModalHideHandler === hide) {
+                    activeModalHideHandler = null;
+                }
+            };
+
+            const show = () => {
+                previouslyFocusedElement = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+
+                modal.classList.add('is-visible');
+                modal.setAttribute('aria-hidden', 'false');
+                document.body.classList.add('modal-open');
+
+                const focusTarget = closeButton || modal.querySelector('.terms-modal__close');
+                if (focusTarget) {
+                    focusTarget.focus();
+                }
+
+                activeModalHideHandler = hide;
+            };
+
+            triggers.forEach((trigger) => {
+                trigger.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    show();
+                });
+            });
+
+            if (closeButton) {
+                closeButton.addEventListener('click', hide);
             }
+
+            modal.addEventListener('click', (event) => {
+                if (event.target === modal) {
+                    hide();
+                }
+            });
+
+            return { show, hide };
         };
 
         if (loginInvalidDialog && errorMessageElement && errorMessageElement.textContent.trim() !== '') {
@@ -323,24 +413,14 @@ if (isset($_POST['submit'])) {
             });
         });
 
-        termsLinks.forEach((link) => {
-            link.addEventListener('click', (event) => {
-                event.preventDefault();
-                showTermsModal();
-            });
+        createModalController('termsModal', 'termsModalClose', '.terms-link');
+        createModalController('privacyModal', 'privacyModalClose', '.privacy-link');
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && typeof activeModalHideHandler === 'function') {
+                activeModalHideHandler();
+            }
         });
-
-        if (termsModalClose) {
-            termsModalClose.addEventListener('click', hideTermsModal);
-        }
-
-        if (termsModal) {
-            termsModal.addEventListener('click', (event) => {
-                if (event.target === termsModal) {
-                    hideTermsModal();
-                }
-            });
-        }
     </script>
 </body>
 </html>

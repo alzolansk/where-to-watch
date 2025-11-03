@@ -1,4 +1,8 @@
 <?php
+// ========== API DE ONBOARDING ==========
+// Sistema completo de configuração inicial do usuário
+// Gerencia coleta de preferências, favoritos e configurações personalizadas
+
 declare(strict_types=1);
 
 session_start();
@@ -6,6 +10,8 @@ session_start();
 header('Content-Type: application/json; charset=utf-8');
 
 require_once __DIR__ . '/../includes/personalization-cache.php';
+
+// ========== VALIDAÇÃO DE USUÁRIO ==========
 
 $userId = (int)($_SESSION['id'] ?? $_SESSION['id_user'] ?? 0);
 if ($userId <= 0) {
@@ -16,6 +22,8 @@ if ($userId <= 0) {
 
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 $resource = strtolower((string)($_GET['resource'] ?? ''));
+
+// ========== ENDPOINT DE SUGESTÕES DE TÍTULOS ==========
 
 if ($resource === 'titles') {
     if ($method !== 'GET') {
@@ -34,6 +42,8 @@ if ($resource === 'titles') {
     }
     return;
 }
+
+// ========== ENDPOINT DE RECOMENDAÇÕES BASEADAS EM FAVORITOS ==========
 
 if ($resource === 'recommendations') {
     if ($method !== 'GET') {
@@ -62,6 +72,8 @@ if ($resource === 'recommendations') {
     return;
 }
 
+// ========== INICIALIZAÇÃO DO BANCO DE DADOS ==========
+
 try {
     $pdo = wyw_bootstrap_pdo();
     ensure_onboarding_schema($pdo);
@@ -71,12 +83,16 @@ try {
     return;
 }
 
+// ========== MÉTODOS HTTP ==========
+
 if ($method === 'GET') {
+    // Retorna preferências atuais do usuário
     echo json_encode(fetchPreferences($pdo, $userId), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     return;
 }
 
 if ($method === 'POST') {
+    // Salva novas preferências do usuário
     $payload = json_decode(file_get_contents('php://input') ?: '[]', true);
     if (!is_array($payload)) {
         http_response_code(400);
@@ -106,6 +122,8 @@ if ($method === 'POST') {
 
 http_response_code(405);
 echo json_encode(['ok' => false, 'error' => 'method_not_allowed']);
+
+// ========== FUNÇÕES DE INICIALIZAÇÃO ==========
 
 function wyw_bootstrap_pdo(): PDO
 {
@@ -171,6 +189,8 @@ function wyw_bootstrap_pdo(): PDO
 
     throw new RuntimeException('PDO connection unavailable');
 }
+
+// ========== CRIAÇÃO DO SCHEMA DO BANCO ==========
 
 function ensure_onboarding_schema(PDO $pdo): void
 {
@@ -302,6 +322,8 @@ function ensure_onboarding_schema(PDO $pdo): void
         error_log('onboarding_schema_favorites_error: ' . $e->getMessage());
     }
 }
+
+// ========== BUSCA DE PREFERÊNCIAS DO USUÁRIO ==========
 
 function fetchPreferences(PDO $pdo, int $userId): array
 {
@@ -445,6 +467,8 @@ function fetchPreferences(PDO $pdo, int $userId): array
 
     return $response;
 }
+
+// ========== PERSISTÊNCIA DE PREFERÊNCIAS ==========
 
 function persistPreferences(PDO $pdo, int $userId, array $payload): array
 {
@@ -627,6 +651,8 @@ function persistPreferences(PDO $pdo, int $userId, array $payload): array
 
     return ['ok' => true];
 }
+
+// ========== PULAR ONBOARDING ==========
 
 function skipOnboarding(PDO $pdo, int $userId): array
 {

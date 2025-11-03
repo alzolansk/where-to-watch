@@ -20,10 +20,18 @@
 <body>    
 
     <?php
+        // ========== PÁGINA PRINCIPAL - INDEX ==========
+        // Esta é a página inicial do sistema WhereToWatch
+        // Inclui dashboard de navegação, configurações e sistema de onboarding
+        
         include_once('dashboard.php');
         include_once('config/config.php');
         require_once __DIR__ . '/includes/personalization-cache.php';
 
+        // ========== CONFIGURAÇÕES DE PERSONALIZAÇÃO ==========
+        // Configurações para verificar se usuário tem preferências salvas
+        // e habilitar conteúdo personalizado na homepage
+        
         $personalizedRowEnabled = false;
         $personalizedPreferenceCount = 0;
         $personalizationCacheToken = null;
@@ -37,6 +45,9 @@
 
         $sessionUserId = (int)($_SESSION['id'] ?? 0);
 
+        // ========== VERIFICAÇÃO DE PREFERÊNCIAS DO USUÁRIO ==========
+        // Verifica quantas preferências o usuário tem salvas para habilitar personalização
+        
         if ($sessionUserId > 0 && isset($conexao) && $conexao instanceof mysqli) {
             foreach ($personalizationTables as $sql) {
                 $stmt = null;
@@ -66,6 +77,9 @@
             }
         }
 
+        // ========== OPÇÕES DE GÊNEROS PARA ONBOARDING ==========
+        // Lista de gêneros de filmes disponíveis para seleção no onboarding
+        
         $genreOptions = [
             ['id' => 28, 'label' => 'Ação'],
             ['id' => 16, 'label' => 'Animação'],
@@ -83,6 +97,9 @@
             ['id' => 27, 'label' => 'Terror'],
         ];
 
+        // ========== OPÇÕES DE PALAVRAS-CHAVE PARA ONBOARDING ==========
+        // Lista de palavras-chave/temas disponíveis para seleção
+        
         $keywordOptions = [
             ['id' => 1308, 'label' => 'baseado em fatos reais'],
             ['id' => 13088, 'label' => 'distopia'],
@@ -101,6 +118,9 @@
             ['id' => 1552, 'label' => 'ficção científica'],
         ];
 
+        // ========== OPÇÕES DE PROVEDORES PARA ONBOARDING ==========
+        // Lista de serviços de streaming disponíveis no Brasil
+        
         $providerOptions = [
             ['id' => 8, 'label' => 'Netflix', 'logo' => 'https://image.tmdb.org/t/p/w154/pbpMk2JmcoNnQwx5JGpXngfoWtp.jpg'],
             ['id' => 119, 'label' => 'Prime Video', 'logo' => 'https://image.tmdb.org/t/p/w154/68MNrwlkpF7WnmNPXLah69CR5cb.jpg'],
@@ -109,9 +129,15 @@
             ['id' => 350, 'label' => 'Apple TV+', 'logo' => 'https://image.tmdb.org/t/p/w154/2E03IAZsX4ZaUqM7tXlctEPMGWS.jpg'],
         ];
 
+        // ========== VERIFICAÇÃO DE ONBOARDING PENDENTE ==========
+        // Verifica se usuário precisa completar processo de onboarding
+        
         $onboardingRequired = !empty($_SESSION['onboarding_pending']);
     ?>
 
+    <!-- ========== MODAL DE ONBOARDING ========== -->
+    <!-- Modal para coleta de preferências do usuário na primeira utilização -->
+    
     <div class="onboarding-backdrop" data-onboarding-backdrop <?php echo $onboardingRequired ? '' : 'hidden'; ?> aria-hidden="<?php echo $onboardingRequired ? 'false' : 'true'; ?>">
         <div class="onboarding-modal" role="dialog" aria-modal="true" aria-labelledby="onboardingTitle" data-onboarding-modal>
             <div class="onboarding-header">
@@ -121,6 +147,8 @@
 
             <div class="onboarding-steps" data-onboarding-steps>
                 <section class="onboarding-step" data-onboarding-step="genres" aria-label="Escolha seus gêneros e temas favoritos">
+                    <!-- ========== ETAPA 1: SELEÇÃO DE GÊNEROS E PALAVRAS-CHAVE ========== -->
+                    
                     <header class="onboarding-step__header">
                         <h3>Gêneros e palavras-chave</h3>
                         <p>Escolha os estilos de filmes que você mais gosta e alguns temas que sempre te interessam.</p>
@@ -152,6 +180,8 @@
                     </div>
                 </section>
 
+                <!-- ========== ETAPA 2: PRÉVIA DE RECOMENDAÇÕES ========== -->
+                
                 <section class="onboarding-step" data-onboarding-step="preview" aria-label="Veja algumas recomendações iniciais" hidden>
                     <header class="onboarding-step__header">
                         <h3>Gerando recomendações iniciais…</h3>
@@ -169,6 +199,8 @@
                     </div>
                 </section>
 
+                <!-- ========== ETAPA 3: SELEÇÃO DE PROVEDORES ========== -->
+                
                 <section class="onboarding-step" data-onboarding-step="providers" aria-label="Selecione os provedores disponíveis para você" hidden>
                     <header class="onboarding-step__header">
                         <h3>Quais provedores você assina?</h3>
@@ -186,6 +218,8 @@
                     </div>
                 </section>
 
+                <!-- ========== ETAPA 4: SELEÇÃO DE TÍTULOS FAVORITOS ========== -->
+                
                 <section class="onboarding-step" data-onboarding-step="favorites" aria-label="Escolha seus filmes e séries favoritos" hidden>
                     <header class="onboarding-step__header">
                         <h3>Filmes e séries que são a sua cara</h3>
@@ -221,13 +255,21 @@
         </div>
     </div>
 
+    <!-- ========== INTERFACE PRINCIPAL ========== -->
+    <!-- Seção principal com carrossel de filmes e controles -->
+    
     <section id="interface" class="interface-section">
 
-        <!-- Modal para o trailer -->
+        <!-- ========== MODAL PARA TRAILERS ========== -->
+        <!-- Modal que exibe trailers dos filmes/séries -->
+
         <dialog id="dialog" class="dialog">
             <iframe id="trailerFrame" src="" title="Trailer" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>
             <button id="close-trailer" type="button" aria-label="Fechar trailer" data-dialog-initial-focus>X</button>
         </dialog>
+
+        <!-- ========== CARROSSEL PRINCIPAL DE CONTEÚDO ========== -->
+        <!-- Container principal que exibe filmes/séries em destaque -->
 
         <div id="surprise-me" class="wrap" tabindex="-1">
             <button id="btnLeft" class="prev" onclick="scrollLeftCustom()">&#10094;</button>
@@ -237,10 +279,16 @@
             <button id="btnRight" class="next" onclick="scrollRight()">&#10095;</button>
         </div>
 
+        <!-- ========== BARRA DE PROGRESSO DO HERÓI ========== -->
+        <!-- Indicador de progresso para navegação no carrossel -->
+
         <div class="hero-progress" data-hero-progress hidden>
             <div class="hero-progress__track" data-hero-progress-track></div>
             <span class="sr-only" data-hero-progress-label aria-live="polite" role="status"></span>
         </div>
+
+        <!-- ========== BOTÕES DE PROVEDOR DE STREAMING ========== -->
+        <!-- Botões para filtrar conteúdo por serviço de streaming -->
 
         <div class="provider-btn-container">
             <div class="provider-btn-div" data-provider-picker data-catalog-url="providers.php">
@@ -262,12 +310,19 @@
             </div>
         </div>
 
+        <!-- ========== BOTÕES DE CATEGORIA ========== -->
+        <!-- Alternar entre visualização de filmes e séries -->
+
         <div class="category-buttons">
             <div class="style-buttons">
                 <button id="showMovies" class="btn-category active">Filmes</button>
                 <button id="showSeries" class="btn-category">S&eacute;rie</button>
             </div>
         </div>
+        
+        <!-- ========== SEÇÕES DE MÍDIA ========== -->
+        <!-- Container que contém todas as seções de filmes/séries organizadas -->
+        
         <div class="media-section">
             <div class="container">
                 <div id="media-sections-root" class="media-sections-root" data-section-root></div>
@@ -281,6 +336,10 @@
         </div> <!-- end media-section -->
 
     </section>
+    
+    <!-- ========== CONFIGURAÇÕES JAVASCRIPT ========== -->
+    <!-- Scripts de configuração para personalização e onboarding -->
+    
     <script>
         window.wtwPersonalization = <?php echo json_encode([
             'enabled' => $personalizedRowEnabled,

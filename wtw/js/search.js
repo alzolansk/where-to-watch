@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const apiKey = runtimeConfig.tmdbApiKey || '';
     const tmdbBaseUrl = (runtimeConfig.tmdbBaseUrl || 'https://api.themoviedb.org/3').replace(/\/+$/, '');
 
+    // Constrói URL completa para endpoint da API TMDB
     const tmdbEndpoint = (path) => {
         if (!path) {
             return tmdbBaseUrl;
@@ -62,6 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
         10768: 'Guerra & Política'
     };
 
+    // Calcula similaridade entre duas strings usando Levenshtein
     const computeFuzzySimilarity = (query, target) => {
         if (!query || !target) {
             return 0;
@@ -75,6 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return similarity < 0 ? 0 : similarity;
     };
 
+    // Calcula pontuação de similaridade de um item com a busca
     const computeItemFuzzyScore = (item, normalizedQuery) => {
         if (!normalizedQuery) {
             return 0;
@@ -97,6 +100,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return best;
     };
 
+    // Gera variações da query para busca mais flexível
     const buildQueryVariants = (query) => {
         const normalized = normalizeText(query);
         if (!normalized) {
@@ -115,6 +119,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return Array.from(variants).slice(0, 4);
     };
 
+    // Remove itens duplicados baseado em chave única
     const dedupeItems = (items) => dedupeByKey(Array.isArray(items) ? items : [], (item) => {
         if (!item || typeof item.id === 'undefined') {
             return null;
@@ -128,6 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let searchController = null;
     const FUZZY_SIMILARITY_THRESHOLD = 0.35;
 
+    // Busca títulos em alta para usar como fallback
     const fetchTrendingCandidates = async ({ signal } = {}) => {
         if (trendingCache) {
             return trendingCache;
@@ -168,6 +174,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return trendingCache;
     };
 
+    // Executa busca multi na API do TMDB
     const fetchMultiSearch = async (query, page = 1, { signal } = {}) => {
         const trimmed = (query || '').trim();
         if (!trimmed) {
@@ -197,6 +204,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    // Coleta candidatos usando busca primária, variantes ou trending
     const collectCandidatesWithFallback = async (query, { signal } = {}) => {
         const primary = await fetchMultiSearch(query, 1, { signal });
         if (primary.length) {
@@ -223,6 +231,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return { items: trending, source: 'trending' };
     };
 
+    // Ordena candidatos por relevância e popularidade
     const rankCandidates = (items, query, { forceFuzzy = false, limit = 8 } = {}) => {
         if (!items.length) {
             return [];
@@ -258,6 +267,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
     };
 
+    // Redireciona para página de resultados completos
     const redirectToFullResults = (query) => {
         if (!query) {
             return;
@@ -266,6 +276,7 @@ document.addEventListener('DOMContentLoaded', () => {
         window.location.href = target;
     };
 
+    // Renderiza botão "Ver todos os resultados"
     const renderViewAllAction = (query) => {
         if (!dropdownEnabled || !resultsContainer) {
             return;
@@ -288,6 +299,7 @@ document.addEventListener('DOMContentLoaded', () => {
         resultsContainer.appendChild(action);
     };
 
+    // Atualiza estado visual do campo de busca
     const toggleClearState = () => {
         if (!inputWrapper) {
             return;
@@ -300,6 +312,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    // Cria elemento chip para tags visuais
     const createChip = (label, modifier) => {
         const chip = document.createElement('span');
         chip.className = modifier ? `chip ${modifier}` : 'chip';
@@ -307,6 +320,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return chip;
     };
 
+    // Cria card visual para resultado de busca
     const createResultCard = (item) => {
         const title = item.title || item.name || 'Sem tÃ­tulo';
         const mediaType = item.media_type === 'movie' ? 'Filme' : 'Série';
@@ -364,6 +378,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return card;
     };
 
+    // Exibe estado vazio com mensagem personalizada
     const showEmptyState = (message) => {
         if (!dropdownEnabled || !resultsContainer) {
             return;
@@ -378,6 +393,7 @@ document.addEventListener('DOMContentLoaded', () => {
         resultsContainer.style.display = 'block';
     };
 
+    // Define estado de carregamento do dropdown
     const setDropdownLoading = (isLoading) => {
         if (!dropdownEnabled || !resultsContainer) {
             return;
@@ -392,6 +408,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    // Exibe indicador visual de carregamento
     const showLoadingIndicator = () => {
         if (!dropdownEnabled || !resultsContainer) {
             return;

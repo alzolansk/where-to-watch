@@ -7,6 +7,7 @@ const HTML_ESCAPE_MAP = {
   "'": '&#39;',
 };
 
+// Normaliza texto removendo acentos e caracteres especiais
 export function normalizeText(input) {
   if (input === null || input === undefined) {
     return '';
@@ -22,6 +23,7 @@ export function normalizeText(input) {
     .trim();
 }
 
+// Calcula distância de edição entre duas strings
 export function levenshtein(source, target) {
   if (source === target) {
     return 0;
@@ -58,6 +60,7 @@ export function levenshtein(source, target) {
   return previous[targetLength];
 }
 
+// Remove duplicatas de array baseado em função de chave
 export function dedupeByKey(list, keyFn) {
   if (!Array.isArray(list)) {
     return [];
@@ -79,6 +82,7 @@ export function dedupeByKey(list, keyFn) {
   return result;
 }
 
+// Escapa caracteres HTML para prevenir XSS
 export function escapeHtml(value) {
   if (value === null || value === undefined) {
     return '';
@@ -86,6 +90,7 @@ export function escapeHtml(value) {
   return String(value).replace(/[&<>"']/g, (character) => HTML_ESCAPE_MAP[character] || character);
 }
 
+// Cria função debounced que aguarda delay antes de executar
 export function debounce(fn, delay = 0) {
   let timeoutId = null;
   function debounced(...args) {
@@ -106,6 +111,7 @@ export function debounce(fn, delay = 0) {
   return debounced;
 }
 
+// Limita valor numérico entre min e max
 export function clamp(value, min, max) {
   if (Number.isNaN(value)) {
     return min;
@@ -113,6 +119,7 @@ export function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
 }
 
+// Cria URL segura tratando erros de formatação
 export function safeURL(value, base) {
   if (!value && value !== 0) {
     return '';

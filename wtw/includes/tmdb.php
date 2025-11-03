@@ -1,22 +1,30 @@
 <?php
-    declare(strict_types=1);
+// ========== CLIENTE DA API TMDB ==========
+// Gerencia todas as comunicações com a API do The Movie Database
+// Inclui cache simples em arquivo e suporte a requisições em lote
 
-    require_once __DIR__ . '/env.php';
+declare(strict_types=1);
 
-    wyw_load_env(__DIR__);
+require_once __DIR__ . '/env.php';
 
-    if (!defined('TMDB_KEY')) {
-        $tmdbKey = (string) wyw_env('TMDB_API_KEY', '');
-        define('TMDB_KEY', $tmdbKey);
-    }
+wyw_load_env(__DIR__);
 
-    if (!defined('TMDB_BASE')) {
-        $tmdbBase = (string) wyw_env('TMDB_API_BASE', 'https://api.themoviedb.org/3');
-        define('TMDB_BASE', rtrim($tmdbBase, '/'));
-    }
+// ========== CONFIGURAÇÃO DAS CONSTANTES ==========
 
-    // cache bobo em arquivo (pode trocar por Redis depois)
-    function cache_get($key, $ttl = 3600)
+if (!defined('TMDB_KEY')) {
+    $tmdbKey = (string) wyw_env('TMDB_API_KEY', '');
+    define('TMDB_KEY', $tmdbKey);
+}
+
+if (!defined('TMDB_BASE')) {
+    $tmdbBase = (string) wyw_env('TMDB_API_BASE', 'https://api.themoviedb.org/3');
+    define('TMDB_BASE', rtrim($tmdbBase, '/'));
+}
+
+// ========== SISTEMA DE CACHE SIMPLES ==========
+// cache bobo em arquivo (trocar por Redis depois)
+
+function cache_get($key, $ttl = 3600)
     {
         $f = sys_get_temp_dir() . "/wyw_" . md5($key) . ".json";
         if (is_file($f) && (time() - filemtime($f) < $ttl)) {
@@ -34,6 +42,8 @@
         file_put_contents($f, json_encode($data));
     }
 
+    // ========== CONSTRUÇÃO DE URLS DA API ==========
+
     function tmdb_build_url(string $path, array $params = []): string
     {
         $params['api_key'] = TMDB_KEY;
@@ -49,6 +59,8 @@
 
         return $base . $normalizedPath . ($qs !== '' ? '?' . $qs : '');
     }
+
+    // ========== REQUISIÇÃO ÚNICA PARA TMDB ==========
 
     function tmdb_get($path, $params = [])
     {
@@ -69,6 +81,9 @@
         return is_array($data) ? $data : [];
     }
 
+    // ========== REQUISIÇÕES EM LOTE PARA TMDB ==========
+    // Otimiza múltiplas chamadas usando cURL multi-handle
+
     function tmdb_get_bulk(array $requests): array
     {
         $results = [];
@@ -88,6 +103,8 @@
                 $pending[$key] = $url;
             }
         }
+
+        // ========== PROCESSAMENTO COM CURL MULTI ==========
 
         if (!empty($pending) && function_exists('curl_multi_init')) {
             $multi = curl_multi_init();
@@ -121,6 +138,9 @@
 
             curl_multi_close($multi);
         }
+
+        // ========== FALLBACK PARA REQUISIÇÕES PENDENTES ==========
+        // Processa requisições que não foram feitas via cURL multi
 
         foreach ($pending as $key => $url) {
             if (array_key_exists($key, $results)) {

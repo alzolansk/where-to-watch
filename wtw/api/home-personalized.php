@@ -1,9 +1,15 @@
 <?php
+// ========== API DE CONTEÚDO PERSONALIZADO PARA HOME ==========
+// Gera recomendações personalizadas baseadas em preferências do usuário
+// Combina múltiplas fontes: gêneros, palavras-chave, pessoas favoritas e trending
+
 declare(strict_types=1);
 
 session_start();
 
 header('Content-Type: application/json; charset=utf-8');
+
+// ========== VALIDAÇÃO DE USUÁRIO ==========
 
 if (!isset($_SESSION['id'])) {
     http_response_code(401);
@@ -12,6 +18,8 @@ if (!isset($_SESSION['id'])) {
 }
 
 require_once __DIR__ . '/../includes/tmdb.php';
+
+// ========== CONEXÃO COM BANCO DE DADOS ==========
 
 function wtw_resolve_pdo(): ?PDO
 {
@@ -63,6 +71,8 @@ function wtw_resolve_pdo(): ?PDO
     }
 }
 
+// ========== INICIALIZAÇÃO E PARÂMETROS ==========
+
 $pdo = wtw_resolve_pdo();
 if (!($pdo instanceof PDO)) {
     http_response_code(503);
@@ -74,6 +84,8 @@ $userId = (int) $_SESSION['id'];
 $media = (isset($_GET['media_type']) && $_GET['media_type'] === 'tv') ? 'tv' : 'movie';
 $limit = (int) ($_GET['limit'] ?? 20);
 $limit = max(6, min(30, $limit));
+
+// ========== CARREGAMENTO DE PREFERÊNCIAS DO USUÁRIO ==========
 
 $genreWeights = [];
 try {
@@ -88,6 +100,7 @@ try {
 } catch (Throwable $exception) {
 }
 
+// Palavras-chave por ID e por label
 $keywordIdWeights = [];
 $keywordLabelWeights = [];
 try {
@@ -106,6 +119,7 @@ try {
 } catch (Throwable $exception) {
 }
 
+// Pessoas favoritas (atores, diretores)
 $peopleWeights = [];
 try {
     $stmt = $pdo->prepare('SELECT person_id, weight FROM user_people WHERE user_id = ? ORDER BY weight DESC, person_id ASC');
@@ -119,6 +133,7 @@ try {
 } catch (Throwable $exception) {
 }
 
+// Títulos favoritos do usuário
 $favorites = [];
 $favoritesSet = [];
 try {
@@ -157,6 +172,8 @@ try {
 }
 $providerIds = array_values($providerIds);
 
+// ========== VALIDAÇÃO DE DADOS DE PERSONALIZAÇÃO ==========
+
 if (empty($genreWeights) && empty($keywordIdWeights) && empty($keywordLabelWeights) && empty($peopleWeights) && empty($favorites)) {
     echo json_encode([
         'results' => [],
@@ -166,9 +183,13 @@ if (empty($genreWeights) && empty($keywordIdWeights) && empty($keywordLabelWeigh
     exit;
 }
 
+// ========== CONSTRUÇÃO DE REQUISIÇÕES PARA TMDB ==========
+// Prepara múltiplas requests para buscar candidatos baseados nas preferências
+
 $requests = [];
 $requestMeta = [];
 
+// Parâmetros base para descoberta de conteúdo
 $discoverBase = [
     'include_adult' => 'false',
     'page' => 1,
@@ -179,11 +200,14 @@ if ($media === 'movie') {
     $discoverBase['region'] = 'BR';
 }
 
+// Filtros por provedores de streaming (se configurados)
 if (!empty($providerIds)) {
     $discoverBase['with_watch_providers'] = implode('|', $providerIds);
     $discoverBase['watch_region'] = 'BR';
     $discoverBase['with_watch_monetization_types'] = 'flatrate|ads|free|rent|buy';
 }
+
+// ========== REQUESTS BASEADAS EM GÊNEROS ==========
 
 if (!empty($genreWeights)) {
     $sortedGenres = array_keys($genreWeights);
@@ -221,6 +245,8 @@ if (!empty($genreWeights)) {
     }
 }
 
+// ========== REQUESTS BASEADAS EM PALAVRAS-CHAVE ==========
+
 if (!empty($keywordIdWeights)) {
     $sortedKeywordIds = array_keys($keywordIdWeights);
     usort($sortedKeywordIds, static function ($a, $b) use ($keywordIdWeights) {
@@ -246,6 +272,7 @@ if (!empty($keywordIdWeights)) {
     }
 }
 
+// Busca por labels de palavras-chave customizadas
 if (!empty($keywordLabelWeights)) {
     $labelKeys = array_keys($keywordLabelWeights);
     usort($labelKeys, static function ($a, $b) use ($keywordLabelWeights) {
@@ -268,6 +295,8 @@ if (!empty($keywordLabelWeights)) {
         ];
     }
 }
+
+// ========== REQUESTS BASEADAS EM PESSOAS FAVORITAS ==========
 
 if (!empty($peopleWeights)) {
     $sortedPeople = array_keys($peopleWeights);
@@ -292,6 +321,9 @@ if (!empty($peopleWeights)) {
     }
 }
 
+// ========== REQUESTS BASEADAS EM FAVORITOS ==========
+// Busca recomendações similares aos títulos favoritos
+
 if (!empty($favorites)) {
     foreach (array_slice($favorites, 0, 5) as $favorite) {
         if ($favorite['media_type'] !== $media) {
@@ -311,6 +343,7 @@ if (!empty($favorites)) {
     }
 }
 
+// Adiciona conteúdo trending para diversidade
 $requests['trending'] = [
     'path' => "/trending/{$media}/week",
     'params' => ['page' => 1],
@@ -319,6 +352,8 @@ $requestMeta['trending'] = [
     'type' => 'trending',
     'weight' => 0.9,
 ];
+
+// ========== PROCESSAMENTO DE CANDIDATOS ==========
 
 $candidates = [];
 
@@ -338,6 +373,8 @@ foreach ($responses as $key => $payload) {
     }
 }
 
+// ========== VALIDAÇÃO E FINALIZAÇÃO ==========
+
 if (empty($candidates)) {
     echo json_encode([
         'results' => [],
@@ -347,6 +384,7 @@ if (empty($candidates)) {
     exit;
 }
 
+// Calcula scores finais baseados em todas as preferências
 finalize_candidate_scores($candidates, $genreWeights, $keywordIdWeights, $keywordLabelWeights, $peopleWeights);
 
 $candidateEntries = array_values($candidates);
@@ -382,6 +420,8 @@ echo json_encode([
         'limit' => $limit,
     ],
 ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
+// ========== FUNÇÕES AUXILIARES ==========
 
 function register_candidate(array $item, array $meta, string $media, array &$candidates, array $favoritesSet): void
 {

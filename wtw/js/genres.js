@@ -80,6 +80,7 @@
     const dropdownKeys = Object.keys(dropdowns).filter((key) => dropdowns[key]);
     let openDropdownKey = null;
 
+    // Normaliza texto removendo acentos e padronizando formato
     const normalize = (value) => (value || '')
         .toString()
         .toLowerCase()
@@ -87,8 +88,10 @@
         .replace(/[\u0300-\u036f]/g, '')
         .trim();
 
+    // Constrói URL completa para imagem usando tamanho especificado
     const buildImageUrl = (path, size) => (path ? `${IMAGE_BASE}${size}${path}` : '');
 
+    // Resolve URL de acesso direto para provedor de streaming
     const resolveProviderWatchUrl = (provider) => {
         if (!provider) {
             return '';
@@ -134,6 +137,7 @@
         state.year = initialYear;
     }
 
+    // Extrai e processa gêneros da URL inicial
     const parseInitialGenres = () => {
         const tokens = (params.get('genres') || '')
             .split(/[\s,;|]+/)
@@ -153,6 +157,7 @@
 
     parseInitialGenres();
 
+    // Extrai e processa palavras-chave da URL inicial  
     const parseInitialKeywords = () => {
         const tokens = (params.get('keywords') || '')
             .split(/[\s,;|]+/)
@@ -174,6 +179,7 @@
 
     parseInitialKeywords();
 
+    // Mapeia ordenação para tipo de mídia específico
     const mapSortForMedia = (sort, mediaType) => {
         if (mediaType === 'tv' && sort === 'primary_release_date.desc') {
             return 'first_air_date.desc';
@@ -181,6 +187,7 @@
         return sort;
     };
 
+    // Fecha menu dropdown aberto
     const closeDropdownMenu = () => {
         if (!openDropdownKey) {
             return;
@@ -195,6 +202,7 @@
         openDropdownKey = null;
     };
 
+    // Abre menu dropdown específico
     const openDropdownMenu = (key) => {
         if (!dropdowns[key]) {
             return;
@@ -213,6 +221,7 @@
         openDropdownKey = key;
     };
 
+    // Alterna estado do menu dropdown
     const toggleDropdownMenu = (key) => {
         if (openDropdownKey === key) {
             closeDropdownMenu();
@@ -221,6 +230,7 @@
         }
     };
 
+    // Atualiza texto do rótulo do dropdown baseado na seleção
     const updateDropdownLabel = (key) => {
         const dropdown = dropdowns[key];
         if (!dropdown || !dropdown.valueEl) {
@@ -267,6 +277,7 @@
         }
     };
 
+    // Cria elemento botão de opção para filtros
     const createFilterOption = ({ label, value, key, isSelected }) => {
         const button = document.createElement('button');
         button.type = 'button';
@@ -287,6 +298,7 @@
         return button;
     };
 
+    // Popula dropdown de gêneros com opções relevantes
     const populateGenreOptions = () => {
         const dropdown = dropdowns.genre;
         if (!dropdown?.options) {
@@ -320,6 +332,7 @@
         updateDropdownLabel('genre');
     };
 
+    // Popula dropdown de anos com range de anos
     const populateYearOptions = () => {
         const dropdown = dropdowns.year;
         if (!dropdown?.options) {
@@ -349,6 +362,7 @@
         updateDropdownLabel('year');
     };
 
+    // Popula dropdown de ordenação com opções disponíveis
     const populateSortOptions = () => {
         const dropdown = dropdowns.sort;
         if (!dropdown?.options) {
@@ -368,6 +382,7 @@
         updateDropdownLabel('sort');
     };
 
+    // Define estado de carregamento da interface
     const setLoading = (isLoading, options = {}) => {
         const { mode = 'loading' } = options;
         if (elements.resultsStatus) {
@@ -396,6 +411,7 @@
         }
     };
 
+    // Define estado vazio da interface com mensagens específicas
     const setEmptyState = (mode) => {
         if (!elements.emptyState) {
             return;
@@ -428,8 +444,10 @@
         }
     };
 
+    // Verifica se há pelo menos uma seleção feita
     const hasAnySelection = () => state.selectedGenres.size > 0 || state.selectedKeywords.size > 0;
 
+    // Obtém nome do gênero por ID
     const getGenreName = (id) => {
         const entry = state.allGenres.get(id);
         if (entry) {
@@ -438,6 +456,7 @@
         return state.initialLabels.get(id) || 'Categoria';
     };
 
+    // Obtém nome da palavra-chave por ID
     const getKeywordName = (id) => {
         const entry = state.keywordData.get(id);
         if (entry?.name) {
@@ -463,6 +482,7 @@
         return [...genres, ...keywords];
     };
 
+    // Gera chave única para cache baseada no estado atual
     const buildCacheKey = () => {
         const media = state.mediaType || 'both';
         const sort = state.sortBy || DEFAULT_SORT;
@@ -579,6 +599,7 @@
         });
     };
 
+    // Atualiza subtítulo do hero com categorias selecionadas
     const updateHeroSubtitle = () => {
         if (!elements.heroSubtitle) {
             return;
@@ -650,6 +671,7 @@
         return Number.POSITIVE_INFINITY;
     };
 
+    // Seleciona provedor principal baseado em prioridades
     const selectPrimaryProvider = (regionEntry) => {
         if (!regionEntry) {
             return null;
@@ -688,6 +710,7 @@
         return `${mediaType}-${item.id}`;
     };
 
+    // Busca e carrega provedores primários para item específico
     const fetchPrimaryProviderForItem = async (item, signal) => {
         const cacheKey = getProviderCacheKey(item);
         if (!cacheKey) {
@@ -722,6 +745,7 @@
 
     const PROVIDER_BATCH_SIZE = 6;
 
+    // Enriquece lista de itens com informações de provedores
     const enrichWithProviders = async (items, token, signal) => {
         const enriched = [];
         for (let index = 0; index < items.length; index += PROVIDER_BATCH_SIZE) {
@@ -739,6 +763,7 @@
         return enriched;
     };
 
+    // Computa gêneros sugeridos baseado nas seleções atuais
     const computeSuggestedGenres = () => {
         const relevant = Array.from(state.allGenres.values()).filter((genre) => {
             if (state.mediaType === 'movie') {
@@ -783,6 +808,7 @@
         .filter((entry) => entry && Number.isInteger(entry.id) && entry.id > 0 && entry.name)
         .map((entry) => ({ id: entry.id, name: entry.name, type: 'keyword' }));
 
+    // Cria elemento chip visual para categoria
     const createCategoryChip = (category, isActive, options = {}) => {
         const { isSuggestion = false } = options;
         const button = document.createElement('button');
@@ -823,6 +849,7 @@
         return button;
     };
 
+    // Renderiza chips das categorias selecionadas e sugeridas
     const renderHeroChips = () => {
         if (!elements.heroSelected) {
             return;
@@ -1054,6 +1081,7 @@
         return items;
     };
 
+    // Compara títulos para ordenação
     const compareTitles = (a, b) => {
         switch (state.sortBy) {
             case 'vote_average.desc': {
@@ -1077,6 +1105,7 @@
         }
     };
 
+    // Renderiza grid de títulos encontrados
     const renderTitles = (items) => {
         if (!elements.grid) {
             return;
@@ -1192,6 +1221,7 @@
         elements.grid.appendChild(fragment);
     };
 
+    // Busca títulos da API baseado nos filtros selecionados
     const fetchTitles = async () => {
         const token = ++state.fetchToken;
         const keywordToken = ++state.keywordToken;
@@ -1565,6 +1595,7 @@
 
     chipContainerEvents(elements.heroSelected);
 
+    // Busca listas de gêneros da API para filmes e séries  
     const fetchGenreLists = async () => {
         const fetchList = async (type) => {
             const url = `${tmdbEndpoint('genre/' + type + '/list')}?api_key=${API_KEY}&language=pt-BR`;
@@ -1590,6 +1621,7 @@
         state.allGenres = map;
     };
 
+    // Inicializa a aplicação carregando dados e configurando interface
     const initialize = async () => {
         try {
             await fetchGenreLists();

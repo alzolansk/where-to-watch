@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+    <!-- ========== PÁGINA DE DETALHES DE FILME/SÉRIE ========== -->
+    <!-- Página que exibe informações detalhadas de um título específico -->
+    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
@@ -17,6 +20,9 @@
 
     <main class="interface-section movie-page">
         <div class="page-shell is-loading">
+            <!-- ========== SKELETON DE CARREGAMENTO ========== -->
+            <!-- Estrutura de placeholder enquanto o conteúdo carrega -->
+            
             <div id="movieSkeleton" class="movie-skeleton" aria-hidden="true">
                 <section class="movie-skeleton__hero">
                     <span class="movie-skeleton__hero-backdrop" aria-hidden="true"></span>
@@ -178,11 +184,19 @@
                 </section>
             </div>
 
+            <!-- ========== CONTEÚDO PRINCIPAL DO FILME ========== -->
+            <!-- Informações detalhadas após carregamento dos dados -->
+
             <div id="movieContent" class="movie-content" aria-live="polite" aria-hidden="true">
+            <!-- ========== MODAL DE TRAILER ========== -->
+            
             <dialog id="dialog" class="dialog">
                 <iframe id="trailerFrame" src="" title="Trailer" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>
                 <button id="close-trailer" type="button" aria-label="Fechar trailer" data-dialog-initial-focus>X</button>
             </dialog>
+
+            <!-- ========== SEÇÃO HERO COM INFORMAÇÕES PRINCIPAIS ========== -->
+            <!-- Área de destaque com poster, backdrop e informações básicas -->
 
             <section class="movie-hero">
                 <div class="hero-backdrop">
@@ -231,6 +245,9 @@
                 </div>
             </section>
 
+            <!-- ========== SEÇÃO DE PROVEDORES ========== -->
+            <!-- Onde assistir: streaming, aluguel e compra -->
+
             <section class="providers-section card-section" id="providersSection">
                   <span class="liquid-sheen" aria-hidden="true"></span>
                 <div class="section-heading">
@@ -253,6 +270,9 @@
                 </div>
             </section>
 
+            <!-- ========== SEÇÃO DE TEMPORADAS ========== -->
+            <!-- Exibida apenas para séries de TV -->
+
             <section class="seasons-section card-section is-hidden" id="seasonSection">
                 <div class="section-heading">
                     <h2>Temporadas</h2>
@@ -264,6 +284,9 @@
                     <button class="nav-arrow slider-next" data-target="seasons-container">&#10095;</button>
                 </div>
             </section>
+
+            <!-- ========== SEÇÃO DE ELENCO ========== -->
+            <!-- Lista dos principais atores e atrizes -->
 
             <section class="cast-section card-section">
                 <div class="section-heading">
@@ -277,6 +300,9 @@
                 </div>
             </section>
 
+            <!-- ========== SEÇÃO DE GALERIA ========== -->
+            <!-- Imagens e backdrops oficiais -->
+
             <section class="gallery-section card-section is-hidden" id="gallerySection">
                 <div class="section-heading">
                     <h2>Galeria</h2>
@@ -288,6 +314,9 @@
                     <button class="nav-arrow slider-next" data-target="gallery-track">&#10095;</button>
                 </div>
             </section>
+
+            <!-- ========== MODALS DE TEMPORADAS E ATORES ========== -->
+            <!-- Dialogs para informações detalhadas -->
 
             <dialog id="seasonDialog" class="season-dialog">
                 <div class="season-dialog__content">
@@ -326,6 +355,9 @@
         </div>
         </div>
     </main>
+
+    <!-- ========== SCRIPTS JAVASCRIPT ========== -->
+    <!-- Scripts para funcionalidade da página de filme -->
 
     <script type="module" src="js/filme.js"></script>
     <script src="js/script.js"></script>

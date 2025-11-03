@@ -1,4 +1,8 @@
 <?php
+// ========== DASHBOARD DE NAVEGAÇÃO ==========
+// Barra de navegação principal do site
+// Inclui menu, busca, autenticação de usuário e configurações
+
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -7,11 +11,17 @@ require_once __DIR__ . '/includes/env.php';
 
 wyw_load_env(__DIR__);
 
+// ========== CONFIGURAÇÕES DO CLIENTE ==========
+// Configurações que serão enviadas para o frontend
+
 $clientConfig = [
     'tmdbApiKey' => (string) wyw_env('TMDB_API_KEY', ''),
     'tmdbBaseUrl' => rtrim((string) wyw_env('TMDB_API_BASE', 'https://api.themoviedb.org/3'), '/'),
     'apiBaseUrl' => (string) wyw_env('APP_API_BASE_URL', '/api'),
 ];
+
+// ========== ESTADOS DE NAVEGAÇÃO ==========
+// Determina qual página está ativa para destacar no menu
 
 $currentScript = basename($_SERVER['SCRIPT_NAME'] ?? 'index.php');
 $navStates = [
@@ -28,12 +38,20 @@ $navStates = [
     )
   );
 </script>
+
+<!-- ========== MENU PRINCIPAL DE NAVEGAÇÃO ========== -->
+<!-- Barra de navegação fixa com logo, menu e busca -->
+
 <nav id="menu">
     <filter id="glass-distortion" x="0%" y="0%" width="100%" height="100%">
     <div class="faixa">
+        <!-- ========== BOTÃO DE MENU MOBILE ========== -->
+        
         <button class="menu-trigger" type="button" aria-label="Abrir menu" aria-expanded="false" aria-controls="menu-buttons">
             <img src="imagens/menu-icon.png" alt="Menu" id="menuIcon" width="30px">
         </button>
+
+        <!-- ========== LOGO/MARCA PRINCIPAL ========== -->
 
         <a href="index.php" class="wyw-brand wyw-brand--menu dashboard-logo home-header" aria-label="Ir para a pagina inicial">
             <span class="wyw-brand__where">where</span>
@@ -42,6 +60,9 @@ $navStates = [
             <span class="wyw-brand__where wyw-brand__where--u">u</span>
             <span class="wyw-brand__watch">WATCH</span>
         </a>
+
+        <!-- ========== PAINEL DE NAVEGAÇÃO ========== -->
+        <!-- Menu principal com links e busca -->
 
         <nav id="menu-buttons" class="menu-panel hidden-menu" aria-hidden="true">
             <ul id="ulBotoes">
@@ -102,6 +123,9 @@ $navStates = [
                 </li>
             </ul>
             <div id="search-div" class="menu-panel__search">
+                <!-- ========== PAINEL DE BUSCA ========== -->
+                <!-- Campo de busca para filmes e séries -->
+                
                 <div class="search-panel">
                     <div class="search-input-wrapper" id="searchInputWrapper">
                         <span class="search-icon" aria-hidden="true">
@@ -125,6 +149,9 @@ $navStates = [
         </nav>
 
         <?php
+        // ========== MENU DE USUÁRIO ==========
+        // Exibe diferentes opções baseado no status de login do usuário
+        
         if (!isset($_SESSION['nome']) || !isset($_SESSION['id'])) {
             echo '<div class="user-menu">';
             echo '<a href="login.php" class="user-menu__link" aria-label="Fazer login">';
@@ -135,6 +162,9 @@ $navStates = [
             echo '</a>';
             echo '</div>';
         } else if (isset($_SESSION['nome'])) {
+            // ========== DROPDOWN DE USUÁRIO LOGADO ==========
+            // Menu dropdown para usuários autenticados
+            
             $userName = htmlspecialchars($_SESSION['nome'], ENT_QUOTES, 'UTF-8');
             echo '<div class="user-account" data-user-menu>';
             echo '    <button type="button" class="user-account__trigger" aria-haspopup="true" aria-expanded="false">';
@@ -167,7 +197,12 @@ $navStates = [
     </div>
 </nav>
 
+<!-- ========== CONTAINER DE RESULTADOS DE BUSCA ========== -->
+
 <div id="searchResults" style="display: none;"></div>
+
+<!-- ========== ESTILOS CSS DO DASHBOARD ========== -->
+<!-- Estilos principais para navegação, menu e busca -->
 
 <style>
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap');

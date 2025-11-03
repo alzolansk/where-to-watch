@@ -112,8 +112,8 @@
 .providers-hero__rail-surface--fixed .providers-hero__rail {
     gap: clamp(8px, 1.6vw, 14px);
     padding: 15px 2px 10px;
-    scrollbar-width: none; /* Hide scrollbar for Firefox */
-    -ms-overflow-style: none; /* Hide scrollbar for IE/Edge */
+    scrollbar-width: none; 
+    -ms-overflow-style: none; 
 }
 
 .providers-hero__rail-surface--fixed .providers-hero__rail .provider-pill {

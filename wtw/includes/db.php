@@ -1,4 +1,7 @@
 <?php
+// ========== GERENCIADOR DE CONEXÕES DE BANCO DE DADOS ==========
+// Fornece conexões PDO e MySQLi configuradas para a aplicação
+
 declare(strict_types=1);
 
 require_once __DIR__ . '/env.php';
@@ -6,6 +9,7 @@ require_once __DIR__ . '/env.php';
 wyw_load_env(__DIR__);
 
 /**
+ * ========== CONFIGURAÇÃO COMPARTILHADA DO BANCO ==========
  * Shared database configuration helper.
  */
 function wyw_database_config(): array
@@ -26,6 +30,7 @@ function wyw_database_config(): array
 }
 
 /**
+ * ========== CONEXÃO PDO SINGLETON ==========
  * Returns a singleton PDO connection configured for the application.
  */
 function get_pdo(): PDO
@@ -54,6 +59,7 @@ function get_pdo(): PDO
 }
 
 /**
+ * ========== CONEXÃO MYSQLI SINGLETON ==========
  * Returns a singleton mysqli connection configured for the application.
  */
 function get_mysqli(): mysqli
@@ -81,5 +87,7 @@ function get_mysqli(): mysqli
     return $mysqli;
 }
 
+// ========== COMPATIBILIDADE RETROATIVA ==========
 // Backwards compatibility: expose $pdo when this file is included.
+
 $pdo = get_pdo();
