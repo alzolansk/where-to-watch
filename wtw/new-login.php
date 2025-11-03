@@ -188,9 +188,56 @@ if (isset($_POST['submit'])) {
                     </div>
 
                     <p class="terms-note">
-                        Ao criar sua conta, voce concorda com os <a href="#">Termos de uso</a> e com a <a href="#">Politica de privacidade</a>.
+                        Ao criar sua conta, voce concorda com os <a href="#" class="terms-link">Termos de uso</a> e com a <a href="#">Politica de privacidade</a>.
                     </p>
                 </form>
+            </div>
+        </div>
+
+        <div id="termsModal" class="terms-modal" role="dialog" aria-modal="true" aria-labelledby="termsModalTitle" aria-hidden="true">
+            <div class="terms-modal__content">
+                <div class="terms-modal__body">
+                    <h2 id="termsModalTitle">🧾 <strong>Termos de Uso — WYWatch</strong></h2>
+                    <p><strong>Última atualização:</strong> outubro de 2025</p>
+                    <p>Bem-vindo ao <strong>WYWatch</strong> — um site desenvolvido para ajudar você a descobrir <strong>onde assistir filmes e séries</strong> nas principais plataformas de streaming e serviços de aluguel.</p>
+                    <p>Ao acessar ou usar o WYWatch, você concorda com os termos descritos abaixo. Recomendamos que leia atentamente antes de continuar.</p>
+                    <hr>
+                    <h3>1. Sobre o WYWatch</h3>
+                    <p>O WYWatch é um projeto independente criado por pessoa física, sem vínculo com serviços de streaming, estúdios ou produtoras.</p>
+                    <p>Nosso objetivo é facilitar a busca por conteúdos audiovisuais, mostrando informações de <strong>onde assistir</strong>, <strong>elenco</strong>, <strong>trailer</strong> e outros dados obtidos por meio de <strong>APIs públicas</strong>, como o The Movie Database (TMDB).</p>
+                    <hr>
+                    <h3>2. Uso do site</h3>
+                    <ul>
+                        <li>Você pode utilizar o WYWatch gratuitamente para fins pessoais e não comerciais.</li>
+                        <li>É proibido copiar, distribuir, modificar ou utilizar o conteúdo do site para fins comerciais sem autorização.</li>
+                        <li>O uso indevido ou que viole leis pode resultar em suspensão de acesso.</li>
+                    </ul>
+                    <hr>
+                    <h3>3. Cadastro e conta de usuário</h3>
+                    <p>Alguns recursos, como <strong>favoritar títulos</strong> ou <strong>receber recomendações personalizadas</strong>, exigem a criação de uma conta.</p>
+                    <ul>
+                        <li>Ao se cadastrar, você deve fornecer <strong>nome, e-mail e senha</strong> (armazenada de forma segura com hash).</li>
+                        <li>É de sua responsabilidade manter a confidencialidade da senha.</li>
+                        <li>Você pode solicitar a exclusão de sua conta a qualquer momento.</li>
+                    </ul>
+                    <hr>
+                    <h3>4. Fontes de informação</h3>
+                    <p>As informações sobre filmes, séries e provedores são obtidas de fontes públicas e confiáveis, especialmente <strong>TMDB</strong> e <strong>JustWatch</strong>.</p>
+                    <p>O WYWatch não se responsabiliza por eventuais divergências, erros ou mudanças nas plataformas de streaming.</p>
+                    <hr>
+                    <h3>5. Limitação de responsabilidade</h3>
+                    <p>O WYWatch é um projeto informativo e não realiza transmissão, aluguel ou venda de filmes.</p>
+                    <p>Não garantimos disponibilidade contínua, ausência de erros ou compatibilidade com todos os dispositivos.</p>
+                    <hr>
+                    <h3>6. Alterações nos Termos</h3>
+                    <p>Podemos atualizar estes Termos de Uso a qualquer momento.</p>
+                    <p>Quando isso ocorrer, a data da última atualização será revisada no início do documento. O uso contínuo do site após alterações implica concordância com os novos termos.</p>
+                    <hr>
+                    <h3>7. Contato</h3>
+                    <p>Para dúvidas, sugestões ou solicitações relacionadas a estes Termos, entre em contato pelo LinkedIn oficial:</p>
+                    <p><a href="https://www.linkedin.com/in/joaoalvesz" target="_blank" rel="noopener noreferrer">linkedin.com/in/joaoalvesz</a></p>
+                </div>
+                <button type="button" class="terms-modal__close" id="termsModalClose">ciente dos termos de uso</button>
             </div>
         </div>
 
@@ -208,6 +255,37 @@ if (isset($_POST['submit'])) {
         const loginInvalidDialog = document.getElementById('loginInvalid');
         const errorMessageElement = document.querySelector('.dialog-message');
         const closeDialogButton = document.getElementById('closeDialog');
+        const termsModal = document.getElementById('termsModal');
+        const termsModalClose = document.getElementById('termsModalClose');
+        const termsLinks = document.querySelectorAll('.terms-link');
+        let lastFocusedElement = null;
+
+        const showTermsModal = () => {
+            if (!termsModal) {
+                return;
+            }
+
+            lastFocusedElement = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+            termsModal.classList.add('is-visible');
+            termsModal.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('modal-open');
+            if (termsModalClose) {
+                termsModalClose.focus();
+            }
+        };
+
+        const hideTermsModal = () => {
+            if (!termsModal) {
+                return;
+            }
+
+            termsModal.classList.remove('is-visible');
+            termsModal.setAttribute('aria-hidden', 'true');
+            document.body.classList.remove('modal-open');
+            if (lastFocusedElement) {
+                lastFocusedElement.focus();
+            }
+        };
 
         if (loginInvalidDialog && errorMessageElement && errorMessageElement.textContent.trim() !== '') {
             loginInvalidDialog.showModal();
@@ -244,6 +322,25 @@ if (isset($_POST['submit'])) {
                 );
             });
         });
+
+        termsLinks.forEach((link) => {
+            link.addEventListener('click', (event) => {
+                event.preventDefault();
+                showTermsModal();
+            });
+        });
+
+        if (termsModalClose) {
+            termsModalClose.addEventListener('click', hideTermsModal);
+        }
+
+        if (termsModal) {
+            termsModal.addEventListener('click', (event) => {
+                if (event.target === termsModal) {
+                    hideTermsModal();
+                }
+            });
+        }
     </script>
 </body>
 </html>

@@ -1076,19 +1076,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const title = document.createElement('p');
     title.className = 'timeline-card__title';
     title.textContent = entry.title;
-    const meta = document.createElement('div');
-    meta.className = 'timeline-card__meta';
-    const yearSpan = document.createElement('span');
-    yearSpan.textContent = entry.year || '–';
+    const roleLabel = pickRoleLabel(entry);
+    const role = document.createElement('p');
+    role.className = 'timeline-card__role';
+    if (roleLabel) {
+      role.textContent = roleLabel;
+    } else {
+      role.classList.add('is-hidden');
+    }
+    const providerWrapper = document.createElement('div');
+    providerWrapper.className = 'timeline-card__providers';
     const providerBadge = document.createElement('span');
     providerBadge.className = 'provider-badge is-hidden';
-    meta.append(yearSpan, providerBadge);
-    body.append(title, meta);
-    const role = document.createElement('span');
-    role.className = 'timeline-role';
-    const roleLabel = pickRoleLabel(entry);
-    role.textContent = roleLabel ? `${roleLabel} – ${entry.title}` : entry.title;
-    card.append(body, role);
+    providerWrapper.appendChild(providerBadge);
+    body.append(title, role, providerWrapper);
+    card.appendChild(body);
     card.addEventListener('click', () => {
       goToMedia(entry);
     });
