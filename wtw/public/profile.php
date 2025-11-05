@@ -803,14 +803,14 @@ $favoritesList = $favorites;
                     <p>Combine diferentes catálogos e descubra o que está em alta nos seus serviços favoritos.</p>
                 </div>
             </a>
-            <a href="index.php#search" class="shortcut-card">
+            <a href="search.php" class="shortcut-card">
                 <span class="shortcut-card__icon" aria-hidden="true">🔍</span>
                 <div class="shortcut-card__content">
                     <h3>Buscar títulos rapidamente</h3>
                     <p>Pesquise filmes e séries e veja onde estão disponíveis para assistir agora.</p>
                 </div>
             </a>
-            <a href="index.php" class="shortcut-card">
+            <a href="surpreenda.php" class="shortcut-card">
                 <span class="shortcut-card__icon" aria-hidden="true">✨</span>
                 <div class="shortcut-card__content">
                     <h3>Surpreenda-me</h3>

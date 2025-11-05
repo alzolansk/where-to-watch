@@ -1,96 +1,82 @@
-<?php
-session_start();
-include_once('config/config.php');
+﻿<?php
+require_once __DIR__ . '/../config/bootstrap.php';
+
+// Inicializar conexão mysqli para código legado
+if (!isset($conexao)) {
+    $host = wyw_env('DB_HOST', 'localhost');
+    $database = wyw_env('DB_NAME', 'db_login');
+    $user = wyw_env('DB_USER', 'root');
+    $password = wyw_env('DB_PASS', '');
+    $conexao = new mysqli($host, $user, $password, $database);
+    if ($conexao->connect_error) {
+        die('Erro de conexão: ' . $conexao->connect_error);
+    }
+    $conexao->set_charset('utf8mb4');
+}
 
 if (!function_exists('wywEnsureOnboardingColumn')) {
-    function wywEnsureOnboardingColumn(mysqli $connection): void
-    {
-        try {
-            $result = $connection->query("SHOW COLUMNS FROM tb_users LIKE 'onboarding_completed_at'");
-            $exists = $result instanceof mysqli_result && $result->num_rows > 0;
-            if ($result instanceof mysqli_result) {
-                $result->free();
-            }
-            if (!$exists) {
-                $connection->query("ALTER TABLE tb_users ADD COLUMN onboarding_completed_at DATETIME NULL DEFAULT NULL AFTER email_user");
-            }
-        } catch (Throwable $schemaError) {
-            error_log('wyw_onboarding_column_error: ' . $schemaError->getMessage());
-        }
+  function wywEnsureOnboardingColumn(mysqli $connection): void {
+    try {
+      $result = $connection->query("SHOW COLUMNS FROM tb_users LIKE 'onboarding_completed_at'");
+      $exists = $result instanceof mysqli_result && $result->num_rows > 0;
+      if ($result instanceof mysqli_result) {
+        $result->free();
+      }
+      if (!$exists) {
+        $connection->query("ALTER TABLE tb_users ADD COLUMN onboarding_completed_at DATETIME NULL DEFAULT NULL AFTER email_user");
+      }
+    } catch (Throwable $schemaError) {
+      error_log('wyw_onboarding_column_error: ' . $schemaError->getMessage());
     }
+  }
 }
 
 wywEnsureOnboardingColumn($conexao);
 
-$error_message = '';
-$title_error = '';
-$name_value = '';
-$email_value = '';
+$error_message = "";
+$user_not_found = false;
+$title_error = "";
+
 if (isset($_POST['submit'])) {
-    $name_value = trim($_POST['nome'] ?? '');
-    $email_value = trim($_POST['email'] ?? '');
-    $senha = $_POST['senha'] ?? '';
-    $confirm_senha = $_POST['confirmasenha'] ?? '';
+  $email = filter_input(INPUT_POST, 'email', FILTER_VALIDATE_EMAIL);
+  $senha_digitada = $_POST['senha'];
 
-    if ($name_value === '' || $email_value === '' || $senha === '' || $confirm_senha === '') {
-        $title_error = 'Campos obrigatorios';
-        $error_message = 'Preencha todos os campos obrigatorios para continuar.';
-    } else {
-        $email = filter_var($email_value, FILTER_VALIDATE_EMAIL);
+  if (!$email) {
+    $error_message = "Email inválido.";
+  } else {
+    $stmt = $conexao->prepare("SELECT id_user, name_user, pswd_user, onboarding_completed_at FROM tb_users WHERE email_user = ?");
+    $stmt->bind_param("s", $email);
+    $stmt->execute();
+    $stmt->store_result();
 
-        if (!$email) {
-            $title_error = 'Email invalido';
-            $error_message = 'Insira um endereco de email valido.';
-        } elseif (strlen($senha) < 6 || !preg_match('/\d/', $senha)) {
-            $title_error = 'Senha invalida';
-            $error_message = 'A senha deve ter pelo menos 6 caracteres e conter ao menos um numero.';
-        } elseif ($senha !== $confirm_senha) {
-            $title_error = 'Senhas diferentes';
-            $error_message = 'A confirmacao de senha precisa corresponder a senha informada.';
+    if ($stmt->num_rows > 0) {
+      $stmt->bind_result($id, $nome, $senha_hash, $onboarding_completed_at);
+      $stmt->fetch();
+
+      if (password_verify($senha_digitada, $senha_hash)) {
+        $_SESSION['id'] = $id;
+        $_SESSION['id_user'] = $id;
+        $_SESSION['nome'] = $nome;
+        $_SESSION['onboarding_pending'] = empty($onboarding_completed_at);
+        if (!empty($onboarding_completed_at)) {
+          $_SESSION['onboarding_completed_at'] = $onboarding_completed_at;
         } else {
-            $stmt = $conexao->prepare('SELECT id_user FROM tb_users WHERE email_user = ?');
-            if ($stmt) {
-                $stmt->bind_param('s', $email);
-                $stmt->execute();
-                $stmt->store_result();
-
-                $email_exists = $stmt->num_rows > 0;
-                $stmt->close();
-
-                if ($email_exists) {
-                    $title_error = 'Usuario existente';
-                    $error_message = 'Este email ja possui cadastro. Gostaria de entrar? <a href="login.php">Clique aqui</a>.';
-                } else {
-                    $hashed_password = password_hash($senha, PASSWORD_DEFAULT);
-                    $insert_stmt = $conexao->prepare('INSERT INTO tb_users (name_user, email_user, pswd_user) VALUES (?, ?, ?)');
-                    if ($insert_stmt) {
-                        $insert_stmt->bind_param('sss', $name_value, $email, $hashed_password);
-                        if ($insert_stmt->execute()) {
-                            $user_id = $insert_stmt->insert_id ?: $conexao->insert_id;
-                            $_SESSION['id'] = $user_id;
-                            $_SESSION['id_user'] = $user_id;
-                            $_SESSION['nome'] = $name_value;
-                            $_SESSION['onboarding_pending'] = true;
-                            unset($_SESSION['onboarding_completed_at']);
-
-                            header('Location: index.php');
-                            exit();
-                        } else {
-                            $title_error = 'Erro ao cadastrar';
-                            $error_message = 'Nao foi possivel concluir seu cadastro. Tente novamente.';
-                        }
-                        $insert_stmt->close();
-                    } else {
-                        $title_error = 'Erro ao cadastrar';
-                        $error_message = 'Nao foi possivel preparar o cadastro. Tente novamente mais tarde.';
-                    }
-                }
-            } else {
-                $title_error = 'Erro ao cadastrar';
-                $error_message = 'Nao foi possivel verificar o email informado.';
-            }
+          unset($_SESSION['onboarding_completed_at']);
         }
+
+        header("Location: index.php");
+        exit();
+      } else {
+        $error_message = "Senha incorreta.";
+      }
+    } else {
+      $title_error = "Usuário inexistente";
+      $error_message = "Usuário não existe no where you WATCH. <br> Crie uma conta <a href='new-login.php'>aqui.</a>";
+      $user_not_found = true;
     }
+    $stmt->close();
+    $conexao->close();
+  }
 }
 ?>
 <!DOCTYPE html>
@@ -99,7 +85,7 @@ if (isset($_POST['submit'])) {
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Criar conta - Where You Watch</title>
+    <title>Entrar - Where You Watch</title>
     <link rel="icon" href="imagens/wywatch-favicon-iris-nobackground.png">
     <link rel="stylesheet" href="css/brand.css">
     <link rel="stylesheet" href="css/login.css">
@@ -115,8 +101,8 @@ if (isset($_POST['submit'])) {
     </dialog>
 
     <div class="login-page">
-        <div class="login-shell auth-shell auth-shell--register">
-            <a href="index.php" class="wyw-brand wyw-brand--badge wyw-brand--lg login-logo" aria-label="Ir para a pagina inicial">
+        <div class="login-shell auth-shell">
+            <a href="index.php" class="wyw-brand wyw-brand--badge wyw-brand--lg login-logo" aria-label="Ir para a página inicial">
                 <span class="wyw-brand__where">where</span>
                 <span class="wyw-brand__where wyw-brand__where--y">y</span>
                 <img src="imagens/eye-icon2.svg" alt="o" class="wyw-brand__eye" />
@@ -126,25 +112,20 @@ if (isset($_POST['submit'])) {
 
             <div class="login-card auth-card">
                 <div class="card-header">
-                    <h1 class="card-title">Criar conta</h1>
-                    <p class="card-subtitle">Cadastre-se para salvar favoritos e descobrir onde assistir seus filmes e series.</p>
+                    <h1 class="card-title">Entrar</h1>
+                    <p class="card-subtitle">Acesse sua conta e continue descobrindo onde assistir.</p>
                 </div>
 
-                <form action="new-login.php" method="POST" class="login-form auth-form">
-                    <div class="input-group">
-                        <label for="nome">Nome</label>
-                        <input type="text" name="nome" id="nome" class="input-control" placeholder="Seu nome de usuário" value="<?php echo htmlspecialchars($name_value, ENT_QUOTES, 'UTF-8'); ?>" required>
-                    </div>
-
+                <form action="login.php" method="POST" class="login-form auth-form">
                     <div class="input-group">
                         <label for="email">Email</label>
-                        <input type="email" name="email" id="email" class="input-control" placeholder="usuario@email.com" value="<?php echo htmlspecialchars($email_value, ENT_QUOTES, 'UTF-8'); ?>" required>
+                        <input type="email" name="email" id="email" class="input-control" placeholder="usuario@gmail.com" value="<?php echo isset($_POST['email']) ? htmlspecialchars($_POST['email'], ENT_QUOTES, 'UTF-8') : ''; ?>" required>
                     </div>
 
                     <div class="input-group">
                         <label for="senha">Senha</label>
                         <div class="password-field">
-                            <input type="password" name="senha" id="senha" class="input-control" placeholder="Crie uma senha segura" aria-describedby="passwordError" required>
+                            <input type="password" name="senha" id="senha" class="input-control" placeholder="Digite sua senha" required>
                             <button type="button" class="password-toggle" data-target="senha" aria-label="Mostrar senha">
                                 <svg class="icon-eye icon-eye-show" viewBox="0 0 24 24" aria-hidden="true">
                                     <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"></path>
@@ -160,35 +141,23 @@ if (isset($_POST['submit'])) {
                         </div>
                     </div>
 
-                    <div class="input-group">
-                        <label for="confirma_senha">Confirme a senha</label>
-                        <div class="password-field">
-                            <input type="password" name="confirmasenha" id="confirma_senha" class="input-control" placeholder="Repita sua senha" aria-describedby="passwordError" required>
-                            <button type="button" class="password-toggle" data-target="confirma_senha" aria-label="Mostrar senha">
-                                <svg class="icon-eye icon-eye-show" viewBox="0 0 24 24" aria-hidden="true">
-                                    <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"></path>
-                                    <circle cx="12" cy="12" r="3"></circle>
-                                </svg>
-                                <svg class="icon-eye icon-eye-hide" viewBox="0 0 24 24" aria-hidden="true">
-                                    <path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-7 0-11-7-11-7s4-7 11-7a10.94 10.94 0 0 1 5.94 1.94"></path>
-                                    <path d="M10.73 6.12A10.94 10.94 0 0 1 12 5c7 0 11 7 11 7a21.82 21.82 0 0 1-4.06 5.94"></path>
-                                    <line x1="1" y1="1" x2="23" y2="23"></line>
-                                    <path d="M9.53 9.53a3.5 3.5 0 0 0 4.94 4.94"></path>
-                                </svg>
-                            </button>
-                        </div>
-                        <p id="passwordError" role="alert" aria-live="polite" class="error" hidden></p>
+                    <div class="login-options">
+                        <label class="remember-option">
+                            <input type="checkbox" name="remember" id="remember">
+                            <span>Lembrar-me</span>
+                        </label>
+                        <a href="#" class="link-muted">Esqueci minha senha</a>
                     </div>
 
-                    <button type="submit" value="Sign in" name="submit" id="submit" class="login-primary">Cadastrar</button>
+                    <button type="submit" value="Log in" name="submit" id="submit" class="login-primary">Entrar</button>
 
                     <div class="create-account">
-                        <span>Ja tem uma conta?</span>
-                        <a href="login.php" class="link-accent">Entrar</a>
+                        <span>Ainda não tem conta?</span>
+                        <a href="new-login.php" class="link-accent">Criar conta</a>
                     </div>
 
                     <p class="terms-note">
-                        Ao criar sua conta, voce concorda com os <a href="#" class="terms-link">Termos de uso</a> e com a <a href="#" class="privacy-link">Politica de privacidade</a>.
+                        Ao continuar, você concorda com os <a href="#" class="terms-link">Termos de uso</a> e com a <a href="#" class="privacy-link">Política de privacidade</a>.
                     </p>
                 </form>
             </div>
@@ -424,3 +393,5 @@ if (isset($_POST['submit'])) {
     </script>
 </body>
 </html>
+
+

@@ -5,21 +5,66 @@
 
 declare(strict_types=1);
 
-session_start();
+// ========== CARREGA BOOTSTRAP DA APLICAÇÃO ==========
+// Bootstrap já carrega: env.php, db.php, tmdb.php e inicia sessão
+require_once __DIR__ . '/../../config/bootstrap.php';
 
+// Define Content-Type para JSON
 header('Content-Type: application/json; charset=utf-8');
+
+// ========== LOGGING E TRATAMENTO DE ERROS ==========
+// Configuração de logs para debug (remover em produção final)
+
+$logFile = defined('LOGS_PATH') ? LOGS_PATH . '/api-home-personalized.log' : __DIR__ . '/error_home_personalized.log';
+$requestId = substr(md5(uniqid((string) mt_rand(), true)), 0, 12);
+
+function wtw_log(string $message, string $logFile, string $requestId): void
+{
+    $timestamp = date('[d-M-Y H:i:s T]');
+    $line = sprintf("%s [req:%s] %s\n", $timestamp, $requestId, $message);
+    @file_put_contents($logFile, $line, FILE_APPEND | LOCK_EX);
+}
+
+// Captura todos os erros e exceções
+set_error_handler(function ($severity, $message, $file, $line) use ($logFile, $requestId) {
+    $errorMsg = sprintf("PHP Error [%d]: %s @ %s:%d", $severity, $message, $file, $line);
+    wtw_log($errorMsg, $logFile, $requestId);
+    return false;
+});
+
+set_exception_handler(function (Throwable $e) use ($logFile, $requestId) {
+    $errorMsg = sprintf("EXCEPTION: %s: %s @ %s:%d", get_class($e), $e->getMessage(), $e->getFile(), $e->getLine());
+    wtw_log($errorMsg, $logFile, $requestId);
+    
+    header('Content-Type: application/json; charset=utf-8');
+    http_response_code(500);
+    echo json_encode([
+        'error' => 'internal_server_error',
+        'message' => 'Ocorreu um erro ao processar sua solicitação',
+        'request_id' => $requestId,
+    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    exit;
+});
+
+wtw_log("=== INÍCIO home-personalized.php ===", $logFile, $requestId);
+wtw_log("PHP Version: " . PHP_VERSION, $logFile, $requestId);
+wtw_log("Session ID: " . (session_id() ?: 'none'), $logFile, $requestId);
+wtw_log("Host: " . ($_SERVER['HTTP_HOST'] ?? 'unknown') . "  URI: " . ($_SERVER['REQUEST_URI'] ?? ''), $logFile, $requestId);
+wtw_log("Bootstrap: " . (defined('APP_BOOTSTRAPPED') ? 'OK' : 'FAILED'), $logFile, $requestId);
 
 // ========== VALIDAÇÃO DE USUÁRIO ==========
 
 if (!isset($_SESSION['id'])) {
+    wtw_log("Usuário não autenticado", $logFile, $requestId);
     http_response_code(401);
     echo json_encode(['error' => 'unauthorized'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     exit;
 }
 
-require_once __DIR__ . '/../includes/tmdb.php';
+wtw_log("UserID: " . $_SESSION['id'], $logFile, $requestId);
 
 // ========== CONEXÃO COM BANCO DE DADOS ==========
+// Bootstrap já carregou db.php, então apenas resolvemos a conexão
 
 function wtw_resolve_pdo(): ?PDO
 {
@@ -29,34 +74,26 @@ function wtw_resolve_pdo(): ?PDO
         return $cached;
     }
 
+    // Verifica se db.php já definiu a conexão global
     if (isset($GLOBALS['pdo']) && $GLOBALS['pdo'] instanceof PDO) {
         $cached = $GLOBALS['pdo'];
         return $cached;
     }
 
-    $dbFile = __DIR__ . '/../includes/db.php';
-    if (is_file($dbFile)) {
-        try {
-            require_once $dbFile;
-            if (isset($GLOBALS['pdo']) && $GLOBALS['pdo'] instanceof PDO) {
-                $cached = $GLOBALS['pdo'];
-                return $cached;
-            }
-            if (function_exists('get_pdo')) {
-                $candidate = get_pdo();
-                if ($candidate instanceof PDO) {
-                    $cached = $candidate;
-                    return $cached;
-                }
-            }
-        } catch (Throwable $exception) {
+    // Verifica se existe função get_pdo() do db.php
+    if (function_exists('get_pdo')) {
+        $candidate = get_pdo();
+        if ($candidate instanceof PDO) {
+            $cached = $candidate;
+            return $cached;
         }
     }
 
-    $host = getenv('DB_HOST') ?: 'localhost';
-    $database = getenv('DB_NAME') ?: 'db_login';
-    $user = getenv('DB_USER') ?: 'root';
-    $password = getenv('DB_PASS') ?: '';
+    // Fallback: cria conexão manualmente usando variáveis de ambiente
+    $host = getenv('DB_HOST') ?: wyw_env('DB_HOST', 'localhost');
+    $database = getenv('DB_NAME') ?: wyw_env('DB_NAME', 'db_login');
+    $user = getenv('DB_USER') ?: wyw_env('DB_USER', 'root');
+    $password = getenv('DB_PASS') ?: wyw_env('DB_PASS', '');
 
     $dsn = sprintf('mysql:host=%s;dbname=%s;charset=utf8mb4', $host, $database);
 
@@ -67,6 +104,10 @@ function wtw_resolve_pdo(): ?PDO
         ]);
         return $cached;
     } catch (Throwable $exception) {
+        global $logFile, $requestId;
+        if (isset($logFile) && isset($requestId)) {
+            wtw_log("Erro ao conectar PDO: " . $exception->getMessage(), $logFile, $requestId);
+        }
         return null;
     }
 }
@@ -75,10 +116,14 @@ function wtw_resolve_pdo(): ?PDO
 
 $pdo = wtw_resolve_pdo();
 if (!($pdo instanceof PDO)) {
+    wtw_log("Falha ao conectar ao banco de dados", $logFile, $requestId);
     http_response_code(503);
     echo json_encode(['error' => 'database_unavailable'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     exit;
 }
+
+wtw_log("UserID: " . $_SESSION['id'], $logFile, $requestId);
+wtw_log("PDO OK", $logFile, $requestId);
 
 $userId = (int) $_SESSION['id'];
 $media = (isset($_GET['media_type']) && $_GET['media_type'] === 'tv') ? 'tv' : 'movie';
@@ -357,7 +402,10 @@ $requestMeta['trending'] = [
 
 $candidates = [];
 
+wtw_log("Iniciando tmdb_get_bulk com " . count($requests) . " requisições", $logFile, $requestId);
 $responses = tmdb_get_bulk($requests);
+wtw_log("tmdb_get_bulk concluído. Respostas: " . count($responses), $logFile, $requestId);
+
 foreach ($responses as $key => $payload) {
     if (!is_array($payload)) {
         continue;
@@ -372,6 +420,8 @@ foreach ($responses as $key => $payload) {
         register_candidate($item, $meta, $media, $candidates, $favoritesSet);
     }
 }
+
+wtw_log("Total de candidatos: " . count($candidates), $logFile, $requestId);
 
 // ========== VALIDAÇÃO E FINALIZAÇÃO ==========
 
@@ -404,6 +454,7 @@ $selected = array_map(static function ($entry) {
 }, array_slice($candidateEntries, 0, $limit));
 
 if (empty($selected)) {
+    wtw_log("Nenhum item selecionado após filtragem", $logFile, $requestId);
     echo json_encode([
         'results' => [],
         'generated_at' => date('c'),
@@ -411,6 +462,8 @@ if (empty($selected)) {
     ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     exit;
 }
+
+wtw_log("Retornando " . count($selected) . " resultados. FIM.", $logFile, $requestId);
 
 echo json_encode([
     'results' => $selected,

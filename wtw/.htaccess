@@ -1,0 +1,38 @@
+# ========================================
+# PROTEÇÃO DE ARQUIVOS SENSÍVEIS
+# ========================================
+
+# Bloqueia acesso ao .env e outros arquivos de configuração
+<FilesMatch "^\.env">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Bloqueia acesso a arquivos de log, backup e temporários
+<FilesMatch "\.(log|md|json|lock|sql|bak|backup|tmp)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Bloqueia listagem de diretórios
+Options -Indexes
+
+# ========================================
+# REDIRECIONAMENTO PARA PUBLIC/
+# ========================================
+# Se você estiver rodando na raiz (htdocs aponta para wtw/)
+# descomente as linhas abaixo para redirecionar para public/
+
+# <IfModule mod_rewrite.c>
+#     RewriteEngine On
+#     
+#     # Se não estiver em public/, redireciona
+#     RewriteCond %{REQUEST_URI} !^/public/
+#     RewriteCond %{REQUEST_FILENAME} !-f
+#     RewriteRule ^(.*)$ public/$1 [L]
+# </IfModule>
+
+# ========================================
+# CHARSET PADRÃO
+# ========================================
+AddDefaultCharset UTF-8

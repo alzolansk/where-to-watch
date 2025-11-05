@@ -1,4 +1,61 @@
+# ========================================
+# AMBIENTE E CONFIGURAÇÕES
+# ========================================
 .env
+.env.*
+!.env.example
 wtw/.env
+
+# ========================================
+# CACHE E LOGS
+# ========================================
+storage/logs/*.log
+storage/cache/*
+!storage/logs/.gitkeep
+!storage/cache/.gitkeep
+*.log
+
+# Logs antigos no public/api (migrar para storage/logs)
+public/api/error_*.log
+
+# ========================================
+# DEPENDÊNCIAS
+# ========================================
 vendor/
 node_modules/
+composer.lock
+package-lock.json
+
+# ========================================
+# IDEs E EDITORES
+# ========================================
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+*.code-workspace
+
+# ========================================
+# SISTEMA OPERACIONAL
+# ========================================
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+
+# ========================================
+# TEMPORÁRIOS
+# ========================================
+*.tmp
+*.temp
+*.bak
+*.backup
+*~
+
+# ========================================
+# BUILD E COMPILAÇÃO
+# ========================================
+dist/
+build/
+*.min.js
+*.min.css

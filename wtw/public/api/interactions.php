@@ -3,15 +3,14 @@
 // Registra ações do usuário com conteúdo (like, dislike, visualização, etc.)
 // Usado para telemetria e personalização de recomendações
 
-session_start();
+header('Content-Type: application/json');
+require_once __DIR__ . '/../../config/bootstrap.php';
+
 if (!isset($_SESSION['id'])) {
   http_response_code(401);
-  header('Content-Type: application/json');
   echo json_encode(['error'=>'unauth']);
   exit;
 }
-header('Content-Type: application/json');
-require __DIR__.'/../includes/db.php';
 
 // ========== PROCESSAMENTO DOS DADOS DE ENTRADA ==========
 

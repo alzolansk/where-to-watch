@@ -1,78 +1,23 @@
 <?php
 declare(strict_types=1);
-session_start();
 
-// 1) Autenticação via sessão
+header('Content-Type: application/json; charset=utf-8');
+
+require_once __DIR__ . '/../../config/bootstrap.php';
+
+// Autenticação via sessão
 if (!isset($_SESSION['id_user'])) {
   http_response_code(401);
-  header('Content-Type: application/json; charset=utf-8');
   echo json_encode(['error' => 'unauth']);
   exit;
 }
 
-header('Content-Type: application/json; charset=utf-8');
-
-require_once __DIR__ . '/../includes/personalization-cache.php';
-
 $userId = (int) $_SESSION['id_user'];
 
-// 2) Bootstrap da conexão PDO (tenta includes/db.php; se não der, usa config.php)
-$pdo = null;
+// Obter PDO do bootstrap
+$pdo = get_pdo();
 
-// tente includes/db.php (pode estar em ../includes ou em includes na raiz)
-$tryPaths = [
-  __DIR__ . '/../includes/db.php',
-  __DIR__ . '/includes/db.php',
-  __DIR__ . '/../db.php',     // fallback: alguns projetos guardam db.php na raiz
-  __DIR__ . '/db.php',
-];
-
-foreach ($tryPaths as $p) {
-  if (is_file($p)) {
-    require_once $p;
-    if (isset($pdo) && $pdo instanceof PDO) {
-      break;
-    }
-  }
-}
-
-// se ainda não houver $pdo, tente montar a partir do config.php (mysqli vars)
-if (!($pdo instanceof PDO)) {
-  $cfgPaths = [
-    __DIR__ . '/../config.php',
-    __DIR__ . '/config.php',
-  ];
-  foreach ($cfgPaths as $cp) {
-    if (is_file($cp)) {
-      // config.php define $host, $database, $usuario, $senha (e abre $conexao mysqli)
-      require_once $cp;
-      if (isset($host, $database, $usuario, $senha)) {
-        try {
-          $pdo = new PDO(
-            "mysql:host={$host};dbname={$database};charset=utf8mb4",
-            $usuario,
-            $senha,
-            [
-              PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-              PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-            ]
-          );
-        } catch (Throwable $e) {
-          // continua para retornar erro mais abaixo
-        }
-      }
-      break;
-    }
-  }
-}
-
-if (!($pdo instanceof PDO)) {
-  http_response_code(500);
-  echo json_encode(['error' => 'missing_get_pdo', 'hint' => 'Verifique o caminho do includes/db.php ou use config.php para criar $pdo.']);
-  exit;
-}
-
-// 3) Helpers
+// Helpers
 function readJsonBody(): array {
   $raw = file_get_contents('php://input') ?: '';
   $json = json_decode($raw, true);

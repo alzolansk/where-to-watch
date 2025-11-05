@@ -1,0 +1,9 @@
+# Bloqueia acesso direto via navegador a todos os arquivos desta pasta
+
+<Files "*">
+    Order Allow,Deny
+    Deny from all
+</Files>
+
+# Permite que PHP interno do servidor inclua os arquivos
+# (seu código PHP ainda pode fazer require/include normalmente)

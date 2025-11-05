@@ -3,13 +3,16 @@
 // Barra de navegação principal do site
 // Inclui menu, busca, autenticação de usuário e configurações
 
+// Sessão já foi iniciada pelo bootstrap, mas verifica por segurança
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-require_once __DIR__ . '/includes/env.php';
-
-wyw_load_env(__DIR__);
+// Bootstrap já carregou env.php, mas mantém para compatibilidade se chamado diretamente
+if (!function_exists('wyw_env')) {
+    require_once __DIR__ . '/../includes/env.php';
+    wyw_load_env(__DIR__ . '/..');
+}
 
 // ========== CONFIGURAÇÕES DO CLIENTE ==========
 // Configurações que serão enviadas para o frontend

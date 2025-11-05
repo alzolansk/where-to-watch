@@ -1,13 +1,13 @@
 <?php
-session_start();
+header('Content-Type: application/json');
+require_once __DIR__ . '/../../config/bootstrap.php';
+
 if (!isset($_SESSION['id'])) {
     http_response_code(401);
     exit(json_encode(['error' => 'unauth']));
 }
 
-header('Content-Type: application/json');
-require __DIR__ . '/../includes/db.php';
-require __DIR__ . '/../includes/tmdb.php';
+$pdo = get_pdo();
 
 $providerStmt = $pdo->query('SELECT provider_id AS id, name, logo_path FROM providers ORDER BY name');
 $genreStmt    = $pdo->query('SELECT genre_id AS id, name FROM genres ORDER BY name');

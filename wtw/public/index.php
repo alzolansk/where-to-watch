@@ -20,13 +20,36 @@
 <body>    
 
     <?php
+        // ========== CARREGA BOOTSTRAP DA APLICAÇÃO ==========
+        // Bootstrap carrega: env.php, db.php, tmdb.php e inicia sessão
+        require_once __DIR__ . '/../config/bootstrap.php';
+        
         // ========== PÁGINA PRINCIPAL - INDEX ==========
         // Esta é a página inicial do sistema WhereToWatch
         // Inclui dashboard de navegação, configurações e sistema de onboarding
         
-        include_once('dashboard.php');
-        include_once('config/config.php');
-        require_once __DIR__ . '/includes/personalization-cache.php';
+        include_once(__DIR__ . '/dashboard.php');
+        require_once __DIR__ . '/../config/config.php';
+        require_once __DIR__ . '/../includes/personalization-cache.php';
+        
+        // ========== CONEXÃO COM BANCO DE DADOS ==========
+        // Garante que a variável $conexao (mysqli) existe para código legado
+        
+        if (!isset($conexao)) {
+            $host = wyw_env('DB_HOST', 'localhost');
+            $database = wyw_env('DB_NAME', 'db_login');
+            $user = wyw_env('DB_USER', 'root');
+            $password = wyw_env('DB_PASS', '');
+            
+            $conexao = new mysqli($host, $user, $password, $database);
+            
+            if ($conexao->connect_error) {
+                error_log("Erro ao conectar mysqli: " . $conexao->connect_error);
+                die("Erro de conexão com banco de dados");
+            }
+            
+            $conexao->set_charset('utf8mb4');
+        }
 
         // ========== CONFIGURAÇÕES DE PERSONALIZAÇÃO ==========
         // Configurações para verificar se usuário tem preferências salvas

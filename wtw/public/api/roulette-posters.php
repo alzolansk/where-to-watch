@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-session_start();
-
 header('Content-Type: application/json; charset=utf-8');
+
+require_once __DIR__ . '/../../config/bootstrap.php';
 
 if (!isset($_SESSION['id'])) {
     http_response_code(401);
@@ -14,12 +14,6 @@ if (!isset($_SESSION['id'])) {
     ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     exit;
 }
-
-require_once __DIR__ . '/../includes/env.php';
-wyw_load_env(__DIR__ . '/..');
-
-require_once __DIR__ . '/../includes/db.php';
-require_once __DIR__ . '/../includes/tmdb.php';
 
 if (!defined('TMDB_KEY') || TMDB_KEY === '') {
     http_response_code(503);

@@ -1,0 +1,2 @@
+# Este arquivo garante que a pasta cache/ seja mantida no Git
+# Os arquivos de cache são ignorados pelo .gitignore

@@ -2541,3 +2541,30 @@ body.connection-error-active {
         min-width: auto;
     }
 }
+
+.media-section footer {
+    display: flex;
+    justify-content: center;
+}
+
+.justwatch-attr {
+    margin: clamp(32px, 6vw, 48px) auto 0;
+    max-width: 420px;
+    text-align: center;
+    font-size: 0.85rem;
+    color: rgba(199, 201, 211, 0.7);
+    letter-spacing: 0.03em;
+}
+
+.justwatch-attr a {
+    color: inherit;
+    text-decoration: none;
+    border-bottom: 1px solid rgba(199, 201, 211, 0.3);
+    padding-bottom: 1px;
+    transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.justwatch-attr a:hover {
+    color: var(--text);
+    border-color: currentColor;
+}

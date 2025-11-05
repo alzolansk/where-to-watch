@@ -1,12 +1,9 @@
 <?php
 declare(strict_types=1);
 
-session_start();
-
 header('Content-Type: application/json; charset=utf-8');
 
-require_once __DIR__ . '/../includes/env.php';
-wyw_load_env(__DIR__ . '/..');
+require_once __DIR__ . '/../../config/bootstrap.php';
 
 if (!isset($_SESSION['id'])) {
     http_response_code(401);
@@ -16,9 +13,6 @@ if (!isset($_SESSION['id'])) {
     ]);
     exit;
 }
-
-require_once __DIR__ . '/../includes/db.php';
-require_once __DIR__ . '/../includes/tmdb.php';
 
 try {
     $pdo = get_pdo();
