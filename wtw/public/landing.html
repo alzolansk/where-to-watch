@@ -95,6 +95,64 @@
       display: flex;
       align-items: center;
       gap: clamp(18px, 4vw, 44px);
+      position: relative;
+    }
+
+    /* Mobile header */
+    .nav__toggle {
+      display: none;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.18);
+      color: inherit;
+      border-radius: 12px;
+      padding: 10px 12px;
+      line-height: 0;
+      cursor: pointer;
+    }
+
+    .nav__menu {
+      display: contents; /* desktop: keep in flow */
+    }
+
+    @media (max-width: 768px) {
+      .nav {
+        padding: 14px var(--pad);
+      }
+      .nav__toggle {
+        display: inline-grid;
+        place-items: center;
+      }
+      .nav__spacer {
+        flex: 1 1 auto;
+      }
+      .nav__menu {
+        position: absolute;
+        inset: calc(100% + 6px) var(--pad) auto var(--pad);
+        display: grid;
+        gap: 12px;
+        padding: 14px;
+        background: rgba(12, 11, 22, 0.86);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 16px;
+        box-shadow: 0 24px 60px rgba(0,0,0,.45);
+        transform-origin: top;
+        transform: scaleY(0.96);
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity .2s ease, transform .2s ease, visibility .2s;
+      }
+      .nav__menu.is-open {
+        opacity: 1;
+        visibility: visible;
+        transform: scaleY(1);
+      }
+      .nav__links {
+        display: grid;
+        gap: 10px;
+        justify-items: center;
+      }
+      .nav__links a { padding: 8px 6px; }
+      .cta#ctaTop { width: 100%; justify-content: center; }
     }
 
     header .dashboard-logo {
@@ -247,6 +305,25 @@
       z-index: 2;
       max-width: 900px;
       margin: 0 auto;
+    }
+
+    /* Hero mobile refinements */
+    @media (max-width: 768px) {
+      .hero { min-height: auto; padding-bottom: clamp(40px, 8vw, 70px); }
+      .hero__content { max-width: 680px; }
+      .hero__logo { flex-wrap: wrap; gap: clamp(0.1em, 0.8vw, 0.3em); }
+      .hero__logo .wyw-brand__eye { margin: 0 10px; }
+      .tagline { font-size: clamp(20px, 5vw, 26px); margin-top: 10px; }
+      .sub { font-size: clamp(14px, 3.2vw, 16px); max-width: 38ch; }
+      .hero__cta-group { flex-direction: column; align-items: stretch; }
+      .hero__cta-group .cta { width: 100%; justify-content: center; }
+      .hero__floating { margin-top: 12px; align-self: flex-end; }
+    }
+
+    @media (max-width: 480px) {
+      .hero__content { max-width: 95%; }
+      .hero__logo { --wyw-brand-size: clamp(40px, 12vw, 64px); }
+      .sub { max-width: 34ch; }
     }
 
     .hero__badge {
@@ -1355,18 +1432,27 @@
         <span class="wyw-brand__where wyw-brand__where--u">u</span>
         <span class="wyw-brand__watch">WATCH</span>
       </a>
-      <div class="nav__spacer" aria-hidden="true"></div>
-      <div class="nav__links">
-        <a href="index.php">Explorar catálogo</a>
-        <a href="providers.php">Plataformas</a>
-        <a href="login.php">Entrar</a>
-      </div>
-      <a class="cta cta--ghost" href="index.php" id="ctaTop">
-        <span>Começar agora</span>
-        <svg class="arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <path d="M5 12h14M13 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <button class="nav__toggle" aria-label="Abrir menu" aria-controls="navMenu" aria-expanded="false">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <line x1="3" y1="12" x2="21" y2="12"></line>
+          <line x1="3" y1="18" x2="21" y2="18"></line>
         </svg>
-      </a>
+      </button>
+      <div class="nav__spacer" aria-hidden="true"></div>
+      <div class="nav__menu" id="navMenu">
+        <div class="nav__links">
+          <a href="index.php">Explorar catálogo</a>
+          <a href="providers.php">Plataformas</a>
+          <a href="login.php">Entrar</a>
+        </div>
+        <a class="cta cta--ghost" href="index.php" id="ctaTop">
+          <span>Começar agora</span>
+          <svg class="arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M5 12h14M13 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </a>
+      </div>
     </nav>
   </header>
 

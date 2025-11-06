@@ -800,6 +800,7 @@ const requestSurprise = async (mediaType = currentMediaType) => {
   const normalizedType = encodeURIComponent(normalizeMediaType(mediaType));
   const endpoint = getApiEndpoint();
   const url = `${endpoint}?media_type=${normalizedType}`;
+  
   let response;
   try {
     response = await fetch(url, { credentials: 'include' });
@@ -870,6 +871,7 @@ const fetchRoulettePosterPool = async (mediaType = currentMediaType) => {
 
   const endpoint = getRoulettePostersEndpoint();
   const url = `${endpoint}?media_type=${encodeURIComponent(normalized)}`;
+  
   const inflightRequest = (async () => {
     try {
       let response;
@@ -892,6 +894,7 @@ const fetchRoulettePosterPool = async (mediaType = currentMediaType) => {
         try {
           payload = await response.json();
         } catch (parseError) {
+          console.error('[DEBUG] Erro ao fazer parse:', parseError);
           payload = null;
         }
       }
@@ -1044,10 +1047,13 @@ const applySelection = (selection) => {
 
 const gatherRouletteOptions = async (mediaType = currentMediaType) => {
   const pool = await fetchRoulettePosterPool(mediaType);
+  
   if (!Array.isArray(pool) || !pool.length) {
     return [];
   }
+  
   const desired = Math.min(6, pool.length);
+  
   const picks = [];
   const used = new Set();
   while (picks.length < desired && used.size < pool.length) {
@@ -1058,6 +1064,7 @@ const gatherRouletteOptions = async (mediaType = currentMediaType) => {
     used.add(index);
     picks.push(pool[index]);
   }
+  
   return picks;
 };
 
@@ -1088,9 +1095,14 @@ const handleTrigger = async () => {
   setStatus('Buscando uma surpresa personalizada para você...', 'info');
 
   const activeMediaType = currentMediaType;
+  
   const personalizedPromise = requestSurprise(activeMediaType)
-    .then((item) => ({ status: 'fulfilled', value: item }))
-    .catch((reason) => ({ status: 'rejected', reason }));
+    .then((item) => {
+      return { status: 'fulfilled', value: item };
+    })
+    .catch((reason) => {
+      return { status: 'rejected', reason };
+    });
 
   try {
     const [options] = await Promise.all([
@@ -1105,20 +1117,26 @@ const handleTrigger = async () => {
     }
 
     const selection = selectFinalItem(options) || { item: options[0], index: 0 };
+    
     const elements = buildRouletteItems(options);
+    
     const [, surpriseResult] = await Promise.all([
       runRoulette(elements, selection.index),
       personalizedPromise,
     ]);
+    console.log('[DEBUG] surpriseResult:', surpriseResult);
 
     if (!surpriseResult || surpriseResult.status !== 'fulfilled' || !surpriseResult.value) {
+      console.log('[DEBUG] surpriseResult inválido');
       const rootError = surpriseResult && surpriseResult.reason ? surpriseResult.reason : new Error('empty');
       throw rootError;
     }
 
+    console.log('[DEBUG] Aplicando seleção');
     applySelection({ item: surpriseResult.value, index: selection.index });
     setStatus('Encontramos algo especial para você! Confira o destaque ao centro ✨', 'success');
   } catch (error) {
+    console.error('[DEBUG] Erro capturado:', error);
     let message = 'Não foi possível encontrar uma recomendação surpresa agora. Tente novamente em instantes.';
     if (error && error.code === 'unauthorized') {
       message = 'Sua sessão expirou. <a href="login.php">Faça login novamente</a> para continuar.';
@@ -1132,6 +1150,7 @@ const handleTrigger = async () => {
     resetStation({ focusButton: true });
     setStatus(message, 'error');
   } finally {
+    console.log('[DEBUG] Finally - limpando estado');
     stopHyperdrive();
     isProcessing = false;
     if (btn) {

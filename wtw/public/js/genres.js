@@ -1644,4 +1644,218 @@
     };
 
     initialize();
+
+    // ==================== BUSCA DE PALAVRA-CHAVE ====================
+    const searchElements = {
+        container: document.getElementById('genreSearchContainer'),
+        btn: document.getElementById('genreSearchBtn'),
+        inputWrapper: document.getElementById('genreSearchInputWrapper'),
+        suggestions: document.getElementById('genreSearchSuggestions'),
+        close: document.getElementById('genreSearchClose'),
+        input: document.getElementById('genreSearchInput')
+    };
+
+    let searchTimeout = null;
+    let currentSearchQuery = '';
+
+    const openSearchPanel = () => {
+        if (!searchElements.container || !searchElements.input) return;
+        searchElements.container.classList.add('is-expanded');
+        setTimeout(() => {
+            if (searchElements.input) {
+                searchElements.input.focus();
+            }
+        }, 150);
+    };
+
+    const closeSearchPanel = () => {
+        if (!searchElements.container) return;
+        searchElements.container.classList.remove('is-expanded');
+        if (searchElements.input) {
+            searchElements.input.value = '';
+        }
+        if (searchElements.suggestions) {
+            searchElements.suggestions.hidden = true;
+            searchElements.suggestions.innerHTML = '';
+        }
+        currentSearchQuery = '';
+    };
+
+    const searchKeywords = async (query) => {
+        if (!query || query.length < 2) {
+            if (searchElements.suggestions) {
+                searchElements.suggestions.hidden = true;
+            }
+            return;
+        }
+
+        currentSearchQuery = query;
+        
+        if (searchElements.suggestions) {
+            searchElements.suggestions.hidden = false;
+        }
+        
+        showSearchLoading();
+
+        try {
+            const url = `https://api.themoviedb.org/3/search/keyword?api_key=${API_KEY}&query=${encodeURIComponent(query)}&page=1`;
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error(`Erro ao buscar palavras-chave (HTTP ${response.status})`);
+            }
+            const data = await response.json();
+            const keywords = Array.isArray(data.results) 
+                ? data.results
+                    .filter(kw => kw && kw.id && kw.name)
+                    .slice(0, 20)
+                    .map(kw => ({ id: kw.id, name: kw.name, type: 'keyword' }))
+                : [];
+
+            if (currentSearchQuery === query) {
+                renderSearchSuggestions(keywords);
+            }
+        } catch (error) {
+            console.error(error);
+            if (currentSearchQuery === query) {
+                showSearchEmpty('Erro ao buscar');
+            }
+        }
+    };
+
+    const showSearchLoading = () => {
+        if (!searchElements.suggestions) return;
+        searchElements.suggestions.innerHTML = '<div class="genre-search-loading">Buscando</div>';
+    };
+
+    const showSearchEmpty = (message = 'Nenhum resultado') => {
+        if (!searchElements.suggestions) return;
+        searchElements.suggestions.innerHTML = `<div class="genre-search-empty">${message}</div>`;
+    };
+
+    const renderSearchSuggestions = (keywords) => {
+        if (!searchElements.suggestions) return;
+
+        if (!keywords.length) {
+            showSearchEmpty('Nenhuma palavra-chave encontrada');
+            return;
+        }
+
+        const fragment = document.createDocumentFragment();
+        
+        const title = document.createElement('span');
+        title.className = 'genre-search-suggestions-title';
+        title.textContent = 'Sugestões';
+        fragment.appendChild(title);
+
+        keywords.forEach(kw => {
+            const chip = document.createElement('button');
+            chip.type = 'button';
+            chip.className = 'genre-search-suggestion-chip';
+            chip.dataset.keywordId = kw.id;
+            chip.dataset.keywordName = kw.name;
+            
+            if (state.selectedKeywords.has(kw.id)) {
+                chip.classList.add('is-selected');
+            }
+
+            const icon = document.createElement('span');
+            icon.className = 'genre-search-suggestion-chip__icon';
+            icon.textContent = state.selectedKeywords.has(kw.id) ? '✓' : '+';
+
+            const label = document.createElement('span');
+            label.textContent = kw.name;
+
+            chip.append(icon, label);
+            fragment.appendChild(chip);
+        });
+
+        searchElements.suggestions.innerHTML = '';
+        searchElements.suggestions.appendChild(fragment);
+    };
+
+    // Event listeners
+    if (searchElements.btn) {
+        searchElements.btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            openSearchPanel();
+        });
+    }
+
+    if (searchElements.close) {
+        searchElements.close.addEventListener('click', (e) => {
+            e.stopPropagation();
+            closeSearchPanel();
+        });
+    }
+
+    if (searchElements.input) {
+        searchElements.input.addEventListener('input', (e) => {
+            const value = e.target.value.trim();
+
+            if (searchTimeout) {
+                clearTimeout(searchTimeout);
+            }
+
+            if (!value) {
+                if (searchElements.suggestions) {
+                    searchElements.suggestions.hidden = true;
+                }
+                return;
+            }
+
+            searchTimeout = setTimeout(() => {
+                searchKeywords(value);
+            }, 400);
+        });
+
+        searchElements.input.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeSearchPanel();
+            }
+        });
+
+        searchElements.input.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+    }
+
+    if (searchElements.suggestions) {
+        searchElements.suggestions.addEventListener('click', (e) => {
+            const chip = e.target.closest('.genre-search-suggestion-chip');
+            if (!chip) return;
+
+            const keywordId = chip.dataset.keywordId;
+            const keywordName = chip.dataset.keywordName;
+
+            if (keywordId) {
+                toggleKeyword(keywordId, keywordName);
+                
+                // Update chip visual state immediately
+                if (state.selectedKeywords.has(parseInt(keywordId, 10))) {
+                    chip.classList.add('is-selected');
+                    const icon = chip.querySelector('.genre-search-suggestion-chip__icon');
+                    if (icon) icon.textContent = '✓';
+                } else {
+                    chip.classList.remove('is-selected');
+                    const icon = chip.querySelector('.genre-search-suggestion-chip__icon');
+                    if (icon) icon.textContent = '+';
+                }
+            }
+        });
+    }
+
+    // Fechar ao clicar fora
+    document.addEventListener('click', (e) => {
+        if (searchElements.container?.classList.contains('is-expanded') &&
+            !searchElements.container.contains(e.target)) {
+            closeSearchPanel();
+        }
+    });
+
+    // Fechar com ESC
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && searchElements.container?.classList.contains('is-expanded')) {
+            closeSearchPanel();
+        }
+    });
 })();

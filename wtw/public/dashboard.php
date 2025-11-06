@@ -103,6 +103,13 @@ $navStates = [
                             <span class="menu-dropdown__label surprise">Surpreenda-me</span>
                             </a>
                             <a
+                                href="genres.php"
+                                class="menu-dropdown__link"
+                                role="menuitem"
+                            >
+                                <span class="menu-dropdown__label">Filmes e séries por categorias</span>
+                            </a>
+                            <a
                                 href="providers.php"
                                 class="menu-dropdown__link<?php echo $navStates['providers'] ? ' is-active' : ''; ?>"
                                 role="menuitem"

@@ -292,4 +292,31 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     });
+
+    // Mobile nav toggle
+    const navToggle = document.querySelector('.nav__toggle');
+    const navMenu = document.getElementById('navMenu');
+    if (navToggle && navMenu) {
+        const closeMenu = () => {
+            navMenu.classList.remove('is-open');
+            navToggle.setAttribute('aria-expanded', 'false');
+        };
+
+        navToggle.addEventListener('click', () => {
+            const opened = navMenu.classList.toggle('is-open');
+            navToggle.setAttribute('aria-expanded', opened ? 'true' : 'false');
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!navMenu.classList.contains('is-open')) return;
+            const path = e.composedPath ? e.composedPath() : [];
+            if (!path.includes(navMenu) && !path.includes(navToggle)) {
+                closeMenu();
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeMenu();
+        });
+    }
 });

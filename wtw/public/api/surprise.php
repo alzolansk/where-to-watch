@@ -1,9 +1,45 @@
 <?php
 declare(strict_types=1);
 
+// Timeout de segurança para evitar travamentos
+set_time_limit(30);
+ini_set('max_execution_time', '30');
+
 header('Content-Type: application/json; charset=utf-8');
 
 require_once __DIR__ . '/../../config/bootstrap.php';
+
+// Força recarregamento do .env e definição da TMDB_KEY
+if (!defined('TMDB_KEY') || TMDB_KEY === '') {
+    // Tenta carregar novamente do ambiente
+    $envPath = __DIR__ . '/../../.env';
+    if (file_exists($envPath) && function_exists('wyw_load_env')) {
+        wyw_load_env(dirname($envPath));
+    }
+    
+    $tmdbKey = '';
+    
+    // Tenta múltiplas fontes
+    if (function_exists('wyw_env')) {
+        $tmdbKey = (string) wyw_env('TMDB_API_KEY', '');
+    }
+    
+    if ($tmdbKey === '' && isset($_ENV['TMDB_API_KEY'])) {
+        $tmdbKey = (string) $_ENV['TMDB_API_KEY'];
+    }
+    
+    if ($tmdbKey === '') {
+        $envValue = getenv('TMDB_API_KEY');
+        if ($envValue !== false) {
+            $tmdbKey = (string) $envValue;
+        }
+    }
+    
+    // Define a constante se encontrou a chave
+    if ($tmdbKey !== '' && !defined('TMDB_KEY')) {
+        define('TMDB_KEY', $tmdbKey);
+    }
+}
 
 if (!isset($_SESSION['id'])) {
     http_response_code(401);
@@ -42,7 +78,7 @@ const FATIGUE_WINDOW = 5;
 const MIN_POOL_THRESHOLD = 60;
 const TARGET_POOL_MIN = 150;
 const TARGET_POOL_MAX = 320;
-const DETAIL_ENRICH_LIMIT = 80;
+const DETAIL_ENRICH_LIMIT = 25; // REDUZIDO de 80 para 25
 const SHORTLIST_RERANK_SIZE = 20;
 const EPSILON = 0.2;
 const DIVERSITY_LAMBDA = 0.7;
@@ -68,6 +104,7 @@ $region = strtoupper((string) ($_GET['region'] ?? 'BR'));
 $now = new DateTimeImmutable('now');
 
 $preferences = fetchUserPreferences($pdo, $userId);
+
 $providerIds = $preferences['providers'] ?? [];
 if (!is_array($providerIds)) {
     $providerIds = [];
@@ -79,6 +116,7 @@ $providerIds = array_values(array_filter(
 
 $seedString = buildCacheSeed($now, $providerIds);
 $banList = buildBanList($pdo, $userId, $mediaType, $now);
+
 $recentHistory = loadRecentHistoryProfile($userId, $mediaType);
 
 $candidatePool = buildCandidatePool(
@@ -645,6 +683,7 @@ function enrichCandidates(array $pool, string $mediaType, string $language): arr
     });
 
     $limited = array_slice($candidates, 0, min(DETAIL_ENRICH_LIMIT, count($candidates)));
+    
     $requests = [];
     foreach ($limited as $candidate) {
         $requests[$candidate['id']] = [

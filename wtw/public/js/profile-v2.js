@@ -317,24 +317,11 @@
   function renderFavorites() {
     if (!elements.favoritesList) return;
 
-    const existingCards = elements.favoritesList.querySelectorAll('.favorite-poster-card--selected');
-    
-    // Manter apenas os favoritos que ainda existem no state
-    const currentKeys = new Set(state.favorites.map(f => favoriteKey(f.tmdb_id, f.media_type)));
-    
-    existingCards.forEach(card => {
-      const key = card.dataset.key;
-      if (!currentKeys.has(key)) {
-        card.remove();
-      }
-    });
+    // Limpar todos os cards selecionados existentes
+    elements.favoritesList.innerHTML = '';
 
-    // Adicionar novos favoritos
+    // Renderizar todos os favoritos do state
     state.favorites.forEach(favorite => {
-      const key = favoriteKey(favorite.tmdb_id, favorite.media_type);
-      const existing = elements.favoritesList.querySelector(`[data-key="${CSS.escape(key)}"]`);
-      if (existing) return;
-
       const card = createFavoriteCard(favorite);
       elements.favoritesList.appendChild(card);
     });
@@ -352,6 +339,8 @@
     const card = document.createElement('article');
     card.className = 'favorite-poster-card favorite-poster-card--selected';
     card.dataset.key = key;
+    card.dataset.tmdbId = favorite.tmdb_id;
+    card.dataset.mediaType = favorite.media_type;
     card.setAttribute('role', 'listitem');
 
     const posterUrl = favorite.poster_url || buildTmdbImage(favorite.poster_path);
@@ -363,12 +352,23 @@
           : `<span class="favorite-poster-card__fallback">${favorite.title.charAt(0).toUpperCase()}</span>`
         }
       </figure>
-      <button type="button" class="favorite-poster-card__remove" aria-label="Remover ${favorite.title} dos favoritos">−</button>
+      <button type="button" 
+              class="favorite-poster-card__remove" 
+              data-remove-favorite 
+              aria-label="Remover ${favorite.title} dos favoritos">
+        ×
+      </button>
     `;
 
-    card.querySelector('.favorite-poster-card__remove').addEventListener('click', () => {
-      removeFavorite(favorite.tmdb_id, favorite.media_type);
-    });
+    // Anexar event listener ao botão de remover
+    const removeBtn = card.querySelector('[data-remove-favorite]');
+    if (removeBtn) {
+      removeBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        console.log('Removendo favorito:', favorite.title);
+        removeFavorite(favorite.tmdb_id, favorite.media_type);
+      });
+    }
 
     return card;
   }
@@ -400,11 +400,15 @@
     const key = favoriteKey(id, mediaType);
     const favorite = state.favorites.find(f => favoriteKey(f.tmdb_id, f.media_type) === key);
     
-    if (favorite) {
-      state.favorites = state.favorites.filter(f => favoriteKey(f.tmdb_id, f.media_type) !== key);
-      renderFavorites();
-      showFeedback(`"${favorite.title}" removido dos favoritos`, 'success');
+    if (!favorite) {
+      console.warn('Favorito não encontrado:', id, mediaType);
+      return;
     }
+    
+    console.log('Removendo favorito:', favorite.title);
+    state.favorites = state.favorites.filter(f => favoriteKey(f.tmdb_id, f.media_type) !== key);
+    renderFavorites();
+    showFeedback(`"${favorite.title}" removido dos favoritos`, 'success');
   }
 
   // ================================
