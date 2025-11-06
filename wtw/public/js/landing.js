@@ -1,10 +1,54 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // Features Section
     const featureRoot = document.querySelector('[data-features-root]');
     const defaultFeatures = [
-        'Todos os seus serviços de streaming integrados em um só lugar',
-        'Busca rápida por título, ator ou plataforma',
-        'Links diretos para assistir nos provedores',
-        'Trailers oficiais e ficha técnica'
+        {
+            icon: `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <path d="m21 21-4.35-4.35"></path>
+            </svg>`,
+            title: 'Busca Inteligente',
+            text: 'Encontre qualquer filme ou série em segundos com nossa busca avançada e filtros precisos'
+        },
+        {
+            icon: `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="2" y="7" width="20" height="15" rx="2" ry="2"></rect>
+                <polyline points="17 2 12 7 7 2"></polyline>
+            </svg>`,
+            title: 'Todas as Plataformas',
+            text: 'Mais de 50 serviços de streaming integrados: Netflix, Prime Video, Disney+ e muito mais'
+        },
+        {
+            icon: `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="23 7 16 12 23 17 23 7"></polygon>
+                <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+            </svg>`,
+            title: 'Trailers & Detalhes',
+            text: 'Assista trailers oficiais, veja elenco completo e todas as informações do título'
+        },
+        {
+            icon: `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"></path>
+            </svg>`,
+            title: 'Acesso Direto',
+            text: 'Links diretos para assistir imediatamente na plataforma de sua escolha'
+        },
+        {
+            icon: `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+            </svg>`,
+            title: 'Organize Favoritos',
+            text: 'Crie sua lista pessoal de filmes e séries que deseja assistir'
+        },
+        {
+            icon: `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 2a10 10 0 1 0 0 20 10 10 0 1 0 0-20z"></path>
+                <path d="m15 9-6 6"></path>
+                <path d="m9 9 6 6"></path>
+            </svg>`,
+            title: '100% Gratuito',
+            text: 'Sem assinatura, sem taxas escondidas. Use todos os recursos gratuitamente'
+        }
     ];
     const features = Array.isArray(window.__WTW_LANDING_FEATURES) && window.__WTW_LANDING_FEATURES.length
         ? window.__WTW_LANDING_FEATURES
@@ -12,24 +56,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (featureRoot) {
         const fragment = document.createDocumentFragment();
-        features.forEach(text => {
-            if (!text) {
+        features.forEach(feature => {
+            if (!feature || !feature.title) {
                 return;
             }
-            const item = document.createElement('div');
-            item.className = 'feat';
-            item.setAttribute('role', 'listitem');
+            const card = document.createElement('article');
+            card.className = 'feature-card';
 
-            const dot = document.createElement('span');
-            dot.className = 'dot';
-            dot.setAttribute('aria-hidden', 'true');
+            if (feature.icon) {
+                const iconDiv = document.createElement('div');
+                iconDiv.className = 'feature-icon';
+                iconDiv.innerHTML = feature.icon;
+                card.appendChild(iconDiv);
+            }
 
-            const label = document.createElement('span');
-            label.textContent = text;
+            const title = document.createElement('h3');
+            title.textContent = feature.title;
+            card.appendChild(title);
 
-            item.appendChild(dot);
-            item.appendChild(label);
-            fragment.appendChild(item);
+            if (feature.text) {
+                const p = document.createElement('p');
+                p.textContent = feature.text;
+                card.appendChild(p);
+            }
+
+            fragment.appendChild(card);
         });
         featureRoot.replaceChildren(fragment);
     }

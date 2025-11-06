@@ -27,6 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const resultCount = document.querySelector('[data-result-count]');
     const searchTerm = document.querySelector('[data-search-term]');
     const resetButton = document.querySelector('[data-reset-filters]');
+    const resetBadge = document.querySelector('[data-active-filters-count]');
     const mediaButtons = document.querySelectorAll('[data-media-filter]');
     const genreButtons = document.querySelectorAll('[data-genre-option]');
     const releaseButtons = document.querySelectorAll('[data-release-option]');
@@ -35,6 +36,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const searchForm = document.querySelector('[data-search-form]');
     const searchField = document.querySelector('[data-search-field]');
     const clearSearchButton = document.querySelector('[data-search-clear]');
+
+    // Mobile elements
+    const mobileSearchBar = document.querySelector('[data-mobile-search-bar]');
+    const mobileSearchForm = document.querySelector('[data-mobile-search-form]');
+    const mobileSearchInput = document.querySelector('[data-mobile-search-input]');
+    const mobileSearchClear = document.querySelector('[data-mobile-search-clear]');
+    const mobileFiltersToggle = document.querySelector('[data-mobile-filters-toggle]');
+    const mobileFiltersBadge = document.querySelector('[data-mobile-filters-badge]');
+    const mobileResultCount = document.querySelector('[data-mobile-result-count]');
+    const searchFilters = document.querySelector('[data-search-filters]');
 
     if (!resultsGrid) {
         return;
@@ -186,6 +197,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const hasCustomActiveChip = (section) => section.querySelector('.search-chip.is-active:not([data-default-active])') !== null;
 
+    const syncResetBadge = () => {
+        if (!resetButton || !resetBadge) return;
+        let count = 0;
+        if (state.media !== 'both') count += 1;
+        if (state.genre) count += 1;
+        if (state.release !== 'all') count += 1;
+        if (state.sort !== 'popularity.desc') count += 1;
+        if (count > 0) {
+            resetBadge.textContent = String(count);
+            resetBadge.hidden = false;
+            resetButton.classList.add('is-active');
+            const s = count === 1 ? '' : 's';
+            resetButton.setAttribute('aria-label', `Limpar ${count} filtro${s} aplicados`);
+        } else {
+            resetBadge.hidden = true;
+            resetButton.classList.remove('is-active');
+            resetButton.setAttribute('aria-label', 'Limpar filtros aplicados');
+        }
+    };
+
     const syncFilterSectionIndicators = () => {
         filterSections.forEach((section) => {
             section.classList.toggle('has-active-filter', hasCustomActiveChip(section));
@@ -218,6 +249,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     setupFilterSections();
     syncFilterSectionIndicators();
+    syncResetBadge();
 
     const computeFuzzySimilarity = (query, target) => {
         if (!query || !target) {
@@ -912,8 +944,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const updateActiveMedia = (value) => {
         state.media = value;
         toggleActiveChip(mediaButtons, value, 'data-media-filter');
-        applyFilters();
-        syncFilterSectionIndicators();
+    applyFilters();
+    syncFilterSectionIndicators();
+    syncResetBadge();
     };
 
     const updateActiveGenre = (value) => {
@@ -923,22 +956,25 @@ document.addEventListener('DOMContentLoaded', () => {
             const isActive = state.genre && id === state.genre;
             chip.classList.toggle('is-active', isActive);
         });
-        applyFilters();
-        syncFilterSectionIndicators();
+    applyFilters();
+    syncFilterSectionIndicators();
+    syncResetBadge();
     };
 
     const updateRelease = (value) => {
         state.release = value;
         toggleActiveChip(releaseButtons, value, 'data-release-option');
-        applyFilters();
-        syncFilterSectionIndicators();
+    applyFilters();
+    syncFilterSectionIndicators();
+    syncResetBadge();
     };
 
     const updateSort = (value) => {
         state.sort = value;
         toggleActiveChip(sortButtons, value, 'data-sort-option');
-        applyFilters();
-        syncFilterSectionIndicators();
+    applyFilters();
+    syncFilterSectionIndicators();
+    syncResetBadge();
     };
 
     mediaButtons.forEach((button) => {
@@ -981,6 +1017,7 @@ document.addEventListener('DOMContentLoaded', () => {
             genreButtons.forEach((chip) => chip.classList.remove('is-active'));
             applyFilters();
             syncFilterSectionIndicators();
+            syncResetBadge();
         });
     }
 
@@ -1016,6 +1053,148 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     fetchResults(initialQuery);
+
+    // Mobile search bar functionality
+    if (mobileSearchInput && mobileSearchClear) {
+        const syncMobileClearButton = () => {
+            const hasValue = mobileSearchInput.value.trim().length > 0;
+            mobileSearchClear.hidden = !hasValue;
+        };
+
+        syncMobileClearButton();
+
+        mobileSearchInput.addEventListener('input', () => {
+            syncMobileClearButton();
+        });
+
+        mobileSearchClear.addEventListener('click', () => {
+            mobileSearchInput.value = '';
+            mobileSearchInput.focus();
+            syncMobileClearButton();
+        });
+    }
+
+    if (mobileSearchForm && mobileSearchInput) {
+        mobileSearchForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+            const value = mobileSearchInput.value.trim();
+            state.query = value;
+            updateUrlQuery(value);
+            syncSearchTerm(value);
+            if (searchField) {
+                searchField.value = value;
+            }
+            fetchResults(value);
+        });
+    }
+
+    // Mobile filters toggle
+    if (mobileFiltersToggle && searchFilters) {
+        // Create backdrop
+        const backdrop = document.createElement('div');
+        backdrop.className = 'filters-backdrop';
+        document.body.appendChild(backdrop);
+
+        // Create close button for mobile filters
+        const filtersHeader = searchFilters.querySelector('.filters-header');
+        if (filtersHeader) {
+            const closeButton = document.createElement('button');
+            closeButton.type = 'button';
+            closeButton.className = 'filters-close';
+            closeButton.setAttribute('aria-label', 'Fechar filtros');
+            closeButton.innerHTML = `
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            `;
+            filtersHeader.appendChild(closeButton);
+
+            const closeFilters = () => {
+                searchFilters.classList.remove('is-open');
+                backdrop.classList.remove('is-visible');
+                mobileFiltersToggle.classList.remove('is-active');
+                document.body.style.overflow = '';
+            };
+
+            closeButton.addEventListener('click', closeFilters);
+
+            // Close on backdrop click
+            backdrop.addEventListener('click', closeFilters);
+        }
+
+        mobileFiltersToggle.addEventListener('click', () => {
+            const isOpen = searchFilters.classList.toggle('is-open');
+            backdrop.classList.toggle('is-visible', isOpen);
+            mobileFiltersToggle.classList.toggle('is-active', isOpen);
+            document.body.style.overflow = isOpen ? 'hidden' : '';
+        });
+
+        // Close on escape key
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && searchFilters.classList.contains('is-open')) {
+                searchFilters.classList.remove('is-open');
+                backdrop.classList.remove('is-visible');
+                mobileFiltersToggle.classList.remove('is-active');
+                document.body.style.overflow = '';
+            }
+        });
+    }
+
+    // Sync mobile filters badge with active filters
+    const syncMobileFiltersBadge = () => {
+        if (!mobileFiltersBadge) return;
+        let count = 0;
+        if (state.media !== 'both') count += 1;
+        if (state.genre) count += 1;
+        if (state.release !== 'all') count += 1;
+        if (state.sort !== 'popularity.desc') count += 1;
+        if (count > 0) {
+            mobileFiltersBadge.textContent = String(count);
+            mobileFiltersBadge.hidden = false;
+        } else {
+            mobileFiltersBadge.hidden = true;
+        }
+    };
+
+    // Update mobile result count
+    const updateMobileCount = (total) => {
+        if (mobileResultCount) {
+            mobileResultCount.textContent = total;
+        }
+    };
+
+    // Override updateCount to also update mobile
+    const originalUpdateCount = updateCount;
+    updateCount = (total) => {
+        originalUpdateCount(total);
+        updateMobileCount(total);
+    };
+
+    // Override syncResetBadge to also sync mobile badge
+    const originalSyncResetBadge = syncResetBadge;
+    syncResetBadge = () => {
+        originalSyncResetBadge();
+        syncMobileFiltersBadge();
+    };
+
+    syncMobileFiltersBadge();
+
+    // Micro-interactions for empty state CTA highlight
+    try {
+        const emptyCta = document.querySelector('.empty-state__action');
+        if (emptyCta) {
+            emptyCta.addEventListener('pointermove', (ev) => {
+                const rect = emptyCta.getBoundingClientRect();
+                const x = ev.clientX - rect.left;
+                const y = ev.clientY - rect.top;
+                emptyCta.style.setProperty('--x', `${x}px`);
+                emptyCta.style.setProperty('--y', `${y}px`);
+            });
+        }
+    } catch (_) {
+        // non-critical enhancement
+    }
 });
 
 

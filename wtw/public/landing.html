@@ -172,6 +172,24 @@
       color: #fff;
       transition: transform 0.2s ease, filter 0.2s ease, box-shadow 0.2s ease;
       border: none;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cta::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at var(--mx, 50%) var(--my, 50%), 
+        rgba(255, 255, 255, 0.2), 
+        transparent 80%
+      );
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .cta:hover::before {
+      opacity: 1;
     }
 
     .cta--ghost {
@@ -201,7 +219,7 @@
     .container {
       max-width: var(--maxw);
       margin: 0 auto;
-      padding: clamp(32px, 7vw, 40px) var(--pad) 0;
+      padding: 0 var(--pad);
       position: relative;
     }
 
@@ -209,20 +227,86 @@
       position: relative;
       gap: clamp(28px, 6vw, 60px);
       align-items: center;
-      min-height: min(85vh, 820px);
-      padding-bottom: clamp(48px, 8vw, 92px);
+      min-height: min(90vh, 900px);
+      padding-bottom: clamp(80px, 10vw, 120px);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      text-align: center;
     }
 
     @media (max-width: 960px) {
       .hero {
         grid-template-columns: 1fr;
-        padding-bottom: clamp(32px, 6vw, 64px);
+        padding-bottom: clamp(60px, 8vw, 80px);
       }
     }
 
     .hero__content {
       position: relative;
       z-index: 2;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .hero__badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 20px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, rgba(255, 88, 100, 0.15), rgba(59, 130, 246, 0.1));
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: clamp(20px, 3vw, 32px);
+      animation: fadeInDown 0.6s ease-out;
+    }
+
+    .badge-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--wyw-red-500), var(--wyw-blue));
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.7; transform: scale(1.1); }
+    }
+
+    @keyframes fadeInDown {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes scaleIn {
+      from {
+        opacity: 0;
+        transform: scale(0.9);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
     }
 
     .hero__wordmark {
@@ -262,20 +346,23 @@
     }
 
     .tagline {
-      font-size: clamp(20px, 2.5vw, 28px);
-      font-weight: 600;
+      font-size: clamp(24px, 3vw, 36px);
+      font-weight: 700;
       color: #fff;
-      margin-top: clamp(12px, 2vw, 18px);
-      margin-bottom: clamp(12px, 2vw, 18px);
-      max-width: 50ch;
+      margin-top: clamp(16px, 2vw, 24px);
+      margin-bottom: clamp(16px, 2vw, 24px);
+      max-width: 100%;
+      line-height: 1.3;
+      animation: fadeInUp 0.6s ease-out 0.2s both;
     }
 
     .sub {
       color: var(--wyw-text-dim);
       font-size: clamp(16px, 2.2vw, 20px);
-      line-height: 1.6;
-      margin: 10px 0 clamp(22px, 4vw, 32px);
-      max-width: 65ch;
+      line-height: 1.7;
+      margin: 10px auto clamp(32px, 5vw, 48px);
+      max-width: 70ch;
+      animation: fadeInUp 0.6s ease-out 0.3s both;
     }
 
     .features {
@@ -283,6 +370,7 @@
       gap: 14px;
       margin: clamp(18px, 4vw, 32px) 0 clamp(24px, 6vw, 36px);
       color: var(--wyw-text);
+      max-width: 700px;
     }
 
     .feat {
@@ -325,35 +413,534 @@
     .hero__cta-group {
       display: flex;
       flex-wrap: wrap;
-      gap: 12px;
+      gap: 14px;
+      justify-content: center;
+      animation: scaleIn 0.6s ease-out 0.4s both;
     }
 
     .hero__metrics {
-      margin-top: clamp(26px, 6vw, 42px);
+      margin-top: clamp(48px, 8vw, 72px);
       display: grid;
-      gap: 12px;
-      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 16px;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      max-width: 700px;
+      width: 100%;
     }
 
     .metric-card {
       position: relative;
-      padding: 18px 18px 20px;
+      padding: 24px 20px;
       border-radius: var(--radius-lg);
-      background: linear-gradient(160deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.02));
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+      background: linear-gradient(160deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04));
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
       overflow: hidden;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .metric-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
     }
 
     .metric-card strong {
       display: block;
-      font-size: clamp(1.6rem, 3vw, 2.1rem);
-      font-weight: 800;
+      font-size: clamp(1.8rem, 3.5vw, 2.4rem);
+      font-weight: 900;
+      background: linear-gradient(135deg, #fff, var(--wyw-red-300));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
     }
 
     .metric-card span {
       color: var(--wyw-text-dim);
+      font-size: 0.95rem;
+      margin-top: 4px;
+      display: block;
+    }
+
+    /* Section Styles */
+    .section {
+      padding: clamp(60px, 10vw, 120px) 0;
+      position: relative;
+    }
+
+    .section__header {
+      text-align: center;
+      margin-bottom: clamp(40px, 7vw, 80px);
+      max-width: 800px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .section__eyebrow {
+      display: inline-block;
+      font-size: 0.85rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--wyw-red-300);
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+
+    .section__title {
+      font-size: clamp(2rem, 4vw, 3rem);
+      font-weight: 900;
+      margin: 0 0 16px;
+      line-height: 1.2;
+    }
+
+    .section__subtitle {
+      font-size: clamp(1rem, 2vw, 1.25rem);
+      color: var(--wyw-text-dim);
+      line-height: 1.6;
+      max-width: 60ch;
+      margin: 0 auto;
+    }
+
+    /* Features Grid */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+    }
+
+    .feature-card {
+      position: relative;
+      padding: 32px 28px;
+      border-radius: var(--radius-xl);
+      background: linear-gradient(160deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      overflow: hidden;
+      transition: transform 0.3s ease, border-color 0.3s ease;
+    }
+
+    .feature-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--wyw-red-500), var(--wyw-blue));
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-8px);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .feature-card:hover::before {
+      opacity: 1;
+    }
+
+    .feature-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, rgba(255, 88, 100, 0.2), rgba(59, 130, 246, 0.15));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+      color: var(--wyw-red-300);
+    }
+
+    .feature-card h3 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      margin: 0 0 12px;
+    }
+
+    .feature-card p {
+      color: var(--wyw-text-dim);
+      line-height: 1.6;
+      margin: 0;
+    }
+
+    /* Steps Grid */
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 32px;
+      position: relative;
+    }
+
+    @media (min-width: 960px) {
+      .steps-grid::before {
+        content: "";
+        position: absolute;
+        top: 80px;
+        left: 20%;
+        right: 20%;
+        height: 2px;
+        background: linear-gradient(90deg, 
+          transparent,
+          rgba(255, 88, 100, 0.3) 20%,
+          rgba(59, 130, 246, 0.3) 80%,
+          transparent
+        );
+        z-index: 0;
+      }
+    }
+
+    .step-card {
+      position: relative;
+      text-align: center;
+      padding: 40px 24px;
+      z-index: 1;
+    }
+
+    .step-number {
+      position: absolute;
+      top: 20px;
+      right: 24px;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, rgba(255, 88, 100, 0.15), rgba(59, 130, 246, 0.1));
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 1.1rem;
+      color: var(--wyw-red-300);
+    }
+
+    .step-icon {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, rgba(255, 88, 100, 0.25), rgba(59, 130, 246, 0.2));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 24px;
+      color: #fff;
+      box-shadow: 0 20px 60px rgba(255, 88, 100, 0.3);
+    }
+
+    .step-card h3 {
+      font-size: 1.5rem;
+      font-weight: 800;
+      margin: 0 0 12px;
+    }
+
+    .step-card p {
+      color: var(--wyw-text-dim);
+      line-height: 1.6;
+      margin: 0;
+    }
+
+    /* Platforms Grid */
+    .platforms-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .platform-badge {
+      padding: 16px 28px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      font-weight: 600;
+      font-size: 0.95rem;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
+    }
+
+    .platform-badge:hover {
+      transform: translateY(-4px);
+      background: linear-gradient(135deg, rgba(255, 88, 100, 0.2), rgba(59, 130, 246, 0.15));
+      border-color: rgba(255, 255, 255, 0.3);
+      box-shadow: 0 10px 30px rgba(255, 88, 100, 0.3);
+    }
+
+    /* Stats Section */
+    .stats-section {
+      background: linear-gradient(180deg, 
+        rgba(255, 88, 100, 0.05),
+        rgba(59, 130, 246, 0.05),
+        transparent
+      );
+      position: relative;
+    }
+
+    .stats-section::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 50% 50%, rgba(255, 88, 100, 0.1), transparent 70%);
+      pointer-events: none;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 32px;
+    }
+
+    .stat-card {
+      text-align: center;
+      padding: 40px 24px;
+      border-radius: var(--radius-xl);
+      background: linear-gradient(160deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      transition: all 0.4s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255, 88, 100, 0.1), rgba(59, 130, 246, 0.05));
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-8px) scale(1.02);
+      border-color: rgba(255, 255, 255, 0.25);
+      box-shadow: 0 20px 60px rgba(255, 88, 100, 0.3);
+    }
+
+    .stat-card:hover::after {
+      opacity: 1;
+    }
+
+    .stat-icon {
+      color: var(--wyw-red-300);
+      margin-bottom: 20px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .stat-value {
+      font-size: clamp(2.5rem, 5vw, 3.5rem);
+      font-weight: 900;
+      background: linear-gradient(135deg, #fff, var(--wyw-red-300));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      margin-bottom: 8px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .stat-label {
+      color: var(--wyw-text-dim);
+      font-size: 1rem;
+      font-weight: 600;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Testimonials Grid */
+    .testimonials-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 28px;
+    }
+
+    .testimonial-card {
+      padding: 32px 28px;
+      border-radius: var(--radius-xl);
+      background: linear-gradient(160deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      transition: all 0.3s ease;
+    }
+
+    .testimonial-card:hover {
+      transform: translateY(-6px);
+      border-color: rgba(255, 255, 255, 0.2);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    .testimonial-stars {
+      color: #fbbf24;
+      font-size: 1.2rem;
+      margin-bottom: 16px;
+      letter-spacing: 2px;
+    }
+
+    .testimonial-text {
+      color: var(--wyw-text);
+      line-height: 1.7;
+      font-size: 1.05rem;
+      margin: 0 0 24px;
+      font-style: italic;
+    }
+
+    .testimonial-author {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .author-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--wyw-red-500), var(--wyw-blue));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 1.2rem;
+      color: #fff;
+    }
+
+    .author-name {
+      font-weight: 700;
+      margin-bottom: 2px;
+    }
+
+    .author-role {
+      color: var(--wyw-text-dim);
       font-size: 0.9rem;
+    }
+
+    /* CTA Section */
+    .cta-section {
+      padding: clamp(80px, 12vw, 140px) 0;
+    }
+
+    .cta-box {
+      position: relative;
+      padding: clamp(50px, 8vw, 80px) clamp(30px, 5vw, 60px);
+      border-radius: var(--radius-xxl);
+      background: linear-gradient(135deg, 
+        rgba(255, 88, 100, 0.15),
+        rgba(59, 130, 246, 0.1)
+      );
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      overflow: hidden;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 40px;
+      align-items: center;
+    }
+
+    @media (max-width: 860px) {
+      .cta-box {
+        grid-template-columns: 1fr;
+        text-align: center;
+      }
+    }
+
+    .cta-box::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 30% 50%, rgba(255, 88, 100, 0.2), transparent 60%);
+      pointer-events: none;
+    }
+
+    .cta-box__content {
+      position: relative;
+      z-index: 2;
+    }
+
+    .cta-box h2 {
+      font-size: clamp(2rem, 4vw, 3rem);
+      font-weight: 900;
+      margin: 0 0 16px;
+      line-height: 1.2;
+    }
+
+    .cta-box p {
+      color: var(--wyw-text-dim);
+      font-size: clamp(1rem, 2vw, 1.2rem);
+      line-height: 1.6;
+      margin: 0 0 32px;
+      max-width: 60ch;
+    }
+
+    @media (max-width: 860px) {
+      .cta-box p {
+        margin-left: auto;
+        margin-right: auto;
+      }
+    }
+
+    .cta-box__buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+    }
+
+    @media (max-width: 860px) {
+      .cta-box__buttons {
+        justify-content: center;
+      }
+    }
+
+    .cta--large {
+      font-size: 1.05rem;
+      padding: 20px 36px;
+    }
+
+    .cta-box__decoration {
+      position: relative;
+      width: 200px;
+      height: 200px;
+    }
+
+    @media (max-width: 860px) {
+      .cta-box__decoration {
+        display: none;
+      }
+    }
+
+    .floating-card {
+      position: absolute;
+      width: 80px;
+      height: 80px;
+      border-radius: 20px;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.05));
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--wyw-red-300);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    }
+
+    .floating-card--1 {
+      top: 0;
+      right: 0;
+      animation: float 3s ease-in-out infinite;
+    }
+
+    .floating-card--2 {
+      bottom: 60px;
+      right: 80px;
+      animation: float 3s ease-in-out infinite 1s;
+    }
+
+    .floating-card--3 {
+      bottom: 0;
+      left: 20px;
+      animation: float 3s ease-in-out infinite 2s;
+    }
+
+    @keyframes float {
+      0%, 100% {
+        transform: translateY(0px);
+      }
+      50% {
+        transform: translateY(-20px);
+      }
     }
 
     .card {
@@ -459,6 +1046,30 @@
       .hero__cta-group {
         flex-direction: column;
         align-items: stretch;
+      }
+
+      .features-grid,
+      .steps-grid,
+      .stats-grid,
+      .testimonials-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .section__title {
+        font-size: 1.75rem;
+      }
+
+      .hero__wordmark {
+        transform: scale(0.9);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
       }
     }
 
@@ -684,13 +1295,13 @@
       body {
         color: #111222;
         background:
-            radial-gradient(120% 90% at 10% 5%, rgba(255, 88, 100, 0.12) 0%, rgba(255, 255, 255, 0) 60%),
+            radial-gradient(120% 90% at 10% 5%, rgba(255, 88, 100, 0.08) 0%, rgba(255, 255, 255, 0) 60%),
             linear-gradient(180deg, #f7f8fb 0%, #eef0f7 100%);
       }
 
       header {
-        background: rgba(255, 255, 255, 0.85);
-        border-bottom-color: rgba(0, 0, 0, 0.08);
+        background: rgba(255, 255, 255, 0.95);
+        border-bottom: 1px solid rgba(0, 0, 0, 0.08);
       }
 
       .cta--ghost {
@@ -698,17 +1309,38 @@
         color: #111222;
       }
 
-      .feat {
-        background: rgba(255, 255, 255, 0.82);
-        border-color: rgba(0, 0, 0, 0.05);
+      .feature-card,
+      .step-card,
+      .stat-card,
+      .testimonial-card,
+      .platform-badge {
+        background: rgba(255, 255, 255, 0.9);
+        border-color: rgba(0, 0, 0, 0.08);
         color: #111222;
       }
 
+      .section__subtitle,
+      .feature-card p,
+      .step-card p,
+      .stat-label,
+      .testimonial-text,
+      .author-role,
+      .cta-box p,
       .metric-card span,
-      .discover-item p,
       .links,
       .nav__links {
-        color: rgba(17, 18, 34, 0.68);
+        color: rgba(17, 18, 34, 0.7);
+      }
+
+      .hero__badge {
+        background: rgba(255, 88, 100, 0.1);
+        border-color: rgba(0, 0, 0, 0.1);
+      }
+
+      .metric-card,
+      .cta-box {
+        background: rgba(255, 255, 255, 0.8);
+        border-color: rgba(0, 0, 0, 0.1);
       }
     }
   </style>
@@ -739,8 +1371,14 @@
   </header>
 
   <main>
+    <!-- Hero Section -->
     <section class="container hero" aria-labelledby="titulo">
       <div class="hero__content">
+        <div class="hero__badge">
+          <span class="badge-dot"></span>
+          <span>A plataforma mais completa de busca de streaming</span>
+        </div>
+        
         <h1 class="hero__wordmark" id="titulo">
           <span class="wyw-brand wyw-brand--xl hero__logo">
             <span class="wyw-brand__where">where</span>
@@ -750,10 +1388,9 @@
             <span class="wyw-brand__watch">WATCH</span>
           </span>
         </h1>
+        
         <p class="tagline" id="tagline">Seu guia definitivo de streamings. Descubra onde assistir sem perder tempo.</p>
         <p class="sub">Busca inteligente, trailers oficiais, elencos completos e links diretos para mais de 50 plataformas. Tudo com a estética premium do universo Where You Watch.</p>
-
-        <div class="features" role="list" data-features-root></div>
 
         <div class="hero__cta-group">
           <a class="cta" href="index.php" id="ctaHero" aria-label="Ir para a página inicial do Where You Watch">
@@ -770,13 +1407,244 @@
         <div class="hero__metrics" data-metrics-root></div>
       </div>
     </section>
+
+    <!-- Features Section -->
+    <section class="section features-section">
+      <div class="container">
+        <div class="section__header">
+          <span class="section__eyebrow">Por que escolher</span>
+          <h2 class="section__title">Tudo que você precisa em um só lugar</h2>
+          <p class="section__subtitle">Recursos pensados para tornar sua experiência única e sem complicações</p>
+        </div>
+        
+        <div class="features-grid" data-features-root></div>
+      </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section class="section how-section">
+      <div class="container">
+        <div class="section__header">
+          <span class="section__eyebrow">Simples e rápido</span>
+          <h2 class="section__title">Como funciona</h2>
+          <p class="section__subtitle">Apenas 3 passos para encontrar o que você quer assistir</p>
+        </div>
+        
+        <div class="steps-grid">
+          <div class="step-card">
+            <div class="step-number">1</div>
+            <div class="step-icon">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <path d="m21 21-4.35-4.35"></path>
+              </svg>
+            </div>
+            <h3>Busque</h3>
+            <p>Digite o nome do filme ou série que deseja assistir</p>
+          </div>
+          
+          <div class="step-card">
+            <div class="step-number">2</div>
+            <div class="step-icon">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+            </div>
+            <h3>Descubra</h3>
+            <p>Veja onde está disponível e compare preços</p>
+          </div>
+          
+          <div class="step-card">
+            <div class="step-number">3</div>
+            <div class="step-icon">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+              </svg>
+            </div>
+            <h3>Assista</h3>
+            <p>Clique e vá direto para a plataforma escolhida</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Platforms Section -->
+    <section class="section platforms-section">
+      <div class="container">
+        <div class="section__header">
+          <span class="section__eyebrow">Integração total</span>
+          <h2 class="section__title">Mais de 50 plataformas integradas</h2>
+          <p class="section__subtitle">Netflix, Prime Video, Disney+, HBO Max e muito mais</p>
+        </div>
+        
+        <div class="platforms-grid">
+          <div class="platform-badge">Netflix</div>
+          <div class="platform-badge">Prime Video</div>
+          <div class="platform-badge">Disney+</div>
+          <div class="platform-badge">HBO Max</div>
+          <div class="platform-badge">Apple TV+</div>
+          <div class="platform-badge">Paramount+</div>
+          <div class="platform-badge">Star+</div>
+          <div class="platform-badge">Globoplay</div>
+          <div class="platform-badge">Crunchyroll</div>
+          <div class="platform-badge">MUBI</div>
+          <div class="platform-badge">Claro TV+</div>
+          <div class="platform-badge">+40 mais</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="section stats-section">
+      <div class="container">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="2" y="7" width="20" height="15" rx="2" ry="2"></rect>
+                <polyline points="17 2 12 7 7 2"></polyline>
+              </svg>
+            </div>
+            <div class="stat-value" data-count="50">50+</div>
+            <div class="stat-label">Plataformas</div>
+          </div>
+          
+          <div class="stat-card">
+            <div class="stat-icon">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="m16 6 4 14"></path>
+                <path d="M12 6v14"></path>
+                <path d="M8 8v12"></path>
+                <path d="M4 4v16"></path>
+              </svg>
+            </div>
+            <div class="stat-value" data-count="2000000">2M+</div>
+            <div class="stat-label">Títulos catalogados</div>
+          </div>
+          
+          <div class="stat-card">
+            <div class="stat-icon">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+            </div>
+            <div class="stat-value" data-count="30">30s</div>
+            <div class="stat-label">Tempo médio de busca</div>
+          </div>
+          
+          <div class="stat-card">
+            <div class="stat-icon">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+              </svg>
+            </div>
+            <div class="stat-value" data-count="100000">100K+</div>
+            <div class="stat-label">Usuários satisfeitos</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Testimonials Section -->
+    <section class="section testimonials-section">
+      <div class="container">
+        <div class="section__header">
+          <span class="section__eyebrow">Depoimentos</span>
+          <h2 class="section__title">O que nossos usuários dizem</h2>
+        </div>
+        
+        <div class="testimonials-grid">
+          <div class="testimonial-card">
+            <div class="testimonial-stars">★★★★★</div>
+            <p class="testimonial-text">"Finalmente consigo encontrar onde está aquele filme que quero ver! Economizo muito tempo."</p>
+            <div class="testimonial-author">
+              <div class="author-avatar">M</div>
+              <div>
+                <div class="author-name">Marina Silva</div>
+                <div class="author-role">Cinéfila</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="testimonial-card">
+            <div class="testimonial-stars">★★★★★</div>
+            <p class="testimonial-text">"Interface linda e super intuitiva. Melhor que os apps oficiais dos streamings!"</p>
+            <div class="testimonial-author">
+              <div class="author-avatar">R</div>
+              <div>
+                <div class="author-name">Roberto Costa</div>
+                <div class="author-role">Designer</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="testimonial-card">
+            <div class="testimonial-stars">★★★★★</div>
+            <p class="testimonial-text">"Não preciso mais ficar entrando em vários apps para saber onde assistir. Indispensável!"</p>
+            <div class="testimonial-author">
+              <div class="author-avatar">C</div>
+              <div>
+                <div class="author-name">Carolina Mendes</div>
+                <div class="author-role">Maratonista de séries</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Final CTA Section -->
+    <section class="section cta-section">
+      <div class="container">
+        <div class="cta-box">
+          <div class="cta-box__content">
+            <h2>Pronto para começar?</h2>
+            <p>Junte-se a milhares de usuários que já encontraram a melhor forma de descobrir onde assistir</p>
+            <div class="cta-box__buttons">
+              <a class="cta cta--large" href="index.php">
+                <span>Começar agora gratuitamente</span>
+                <svg class="arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M5 12h14M13 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </a>
+              <a class="cta cta--ghost" href="providers.php">
+                <span>Ver todas as plataformas</span>
+              </a>
+            </div>
+          </div>
+          <div class="cta-box__decoration">
+            <div class="floating-card floating-card--1">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+              </svg>
+            </div>
+            <div class="floating-card floating-card--2">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+            </div>
+            <div class="floating-card floating-card--3">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
   </main>
 
   <footer>
     <div class="footwrap">
       <small>© <span id="year"></span> Where You Watch</small>
       <nav class="links" aria-label="Links de rodapé">
-        <a href="index.html">Início</a>
+        <a href="index.php">Início</a>
         <a href="#titulo">Topo</a>
         <a href="mailto:contato@whereuwatch.com">Contato</a>
       </nav>

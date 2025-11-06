@@ -1509,7 +1509,7 @@ function onboardingTitleSuggestions(array $queryParams): array
 
 function onboardingFavoritesRecommendations(array $favorites, array $options = []): array
 {
-    require_once __DIR__ . '/../includes/tmdb.php';
+    require_once __DIR__ . '/../../includes/tmdb.php';
 
     $anchorRaw = isset($options['anchor']) ? (string) $options['anchor'] : null;
     $levelRequested = isset($options['level']) ? (int) $options['level'] : null;

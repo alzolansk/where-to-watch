@@ -902,7 +902,7 @@ const updateResultsCaption = (count) => {
             const title = item.title || item.name || 'Titulo indisponivel';
             const year = (item.release_date || item.first_air_date || '').slice(0, 4) || '-';
             const typeLabel = item.media_type === 'tv' ? 'Serie' : 'Filme';
-            const detailUrl = new URL('WhereToWatch/wtw/filme.php', window.location.origin);
+            const detailUrl = new URL('WhereToWatch/wtw/public/filme.php', window.location.origin);
             detailUrl.searchParams.set('id', item.id);
             detailUrl.searchParams.set('type', item.media_type === 'tv' ? 'tv' : 'movie');
             const detailHref = detailUrl.pathname + detailUrl.search;
