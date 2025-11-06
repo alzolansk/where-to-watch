@@ -34,9 +34,10 @@ if ($resource === 'titles') {
         $response = onboardingTitleSuggestions($_GET);
         echo json_encode($response, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     } catch (Throwable $e) {
-        error_log('onboarding_titles_error: ' . $e->getMessage());
-        http_response_code(502);
-        echo json_encode(['ok' => false, 'error' => 'tmdb_unavailable']);
+        error_log('onboarding_titles_error: ' . $e->getMessage() . ' | ' . $e->getTraceAsString());
+        // Retorna 200 com erro em vez de 502 para não bloquear o fluxo
+        http_response_code(200);
+        echo json_encode(['ok' => false, 'error' => 'tmdb_unavailable', 'results' => []], JSON_UNESCAPED_UNICODE);
     }
     return;
 }
@@ -55,6 +56,10 @@ if ($resource === 'recommendations') {
         ensure_onboarding_schema($pdo);
         $preferences = fetchPreferences($pdo, $userId);
         $favorites = is_array($preferences['favorites'] ?? null) ? $preferences['favorites'] : [];
+        
+        // Debug: log quantidade de favoritos
+        error_log(sprintf('onboarding_recommendations: user_id=%d, favorites_count=%d', $userId, count($favorites)));
+        
         $anchorParam = isset($_GET['anchor']) ? trim((string) $_GET['anchor']) : null;
         $levelParam = isset($_GET['level']) ? (int) $_GET['level'] : null;
         $response = onboardingFavoritesRecommendations($favorites, [
@@ -63,9 +68,15 @@ if ($resource === 'recommendations') {
         ]);
         echo json_encode($response, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     } catch (Throwable $e) {
-        error_log('onboarding_recommendations_error: ' . $e->getMessage());
-        http_response_code(502);
-        echo json_encode(['ok' => false, 'error' => 'recommendations_unavailable']);
+        error_log('onboarding_recommendations_error: ' . $e->getMessage() . ' | File: ' . $e->getFile() . ':' . $e->getLine());
+        // Retorna 200 com erro em vez de 502 para não bloquear o fluxo
+        http_response_code(200);
+        echo json_encode([
+            'ok' => false, 
+            'error' => 'recommendations_unavailable', 
+            'message' => $e->getMessage(),
+            'results' => []
+        ], JSON_UNESCAPED_UNICODE);
     }
     return;
 }
@@ -130,9 +141,20 @@ function wyw_bootstrap_pdo(): PDO
         return $pdoInstance;
     }
 
+    // Tenta usar a função get_pdo() se disponível (carregada pelo bootstrap)
+    if (function_exists('get_pdo')) {
+        try {
+            $pdoInstance = get_pdo();
+            return $pdoInstance;
+        } catch (Throwable $e) {
+            error_log('wyw_bootstrap_pdo: get_pdo() failed - ' . $e->getMessage());
+        }
+    }
+
+    // Tenta carregar db.php manualmente
     $pdoPaths = [
+        __DIR__ . '/../../includes/db.php',
         __DIR__ . '/../includes/db.php',
-        __DIR__ . '/includes/db.php',
     ];
 
     foreach ($pdoPaths as $path) {
@@ -150,9 +172,10 @@ function wyw_bootstrap_pdo(): PDO
         }
     }
 
+    // Tenta criar PDO a partir de config.php
     $configPaths = [
+        __DIR__ . '/../../config/config.php',
         __DIR__ . '/../config/config.php',
-        __DIR__ . '/config/config.php',
     ];
 
     foreach ($configPaths as $path) {
@@ -943,7 +966,7 @@ function load_favorite_details(string $mediaType, int $tmdbId): array
         return $cache[$cacheKey];
     }
 
-    require_once __DIR__ . '/../includes/tmdb.php';
+    require_once __DIR__ . '/../../includes/tmdb.php';
 
     try {
         $response = tmdb_get(sprintf('/%s/%d', $mediaType, $tmdbId), [
@@ -975,7 +998,7 @@ function prefetch_favorite_details_bulk(string $mediaType, array $ids): array
         return [];
     }
 
-    require_once __DIR__ . '/../includes/tmdb.php';
+    require_once __DIR__ . '/../../includes/tmdb.php';
 
     $requests = [];
     foreach ($uniqueIds as $id) {
@@ -1356,7 +1379,7 @@ function load_keyword_label_suggestions(array $labels, array $genres = []): arra
 
 function onboardingTitleSuggestions(array $queryParams): array
 {
-    require_once __DIR__ . '/../includes/tmdb.php';
+    require_once __DIR__ . '/../../includes/tmdb.php';
 
     $query = normalise_label((string)($queryParams['q'] ?? $queryParams['query'] ?? ''));
     $results = [];

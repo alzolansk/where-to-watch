@@ -174,7 +174,7 @@
                     
                     <header class="onboarding-step__header">
                         <h3>Gêneros e palavras-chave</h3>
-                        <p>Escolha os estilos de filmes que você mais gosta e alguns temas que sempre te interessam.</p>
+                        <p>Escolha os estilos de filmes que você mais gosta e adicione temas que sempre te interessam.</p>
                     </header>
                     <div class="onboarding-section">
                         <h4 class="onboarding-section__title">Gêneros favoritos</h4>
@@ -187,42 +187,20 @@
                         </div>
                     </div>
                     <div class="onboarding-section">
-                        <h4 class="onboarding-section__title">Palavras-chave preferidas</h4>
-                        <div class="onboarding-chip-grid" data-onboarding-keywords>
-                            <?php foreach ($keywordOptions as $keyword): ?>
-                                <button type="button" class="onboarding-chip" data-keyword-id="<?php echo (int) $keyword['id']; ?>" data-keyword-label="<?php echo htmlspecialchars($keyword['label'], ENT_QUOTES, 'UTF-8'); ?>">
-                                    <?php echo htmlspecialchars($keyword['label'], ENT_QUOTES, 'UTF-8'); ?>
-                                </button>
-                            <?php endforeach; ?>
+                        <h4 class="onboarding-section__title">Adicionar palavras-chave</h4>
+                        <p class="onboarding-helper-text">Digite temas, estilos ou conceitos que você ama (ex: "viagem no tempo", "super-heróis", "romance").</p>
+                        <div class="onboarding-chip-grid" data-onboarding-keywords style="min-height: 40px; margin-bottom: 12px;">
+                            <!-- Palavras-chave adicionadas aparecerão aqui -->
                         </div>
                         <form class="onboarding-keyword-form" data-onboarding-keyword-form>
                             <label for="onboardingKeywordInput" class="sr-only">Adicionar palavra-chave</label>
-                            <input type="text" id="onboardingKeywordInput" class="onboarding-input" placeholder="Digite outra palavra-chave" data-onboarding-keyword-input>
+                            <input type="text" id="onboardingKeywordInput" class="onboarding-input" placeholder="Digite uma palavra-chave ou tema" data-onboarding-keyword-input>
                             <button type="submit" class="onboarding-button onboarding-button--inline onboarding-button--primary" data-onboarding-keyword-add>Adicionar</button>
                         </form>
                     </div>
                 </section>
 
-                <!-- ========== ETAPA 2: PRÉVIA DE RECOMENDAÇÕES ========== -->
-                
-                <section class="onboarding-step" data-onboarding-step="preview" aria-label="Veja algumas recomendações iniciais" hidden>
-                    <header class="onboarding-step__header">
-                        <h3>Gerando recomendações iniciais…</h3>
-                        <p>Com base nas suas escolhas, encontramos alguns títulos que podem ser o seu próximo vício.</p>
-                    </header>
-                    <div class="onboarding-section onboarding-section--preview">
-                        <p class="onboarding-preview__status" data-onboarding-preview-status aria-live="polite" role="status">Carregando recomendações personalizadas…</p>
-                        <div class="onboarding-preview__carousel" data-onboarding-preview-carousel>
-                            <div class="onboarding-preview__list" data-onboarding-preview-list></div>
-                        </div>
-                        <div class="onboarding-preview__actions">
-                            <button type="button" class="onboarding-button onboarding-button--ghost" data-onboarding-preview-refresh>Gerar novas recomendações</button>
-                            <p class="onboarding-helper-text">Curtiu o que viu? Clique em continuar para avançar ou gere outra combinação.</p>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- ========== ETAPA 3: SELEÇÃO DE PROVEDORES ========== -->
+                <!-- ========== ETAPA 2: SELEÇÃO DE PROVEDORES ========== -->
                 
                 <section class="onboarding-step" data-onboarding-step="providers" aria-label="Selecione os provedores disponíveis para você" hidden>
                     <header class="onboarding-step__header">
@@ -241,23 +219,22 @@
                     </div>
                 </section>
 
-                <!-- ========== ETAPA 4: SELEÇÃO DE TÍTULOS FAVORITOS ========== -->
+                <!-- ========== ETAPA 3: SELEÇÃO DE TÍTULOS FAVORITOS + RECOMENDAÇÕES ========== -->
                 
                 <section class="onboarding-step" data-onboarding-step="favorites" aria-label="Escolha seus filmes e séries favoritos" hidden>
                     <header class="onboarding-step__header">
-                        <h3>Filmes e séries que são a sua cara</h3>
-                        <p>Selecione alguns títulos que você ama. Usaremos essas referências para encontrar recomendações melhores.</p>
+                        <h3>Personalize sua experiência</h3>
+                        <p>Selecione os filmes e séries que têm a ver com você. Mostramos sugestões baseadas nas suas preferências.</p>
                     </header>
                     <div class="onboarding-section onboarding-section--search">
                         <div class="onboarding-search" data-onboarding-favorites-search-wrapper>
                             <label for="onboardingFavoriteSearch" class="sr-only">Buscar filmes e séries</label>
-                            <input type="search" id="onboardingFavoriteSearch" class="onboarding-input" placeholder="Busque por filmes ou séries que você ama" data-onboarding-favorites-search>
+                            <input type="search" id="onboardingFavoriteSearch" class="onboarding-input" placeholder="Busque por filmes ou séries" data-onboarding-favorites-search>
                             <button type="button" class="onboarding-button onboarding-button--inline onboarding-button--primary" data-onboarding-favorites-refresh>Buscar</button>
                         </div>
-                        <p class="onboarding-helper-text">Mostramos opções personalizadas automaticamente. Busque para encontrar qualquer título disponível na API.</p>
                         <div class="onboarding-grid onboarding-grid--favorites" data-onboarding-favorites></div>
                         <p class="onboarding-helper-text" data-onboarding-favorites-empty hidden>Nenhum título encontrado. Tente outra busca.</p>
-                        <p class="onboarding-helper-text" data-onboarding-favorites-loading hidden aria-live="polite" role="status">Carregando recomendações personalizadas…</p>
+                        <p class="onboarding-helper-text" data-onboarding-favorites-loading hidden aria-live="polite" role="status">Carregando sugestões…</p>
                     </div>
                 </section>
             </div>
@@ -267,7 +244,6 @@
                 <div class="onboarding-progress" role="group" aria-label="Progresso">
                     <span class="onboarding-progress__dot is-active" data-onboarding-progress-step="0"></span>
                     <span class="onboarding-progress__dot" data-onboarding-progress-step="1"></span>
-                    <span class="onboarding-progress__dot" data-onboarding-progress-step="3"></span>
                     <span class="onboarding-progress__dot" data-onboarding-progress-step="2"></span>
                 </div>
                 <button type="button" class="onboarding-button onboarding-button--ghost" data-onboarding-action="skip">Pular por enquanto</button>

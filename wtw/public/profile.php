@@ -510,7 +510,7 @@ $favoritesList = $favorites;
     <link rel="icon" href="imagens/wywatch-favicon-iris-nobackground.png">
     <link rel="stylesheet" href="css/brand.css">
     <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/profile.css">
+    <link rel="stylesheet" href="css/profile-v2.css">
 </head>
 <body class="profile-page has-fixed-header">
 <?php include_once('dashboard.php'); ?>
@@ -538,121 +538,260 @@ $favoritesList = $favorites;
         </div>
     </section>
 
-    <section class="profile-overview" aria-label="Resumo de favoritos e preferências">
-        <div class="profile-overview__grid">
-            <aside class="profile-option profile-option--preferences" aria-labelledby="preferencesTitle" data-profile-preferences-section>
-                <header class="profile-option__header">
-                    <p class="profile-option__eyebrow">Preferências</p>
-                    <h2 class="profile-option__title" id="preferencesTitle">Sua curadoria</h2>
-                    <p class="profile-option__subtitle">Os generos e provedores que guiam nossas recomendacoes.</p>
+    <!-- Navegação por Tabs -->
+    <nav class="profile-tabs" role="tablist" aria-label="Navegação do perfil">
+        <button class="profile-tab profile-tab--active" role="tab" aria-selected="true" aria-controls="tab-overview" id="tab-btn-overview" data-profile-tab="overview">
+            <svg class="profile-tab__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+            <span class="profile-tab__label">Visão Geral</span>
+        </button>
+        <button class="profile-tab" role="tab" aria-selected="false" aria-controls="tab-curadoria" id="tab-btn-curadoria" data-profile-tab="curadoria">
+            <svg class="profile-tab__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+            </svg>
+            <span class="profile-tab__label">Curadoria</span>
+        </button>
+        <button class="profile-tab" role="tab" aria-selected="false" aria-controls="tab-filmes" id="tab-btn-filmes" data-profile-tab="filmes">
+            <svg class="profile-tab__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path d="M19 4H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/>
+                <path d="M12 9l-6 6h12l-6-6z"/>
+            </svg>
+            <span class="profile-tab__label">Meus Filmes</span>
+        </button>
+    </nav>
+
+    <!-- Tab Content: Visão Geral -->
+    <div class="profile-tab-content profile-tab-content--active" id="tab-overview" role="tabpanel" aria-labelledby="tab-btn-overview">
+        <div class="profile-content-grid">
+            <!-- Quick Stats -->
+            <section class="profile-stats-card">
+                <h2 class="profile-card__title">Estatísticas Rápidas</h2>
+                <div class="profile-stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-item__icon">🎬</div>
+                        <div class="stat-item__content">
+                            <span class="stat-item__value" data-profile-favorites-count><?php echo $favoritesCount; ?></span>
+                            <span class="stat-item__label">Favoritos</span>
+                        </div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-item__icon">⭐</div>
+                        <div class="stat-item__content">
+                            <span class="stat-item__value" data-profile-preferences-count><?php echo $preferencesCount; ?></span>
+                            <span class="stat-item__label">Preferências</span>
+                        </div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-item__icon">🎭</div>
+                        <div class="stat-item__content">
+                            <span class="stat-item__value"><?php echo count($initialState['genres']); ?></span>
+                            <span class="stat-item__label">Gêneros</span>
+                        </div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-item__icon">📺</div>
+                        <div class="stat-item__content">
+                            <span class="stat-item__value"><?php echo count($initialState['providers']); ?></span>
+                            <span class="stat-item__label">Plataformas</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Favorites Preview -->
+            <section class="profile-favorites-preview">
+                <header class="section-header">
+                    <h2 class="section-header__title">Seus Favoritos Recentes</h2>
+                    <button class="section-header__action" data-profile-tab="filmes" aria-label="Ver todos os favoritos">
+                        Ver todos →
+                    </button>
                 </header>
-                <?php if (!$isAuthenticated): ?>
-                    <div class="profile-notice" role="alert">
-                        <p>Faça <a href="login.php">login</a> para gerenciar suas preferências personalizadas.</p>
+                <?php if ($favoritesCount === 0): ?>
+                    <div class="empty-state">
+                        <div class="empty-state__icon">🎬</div>
+                        <h3 class="empty-state__title">Você ainda não tem favoritos</h3>
+                        <p class="empty-state__description">Comece adicionando filmes e séries que você ama para receber recomendações personalizadas.</p>
+                        <a href="search.php" class="btn btn--primary">Descobrir Filmes</a>
+                    </div>
+                <?php else: ?>
+                    <div class="favorites-grid-preview">
+                        <?php foreach (array_slice($favorites, 0, 6) as $favorite): ?>
+                        <?php
+                            $posterUrl = $favorite['poster_url'] ?? null;
+                            if (!$posterUrl && !empty($favorite['poster_path'])) {
+                                $posterUrl = wyw_tmdb_image_url((string) $favorite['poster_path']);
+                            }
+                        ?>
+                        <div class="favorite-preview-card">
+                            <?php if ($posterUrl): ?>
+                                <img src="<?php echo htmlspecialchars($posterUrl, ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo htmlspecialchars($favorite['title'], ENT_QUOTES, 'UTF-8'); ?>" class="favorite-preview-card__poster" loading="lazy">
+                            <?php else: ?>
+                                <div class="favorite-preview-card__fallback"><?php echo htmlspecialchars(wyw_initial_letter($favorite['title']), ENT_QUOTES, 'UTF-8'); ?></div>
+                            <?php endif; ?>
+                        </div>
+                        <?php endforeach; ?>
                     </div>
                 <?php endif; ?>
-                <dl class="profile-option__summary" aria-live="polite">
-                    <div class="profile-option__group">
-                        <dt>Gêneros</dt>
-                        <dd><div class="profile-summary-chips" data-profile-genres-summary></div></dd>
-                    </div>
-                    <div class="profile-option__group">
-                        <dt>Provedores</dt>
-                        <dd><div class="profile-summary-chips" data-profile-providers-summary></div></dd>
-                    </div>
-                </dl>
-                <div class="profile-option__actions">
-                    <span class="profile-chip-counter" data-profile-preferences-count><?php echo htmlspecialchars($preferencesBadgeLabel, ENT_QUOTES, 'UTF-8'); ?></span>
-                    <button type="button" class="profile-button profile-button--primary" data-profile-open-modal="preferences" <?php echo $isAuthenticated ? '' : 'disabled'; ?>>Gerenciar preferências</button>
-                    <a href="index.php" class="profile-button profile-button--ghost">Explorar recomendações</a>
-                </div>
-            </aside>
+            </section>
 
-            <section class="profile-card profile-card--favorites" aria-labelledby="favoritesTitle">
-                <header class="profile-card__header">
-                    <div>
-                        <h2 class="profile-card__title" id="favoritesTitle">Meus favoritos</h2>
-                        <p class="profile-card__subtitle">Um painel rápido com alguns dos títulos que você marcou como indispensáveis.</p>
-                    </div>
-                    <div class="profile-card__actions">
-                        <span class="profile-badge" data-profile-favorites-count><?php echo htmlspecialchars($favoritesBadgeLabel, ENT_QUOTES, 'UTF-8'); ?></span>
-                        <button type="button" class="profile-button profile-button--primary" data-profile-open-modal="favorites" <?php echo $isAuthenticated ? '' : 'disabled'; ?>>Gerenciar favoritos</button>
-                    </div>
-                </header>
-                <div class="profile-favorite-rail-wrapper">
-                    <ul class="profile-favorite-rail" data-profile-favorites-summary role="list">
-                        <?php foreach ($favoritesSummaryData as $summaryIndex => $favorite): ?>
-                        <?php
-                            $summaryPoster = $favorite['poster_url'] ?? null;
-                            if (!$summaryPoster && !empty($favorite['poster_path'])) {
-                                $summaryPoster = wyw_tmdb_image_url((string) $favorite['poster_path']);
-                            }
-                            if (!$summaryPoster && !empty($favorite['backdrop_path'])) {
-                                $summaryPoster = wyw_tmdb_image_url((string) $favorite['backdrop_path']);
-                            }
-                            $summaryTitle = $favorite['title'] ?? '';
-                            $summaryDepth = $favoritesSummaryCount > 1
-                                ? $summaryIndex / ($favoritesSummaryCount - 1)
-                                : 0;
-                            $summaryLayer = $favoritesSummaryCount - $summaryIndex;
-                        ?>
-                        <li class="favorite-tile favorite-tile--poster" style="--favorite-depth: <?php echo htmlspecialchars(number_format($summaryDepth, 4, '.', ''), ENT_QUOTES, 'UTF-8'); ?>; --favorite-layer: <?php echo htmlspecialchars((string) $summaryLayer, ENT_QUOTES, 'UTF-8'); ?>;">
-                            <figure class="favorite-tile__poster" aria-hidden="true">
-                                <?php if ($summaryPoster): ?>
-                                    <img src="<?php echo htmlspecialchars($summaryPoster, ENT_QUOTES, 'UTF-8'); ?>" alt="" loading="lazy" class="favorite-tile__image">
-                                <?php else: ?>
-                                    <span class="favorite-tile__fallback"><?php echo htmlspecialchars(wyw_initial_letter($summaryTitle), ENT_QUOTES, 'UTF-8'); ?></span>
-                                <?php endif; ?>
-                            </figure>
-                        </li>
-                        <?php endforeach; ?>
-                    </ul>
+            <!-- Quick Actions -->
+            <section class="profile-quick-actions">
+                <h2 class="section-header__title">Ações Rápidas</h2>
+                <div class="quick-actions-grid">
+                    <a href="providers.php" class="quick-action-card">
+                        <div class="quick-action-card__icon">🎯</div>
+                        <h3 class="quick-action-card__title">Explorar por Provedor</h3>
+                        <p class="quick-action-card__description">Veja o que está disponível nos seus serviços</p>
+                    </a>
+                    <a href="search.php" class="quick-action-card">
+                        <div class="quick-action-card__icon">🔍</div>
+                        <h3 class="quick-action-card__title">Buscar Títulos</h3>
+                        <p class="quick-action-card__description">Pesquise filmes e séries rapidamente</p>
+                    </a>
+                    <a href="surpreenda.php" class="quick-action-card">
+                        <div class="quick-action-card__icon">✨</div>
+                        <h3 class="quick-action-card__title">Surpreenda-me</h3>
+                        <p class="quick-action-card__description">Receba sugestões personalizadas</p>
+                    </a>
                 </div>
-                <p class="profile-empty profile-empty--rail" data-profile-favorites-summary-empty <?php echo $showFavoritesSummaryEmpty ? '' : 'hidden'; ?>>
-                    <?php echo htmlspecialchars($favoritesEmptyMessage, ENT_QUOTES, 'UTF-8'); ?>
-                </p>
             </section>
         </div>
-    </section>
+    </div>
 
-    <div class="profile-modal" data-profile-modal="favorites" role="dialog" aria-modal="true" aria-labelledby="favoritesModalTitle" aria-hidden="true">
-        <div class="profile-modal__overlay" data-profile-modal-close aria-hidden="true"></div>
-        <div class="profile-modal__window" role="document">
-            <header class="profile-modal__header">
-                <div>
-                    <h2 class="profile-modal__title" id="favoritesModalTitle">Coleção de favoritos</h2>
-                    <span class="favorites-modal-caption">Remova com "-" ou toque em um novo pôster para adicioná-lo imediatamente.</span>
+    <!-- Tab Content: Curadoria -->
+    <div class="profile-tab-content" id="tab-curadoria" role="tabpanel" aria-labelledby="tab-btn-curadoria" hidden>
+        <div class="profile-content-wrapper">
+            <?php if (!$isAuthenticated): ?>
+                <div class="empty-state">
+                    <div class="empty-state__icon">🔒</div>
+                    <h3 class="empty-state__title">Login Necessário</h3>
+                    <p class="empty-state__description">Faça <a href="login.php">login</a> para gerenciar suas preferências personalizadas.</p>
                 </div>
-                <button type="button" class="profile-modal__close" data-profile-modal-close aria-label="Fechar">&times;</button>
+            <?php else: ?>
+                <header class="section-header section-header--large">
+                    <div>
+                        <h2 class="section-header__title">Sua Curadoria Pessoal</h2>
+                        <p class="section-header__description">Defina seus gostos e receba recomendações cada vez mais precisas</p>
+                    </div>
+                </header>
+
+                <div class="preferences-layout">
+                    <div class="preferences-main">
+                        <!-- Gêneros -->
+                        <section class="preference-section">
+                            <header class="preference-section__header">
+                                <h3 class="preference-section__title">🎭 Gêneros Favoritos</h3>
+                                <p class="preference-section__description">Selecione os estilos cinematográficos que mais combinam com você</p>
+                            </header>
+                            <div class="chip-grid" data-profile-genres>
+                                <?php foreach ($genreOptions as $genre): ?>
+                                    <button type="button" class="chip" data-genre-id="<?php echo (int) $genre['id']; ?>" aria-pressed="false">
+                                        <?php echo htmlspecialchars($genre['label'], ENT_QUOTES, 'UTF-8'); ?>
+                                    </button>
+                                <?php endforeach; ?>
+                            </div>
+                        </section>
+
+                        <!-- Provedores -->
+                        <section class="preference-section">
+                            <header class="preference-section__header">
+                                <h3 class="preference-section__title">📺 Serviços de Streaming</h3>
+                                <p class="preference-section__description">Marque os serviços que você assina para filtrar recomendações</p>
+                            </header>
+                            <div class="provider-grid" data-profile-providers>
+                                <?php foreach ($providerOptions as $provider): ?>
+                                    <button type="button" class="provider-card" data-provider-id="<?php echo (int) $provider['id']; ?>" data-provider-label="<?php echo htmlspecialchars($provider['label'], ENT_QUOTES, 'UTF-8'); ?>" aria-pressed="false">
+                                        <span class="provider-card__logo" aria-hidden="true">
+                                            <img src="<?php echo htmlspecialchars($provider['logo'], ENT_QUOTES, 'UTF-8'); ?>" alt="" loading="lazy">
+                                        </span>
+                                        <span class="provider-card__label"><?php echo htmlspecialchars($provider['label'], ENT_QUOTES, 'UTF-8'); ?></span>
+                                    </button>
+                                <?php endforeach; ?>
+                            </div>
+                            <?php if ($hasStreamingProvidersCatalog): ?>
+                                <div class="preference-section__actions">
+                                    <button type="button" class="btn btn--ghost" data-toggle-providers-panel>
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <circle cx="11" cy="11" r="8"/>
+                                            <path d="m21 21-4.35-4.35"/>
+                                        </svg>
+                                        Explorar catálogo completo
+                                    </button>
+                                </div>
+                            <?php endif; ?>
+                        </section>
+                    </div>
+
+                    <!-- Summary Info -->
+                    <aside class="preferences-summary">
+                        <h3 class="preferences-summary__title">📊 Resumo das Preferências</h3>
+                        <div class="preferences-summary__content">
+                            <div class="summary-item">
+                                <span class="summary-item__label">Gêneros Selecionados</span>
+                                <div class="profile-summary-chips" data-profile-genres-summary></div>
+                            </div>
+                            <div class="summary-item">
+                                <span class="summary-item__label">Provedores Ativos</span>
+                                <div class="profile-summary-chips" data-profile-providers-summary></div>
+                            </div>
+                            <div class="summary-item">
+                                <span class="summary-item__label">Provedores</span>
+                                <div class="profile-summary-chips" data-profile-providers-summary></div>
+                            </div>
+                        </div>
+                    </aside>
+                </div>
+            <?php endif; ?>
+        </div>
+    </div>
+
+    <!-- Tab Content: Meus Filmes -->
+    <div class="profile-tab-content" id="tab-filmes" role="tabpanel" aria-labelledby="tab-btn-filmes" hidden>
+        <div class="profile-content-wrapper">
+            <header class="section-header section-header--large">
+                <div>
+                    <h2 class="section-header__title">Meus Filmes e Séries</h2>
+                    <p class="section-header__description">Gerencie sua coleção de favoritos</p>
+                </div>
+                <span class="section-header__badge" data-profile-favorites-count><?php echo htmlspecialchars($favoritesBadgeLabel, ENT_QUOTES, 'UTF-8'); ?></span>
             </header>
-            <div class="profile-modal__body favorites-modal-body" data-profile-modal-focus tabindex="-1" aria-labelledby="favoritesDeckTitle">
-                <div class="favorite-search-block">
+
+            <?php if (!$isAuthenticated): ?>
+                <div class="empty-state">
+                    <div class="empty-state__icon">🔒</div>
+                    <h3 class="empty-state__title">Login Necessário</h3>
+                    <p class="empty-state__description">Entre na sua conta para visualizar e gerenciar seus favoritos</p>
+                    <a href="login.php" class="btn btn--primary">Fazer Login</a>
+                </div>
+            <?php else: ?>
+                <!-- Search -->
+                <div class="favorite-search-wrapper">
                     <form class="favorite-search-form" data-profile-favorite-search novalidate>
                         <label class="favorite-search-field">
-                            <span class="favorite-search-icon" aria-hidden="true">
-                                <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
-                                    <path d="M11 4a7 7 0 0 1 5.45 11.45l3.55 3.55a1 1 0 0 1-1.41 1.41l-3.55-3.55A7 7 0 1 1 11 4zm0 2a5 5 0 1 0 3.54 8.54A5 5 0 0 0 11 6z" />
-                                </svg>
-                            </span>
-                            <span class="sr-only">Pesquisar t&iacute;tulos para adicionar aos favoritos</span>
+                            <svg class="favorite-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="11" cy="11" r="7"/>
+                                <path d="m21 21-4.35-4.35"/>
+                            </svg>
                             <input
                                 type="search"
                                 name="favoriteSearch"
                                 class="favorite-search-input"
-                                placeholder="Pesquisar nova s&eacute;rie ou filme"
+                                placeholder="Pesquisar nova série ou filme"
                                 autocomplete="off"
                                 spellcheck="false"
                                 data-profile-favorite-search-input
-                                <?php echo $isAuthenticated ? '' : 'disabled'; ?>
                             >
-                            <button type="submit" class="favorite-search-button" <?php echo $isAuthenticated ? '' : 'disabled'; ?>>
-                                <span class="favorite-search-button__label">Buscar</span>
-                            </button>
+                            <button type="submit" class="btn btn--primary btn--compact">Buscar</button>
                         </label>
                     </form>
                     <div class="favorite-search-results" data-profile-favorite-search-results role="status" aria-live="polite"></div>
                 </div>
-                <div class="favorite-poster-grid" data-profile-favorites-list role="list">
+
+                <!-- Favorites Grid -->
+                <div class="favorites-container">
+                    <div class="favorite-poster-grid" data-profile-favorites-list role="list">
                         <?php foreach ($favoritesList as $favorite): ?>
                         <?php
                             $posterUrl = $favorite['poster_url'] ?? null;
@@ -664,131 +803,84 @@ $favoritesList = $favorites;
                             }
                             $favoriteTitle = $favorite['title'] ?? '';
                             $favoriteKey = $favorite['tmdb_id'] . ':' . ($favorite['media_type'] ?? 'movie');
-                            ?>
+                        ?>
                             <article class="favorite-poster-card favorite-poster-card--selected" role="listitem" data-key="<?php echo htmlspecialchars($favoriteKey, ENT_QUOTES, 'UTF-8'); ?>">
                                 <figure class="favorite-poster-card__media" aria-hidden="true">
                                     <?php if ($posterUrl): ?>
-                                        <img src="<?php echo htmlspecialchars($posterUrl, ENT_QUOTES, 'UTF-8'); ?>" alt="" loading="lazy">
+                                        <img src="<?php echo htmlspecialchars($posterUrl, ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo htmlspecialchars($favoriteTitle, ENT_QUOTES, 'UTF-8'); ?>" loading="lazy">
                                     <?php else: ?>
                                         <span class="favorite-poster-card__fallback"><?php echo htmlspecialchars(wyw_initial_letter($favoriteTitle), ENT_QUOTES, 'UTF-8'); ?></span>
                                     <?php endif; ?>
                                 </figure>
-                                <button type="button" class="favorite-poster-card__remove" aria-label="Remover dos favoritos" <?php echo $isAuthenticated ? '' : 'disabled'; ?>>-</button>
+                                <button type="button" class="favorite-poster-card__remove" aria-label="Remover <?php echo htmlspecialchars($favoriteTitle, ENT_QUOTES, 'UTF-8'); ?> dos favoritos">−</button>
                             </article>
                         <?php endforeach; ?>
+                    </div>
+
+                    <div class="empty-state" data-profile-favorites-empty <?php echo $showFavoritesListEmpty ? '' : 'hidden'; ?>>
+                        <div class="empty-state__icon">🎬</div>
+                        <h3 class="empty-state__title">Você ainda não tem favoritos</h3>
+                        <p class="empty-state__description">Adicione filmes e séries que você ama para receber recomendações mais certeiras</p>
+                        <a href="search.php" class="btn btn--primary">Descobrir Filmes</a>
+                    </div>
                 </div>
-                <p class="profile-empty favorite-poster-grid__empty favorites-modal-empty" data-profile-favorites-empty <?php echo $showFavoritesListEmpty ? '' : 'hidden'; ?>>
-                        <?php echo htmlspecialchars($modalFavoritesEmptyMessage, ENT_QUOTES, 'UTF-8'); ?>
-                </p>
-            </div>
+            <?php endif; ?>
         </div>
     </div>
 
-    <div class="profile-modal" data-profile-modal="preferences" role="dialog" aria-modal="true" aria-labelledby="preferencesModalTitle" aria-hidden="true">
-        <div class="profile-modal__overlay" data-profile-modal-close aria-hidden="true"></div>
-        <div class="profile-modal__window" role="document">
-            <header class="profile-modal__header">
-                <div class="profile-modal__heading">
-                    <h2 class="profile-modal__title" id="preferencesModalTitle">Gerenciar preferências</h2>
-                    <p class="profile-modal__subtitle">Personalize sua experiência escolhendo gêneros, provedores e palavras-chave favoritos.</p>
-                </div>
-                <button type="button" class="profile-modal__close" data-profile-modal-close data-profile-modal-focus aria-label="Fechar">&times;</button>
-            </header>
-            <div class="profile-modal__body">
-                <div class="profile-preferences" data-profile-preferences <?php echo $isAuthenticated ? '' : 'data-disabled="true"'; ?>>
-                    <section class="preference-group" aria-labelledby="genresTitle">
-                        <div class="preference-group__header">
-                            <h3 id="genresTitle">Gêneros favoritos</h3>
-                            <p>Selecione os estilos cinematográficos que mais combinam com você.</p>
-                        </div>
-                        <div class="chip-grid" data-profile-genres>
-                            <?php foreach ($genreOptions as $genre): ?>
-                                <button type="button" class="chip" data-genre-id="<?php echo (int) $genre['id']; ?>" aria-pressed="false" <?php echo $isAuthenticated ? '' : 'disabled'; ?>><?php echo htmlspecialchars($genre['label'], ENT_QUOTES, 'UTF-8'); ?></button>
-                            <?php endforeach; ?>
-                        </div>
-                    </section>
-
-
-                    <section class="preference-group" aria-labelledby="providersTitle">
-                        <div class="preference-group__header">
-                            <h3 id="providersTitle">Provedores disponíveis</h3>
-                            <p>Marque os serviços de streaming que você assina para filtrar resultados automaticamente.</p>
-                        </div>
-                        <div class="provider-grid" data-profile-providers>
-                            <?php foreach ($providerOptions as $provider): ?>
-                                <button type="button" class="provider-card" data-provider-id="<?php echo (int) $provider['id']; ?>" data-provider-label="<?php echo htmlspecialchars($provider['label'], ENT_QUOTES, 'UTF-8'); ?>" aria-pressed="false" <?php echo $isAuthenticated ? '' : 'disabled'; ?>>
-                                    <span class="provider-card__logo" aria-hidden="true">
-                                        <img src="<?php echo htmlspecialchars($provider['logo'], ENT_QUOTES, 'UTF-8'); ?>" alt="" loading="lazy">
-                                    </span>
-                                    <span class="provider-card__label"><?php echo htmlspecialchars($provider['label'], ENT_QUOTES, 'UTF-8'); ?></span>
-                                </button>
-                            <?php endforeach; ?>
-                        </div>
-                        <div class="provider-grid__actions">
-                            <button type="button" class="profile-button profile-button--ghost profile-button--compact" data-profile-open-modal="providers-catalog" aria-controls="providersCatalogModal" <?php echo $isAuthenticated && $hasStreamingProvidersCatalog ? '' : 'disabled'; ?>>Outros provedores</button>
-                        </div>
-                    </section>
-                </div>
-            </div>
-            <footer class="profile-modal__footer">
-                <div class="profile-feedback" data-profile-feedback role="status" aria-live="polite"<?php echo $initialFeedbackTone ? ' data-feedback-tone="' . htmlspecialchars($initialFeedbackTone, ENT_QUOTES, 'UTF-8') . '"' : ''; ?>>
-                    <?php if ($initialFeedbackMessage !== null): ?>
-                        <?php echo htmlspecialchars($initialFeedbackMessage, ENT_QUOTES, 'UTF-8'); ?>
-                    <?php endif; ?>
-                </div>
-                <button type="button" class="profile-button profile-button--ghost" data-profile-modal-close>Cancelar</button>
-                <button type="button" class="profile-button profile-button--primary" data-profile-save <?php echo $isAuthenticated ? '' : 'disabled'; ?>>Salvar alterações</button>
-            </footer>
+    <!-- Painel Lateral: Catálogo de Provedores -->
+    <aside class="side-panel" data-side-panel="providers" aria-label="Catálogo completo de provedores" hidden>
+        <div class="side-panel__header">
+            <h2 class="side-panel__title">Todos os Provedores</h2>
+            <button type="button" class="side-panel__close" data-close-panel aria-label="Fechar painel">&times;</button>
         </div>
-    </div>
-    <div class="profile-modal profile-modal--sidecar" data-profile-modal="providers-catalog" role="dialog" aria-modal="false" aria-labelledby="providersCatalogTitle" aria-hidden="true" id="providersCatalogModal">
-        <div class="profile-modal__window profile-modal__window--sidecar" role="document">
-            <header class="profile-modal__header profile-modal__header--sidecar">
-                <div class="profile-modal__heading">
-                    <h2 class="profile-modal__title" id="providersCatalogTitle">Outros provedores</h2>
-                    <p class="profile-modal__subtitle">Selecione outros serviços de streaming disponíveis para assinatura.</p>
+        <div class="side-panel__body">
+            <?php if ($hasStreamingProvidersCatalog): ?>
+                <div class="providers-catalog__search">
+                    <input type="search" class="providers-catalog__search-field" placeholder="Buscar provedores" data-profile-providers-search>
                 </div>
-                <button type="button" class="profile-modal__close" data-profile-modal-close aria-label="Fechar">&times;</button>
-            </header>
-            <div class="profile-modal__body profile-modal__body--sidecar">
-                <?php if ($hasStreamingProvidersCatalog): ?>
-                    <div class="providers-catalog__search">
-                        <label for="providersCatalogSearch" class="sr-only">Buscar provedores</label>
-                        <input type="search" id="providersCatalogSearch" class="providers-catalog__search-field" placeholder="Buscar provedores" data-profile-providers-search <?php echo $isAuthenticated ? '' : 'disabled'; ?> data-profile-modal-focus>
-                    </div>
-                    <div class="providers-catalog" data-profile-providers-catalog>
-                        <?php foreach ($streamingProvidersCatalog as $initial => $providersGroup): ?>
-                            <?php $initialLabel = htmlspecialchars($initial, ENT_QUOTES, 'UTF-8'); ?>
-                            <section class="providers-catalog__group" data-provider-group aria-label="Provedores com inicial <?php echo $initialLabel; ?>">
-                                <h3 class="providers-catalog__group-title"><?php echo $initialLabel; ?></h3>
-                                <div class="providers-catalog__grid">
-                                    <?php foreach ($providersGroup as $provider): ?>
-                                        <?php $providerLabel = htmlspecialchars($provider['label'], ENT_QUOTES, 'UTF-8'); ?>
-                                        <button type="button" class="providers-catalog__item" data-provider-id="<?php echo (int) $provider['id']; ?>" data-provider-label="<?php echo $providerLabel; ?>" aria-pressed="false" <?php echo $isAuthenticated ? '' : 'disabled'; ?>>
-                                            <span class="providers-catalog__item-logo" aria-hidden="true">
-                                                <?php if (!empty($provider['logo'])): ?>
-                                                    <img src="<?php echo htmlspecialchars($provider['logo'], ENT_QUOTES, 'UTF-8'); ?>" alt="" loading="lazy">
-                                                <?php else: ?>
-                                                    <span class="providers-catalog__item-fallback"><?php echo htmlspecialchars(wyw_initial_letter($provider['label']), ENT_QUOTES, 'UTF-8'); ?></span>
-                                                <?php endif; ?>
-                                            </span>
-                                            <span class="providers-catalog__item-label"><?php echo $providerLabel; ?></span>
-                                        </button>
-                                    <?php endforeach; ?>
-                                </div>
-                            </section>
-                        <?php endforeach; ?>
-                    </div>
-                    <p class="providers-catalog__empty" data-profile-providers-empty hidden>Nenhum provedor encontrado com esse nome.</p>
-                <?php else: ?>
-                    <p class="providers-catalog__fallback">Não encontramos outros provedores de streaming no momento.</p>
+                <div class="providers-catalog" data-profile-providers-catalog>
+                    <?php foreach ($streamingProvidersCatalog as $initial => $providersGroup): ?>
+                        <section class="providers-catalog__group" data-provider-group>
+                            <h3 class="providers-catalog__group-title"><?php echo htmlspecialchars($initial, ENT_QUOTES, 'UTF-8'); ?></h3>
+                            <div class="providers-catalog__grid">
+                                <?php foreach ($providersGroup as $provider): ?>
+                                    <button type="button" class="providers-catalog__item" data-provider-id="<?php echo (int) $provider['id']; ?>" data-provider-label="<?php echo htmlspecialchars($provider['label'], ENT_QUOTES, 'UTF-8'); ?>" aria-pressed="false">
+                                        <span class="providers-catalog__item-logo">
+                                            <?php if (!empty($provider['logo'])): ?>
+                                                <img src="<?php echo htmlspecialchars($provider['logo'], ENT_QUOTES, 'UTF-8'); ?>" alt="" loading="lazy">
+                                            <?php else: ?>
+                                                <span class="providers-catalog__item-fallback"><?php echo htmlspecialchars(wyw_initial_letter($provider['label']), ENT_QUOTES, 'UTF-8'); ?></span>
+                                            <?php endif; ?>
+                                        </span>
+                                        <span class="providers-catalog__item-label"><?php echo htmlspecialchars($provider['label'], ENT_QUOTES, 'UTF-8'); ?></span>
+                                    </button>
+                                <?php endforeach; ?>
+                            </div>
+                        </section>
+                    <?php endforeach; ?>
+                </div>
+                <p class="providers-catalog__empty" data-profile-providers-empty hidden>Nenhum provedor encontrado</p>
+            <?php endif; ?>
+        </div>
+    </aside>
+
+    <!-- Rodapé Fixo com Ações (aparece nas tabs de edição) -->
+    <footer class="profile-footer" data-profile-footer hidden>
+        <div class="profile-footer__content">
+            <div class="profile-feedback" data-profile-feedback role="status" aria-live="polite"<?php echo $initialFeedbackTone ? ' data-feedback-tone="' . htmlspecialchars($initialFeedbackTone, ENT_QUOTES, 'UTF-8') . '"' : ''; ?>>
+                <?php if ($initialFeedbackMessage !== null): ?>
+                    <?php echo htmlspecialchars($initialFeedbackMessage, ENT_QUOTES, 'UTF-8'); ?>
                 <?php endif; ?>
             </div>
+            <div class="profile-footer__actions">
+                <button type="button" class="btn btn--ghost" data-profile-cancel>Cancelar</button>
+                <button type="button" class="btn btn--primary" data-profile-save>Salvar Alterações</button>
+            </div>
         </div>
-    </div>
+    </footer>
 
-
-    <section class="profile-card profile-card--shortcuts" aria-labelledby="shortcutsTitle">
+    <section class="profile-card profile-card--shortcuts" aria-labelledby="shortcutsTitle" style="display: none;">
         <header class="profile-card__header">
             <div>
                 <h2 class="profile-card__title" id="shortcutsTitle">Minhas listas e atalhos</h2>
@@ -822,6 +914,6 @@ $favoritesList = $favorites;
 </main>
 
 <script src="js/script.js"></script>
-<script src="js/profile.js" defer></script>
+<script src="js/profile-v2.js" defer></script>
 </body>
 </html>

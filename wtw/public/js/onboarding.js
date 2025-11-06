@@ -8,11 +8,9 @@
 
   const steps = Array.from(modal.querySelectorAll('[data-onboarding-step]'));
   const genresStepElement = modal.querySelector('[data-onboarding-step="genres"]');
-  const previewStepElement = modal.querySelector('[data-onboarding-step="preview"]');
   const providersStepElement = modal.querySelector('[data-onboarding-step="providers"]');
   const favoritesStepElement = modal.querySelector('[data-onboarding-step="favorites"]');
   const genresStepIndex = genresStepElement ? steps.indexOf(genresStepElement) : 0;
-  const previewStepIndex = previewStepElement ? steps.indexOf(previewStepElement) : -1;
   const providersStepIndex = providersStepElement ? steps.indexOf(providersStepElement) : -1;
   const favoritesStepIndex = favoritesStepElement ? steps.indexOf(favoritesStepElement) : -1;
   const progressDots = Array.from(modal.querySelectorAll('[data-onboarding-progress-step]'));
@@ -21,9 +19,6 @@
   const finishButton = modal.querySelector('[data-onboarding-action="finish"]');
   const skipButton = modal.querySelector('[data-onboarding-action="skip"]');
   const errorBox = modal.querySelector('[data-onboarding-error]');
-  const previewStatus = modal.querySelector('[data-onboarding-preview-status]');
-  const previewList = modal.querySelector('[data-onboarding-preview-list]');
-  const previewRefreshButton = modal.querySelector('[data-onboarding-preview-refresh]');
   const genresGrid = modal.querySelector('[data-onboarding-genres]');
   const keywordsGrid = modal.querySelector('[data-onboarding-keywords]');
   const keywordForm = modal.querySelector('[data-onboarding-keyword-form]');
@@ -53,15 +48,55 @@
     favoritesQuery: '',
     favoritesDebounce: null,
     favoriteAbortController: null,
-    previewLoaded: false,
-    previewLoading: false,
-    previewResults: [],
-    previewAbortController: null,
+    recommendationsLoaded: false,
+    recommendationsAbortController: null,
     initialised: false,
+    retryAttempts: {},
   };
 
   function normaliseLabel(label) {
     return String(label || '').trim().replace(/\s+/g, ' ');
+  }
+
+  async function fetchWithRetry(url, options = {}, retries = 2) {
+    const retryKey = url.split('?')[0]; // Usa a URL base como chave
+    
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      try {
+        const response = await fetch(url, options);
+        
+        // Se foi bem-sucedido, limpa o contador de tentativas
+        if (response.ok) {
+          delete state.retryAttempts[retryKey];
+          return response;
+        }
+        
+        // Se for erro 502 e ainda há tentativas, aguarda antes de tentar novamente
+        if (response.status === 502 && attempt < retries) {
+          const delay = Math.min(1000 * Math.pow(2, attempt), 3000); // Exponential backoff
+          await new Promise(resolve => setTimeout(resolve, delay));
+          continue;
+        }
+        
+        // Para outros erros ou última tentativa, retorna a resposta
+        return response;
+      } catch (error) {
+        // Se for AbortError, não tenta novamente
+        if (error.name === 'AbortError') {
+          throw error;
+        }
+        
+        // Se for erro de rede e ainda há tentativas, aguarda antes de tentar novamente
+        if (attempt < retries) {
+          const delay = Math.min(1000 * Math.pow(2, attempt), 3000);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          continue;
+        }
+        
+        // Última tentativa, lança o erro
+        throw error;
+      }
+    }
   }
 
   function collectFavoriteFilters() {
@@ -392,17 +427,32 @@
     setPreviewLoading(true, { showSkeleton: true });
 
     try {
-      const response = await fetch(url, {
+      const response = await fetchWithRetry(url, {
         method: 'GET',
         credentials: 'same-origin',
         signal: controller.signal,
       });
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
+        const errorMessage = response.status === 502 
+          ? 'Servidor temporariamente indisponível. Tente novamente em alguns segundos.'
+          : `Erro HTTP ${response.status}`;
+        throw new Error(errorMessage);
       }
       const data = await response.json();
       if (!data || data.ok !== true) {
-        throw new Error(data && data.error ? data.error : 'invalid_response');
+        const errorMsg = data && data.error ? data.error : 'invalid_response';
+        console.warn('Resposta de recomendações:', data);
+        // Se retornou erro mas com results vazios, não é crítico
+        if (errorMsg === 'recommendations_unavailable' && Array.isArray(data.results)) {
+          console.warn('Recomendações temporariamente indisponíveis, mostrando vazio');
+          const normalisedResults = renderPreviewResults([]);
+          state.previewResults = normalisedResults;
+          state.previewLoaded = true;
+          const userMessage = data.message ? `Erro: ${data.message}` : 'Não foi possível carregar recomendações agora. Tente ajustar suas preferências ou recarregar.';
+          setPreviewStatus(userMessage);
+          return;
+        }
+        throw new Error(errorMsg);
       }
 
       const results = Array.isArray(data.results) ? data.results : [];
@@ -419,14 +469,14 @@
       if (error.name === 'AbortError') {
         return;
       }
-      console.error('Falha ao carregar recomendações do onboarding', error);
+      console.error('Falha ao carregar recomendações do onboarding:', error.message);
       state.previewLoaded = false;
       state.previewResults = [];
       if (previewList) {
         previewList.classList.add('is-empty');
         previewList.textContent = 'Não foi possível carregar as recomendações agora.';
       }
-      setPreviewStatus('Não foi possível carregar as recomendações agora. Tente novamente.');
+      setPreviewStatus(error.message || 'Não foi possível carregar as recomendações agora. Tente novamente.');
     } finally {
       setPreviewLoading(false);
       state.previewAbortController = null;
@@ -560,8 +610,7 @@
   function updateNavigation() {
     const isFirst = state.stepIndex === 0;
     const isLast = state.stepIndex === totalSteps - 1;
-    const isPreviewStep = previewStepIndex !== -1 && state.stepIndex === previewStepIndex;
-    const disableForward = state.submitting || (isPreviewStep && state.previewLoading);
+    const disableForward = state.submitting;
 
     if (backButton) {
       backButton.disabled = isFirst || state.submitting;
@@ -579,21 +628,18 @@
     if (skipButton) {
       skipButton.disabled = state.submitting;
     }
-    updatePreviewControls();
   }
 
   function showStep(index) {
     state.stepIndex = Math.min(Math.max(index, 0), totalSteps - 1);
     steps.forEach((step, i) => { step.hidden = i !== state.stepIndex; });
     progressDots.forEach((dot, i) => { dot.classList.toggle('is-active', i === state.stepIndex); });
-    setError(''); updateNavigation();
+    setError(''); 
+    updateNavigation();
 
-    if (state.stepIndex === previewStepIndex) {
-      preloadPreview();
-    }
-
+    // Carrega favoritos/recomendações quando entrar na etapa de favoritos
     if (!state.favoritesLoaded && state.stepIndex === favoritesStepIndex) {
-      preloadFavorites(true); // força primeira busca com filtros atuais
+      preloadFavorites(true);
     }
   }
 
@@ -615,21 +661,10 @@
   }
 
   function handlePreferenceChange() {
-    if (previewStepIndex !== -1) {
-      if (state.stepIndex === previewStepIndex) {
-        preloadPreview(true);
-      } else {
-        state.previewLoaded = false;
-        state.previewResults = [];
-      }
-    }
-
+    // Quando preferências mudam, reseta o cache de favoritos/recomendações
     if (favoritesStepIndex !== -1) {
-      if (state.stepIndex === favoritesStepIndex) {
-        preloadFavorites(true);
-      } else {
-        state.favoritesLoaded = false;
-      }
+      state.favoritesLoaded = false;
+      state.recommendationsLoaded = false;
     }
   }
 
@@ -721,6 +756,12 @@
       mediaSpan.appendChild(fallback);
     }
     button.appendChild(mediaSpan);
+    
+    // Adiciona o título do filme/série
+    const labelSpan = document.createElement('span');
+    labelSpan.className = 'onboarding-card__label';
+    labelSpan.textContent = item.label;
+    button.appendChild(labelSpan);
 
     return button;
   }
@@ -834,31 +875,136 @@
     setFavoritesLoading(true);
 
     try {
-      const response = await fetch(url, {
+      // Carrega resultados de busca OU títulos personalizados
+      const response = await fetchWithRetry(url, {
         method: 'GET',
         credentials: 'same-origin',
         signal: controller.signal,
       });
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
+        const errorMessage = response.status === 502 
+          ? 'Servidor temporariamente indisponível'
+          : `Erro HTTP ${response.status}`;
+        throw new Error(errorMessage);
       }
       const data = await response.json();
       if (!data || data.ok !== true) {
-        throw new Error('invalid_response');
+        const errorMsg = data && data.error ? data.error : 'invalid_response';
+        if (errorMsg === 'tmdb_unavailable' && Array.isArray(data.results)) {
+          console.warn('TMDB temporariamente indisponível, mostrando resultados vazios');
+          renderFavoriteResults([]);
+          return;
+        }
+        throw new Error(errorMsg);
       }
-      renderFavoriteResults(data.results || []);
+      
+      let results = data.results || [];
+      
+      // Se não há query de busca E ainda não carregamos recomendações, mescla com títulos gerais
+      if (!query && !state.recommendationsLoaded) {
+        console.log('🎬 Carregando títulos gerais para mesclar...');
+        const generalTitles = await loadGeneralTitlesQuietly();
+        console.log('🎬 Títulos gerais recebidos:', generalTitles.length);
+        console.log('🎬 Títulos filtrados por preferências:', results.length);
+        
+        if (generalTitles && generalTitles.length > 0) {
+          // Mescla títulos filtrados (baseados em preferências) com títulos gerais
+          const maxTotal = 18;
+          
+          // Remove duplicatas: títulos filtrados têm prioridade
+          const filteredKeys = new Set(results.map(r => `${r.media_type || 'movie'}:${r.tmdb_id || r.id}`));
+          const uniqueGeneralTitles = generalTitles.filter(r => {
+            const key = `${r.media_type || 'movie'}:${r.tmdb_id || r.id}`;
+            return !filteredKeys.has(key);
+          });
+          
+          console.log('🎬 Títulos gerais únicos:', uniqueGeneralTitles.length);
+          
+          // Mescla intercalando: 2 filtrados, 1 geral, 2 filtrados, 1 geral...
+          const merged = [];
+          let filteredIndex = 0;
+          let generalIndex = 0;
+          
+          while (merged.length < maxTotal) {
+            // Adiciona 2 títulos filtrados
+            for (let i = 0; i < 2 && filteredIndex < results.length && merged.length < maxTotal; i++) {
+              merged.push(results[filteredIndex++]);
+            }
+            // Adiciona 1 título geral
+            if (generalIndex < uniqueGeneralTitles.length && merged.length < maxTotal) {
+              merged.push(uniqueGeneralTitles[generalIndex++]);
+            }
+            // Evita loop infinito
+            if (filteredIndex >= results.length && generalIndex >= uniqueGeneralTitles.length) {
+              break;
+            }
+          }
+          
+          results = merged;
+          console.log('🎬 Total de resultados após mesclagem:', results.length);
+        }
+        state.recommendationsLoaded = true;
+      }
+      
+      renderFavoriteResults(results);
     } catch (error) {
       if (error.name === 'AbortError') {
         return;
       }
-      console.error('Falha ao buscar títulos populares', error);
+      console.error('Falha ao buscar títulos:', error.message);
       clearFavoriteResults();
       if (favoritesEmpty) {
-        favoritesEmpty.textContent = 'Não foi possível carregar os títulos agora.';
+        favoritesEmpty.textContent = error.message === 'Servidor temporariamente indisponível'
+          ? 'Servidor temporariamente indisponível. Aguarde alguns segundos e tente novamente.'
+          : 'Não foi possível carregar os títulos agora.';
         favoritesEmpty.hidden = false;
       }
     } finally {
       setFavoritesLoading(false);
+    }
+  }
+
+  async function loadGeneralTitlesQuietly() {
+    // Carrega títulos gerais (trending) sem filtros de preferências
+    const endpoint = config.titlesEndpoint || (
+      config.apiUrl ? `${config.apiUrl}${config.apiUrl.includes('?') ? '&' : '?'}resource=titles` : null
+    );
+    
+    console.log('🔍 Endpoint de títulos gerais:', endpoint);
+    
+    if (!endpoint) {
+      console.warn('⚠️ Endpoint de títulos não configurado');
+      return [];
+    }
+
+    try {
+      console.log('🌐 Fazendo requisição para títulos gerais (sem filtros)...');
+      const response = await fetchWithRetry(endpoint, {
+        method: 'GET',
+        credentials: 'same-origin',
+      }, 1);
+
+      console.log('📡 Resposta recebida:', response.ok, response.status);
+      
+      if (!response.ok) {
+        console.warn('⚠️ Resposta não OK:', response.status);
+        return [];
+      }
+      
+      const data = await response.json();
+      console.log('📦 Dados recebidos (títulos gerais)');
+      
+      if (!data || data.ok !== true) {
+        console.warn('⚠️ Dados inválidos ou ok !== true');
+        return [];
+      }
+      
+      const results = Array.isArray(data.results) ? data.results : [];
+      console.log('✅ Títulos gerais processados:', results.length);
+      return results;
+    } catch (error) {
+      console.error('❌ Erro ao carregar títulos gerais:', error.message);
+      return [];
     }
   }
 
@@ -887,7 +1033,7 @@
 
   function toggleFavorite(button) {
     if (!button) return;
-    if (state.stepIndex === totalSteps - 1) {
+    if (state.stepIndex === favoritesStepIndex) {
       setError('');
     }
     const id = Number(button.dataset.favoriteId);
@@ -898,9 +1044,16 @@
     const logo = button.dataset.favoriteLogo || '';
     const logoPath = button.dataset.favoriteLogoPath || '';
     const key = button.dataset.favoriteKey || makeFavoriteKey(id, mediaType);
+    
     if (state.favorites.has(key)) {
       state.favorites.delete(key);
       button.classList.remove('is-selected');
+      
+      // Atualiza todos os botões com o mesmo ID em todos os grids
+      if (favoritesGrid) {
+        const matchingButtons = favoritesGrid.querySelectorAll(`[data-favorite-key="${key}"]`);
+        matchingButtons.forEach(btn => btn.classList.remove('is-selected'));
+      }
     } else {
       state.favorites.set(key, {
         id,
@@ -910,6 +1063,12 @@
         logoPath,
       });
       button.classList.add('is-selected');
+      
+      // Atualiza todos os botões com o mesmo ID em todos os grids
+      if (favoritesGrid) {
+        const matchingButtons = favoritesGrid.querySelectorAll(`[data-favorite-key="${key}"]`);
+        matchingButtons.forEach(btn => btn.classList.add('is-selected'));
+      }
     }
     refreshSelectedFavorites();
   }
@@ -956,17 +1115,12 @@
     });
   }
 
-  if (previewRefreshButton) {
-    previewRefreshButton.addEventListener('click', () => {
-      const anchor = pickPreviewAnchor();
-      loadPreviewRecommendations(anchor ? { anchor, reset: true } : { reset: true });
-    });
-  }
-
   if (favoritesGrid) {
     favoritesGrid.addEventListener('click', (event) => {
       const target = event.target.closest('[data-favorite-id]');
       if (!target) return;
+      event.preventDefault();
+      event.stopPropagation();
       toggleFavorite(target);
     });
   }
@@ -975,6 +1129,8 @@
     favoritesSelectedGrid.addEventListener('click', (event) => {
       const target = event.target.closest('[data-favorite-id]');
       if (!target) return;
+      event.preventDefault();
+      event.stopPropagation();
       toggleFavorite(target);
     });
   }
@@ -996,19 +1152,15 @@
   function validateStep(index) {
     if (index === genresStepIndex) {
       if (state.genres.size === 0 && state.keywords.size === 0) {
-        setError('Selecione pelo menos um gênero ou palavra-chave para continuar.');
+        setError('👆 Selecione pelo menos um gênero ou palavra-chave para continuar.');
         return false;
       }
       return true;
     }
 
-    if (index === previewStepIndex) {
-      return true;
-    }
-
     if (index === providersStepIndex) {
       if (state.providers.size === 0) {
-        setError('Escolha pelo menos um provedor disponível para você.');
+        setError('📺 Escolha pelo menos um provedor disponível para você.');
         return false;
       }
       return true;
@@ -1016,7 +1168,7 @@
 
     if (index === favoritesStepIndex) {
       if (state.favorites.size === 0) {
-        setError('Selecione ao menos um título favorito.');
+        setError('🎬 Selecione ao menos um título favorito para personalizar suas recomendações.');
         return false;
       }
       return true;
@@ -1102,10 +1254,9 @@
       body.classList.add('onboarding-open');
       backdrop.setAttribute('aria-hidden', 'false');
       applyInitialSelections(config.existing);
-      state.previewLoaded = false;
-      state.previewResults = [];
       state.favoritesLoaded = false;
       state.favoritesQuery = '';
+      state.recommendationsLoaded = false;
       showStep(0);
     });
   }

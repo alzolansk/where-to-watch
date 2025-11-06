@@ -17,6 +17,7 @@ wyw_load_env(ROOT_PATH);
 // Carrega funções utilitárias
 require_project_file('includes/db.php');
 require_project_file('includes/tmdb.php');
+require_project_file('includes/personalization-cache.php');
 
 // Configurações de erro baseadas no ambiente
 $appEnv = wyw_env('APP_ENV', 'production');
