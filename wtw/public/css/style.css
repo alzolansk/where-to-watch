@@ -57,6 +57,14 @@ body{
     background-attachment: fixed, fixed, scroll;
 }
 
+/* Melhorar estados de focus para navegação por teclado */
+button:focus-visible,
+a:focus-visible {
+    outline: 3px solid rgba(59, 130, 246, 0.8);
+    outline-offset: 3px;
+    border-radius: 4px;
+}
+
 .media-section,
 .media-section .container {
     position: relative;
@@ -76,12 +84,40 @@ body{
     width: 80px;   /* Ajuste conforme necessario */
     height: 80px;
     display: block;
+    filter: drop-shadow(0 4px 12px rgba(215, 23, 30, 0.3));
 }
 
 .iris {
     display: flex;
     flex-direction: column;  /* Para empilhar o SVG e o texto */
     align-items: center;
+    animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+.iris::after {
+    content: 'Carregando...';
+    margin-top: 16px;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.7);
+    animation: pulse-text 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-text {
+    0%, 100% {
+        opacity: 0.5;
+    }
+    50% {
+        opacity: 1;
+    }
 }
 
 /*.spinner {
@@ -122,8 +158,23 @@ body{
 .skeleton-block {
     position: relative;
     overflow: hidden;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.06));
+    background: linear-gradient(
+        135deg, 
+        rgba(255, 255, 255, 0.12), 
+        rgba(255, 255, 255, 0.04)
+    );
     border-radius: 16px;
+    /* Adicionar pulse suave */
+    animation: skeleton-pulse 2s ease-in-out infinite;
+}
+
+@keyframes skeleton-pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.8;
+    }
 }
 
 .skeleton-block::after {
@@ -131,12 +182,21 @@ body{
     position: absolute;
     inset: 0;
     transform: translateX(-100%);
-    background: linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0));
-    animation: skeleton-shimmer 1.6s ease-in-out infinite;
+    /* Suavizar o shimmer */
+    background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0),
+        rgba(255, 255, 255, 0.15),
+        rgba(255, 255, 255, 0)
+    );
+    animation: skeleton-shimmer 2s ease-in-out infinite;
 }
 
 @keyframes skeleton-shimmer {
-    100% {
+    0% {
+        transform: translateX(-100%);
+    }
+    50%, 100% {
         transform: translateX(100%);
     }
 }
@@ -315,17 +375,45 @@ body{
     gap: 14px;
     padding: 8px 10px;
     background: linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05)); /*Glass transparency*/
-    backdrop-filter: blur(20px) saturate(180%);
-    -webkit-backdrop-filter: blur(20px) saturate(180%);
     border: 1px solid rgba(255, 255, 255, 0.034);
     border-radius: 10px;
+}
+
+/* Otimizar backdrop-filter */
+@supports (backdrop-filter: blur(20px)) {
+    .provider-btn-div {
+        backdrop-filter: blur(20px) saturate(180%);
+        -webkit-backdrop-filter: blur(20px) saturate(180%);
+    }
+}
+
+@supports not (backdrop-filter: blur(20px)) {
+    .provider-btn-div {
+        background: rgba(0, 0, 0, 0.8);
+    }
 }
 
 .provider-btn-container button {
     background: transparent;
     border: none;
     padding: 10px;
-    transition: 0.2s ease-in-out;
+    position: relative;
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+                filter 0.2s ease;
+}
+
+.provider-btn-container button::before {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.1);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.provider-btn-container button:hover::before {
+    opacity: 1;
 }
 
 .provider-btn-container img {
@@ -335,11 +423,22 @@ body{
 }
 
 .provider-btn-container button:hover{
-    transform: scale(1.15) translateX(-5%);
+    transform: scale(1.1);
+    filter: brightness(1.2);
+}
+
+.provider-btn-container button:active {
+    transform: scale(1.05);
 }
 
 .provider-btn-container button:focus{
     outline: none;
+}
+
+.provider-btn-container button:focus-visible {
+    outline: 3px solid rgba(59, 130, 246, 0.8);
+    outline-offset: 3px;
+    border-radius: 4px;
 }
 
 /*Galeria de Em Breve*/
@@ -396,13 +495,14 @@ body{
     border: 0;
     border-bottom: 2px solid rgba(255, 255, 255, 0.8);
     opacity: 0.75;
-    transition: opacity 0.25s ease, border-color 0.25s ease, transform 0.25s ease;
+    transform: scaleX(1);
+    transform-origin: left;
+    transition: opacity 0.25s ease, transform 0.25s ease;
 }
 
 .hero-progress__segment.is-active {
-    border-bottom-color: var(--text-dim);
     opacity: 1;
-    transform: scaleY(1.2);
+    transform: scaleX(1.2) scaleY(1.2);
 }
 
 @media (max-width: 720px) {
@@ -436,9 +536,12 @@ body{
     color: #f0eff6;
     transform: translateY(18px) scale(0.96);
     opacity: 0.65;
-    transition: transform 0.6s ease, opacity 0.6s ease, box-shadow 0.6s ease;
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), 
+                opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), 
+                box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: pointer;
     display: flex;
+    will-change: transform, opacity;
 }
 
 .backdropContainer.active {
@@ -611,7 +714,8 @@ body{
     object-fit: cover;
     filter: brightness(0.78) saturate(1.08);
     transform: scale(1.04);
-    transition: transform 1.2s ease;
+    transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform;
 }
 
 .backdropContainer.active .hero-card__backdrop {
@@ -795,7 +899,26 @@ body{
     letter-spacing: 0.04em;
     font-size: clamp(0.9rem, 1.8vw, 1rem);
     cursor: pointer;
+    position: relative;
+    overflow: hidden;
     transition: transform 0.3s ease, background 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hero-card__action::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.2),
+        rgba(255, 255, 255, 0)
+    );
+    transform: translateX(-100%);
+    transition: transform 0.4s ease;
+}
+
+.hero-card__action:hover::before {
+    transform: translateX(100%);
 }
 
 .hero-card__action--primary {
@@ -809,7 +932,12 @@ body{
 }
 
 .hero-card__action:hover {
-    transform: translateY(-2px);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.hero-card__action:active {
+    transform: translateY(-1px);
 }
 
 .hero-card__action--ghost:hover {
@@ -819,6 +947,12 @@ body{
 .hero-card__action--disabled {
     opacity: 0.5;
     pointer-events: none;
+}
+
+.hero-card__action:focus-visible {
+    outline: 3px solid rgba(255, 255, 255, 0.8);
+    outline-offset: 3px;
+    transform: translateY(-2px);
 }
 
 .hero-card__action-icon {
@@ -1333,7 +1467,9 @@ button.prev:active, button.next:active {
     align-items: center;
     justify-content: center;
     opacity: 0;
-    transition: opacity 0.3s, transform 0.3s;
+    transition: opacity 0.3s ease, 
+                transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                background 0.2s ease;
     pointer-events: auto;
     z-index: 2;
 }
@@ -1345,9 +1481,31 @@ button.prev:active, button.next:active {
 
 .slider-prev { left: 0; }
 .slider-next { right: 0; }
+
 .nav-arrow:hover {
     opacity: 1;
-    transform: translateY(-50%) scale(1.1);
+    transform: translateY(-50%) scale(1.08);
+    background: rgba(0, 0, 0, 0.7);
+}
+
+.nav-arrow:active {
+    transform: translateY(-50%) scale(1.02);
+}
+
+/* Adicionar indicador visual quando desabilitado */
+.nav-arrow:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* Melhorar visibilidade em mobile */
+@media (max-width: 768px) {
+    .nav-arrow {
+        opacity: 0.8;
+        width: 40px;
+        height: 100px;
+    }
 }
 
 /* User's navigation area*/
@@ -1372,17 +1530,67 @@ button.prev:active, button.next:active {
     cursor: pointer;
     font-size: 16px;
     border-radius: 30px;
-    transition: background-color 0.5s ease, color 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-category::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        135deg, 
+        rgba(219, 5, 5, 0.1), 
+        rgba(255, 3, 3, 0.3)
+    );
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.btn-category:hover::before {
+    opacity: 1;
 }
 
 .btn-category.active {
     box-shadow:  2px 2px 8px 0.2px #c410224b;
     background: linear-gradient(135deg, rgba(219, 5, 5, 0.226), rgba(255, 3, 3, 0.589));
     color: white;
+    transform: scale(1.02);
+}
+
+/* Adicionar ripple effect */
+.btn-category:active::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+        circle at center,
+        rgba(255, 255, 255, 0.3) 0%,
+        transparent 70%
+    );
+    animation: ripple 0.6s ease-out;
+}
+
+@keyframes ripple {
+    from {
+        transform: scale(0);
+        opacity: 1;
+    }
+    to {
+        transform: scale(2);
+        opacity: 0;
+    }
 }
 
 .btn-category:focus{
     outline: none;
+}
+
+.btn-category:focus-visible {
+    outline: 3px solid rgba(59, 130, 246, 0.8);
+    outline-offset: 3px;
+    border-radius: 4px;
 }
 
 .hidden {
@@ -1449,6 +1657,22 @@ button.prev:active, button.next:active {
         opacity: 1;
     }
 
+}
+
+/* Melhorar toque em dispositivos móveis */
+@media (hover: none) and (pointer: coarse) {
+    .media-section .row .description:hover {
+        transform: none;
+    }
+    
+    .media-section .row .description:active {
+        transform: scale(0.98);
+    }
+    
+    .hero-card__action,
+    .btn-category {
+        min-height: 44px; /* Área mínima de toque recomendada */
+    }
 }
 
 @media (max-width: 480px) {
@@ -1877,13 +2101,26 @@ button.prev:active, button.next:active {
     isolation: isolate;
     bottom: 0;
     transform-origin: center;
+    will-change: transform;
+}
+
+.media-section .row .description:focus-visible {
+    outline: 3px solid rgba(255, 255, 255, 0.6);
+    outline-offset: 4px;
+    transform: scale(1.04);
 }
 
 .media-section .row .description::before{
     content: "";
     position: absolute;
     inset: 0;
-    background: linear-gradient(140deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0) 45%);
+    /* Adicionar brilho sutil ao hover */
+    background: linear-gradient(
+        140deg,
+        rgba(255, 255, 255, 0.2) 0%,
+        rgba(255, 255, 255, 0.05) 45%,
+        rgba(255, 255, 255, 0) 100%
+    );
     opacity: 0;
     transition: opacity 0.35s ease;
     z-index: 1;
@@ -1924,11 +2161,16 @@ button.prev:active, button.next:active {
     object-fit: cover;
     border-radius: 0;
     transform: scale(1);
-    transition: transform 0.45s ease;
+    /* Melhorar transição do poster */
+    filter: brightness(0.95) saturate(1.05);
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                filter 0.3s ease,
+                border-radius 0.3s ease;
 }
 
 .media-section .row .description:hover .img-fluid{
-    transform: scale(1.05);
+    transform: scale(1.08);
+    filter: brightness(1.05) saturate(1.15);
 }
 
 .media-section .row .description .info{
