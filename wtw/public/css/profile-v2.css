@@ -277,6 +277,53 @@
 }
 
 /* ================================
+   SUB-SECTIONS (Watch Later / Favorites)
+   ================================ */
+
+.profile-subsection-tabs {
+    display: flex;
+    gap: var(--profile-space-sm);
+    margin-bottom: var(--profile-space-lg);
+    padding: 4px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: var(--profile-radius-md);
+    border: 1px solid var(--profile-border-soft);
+}
+
+.subsection-tab {
+    flex: 1;
+    padding: 12px 20px;
+    background: transparent;
+    color: var(--profile-text-secondary);
+    border: none;
+    border-radius: var(--profile-radius-sm);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 200ms ease;
+}
+
+.subsection-tab:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--profile-text-primary);
+}
+
+.subsection-tab--active {
+    background: var(--profile-accent-red-soft);
+    color: var(--profile-accent-red);
+    box-shadow: 0 2px 8px rgba(225, 29, 72, 0.15);
+}
+
+.profile-subsection {
+    display: none;
+}
+
+.profile-subsection--active {
+    display: block;
+}
+
+
+/* ================================
    SECTIONS & HEADERS
    ================================ */
 

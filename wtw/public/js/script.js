@@ -542,6 +542,86 @@ function scrollRight() {
     scrollToNextItem('right');
 }
 
+// ========== CONTROLE DE VISIBILIDADE DAS SETAS ==========
+
+// Atualiza a visibilidade das setas baseado na posição do scroll
+function updateHeroArrowsVisibility() {
+    const container = document.getElementById('container-wrap');
+    const btnLeft = document.getElementById('btnLeft');
+    const btnRight = document.getElementById('btnRight');
+    
+    if (!container || !btnLeft || !btnRight) {
+        return;
+    }
+    
+    const scrollLeft = container.scrollLeft;
+    const scrollWidth = container.scrollWidth;
+    const clientWidth = container.clientWidth;
+    const maxScroll = scrollWidth - clientWidth;
+    
+    // Se não há conteúdo para scroll (apenas 1 item ou menos), ocultar ambas as setas
+    if (maxScroll <= 10) {
+        btnLeft.classList.add('hidden');
+        btnRight.classList.add('hidden');
+        return;
+    }
+    
+    // Ocultar seta esquerda se estiver no início
+    if (scrollLeft <= 5) {
+        btnLeft.classList.add('hidden');
+    } else {
+        btnLeft.classList.remove('hidden');
+    }
+    
+    // Ocultar seta direita se estiver no fim
+    if (scrollLeft >= maxScroll - 5) {
+        btnRight.classList.add('hidden');
+    } else {
+        btnRight.classList.remove('hidden');
+    }
+}
+
+// Inicializa o controle das setas do hero carousel
+function initHeroArrowsControl() {
+    const container = document.getElementById('container-wrap');
+    
+    if (!container) {
+        return;
+    }
+    
+    // Atualizar ao carregar (com delay para garantir que o conteúdo foi carregado)
+    setTimeout(updateHeroArrowsVisibility, 200);
+    setTimeout(updateHeroArrowsVisibility, 500);
+    
+    // Atualizar durante o scroll
+    container.addEventListener('scroll', updateHeroArrowsVisibility, { passive: true });
+    
+    // Atualizar ao redimensionar a janela
+    window.addEventListener('resize', () => {
+        setTimeout(updateHeroArrowsVisibility, 100);
+    });
+    
+    // Observar mudanças no conteúdo do container
+    const observer = new MutationObserver(() => {
+        setTimeout(updateHeroArrowsVisibility, 150);
+    });
+    
+    observer.observe(container, {
+        childList: true,
+        subtree: false
+    });
+}
+
+// Executar quando o DOM estiver pronto
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initHeroArrowsControl);
+} else {
+    initHeroArrowsControl();
+}
+
+// Exportar função globalmente para ser usada por outros módulos
+window.updateHeroArrowsVisibility = updateHeroArrowsVisibility;
+
 // ========== MENU DE NAVEGAÇÃO ==========
 
 /* Menu */

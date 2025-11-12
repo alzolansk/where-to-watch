@@ -301,6 +301,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         await waitForImages(document);
         setMovieLoadingState(false);
         window.history.replaceState({}, '', `filme.php?id=${movieId}&type=${mediaType}`);
+        
+        // Inicializar botão de assistir mais tarde após carregamento completo
+        await initWatchLaterButton();
     }
 });
 
@@ -1225,6 +1228,159 @@ document.getElementById('closeItem')?.addEventListener('click', () => {
     const modal = document.getElementById('actorDialog');
     modal?.close?.();
 });
+
+// ========== FUNCIONALIDADE ASSISTIR MAIS TARDE ==========
+let isMovieInWatchLater = false;
+
+async function checkWatchLaterStatus(movieId) {
+    try {
+        const response = await fetch('api/watch-later.php');
+        console.log('Check status response:', response.status);
+        
+        if (!response.ok) {
+            console.warn('API não OK:', response.status);
+            return false;
+        }
+        
+        const data = await response.json();
+        console.log('Watch later data:', data);
+        
+        if (data.success && Array.isArray(data.movies)) {
+            return data.movies.some(movie => movie.movie_id === parseInt(movieId));
+        }
+        return false;
+    } catch (error) {
+        console.error('Erro ao verificar status de assistir mais tarde:', error);
+        return false;
+    }
+}
+
+async function toggleWatchLater(movieId, movieTitle, posterPath, backdropPath) {
+    const btn = document.getElementById('watchLaterBtn');
+    if (!btn) {
+        console.error('Botão watchLaterBtn não encontrado');
+        return;
+    }
+
+    console.log('Toggle watch later:', { movieId, movieTitle, isInList: isMovieInWatchLater });
+
+    const icon = btn.querySelector('.watch-later-icon');
+    const text = btn.querySelector('.watch-later-text');
+    
+    try {
+        if (isMovieInWatchLater) {
+            // Remover da lista
+            console.log('Removendo filme da lista...');
+            const response = await fetch('api/watch-later.php', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ movie_id: parseInt(movieId) })
+            });
+
+            const data = await response.json();
+            console.log('Delete response:', data);
+            
+            if (data.success) {
+                isMovieInWatchLater = false;
+                btn.classList.remove('is-active');
+                if (icon) icon.textContent = '🕒';
+                if (text) text.textContent = 'Assistir mais tarde';
+                console.log('✅ Filme removido com sucesso');
+            }
+        } else {
+            // Adicionar à lista
+            console.log('Adicionando filme à lista...');
+            
+            // Limpar e validar URLs
+            const cleanPoster = posterPath ? String(posterPath).trim() : '';
+            const cleanBackdrop = backdropPath ? String(backdropPath).trim() : '';
+            
+            const payload = {
+                movie_id: parseInt(movieId),
+                movie_title: String(movieTitle || '').trim(),
+                movie_poster: cleanPoster,
+                movie_backdrop: cleanBackdrop
+            };
+            
+            console.log('Payload:', payload);
+            
+            const response = await fetch('api/watch-later.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await response.json();
+            console.log('Post response:', data);
+            
+            if (data.success) {
+                isMovieInWatchLater = true;
+                btn.classList.add('is-active');
+                if (icon) icon.textContent = '✓';
+                if (text) text.textContent = 'Na lista';
+                console.log('✅ Filme adicionado com sucesso');
+            }
+        }
+    } catch (error) {
+        console.error('Erro ao alterar status de assistir mais tarde:', error);
+    }
+}
+
+// Inicializar botão de assistir mais tarde
+async function initWatchLaterButton() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const movieId = urlParams.get('id');
+    
+    if (!movieId) return;
+    
+    const btn = document.getElementById('watchLaterBtn');
+    if (!btn) {
+        console.warn('Botão watchLaterBtn não encontrado');
+        return;
+    }
+    
+    // Verificar status inicial
+    isMovieInWatchLater = await checkWatchLaterStatus(movieId);
+    
+    if (isMovieInWatchLater) {
+        btn.classList.add('is-active');
+        const icon = btn.querySelector('.watch-later-icon');
+        const text = btn.querySelector('.watch-later-text');
+        if (icon) icon.textContent = '✓';
+        if (text) text.textContent = 'Na lista';
+    }
+    
+    btn.setAttribute('data-movie-id', movieId);
+    
+    // Adicionar event listener (verificar se já existe antes)
+    if (!btn.dataset.listenerAdded) {
+        btn.addEventListener('click', async () => {
+            const movieTitle = document.getElementById('itemName')?.textContent || '';
+            const posterImg = document.getElementById('itemPoster');
+            const backdropImg = document.getElementById('backdropImage');
+            
+            // Pegar apenas o path, não a URL completa com domínio
+            let posterPath = null;
+            let backdropPath = null;
+            
+            if (posterImg && posterImg.src) {
+                const posterUrl = new URL(posterImg.src);
+                posterPath = posterUrl.pathname + posterUrl.search;
+            }
+            
+            if (backdropImg && backdropImg.src) {
+                const backdropUrl = new URL(backdropImg.src);
+                backdropPath = backdropUrl.pathname + backdropUrl.search;
+            }
+            
+            await toggleWatchLater(movieId, movieTitle, posterPath, backdropPath);
+        });
+        
+        btn.dataset.listenerAdded = 'true';
+    }
+    
+    console.log('✅ Botão Assistir Mais Tarde inicializado');
+}
 
 
 

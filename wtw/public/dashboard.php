@@ -1551,31 +1551,34 @@ $navStates = [
 
 #search-div .search-results {
     position: absolute;
-    top: calc(100% + 14px);
+    top: calc(100% + 12px);
     left: 0;
     right: 0;
     width: 100%;
-    max-height: min(calc(100vh - 160px), 480px);
+    max-height: min(calc(100vh - 160px), 520px);
     overflow-y: auto;
-    padding: 8px;
-    border-radius: 20px;
-    background: linear-gradient(155deg, rgba(14, 16, 30, 0.98), rgba(8, 10, 22, 0.96));
-    box-shadow: 
-        0 28px 64px rgba(0, 0, 0, 0.7),
-        0 8px 24px rgba(0, 0, 0, 0.5),
+    padding: 10px;
+    border-radius: 22px;
+    background: linear-gradient(155deg,
+                                rgba(12, 14, 26, 0.98),
+                                rgba(8, 10, 20, 0.96));
+    box-shadow:
+        0 32px 72px rgba(0, 0, 0, 0.75),
+        0 12px 32px rgba(0, 0, 0, 0.6),
+        0 4px 12px rgba(255, 93, 124, 0.1),
         inset 0 1px 0 rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(32px) saturate(180%) contrast(110%);
-    -webkit-backdrop-filter: blur(32px) saturate(180%) contrast(110%);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(40px) saturate(180%) contrast(110%);
+    -webkit-backdrop-filter: blur(40px) saturate(180%) contrast(110%);
     overscroll-behavior: contain;
     z-index: 999;
-    animation: searchDropdownIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    animation: searchDropdownIn 0.4s cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 @keyframes searchDropdownIn {
     from {
         opacity: 0;
-        transform: translateY(-12px) scale(0.96);
+        transform: translateY(-8px) scale(0.98);
     }
     to {
         opacity: 1;
@@ -1588,12 +1591,14 @@ $navStates = [
     position: absolute;
     inset: 0;
     border-radius: inherit;
-    background: 
-        radial-gradient(circle at 15% 20%, rgba(255, 80, 110, 0.18), transparent 40%),
-        radial-gradient(circle at 85% 80%, rgba(186, 85, 211, 0.12), transparent 45%);
+    background:
+        radial-gradient(circle at 20% 15%, rgba(255, 93, 124, 0.12), transparent 35%),
+        radial-gradient(circle at 80% 85%, rgba(186, 85, 211, 0.1), transparent 40%),
+        radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.06), transparent 50%);
     mix-blend-mode: screen;
     pointer-events: none;
-    opacity: 0.9;
+    opacity: 0.85;
+    z-index: 0;
 }
 
 #search-div .search-results::after {
@@ -1606,85 +1611,100 @@ $navStates = [
 }
 
 #search-div .search-results::-webkit-scrollbar {
-    width: 8px;
+    width: 6px;
 }
 
 #search-div .search-results::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.02);
+    background: rgba(255, 255, 255, 0.03);
     border-radius: 999px;
-    margin: 8px 0;
+    margin: 10px 0;
 }
 
 #search-div .search-results::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, rgba(255, 93, 124, 0.45), rgba(186, 85, 211, 0.4));
+    background: linear-gradient(180deg,
+                                rgba(255, 93, 124, 0.5),
+                                rgba(186, 85, 211, 0.45));
     border-radius: 999px;
-    border: 2px solid transparent;
+    border: 1px solid transparent;
     background-clip: padding-box;
-    transition: background 0.3s ease;
+    transition: background 0.25s ease;
 }
 
 #search-div .search-results::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(180deg, rgba(255, 93, 124, 0.65), rgba(186, 85, 211, 0.6));
+    background: linear-gradient(180deg,
+                                rgba(255, 93, 124, 0.7),
+                                rgba(186, 85, 211, 0.65));
     background-clip: padding-box;
 }
 
 .search-result-card {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 14px;
     padding: 10px;
     border-radius: 16px;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.01));
+    background:
+        linear-gradient(135deg,
+                        rgba(18, 20, 35, 0.6),
+                        rgba(12, 14, 25, 0.7)),
+        radial-gradient(circle at top left,
+                        rgba(255, 93, 124, 0.03),
+                        transparent 60%);
     border: 1px solid rgba(255, 255, 255, 0.06);
-    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: pointer;
     position: relative;
-    overflow: hidden;
+    overflow: visible;
     isolation: isolate;
+    backdrop-filter: blur(16px) saturate(140%);
+    box-shadow:
+        0 1px 3px rgba(0, 0, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.02);
+    animation: cardSlideIn 0.5s cubic-bezier(0.4, 0, 0.2, 1) backwards;
 }
 
-/* Borda gradiente animada */
+@keyframes cardSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Animated gradient glow on hover */
 .search-result-card::after {
     content: "";
     position: absolute;
-    inset: -2px;
+    inset: -1px;
     border-radius: inherit;
-    padding: 2px;
-    background: linear-gradient(135deg, 
-                                rgba(255, 93, 124, 0.6), 
-                                rgba(186, 85, 211, 0.5),
-                                rgba(255, 93, 124, 0.6));
-    background-size: 200% 200%;
-    -webkit-mask: 
-        linear-gradient(#fff 0 0) content-box, 
-        linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
+    background: linear-gradient(135deg,
+                                rgba(255, 93, 124, 0.8),
+                                rgba(186, 85, 211, 0.7),
+                                rgba(59, 130, 246, 0.6));
     opacity: 0;
+    filter: blur(8px);
     transition: opacity 0.4s ease;
-    animation: borderGradient 3s ease infinite;
     pointer-events: none;
-    z-index: 1;
-}
-
-@keyframes borderGradient {
-    0%, 100% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
+    z-index: -1;
 }
 
 .search-result-card:hover::after {
-    opacity: 1;
+    opacity: 0.6;
 }
 
 .search-result-card::before {
     content: "";
     position: absolute;
     inset: 0;
-    background: linear-gradient(135deg, rgba(255, 93, 124, 0.15), rgba(186, 85, 211, 0.1));
+    background: linear-gradient(135deg,
+                                rgba(25, 28, 45, 0.9),
+                                rgba(18, 21, 35, 0.95));
     opacity: 0;
-    transform: translateY(100%);
-    transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-    z-index: -1;
+    transition: opacity 0.4s ease;
+    z-index: 0;
     border-radius: inherit;
 }
 
@@ -1694,52 +1714,82 @@ $navStates = [
 
 .search-result-card:hover::before {
     opacity: 1;
-    transform: translateY(0);
-}
-
-.search-result-card:hover::after {
-    opacity: 1;
 }
 
 .search-result-card:hover {
-    transform: translateX(4px);
-    border-color: rgba(255, 255, 255, 0);
-    background: linear-gradient(135deg, rgba(255, 93, 124, 0.1), rgba(186, 85, 211, 0.08));
-    box-shadow: 
-        0 8px 24px rgba(0, 0, 0, 0.4),
-        0 2px 8px rgba(255, 93, 124, 0.2),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    transform: translateY(-4px) scale(1.01);
+    border-color: rgba(255, 255, 255, 0.12);
+    background:
+        linear-gradient(135deg,
+                        rgba(25, 28, 45, 0.85),
+                        rgba(18, 21, 35, 0.9)),
+        radial-gradient(circle at top left,
+                        rgba(255, 93, 124, 0.08),
+                        transparent 60%);
+    box-shadow:
+        0 16px 40px rgba(0, 0, 0, 0.6),
+        0 8px 16px rgba(255, 93, 124, 0.15),
+        0 4px 8px rgba(186, 85, 211, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 .search-result-card:active {
-    transform: translateX(2px) scale(0.98);
+    transform: translateY(-2px) scale(1);
+    transition-duration: 0.15s;
 }
 
 .search-result-card img {
-    width: 70px;
-    height: 100px;
-    min-width: 70px;
+    width: 56px;
+    height: 84px;
+    min-width: 56px;
     object-fit: cover;
     border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    box-shadow: 
+    border: 1.5px solid rgba(255, 255, 255, 0.1);
+    box-shadow:
         0 8px 20px rgba(0, 0, 0, 0.5),
-        0 2px 6px rgba(0, 0, 0, 0.3);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+        0 2px 6px rgba(0, 0, 0, 0.3),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
-    z-index: 1;
+    z-index: 2;
 }
 
 .search-result-card:hover img {
-    transform: scale(1.05) translateY(-2px);
-    box-shadow: 
-        0 12px 28px rgba(0, 0, 0, 0.6),
-        0 4px 12px rgba(255, 93, 124, 0.2);
+    transform: scale(1.08) translateY(-2px) rotate(-1deg);
+    border-color: rgba(255, 93, 124, 0.4);
+    box-shadow:
+        0 16px 32px rgba(0, 0, 0, 0.7),
+        0 6px 12px rgba(255, 93, 124, 0.35),
+        0 0 0 1px rgba(255, 93, 124, 0.3),
+        inset 0 0 0 1.5px rgba(255, 255, 255, 0.15);
+    filter: brightness(1.1) contrast(1.05);
 }
 
 .search-result-card figure {
     margin: 0;
     position: relative;
+    display: flex;
+    align-items: flex-start;
+    flex-shrink: 0;
+}
+
+.search-result-card figure::before {
+    content: "";
+    position: absolute;
+    inset: -4px;
+    border-radius: 14px;
+    background: linear-gradient(135deg,
+                                rgba(255, 93, 124, 0.2),
+                                rgba(186, 85, 211, 0.15));
+    opacity: 0;
+    filter: blur(12px);
+    transition: opacity 0.4s ease;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.search-result-card:hover figure::before {
+    opacity: 1;
 }
 
 .search-result-card figure::after {
@@ -1747,33 +1797,48 @@ $navStates = [
     position: absolute;
     inset: 0;
     border-radius: 12px;
-    background: linear-gradient(135deg, rgba(255, 93, 124, 0.15), rgba(186, 85, 211, 0.1));
+    background: linear-gradient(180deg,
+                                transparent 0%,
+                                transparent 50%,
+                                rgba(255, 93, 124, 0.15) 100%);
     opacity: 0;
-    transition: opacity 0.3s ease;
+    transition: opacity 0.4s ease;
     pointer-events: none;
+    z-index: 3;
 }
 
 .search-result-card:hover figure::after {
     opacity: 1;
 }
 
-/* Ícone de play sutil no hover */
+/* Play icon on hover */
 .result-info::after {
     content: "▶";
     position: absolute;
-    right: 8px;
-    top: 50%;
-    transform: translateY(-50%) translateX(10px);
-    color: rgba(255, 93, 124, 0.8);
-    font-size: 1.2rem;
+    right: 10px;
+    bottom: 8px;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    padding-left: 2px;
+    color: #fff;
+    background: linear-gradient(135deg,
+                                rgba(255, 93, 124, 0.95),
+                                rgba(239, 68, 68, 0.9));
+    border-radius: 50%;
     opacity: 0;
-    transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transform: scale(0.8) translateY(4px);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     pointer-events: none;
+    box-shadow: 0 4px 12px rgba(255, 93, 124, 0.4);
 }
 
 .search-result-card:hover .result-info::after {
     opacity: 1;
-    transform: translateY(-50%) translateX(0);
+    transform: scale(1) translateY(0);
 }
 
 .search-view-all {
@@ -1815,12 +1880,14 @@ $navStates = [
     min-width: 0;
     position: relative;
     z-index: 1;
+    padding: 2px 0;
 }
 
 .result-title {
-    font-size: 1.05rem;
-    font-weight: 600;
+    font-size: 1rem;
+    font-weight: 650;
     margin: 0;
+    margin-bottom: 2px;
     line-height: 1.35;
     color: rgba(255, 255, 255, 0.95);
     display: -webkit-box;
@@ -1828,146 +1895,180 @@ $navStates = [
     -webkit-box-orient: vertical;
     overflow: hidden;
     text-overflow: ellipsis;
-    transition: color 0.3s ease;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    letter-spacing: -0.015em;
 }
 
 .search-result-card:hover .result-title {
-    color: #fff;
-    text-shadow: 0 0 8px rgba(255, 93, 124, 0.3);
+    color: #ffffff;
+    letter-spacing: -0.005em;
+    text-shadow: 0 2px 8px rgba(255, 93, 124, 0.3);
 }
 
 .result-tag-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    align-items: center;
-}
-
-.result-chips {
     display: flex;
     flex-wrap: wrap;
     gap: 5px;
     align-items: center;
 }
 
+.result-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    align-items: center;
+    margin-top: 2px;
+}
+
 .chip {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 4px 10px;
-    border-radius: 8px;
-    font-size: 0.75rem;
+    padding: 4px 9px;
+    border-radius: 7px;
+    font-size: 0.7rem;
     font-weight: 600;
-    letter-spacing: 0.02em;
+    letter-spacing: 0.015em;
     border: 1px solid transparent;
-    background: rgba(255, 255, 255, 0.08);
-    color: rgba(255, 255, 255, 0.82);
+    background: rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.75);
     white-space: nowrap;
-    transition: all 0.25s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(8px);
 }
 
 .chip--type {
-    background: linear-gradient(135deg, rgba(220, 38, 38, 0.85), rgba(185, 28, 28, 0.75));
-    border-color: rgba(255, 100, 100, 0.3);
-    color: #fff;
+    background: linear-gradient(135deg,
+                                rgba(255, 93, 124, 0.25),
+                                rgba(239, 68, 68, 0.2));
+    border: 1px solid rgba(255, 93, 124, 0.4);
+    color: rgba(255, 180, 200, 1);
     font-weight: 700;
     text-transform: uppercase;
-    font-size: 0.7rem;
+    font-size: 0.68rem;
     letter-spacing: 0.08em;
-    box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);
 }
 
 .search-result-card:hover .chip--type {
-    background: linear-gradient(135deg, rgba(239, 68, 68, 0.95), rgba(220, 38, 38, 0.85));
-    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.45);
+    background: linear-gradient(135deg,
+                                rgba(255, 93, 124, 0.85),
+                                rgba(239, 68, 68, 0.8));
+    border-color: rgba(255, 120, 140, 0.6);
+    color: #fff;
+    box-shadow:
+        0 4px 12px rgba(255, 93, 124, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
     transform: translateY(-1px);
 }
 
 .chip--year {
-    background: linear-gradient(135deg, rgba(255, 93, 124, 0.65), rgba(220, 38, 38, 0.55));
-    border-color: rgba(255, 120, 140, 0.25);
-    color: #fff;
-    font-weight: 700;
-    box-shadow: 0 2px 8px rgba(255, 93, 124, 0.25);
+    background: linear-gradient(135deg,
+                                rgba(186, 85, 211, 0.2),
+                                rgba(139, 92, 246, 0.18));
+    border: 1px solid rgba(186, 85, 211, 0.35);
+    color: rgba(210, 160, 230, 1);
+    font-weight: 650;
 }
 
 .search-result-card:hover .chip--year {
-    background: linear-gradient(135deg, rgba(255, 120, 150, 0.75), rgba(239, 68, 68, 0.65));
-    box-shadow: 0 4px 12px rgba(255, 93, 124, 0.4);
+    background: linear-gradient(135deg,
+                                rgba(196, 105, 221, 0.75),
+                                rgba(159, 122, 255, 0.7));
+    border-color: rgba(196, 105, 221, 0.5);
+    color: #fff;
+    box-shadow:
+        0 4px 12px rgba(186, 85, 211, 0.45),
+        inset 0 1px 0 rgba(255, 255, 255, 0.18);
     transform: translateY(-1px);
 }
 
 .chip--genre {
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    color: rgba(255, 255, 255, 0.8);
-    font-weight: 500;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.65);
+    font-weight: 550;
 }
 
 .search-result-card:hover .chip--genre {
     background: rgba(255, 255, 255, 0.12);
-    border-color: rgba(255, 255, 255, 0.18);
+    border-color: rgba(255, 255, 255, 0.22);
     color: rgba(255, 255, 255, 0.95);
+    transform: translateY(-0.5px);
+    box-shadow: 0 2px 6px rgba(255, 255, 255, 0.1);
 }
 
 .search-empty {
     margin: 0;
-    padding: 50px 20px;
+    padding: 60px 24px;
     text-align: center;
-    color: rgba(255, 255, 255, 0.5);
+    color: rgba(255, 255, 255, 0.55);
     font-size: 0.95rem;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 14px;
+    gap: 16px;
     position: relative;
+    animation: fadeIn 0.4s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .search-empty::before {
     content: "";
-    width: 80px;
-    height: 80px;
+    width: 72px;
+    height: 72px;
     display: block;
-    background: 
-        radial-gradient(circle at 30% 30%, rgba(255, 93, 124, 0.15), transparent 60%),
-        radial-gradient(circle at 70% 70%, rgba(186, 85, 211, 0.12), transparent 60%);
+    background:
+        radial-gradient(circle at 35% 35%, rgba(255, 93, 124, 0.18), transparent 55%),
+        radial-gradient(circle at 65% 65%, rgba(186, 85, 211, 0.14), transparent 55%);
     border-radius: 50%;
-    border: 2px solid rgba(255, 255, 255, 0.08);
+    border: 2px solid rgba(255, 255, 255, 0.1);
     position: relative;
-    opacity: 0.6;
+    opacity: 0.7;
 }
 
 .search-empty::after {
     content: "🔍";
     position: absolute;
-    top: 50px;
+    top: 46px;
     left: 50%;
     transform: translate(-50%, -50%);
-    font-size: 2.5rem;
-    opacity: 0.4;
+    font-size: 2.25rem;
+    opacity: 0.5;
 }
 
 .search-empty p {
     margin: 0;
     line-height: 1.6;
+    font-weight: 500;
 }
 
 .search-view-all {
-    margin-top: 8px;
+    margin-top: 12px;
     width: 100%;
-    padding: 13px 18px;
-    border-radius: 14px;
-    background: linear-gradient(135deg, rgba(239, 68, 68, 0.9), rgba(220, 38, 38, 0.85));
-    border: 1px solid rgba(255, 100, 100, 0.3);
+    padding: 14px 20px;
+    border-radius: 16px;
+    background: linear-gradient(135deg,
+                                rgba(239, 68, 68, 0.92),
+                                rgba(220, 38, 38, 0.88));
+    border: 1px solid rgba(255, 100, 100, 0.35);
     color: #fff;
-    font-size: 0.92rem;
+    font-size: 0.9rem;
     font-weight: 700;
-    letter-spacing: 0.03em;
-    text-transform: uppercase;
+    letter-spacing: 0.025em;
     cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-    box-shadow: 
-        0 8px 20px rgba(220, 38, 38, 0.35),
+    transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+    box-shadow:
+        0 6px 16px rgba(220, 38, 38, 0.4),
         inset 0 1px 0 rgba(255, 255, 255, 0.2);
     position: relative;
     overflow: hidden;
@@ -2011,20 +2112,23 @@ $navStates = [
 .search-view-all:hover,
 .search-view-all:focus-visible {
     transform: translateY(-2px);
-    padding-right: 40px;
-    box-shadow: 
-        0 12px 28px rgba(220, 38, 38, 0.5),
+    padding-right: 42px;
+    box-shadow:
+        0 10px 24px rgba(220, 38, 38, 0.55),
         inset 0 1px 0 rgba(255, 255, 255, 0.25);
-    background: linear-gradient(135deg, rgba(248, 113, 113, 0.95), rgba(239, 68, 68, 0.9));
-    border-color: rgba(255, 120, 120, 0.4);
+    background: linear-gradient(135deg,
+                                rgba(248, 113, 113, 0.96),
+                                rgba(239, 68, 68, 0.92));
+    border-color: rgba(255, 120, 120, 0.45);
 }
 
 .search-view-all:active {
-    transform: translateY(0) scale(0.98);
+    transform: translateY(-1px) scale(0.99);
+    transition-duration: 0.1s;
 }
 
 .search-view-all:focus-visible {
-    outline: 2px solid rgba(255, 100, 100, 0.6);
+    outline: 2px solid rgba(255, 100, 100, 0.65);
     outline-offset: 3px;
 }
 
@@ -2046,10 +2150,55 @@ $navStates = [
 }
 
 @media (max-width: 600px) {
+    .search-result-card {
+        padding: 9px;
+        gap: 12px;
+        border-radius: 14px;
+    }
+
+    .search-result-card:hover {
+        transform: translateY(-3px) scale(1.005);
+    }
+
     .search-result-card img {
-        width: 60px;
-        height: 85px;
-        min-width: 60px;
+        width: 52px;
+        height: 78px;
+        min-width: 52px;
+        border-radius: 10px;
+    }
+
+    .search-result-card:hover img {
+        transform: scale(1.05) translateY(-1px) rotate(-0.5deg);
+    }
+
+    .result-info {
+        gap: 7px;
+        padding: 1px 0;
+    }
+
+    .result-title {
+        font-size: 0.95rem;
+        line-height: 1.32;
+        margin-bottom: 1px;
+    }
+
+    .chip {
+        padding: 3px 8px;
+        font-size: 0.68rem;
+        border-radius: 6px;
+    }
+
+    .chip--type,
+    .chip--year {
+        font-size: 0.65rem;
+    }
+
+    .result-info::after {
+        width: 24px;
+        height: 24px;
+        font-size: 0.65rem;
+        right: 8px;
+        bottom: 6px;
     }
     
     .result-title {

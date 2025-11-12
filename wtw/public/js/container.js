@@ -1775,6 +1775,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 handleHashNavigation();
                 scheduleAutoScrollRefresh();
+                
+                // Atualizar visibilidade das setas após carregamento
+                if (typeof window.updateHeroArrowsVisibility === 'function') {
+                    setTimeout(() => window.updateHeroArrowsVisibility(), 300);
+                }
             });
     }    // Botoes para alternar entre filmes e series
     document.getElementById('showMovies').addEventListener('click', function() {

@@ -225,6 +225,10 @@
                         <div class="hero-actions">
                             <a id="trailerLink" class="action-btn action-btn--primary" href="#">▶ Ver trailer</a>
                             <a id="providersCta" class="action-btn action-btn--glass" href="#providersSection">🍿 Onde assistir</a>
+                            <button id="watchLaterBtn" class="action-btn action-btn--secondary" data-movie-id="" aria-label="Adicionar à lista de assistir mais tarde">
+                                <span class="watch-later-icon">🕒</span>
+                                <span class="watch-later-text">Assistir mais tarde</span>
+                            </button>
                         </div>
                         <div class="hero-highlights">
                             <div class="highlight-card">

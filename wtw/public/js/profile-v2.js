@@ -671,8 +671,155 @@
     // Tab inicial
     switchTab('overview');
     
+    // Inicializar subsections (Favoritos / Assistir Mais Tarde)
+    initializeSubsections();
+    
+    // Carregar lista de assistir mais tarde
+    loadWatchLaterMovies();
+    
     console.log('✨ Profile 2.0 inicializado');
   }
+
+  // ================================
+  // SUBSECTIONS (FAVORITOS / ASSISTIR MAIS TARDE)
+  // ================================
+
+  function initializeSubsections() {
+    const subsectionTabs = document.querySelectorAll('.subsection-tab');
+    const subsections = document.querySelectorAll('.profile-subsection');
+
+    subsectionTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        const targetSubsection = tab.dataset.subsection;
+
+        // Atualizar tabs
+        subsectionTabs.forEach(t => t.classList.remove('subsection-tab--active'));
+        tab.classList.add('subsection-tab--active');
+
+        // Atualizar conteúdo
+        subsections.forEach(section => {
+          if (section.dataset.subsectionContent === targetSubsection) {
+            section.classList.add('profile-subsection--active');
+          } else {
+            section.classList.remove('profile-subsection--active');
+          }
+        });
+
+        // Carregar dados específicos
+        if (targetSubsection === 'watch-later') {
+          loadWatchLaterMovies();
+        }
+      });
+    });
+  }
+
+  // ================================
+  // ASSISTIR MAIS TARDE
+  // ================================
+
+  async function loadWatchLaterMovies() {
+    const listContainer = document.querySelector('[data-watch-later-list]');
+    const emptyState = document.querySelector('[data-watch-later-empty]');
+
+    if (!listContainer) return;
+
+    try {
+      const response = await fetch('api/watch-later.php');
+      if (!response.ok) throw new Error('Erro ao carregar lista');
+
+      const data = await response.json();
+      
+      if (data.success && Array.isArray(data.movies)) {
+        if (data.movies.length === 0) {
+          listContainer.innerHTML = '';
+          if (emptyState) emptyState.style.display = 'flex';
+        } else {
+          if (emptyState) emptyState.style.display = 'none';
+          renderWatchLaterMovies(data.movies, listContainer);
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao carregar assistir mais tarde:', error);
+    }
+  }
+
+  function renderWatchLaterMovies(movies, container) {
+    container.innerHTML = '';
+
+    movies.forEach(movie => {
+      const posterUrl = movie.movie_poster || movie.movie_backdrop || '';
+      const title = movie.movie_title || '';
+      const movieId = movie.movie_id;
+
+      const card = document.createElement('article');
+      card.className = 'favorite-poster-card favorite-poster-card--selected';
+      card.setAttribute('role', 'listitem');
+      card.setAttribute('data-watch-later-id', movieId);
+
+      const figure = document.createElement('figure');
+      figure.className = 'favorite-poster-card__media';
+      figure.setAttribute('aria-hidden', 'true');
+
+      if (posterUrl) {
+        const img = document.createElement('img');
+        img.src = posterUrl;
+        img.alt = title;
+        img.loading = 'lazy';
+        figure.appendChild(img);
+      } else {
+        const fallback = document.createElement('span');
+        fallback.className = 'favorite-poster-card__fallback';
+        fallback.textContent = title.charAt(0).toUpperCase();
+        figure.appendChild(fallback);
+      }
+
+      const removeBtn = document.createElement('button');
+      removeBtn.type = 'button';
+      removeBtn.className = 'favorite-poster-card__remove';
+      removeBtn.textContent = '−';
+      removeBtn.setAttribute('aria-label', `Remover ${title} da lista de assistir mais tarde`);
+      
+      removeBtn.addEventListener('click', async () => {
+        await removeFromWatchLater(movieId, card);
+      });
+
+      card.appendChild(figure);
+      card.appendChild(removeBtn);
+      container.appendChild(card);
+    });
+  }
+
+  async function removeFromWatchLater(movieId, cardElement) {
+    try {
+      const response = await fetch('api/watch-later.php', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ movie_id: parseInt(movieId) })
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        // Remover elemento da UI com animação
+        cardElement.style.opacity = '0';
+        cardElement.style.transform = 'scale(0.8)';
+        setTimeout(() => {
+          cardElement.remove();
+          
+          // Verificar se ainda há itens
+          const listContainer = document.querySelector('[data-watch-later-list]');
+          const emptyState = document.querySelector('[data-watch-later-empty]');
+          
+          if (listContainer && listContainer.children.length === 0 && emptyState) {
+            emptyState.style.display = 'flex';
+          }
+        }, 300);
+      }
+    } catch (error) {
+      console.error('Erro ao remover filme:', error);
+    }
+  }
+
 
   init();
 })();

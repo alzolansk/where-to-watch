@@ -753,10 +753,20 @@ $favoritesList = $favorites;
             <header class="section-header section-header--large">
                 <div>
                     <h2 class="section-header__title">Meus Filmes e Séries</h2>
-                    <p class="section-header__description">Gerencie sua coleção de favoritos</p>
+                    <p class="section-header__description">Gerencie sua coleção de favoritos e lista de assistir mais tarde</p>
                 </div>
                 <span class="section-header__badge" data-profile-favorites-count><?php echo htmlspecialchars($favoritesBadgeLabel, ENT_QUOTES, 'UTF-8'); ?></span>
             </header>
+
+            <!-- Subnavegação para Favoritos e Assistir Mais Tarde -->
+            <div class="profile-subsection-tabs">
+                <button class="subsection-tab subsection-tab--active" data-subsection="favorites">
+                    ⭐ Favoritos
+                </button>
+                <button class="subsection-tab" data-subsection="watch-later">
+                    🕒 Assistir Mais Tarde
+                </button>
+            </div>
 
             <?php if (!$isAuthenticated): ?>
                 <div class="empty-state">
@@ -766,62 +776,81 @@ $favoritesList = $favorites;
                     <a href="login.php" class="btn btn--primary">Fazer Login</a>
                 </div>
             <?php else: ?>
-                <!-- Search -->
-                <div class="favorite-search-wrapper">
-                    <form class="favorite-search-form" data-profile-favorite-search novalidate>
-                        <label class="favorite-search-field">
-                            <svg class="favorite-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <circle cx="11" cy="11" r="7"/>
-                                <path d="m21 21-4.35-4.35"/>
-                            </svg>
-                            <input
-                                type="search"
-                                name="favoriteSearch"
-                                class="favorite-search-input"
-                                placeholder="Pesquisar nova série ou filme"
-                                autocomplete="off"
-                                spellcheck="false"
-                                data-profile-favorite-search-input
-                            >
-                            <button type="submit" class="btn btn--primary btn--compact">Buscar</button>
-                        </label>
-                    </form>
-                    <div class="favorite-search-results" data-profile-favorite-search-results role="status" aria-live="polite"></div>
-                </div>
-
-                <!-- Favorites Grid -->
-                <div class="favorites-container">
-                    <div class="favorite-poster-grid" data-profile-favorites-list role="list">
-                        <?php foreach ($favoritesList as $favorite): ?>
-                        <?php
-                            $posterUrl = $favorite['poster_url'] ?? null;
-                            if (!$posterUrl && !empty($favorite['poster_path'])) {
-                                $posterUrl = wyw_tmdb_image_url((string) $favorite['poster_path']);
-                            }
-                            if (!$posterUrl && !empty($favorite['backdrop_path'])) {
-                                $posterUrl = wyw_tmdb_image_url((string) $favorite['backdrop_path']);
-                            }
-                            $favoriteTitle = $favorite['title'] ?? '';
-                            $favoriteKey = $favorite['tmdb_id'] . ':' . ($favorite['media_type'] ?? 'movie');
-                        ?>
-                            <article class="favorite-poster-card favorite-poster-card--selected" role="listitem" data-key="<?php echo htmlspecialchars($favoriteKey, ENT_QUOTES, 'UTF-8'); ?>">
-                                <figure class="favorite-poster-card__media" aria-hidden="true">
-                                    <?php if ($posterUrl): ?>
-                                        <img src="<?php echo htmlspecialchars($posterUrl, ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo htmlspecialchars($favoriteTitle, ENT_QUOTES, 'UTF-8'); ?>" loading="lazy">
-                                    <?php else: ?>
-                                        <span class="favorite-poster-card__fallback"><?php echo htmlspecialchars(wyw_initial_letter($favoriteTitle), ENT_QUOTES, 'UTF-8'); ?></span>
-                                    <?php endif; ?>
-                                </figure>
-                                <button type="button" class="favorite-poster-card__remove" aria-label="Remover <?php echo htmlspecialchars($favoriteTitle, ENT_QUOTES, 'UTF-8'); ?> dos favoritos">−</button>
-                            </article>
-                        <?php endforeach; ?>
+                <!-- Seção de Favoritos -->
+                <div class="profile-subsection profile-subsection--active" data-subsection-content="favorites">
+                    <!-- Search -->
+                    <div class="favorite-search-wrapper">
+                        <form class="favorite-search-form" data-profile-favorite-search novalidate>
+                            <label class="favorite-search-field">
+                                <svg class="favorite-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="11" cy="11" r="7"/>
+                                    <path d="m21 21-4.35-4.35"/>
+                                </svg>
+                                <input
+                                    type="search"
+                                    name="favoriteSearch"
+                                    class="favorite-search-input"
+                                    placeholder="Pesquisar nova série ou filme"
+                                    autocomplete="off"
+                                    spellcheck="false"
+                                    data-profile-favorite-search-input
+                                >
+                                <button type="submit" class="btn btn--primary btn--compact">Buscar</button>
+                            </label>
+                        </form>
+                        <div class="favorite-search-results" data-profile-favorite-search-results role="status" aria-live="polite"></div>
                     </div>
 
-                    <div class="empty-state" data-profile-favorites-empty <?php echo $showFavoritesListEmpty ? '' : 'hidden'; ?>>
-                        <div class="empty-state__icon">🎬</div>
-                        <h3 class="empty-state__title">Você ainda não tem favoritos</h3>
-                        <p class="empty-state__description">Adicione filmes e séries que você ama para receber recomendações mais certeiras</p>
-                        <a href="search.php" class="btn btn--primary">Descobrir Filmes</a>
+                    <!-- Favorites Grid -->
+                    <div class="favorites-container">
+                        <div class="favorite-poster-grid" data-profile-favorites-list role="list">
+                            <?php foreach ($favoritesList as $favorite): ?>
+                            <?php
+                                $posterUrl = $favorite['poster_url'] ?? null;
+                                if (!$posterUrl && !empty($favorite['poster_path'])) {
+                                    $posterUrl = wyw_tmdb_image_url((string) $favorite['poster_path']);
+                                }
+                                if (!$posterUrl && !empty($favorite['backdrop_path'])) {
+                                    $posterUrl = wyw_tmdb_image_url((string) $favorite['backdrop_path']);
+                                }
+                                $favoriteTitle = $favorite['title'] ?? '';
+                                $favoriteKey = $favorite['tmdb_id'] . ':' . ($favorite['media_type'] ?? 'movie');
+                            ?>
+                                <article class="favorite-poster-card favorite-poster-card--selected" role="listitem" data-key="<?php echo htmlspecialchars($favoriteKey, ENT_QUOTES, 'UTF-8'); ?>">
+                                    <figure class="favorite-poster-card__media" aria-hidden="true">
+                                        <?php if ($posterUrl): ?>
+                                            <img src="<?php echo htmlspecialchars($posterUrl, ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo htmlspecialchars($favoriteTitle, ENT_QUOTES, 'UTF-8'); ?>" loading="lazy">
+                                        <?php else: ?>
+                                            <span class="favorite-poster-card__fallback"><?php echo htmlspecialchars(wyw_initial_letter($favoriteTitle), ENT_QUOTES, 'UTF-8'); ?></span>
+                                        <?php endif; ?>
+                                    </figure>
+                                    <button type="button" class="favorite-poster-card__remove" aria-label="Remover <?php echo htmlspecialchars($favoriteTitle, ENT_QUOTES, 'UTF-8'); ?> dos favoritos">−</button>
+                                </article>
+                            <?php endforeach; ?>
+                        </div>
+
+                        <div class="empty-state" data-profile-favorites-empty <?php echo $showFavoritesListEmpty ? '' : 'hidden'; ?>>
+                            <div class="empty-state__icon">🎬</div>
+                            <h3 class="empty-state__title">Você ainda não tem favoritos</h3>
+                            <p class="empty-state__description">Adicione filmes e séries que você ama para receber recomendações mais certeiras</p>
+                            <a href="search.php" class="btn btn--primary">Descobrir Filmes</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Seção de Assistir Mais Tarde -->
+                <div class="profile-subsection" data-subsection-content="watch-later">
+                    <div class="favorites-container">
+                        <div class="favorite-poster-grid" data-watch-later-list role="list">
+                            <!-- Será preenchido dinamicamente via JavaScript -->
+                        </div>
+
+                        <div class="empty-state" data-watch-later-empty>
+                            <div class="empty-state__icon">🕒</div>
+                            <h3 class="empty-state__title">Nenhum filme na lista</h3>
+                            <p class="empty-state__description">Adicione filmes que você deseja assistir mais tarde clicando no botão 🕒 na página do filme</p>
+                            <a href="search.php" class="btn btn--primary">Descobrir Filmes</a>
+                        </div>
                     </div>
                 </div>
             <?php endif; ?>
