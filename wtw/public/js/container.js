@@ -607,6 +607,11 @@ document.addEventListener('DOMContentLoaded', function() {
             containerWrap.dataset.activeIndex = String(index);
             ensureHeroProgress(carouselItems.length);
             setActiveHeroProgress(index);
+            
+            // Aplica responsividade quando slide se torna ativo
+            if (window.heroResponsive && typeof window.heroResponsive.processContainer === 'function') {
+                setTimeout(() => window.heroResponsive.processContainer(item), 50);
+            }
         }
 
         const scrollToItem = (index, behavior = 'smooth') => {
@@ -1730,6 +1735,11 @@ document.addEventListener('DOMContentLoaded', function() {
                             if (!slideEl.isConnected) {
                                 containerNew.appendChild(slideEl);
                                 scheduleAutoScrollRefresh();
+                                
+                                // Aplica responsividade após adicionar o slide
+                                if (window.heroResponsive && typeof window.heroResponsive.processContainer === 'function') {
+                                    setTimeout(() => window.heroResponsive.processContainer(slideEl), 100);
+                                }
                             }
                             return null;
                         })
@@ -1779,6 +1789,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Atualizar visibilidade das setas após carregamento
                 if (typeof window.updateHeroArrowsVisibility === 'function') {
                     setTimeout(() => window.updateHeroArrowsVisibility(), 300);
+                }
+                
+                // Aplica responsividade a todos os containers após carregamento completo
+                if (window.heroResponsive && typeof window.heroResponsive.processAllContainers === 'function') {
+                    setTimeout(() => window.heroResponsive.processAllContainers(), 400);
                 }
             });
     }    // Botoes para alternar entre filmes e series

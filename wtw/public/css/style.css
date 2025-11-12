@@ -665,7 +665,10 @@ a:focus-visible {
                 opacity 0.5s cubic-bezier(0.34, 1.56, 0.64, 1),
                 filter 0.5s ease;
     cursor: pointer;
+    /* Centralização perfeita do conteúdo */
     display: flex;
+    align-items: center;
+    justify-content: center;
     will-change: transform, opacity, filter;
     touch-action: pan-y;
 }
@@ -1018,16 +1021,25 @@ a:focus-visible {
     grid-template-columns: minmax(0, 1fr) clamp(200px, 20vw, 300px);
     gap: clamp(32px, 4vw, 56px);
     width: 100%;
-    align-items: start;
+    align-items: center;
+    justify-items: center;
+    place-items: center;
+    /* Garante que o layout está sempre centralizado no backdrop */
+    margin: auto;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .hero-card__content {
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    justify-content: center;
+    align-items: flex-start;
     gap: clamp(16px, 2.2vw, 24px);
     min-height: 0;
     padding-top: clamp(4px, 0.8vw, 8px);
+    /* Garante que o conteúdo está centralizado verticalmente */
+    align-self: center;
+    width: 100%;
 }
 
 .hero-card__top {
@@ -1061,6 +1073,8 @@ a:focus-visible {
     height: auto;
     object-fit: contain;
     filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.5));
+    /* Garante que a logo mantém proporções ao ser redimensionada */
+    flex-shrink: 0;
 }
 
 .hero-card__title {
@@ -1283,8 +1297,10 @@ a:focus-visible {
     position: relative;
     z-index: 2;
     display: flex;
-    align-items: flex-start;
-    justify-content: flex-end;
+    align-items: center;
+    justify-content: center;
+    /* Centraliza o poster verticalmente */
+    align-self: center;
 }
 
 .hero-card__poster-img {
@@ -1348,6 +1364,32 @@ a:focus-visible {
 .backdropContainer.active .hero-card__poster-img {
     transform: translateY(0) scale(1);
     box-shadow: 0 30px 62px rgba(0, 0, 0, 0.6);
+}
+
+/* ===== RESPONSIVIDADE DO CARROSSEL - SISTEMA DE AUTO-SCALE ===== */
+/* Garante que o layout escalonado mantenha legibilidade */
+[data-hero-scale] {
+    /* Layout já possui transform: scale() aplicado via JS */
+    /* Garante que o transform-origin está centralizado */
+    transform-origin: center center !important;
+}
+
+/* Garante overflow visível durante transições de escala */
+.backdropContainer.active .hero-card__layout {
+    overflow: visible;
+}
+
+/* Evita quebra de linha indesejada em títulos longos */
+.hero-card__title {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+}
+
+/* Garante que overview não quebre o layout quando escalado */
+.hero-card__overview {
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 @media (max-width: 1200px) {
@@ -1479,9 +1521,10 @@ a:focus-visible {
         min-height: clamp(400px, 70vh, 550px);
         max-height: clamp(500px, 75vh, 650px);
         border-radius: clamp(20px, 4vw, 28px);
-        flex-direction: column;
-        align-items: stretch;
-        justify-content: flex-start;
+        /* Centraliza todo o conteúdo no mobile */
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
     .backdropContainer::before {
@@ -1489,31 +1532,36 @@ a:focus-visible {
     }
 
     .hero-card__layout {
-        grid-template-columns: 1fr;
-        grid-template-areas: "poster" "content";
-        gap: clamp(16px, 3.5vw, 24px);
-        height: 100%;
-    }
-
-    .hero-card__poster {
-        grid-area: poster;
-        justify-content: center;
+        /* Remove o grid e usa apenas o content em mobile */
+        display: flex;
+        flex-direction: column;
         align-items: center;
-        flex-shrink: 0;
+        justify-content: center;
+        gap: clamp(16px, 3.5vw, 24px);
+        width: 100%;
+        height: auto;
     }
 
-    .hero-card__poster-img {
-        width: clamp(160px, 42vw, 220px);
-        margin: 0 auto;
+    /* Oculta o poster completamente em mobile */
+    .hero-card__poster {
+        display: none !important;
+    }
+    
+    /* Oculta também o streaming badge que fica no poster */
+    .hero-card__streaming-badge {
+        display: none !important;
     }
 
     .hero-card__content {
-        grid-area: content;
+        /* Centraliza todo o conteúdo */
+        display: flex;
+        flex-direction: column;
         align-items: center;
+        justify-content: center;
         text-align: center;
         gap: clamp(12px, 2.5vw, 18px);
-        flex: 1;
-        min-height: 0;
+        width: 100%;
+        max-width: 100%;
         overflow-y: auto;
         scrollbar-width: none;
     }
@@ -1526,12 +1574,51 @@ a:focus-visible {
         align-items: center;
         text-align: center;
         gap: clamp(8px, 2vw, 14px);
+        width: 100%;
+    }
+    
+    .hero-card__title-block {
+        /* Centraliza a logo e o título */
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: clamp(8px, 2vw, 12px);
+        width: 100%;
+    }
+    
+    .hero-card__title-logo {
+        /* Garante que a logo fique bem visível e centralizada */
+        max-width: clamp(200px, 60vw, 320px);
+        max-height: clamp(60px, 12vw, 100px);
+        width: auto;
+        height: auto;
+        margin: 0 auto;
+    }
+    
+    .hero-card__title {
+        /* Título centralizado quando não há logo */
+        text-align: center;
+        width: 100%;
+    }
+    
+    .hero-card__subtitle {
+        /* Subtítulo centralizado */
+        text-align: center;
+        width: 100%;
+    }
+    
+    .hero-card__eyebrow {
+        /* Texto acima da logo/título centralizado */
+        text-align: center;
+        width: 100%;
     }
 
     .hero-card__bottom {
         align-items: center;
         text-align: center;
         gap: clamp(10px, 2vw, 16px);
+        width: 100%;
     }
 
     .hero-card__brand-row {
@@ -1546,11 +1633,14 @@ a:focus-visible {
     .hero-card__meta {
         justify-content: center;
         flex-wrap: wrap;
+        width: 100%;
     }
 
     .hero-card__title {
         font-size: clamp(1.8rem, 6.5vw, 2.8rem);
         line-height: 1.05;
+        text-align: center;
+        width: 100%;
     }
 
     .hero-card__overview {
@@ -1558,6 +1648,9 @@ a:focus-visible {
         line-clamp: 3;
         font-size: clamp(0.85rem, 2vw, 0.95rem);
         line-height: 1.5;
+        text-align: center;
+        width: 100%;
+        max-width: 100%;
     }
 
     .hero-card__tagline {
@@ -1565,10 +1658,13 @@ a:focus-visible {
         font-size: clamp(0.88rem, 2.2vw, 1rem);
         -webkit-line-clamp: 2;
         line-clamp: 2;
+        width: 100%;
     }
 
     .hero-card__genres {
         font-size: clamp(0.82rem, 1.9vw, 0.92rem);
+        text-align: center;
+        width: 100%;
     }
 
     .hero-card__cast {
@@ -1636,14 +1732,41 @@ a:focus-visible {
         padding: clamp(16px, 3.5vw, 22px);
         min-height: clamp(380px, 68vh, 520px);
         max-height: clamp(480px, 72vh, 600px);
+        /* Mantém centralização */
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
     .hero-card__layout {
         gap: clamp(12px, 3vw, 18px);
+        /* Mantém layout em coluna centralizado */
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
     }
 
-    .hero-card__poster-img {
-        width: clamp(140px, 38vw, 180px);
+    /* Garante que o poster continue oculto */
+    .hero-card__poster {
+        display: none !important;
+    }
+    
+    /* Oculta também o streaming badge */
+    .hero-card__streaming-badge {
+        display: none !important;
+    }
+    
+    .hero-card__content {
+        width: 100%;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .hero-card__title-logo {
+        max-width: clamp(180px, 70vw, 280px);
+        max-height: clamp(50px, 14vw, 90px);
     }
 
     .hero-card__title {
@@ -3407,7 +3530,74 @@ body.connection-error-active {
     .connection-error__description {
         max-width: 48ch;
     }
+}
 
+/* ================================
+   SISTEMA DE RESPONSIVIDADE DO CARROSSEL
+   ================================ */
+
+/* Garante que o layout com escala aplicada mantém centralização */
+.hero-card__layout[data-hero-scale] {
+    transform-origin: center center;
+    margin: auto;
+}
+
+/* Previne overflow quando o conteúdo é redimensionado */
+.backdropContainer .hero-card__layout {
+    max-width: 100%;
+    max-height: 100%;
+}
+
+/* Garante que textos não quebrem de forma inadequada */
+.hero-card__title,
+.hero-card__subtitle,
+.hero-card__overview {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+}
+
+/* Mantém qualidade visual durante o redimensionamento */
+.hero-card__layout[data-hero-scale] .hero-card__title-logo,
+.hero-card__layout[data-hero-scale] .hero-card__poster-img {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+}
+
+/* Transição suave ao aplicar escala */
+.hero-card__layout {
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Em telas muito pequenas, ajusta o padding para dar mais espaço */
+@media (max-width: 640px) {
+    .backdropContainer {
+        padding: clamp(16px, 3.5vw, 24px);
+    }
+    
+    /* Reduz gap entre elementos para economizar espaço */
+    .hero-card__layout {
+        gap: clamp(16px, 3vw, 24px);
+    }
+    
+    .hero-card__content {
+        gap: clamp(12px, 2vw, 18px);
+    }
+}
+
+/* Otimizações para performance do sistema de responsividade */
+.hero-card__layout,
+.hero-card__content,
+.hero-card__poster {
+    contain: layout style;
+}
+
+/* Previne quebra de layout durante animações */
+.backdropContainer.active .hero-card__layout {
+    will-change: transform;
+}
+
+@media (max-width: 900px) {
     .connection-error__actions {
         justify-content: center;
     }
