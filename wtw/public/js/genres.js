@@ -1124,7 +1124,7 @@
         updateResultsCount(validItems.length);
         updateResultsCaption(validItems.length);
         const fragment = document.createDocumentFragment();
-        validItems.forEach((item) => {
+        validItems.forEach((item, itemIndex) => {
             const posterUrl = buildImageUrl(item.poster_path, POSTER_SIZE);
             const title = item.title || item.name || 'Título indisponível';
             const year = (item.release_date || item.first_air_date || '').slice(0, 4) || '-';
@@ -1135,7 +1135,10 @@
             detailUrl.searchParams.set('title', title);
             const provider = item.primaryWatchProvider;
             const providerWatchUrl = resolveProviderWatchUrl(provider) || provider?.link || '';
-            
+
+            // Otimização: primeiros 8 cards carregam com prioridade alta
+            const isHighPriority = itemIndex < 8;
+
             const card = document.createElement('article');
             card.className = 'media-card';
             card.dataset.mediaType = item.media_type;
@@ -1148,7 +1151,12 @@
             const img = document.createElement('img');
             img.src = posterUrl;
             img.alt = `Poster de ${title}`;
-            img.loading = 'lazy';
+            img.loading = isHighPriority ? 'eager' : 'lazy';
+            if (isHighPriority) {
+                img.fetchPriority = 'high';
+            } else {
+                img.decoding = 'async';
+            }
 
             const figcaption = document.createElement('figcaption');
             figcaption.className = 'media-card__overlay';
@@ -1184,6 +1192,7 @@
                     logo.src = provider.logo;
                     logo.alt = provider.name ? provider.name : 'Provedor de streaming';
                     logo.loading = 'lazy';
+                    logo.decoding = 'async';
                     watchButton.appendChild(logo);
                 } else if (provider.name) {
                     const providerName = document.createElement('strong');

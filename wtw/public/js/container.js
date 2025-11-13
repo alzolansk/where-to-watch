@@ -1239,7 +1239,7 @@ document.addEventListener('DOMContentLoaded', function() {
         return candidateUrl;
     }
 
-    async function createMediaCard(movie, section, mediaType) {
+    async function createMediaCard(movie, section, mediaType, cardIndex = 0) {
         if (!movie || !movie.id) {
             return null;
         }
@@ -1273,13 +1273,20 @@ document.addEventListener('DOMContentLoaded', function() {
             ? `<div class="provider-preview"${providerInfo.previewAssistiveText ? ` title="${providerInfo.previewAssistiveText.replace(/"/g, '&quot;')}"` : ''}>${providerInfo.previewMarkup}</div>`
             : '';
 
+        // Otimização: primeiros 6 cards são above the fold (visíveis imediatamente)
+        // Use eager loading + high priority para eles, lazy loading para o resto
+        const isAboveFold = cardIndex < 6;
+        const loadingAttr = isAboveFold ? 'eager' : 'lazy';
+        const fetchPriorityAttr = isAboveFold ? ' fetchpriority="high"' : '';
+        const decodingAttr = isAboveFold ? '' : ' decoding="async"';
+
         card.innerHTML = `
             <div class="description">
                 <li id="movie-li-link">
-                    <img src="${imgUrl}" alt="${titleText}" class="img-fluid">
+                    <img src="${imgUrl}" alt="${titleText}" class="img-fluid" loading="${loadingAttr}"${fetchPriorityAttr}${decodingAttr}>
                 </li>
                 <div class="info">
-                    <img src="imagens/star-emoji.png" alt="" class="rating">
+                    <img src="imagens/star-emoji.png" alt="" class="rating" loading="lazy" decoding="async">
                     <p class="rating-value">${rating}</p>
                     <li class="movie-name">
                         <a href="#">${titleText}</a>
@@ -1288,7 +1295,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     </li>
                     <li class="watch-trailer">
                         <a href="#">
-                            <img src="imagens/video-start.png" alt=""> Trailer
+                            <img src="imagens/video-start.png" alt="" loading="lazy" decoding="async"> Trailer
                         </a>
                     </li>
                 </div>
@@ -1383,7 +1390,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         for (const movie of items.slice(0, limit)) {
             try {
-                const card = await createMediaCard(movie, section, context.mediaType);
+                const card = await createMediaCard(movie, section, context.mediaType, added);
                 if (card) {
                     fragment.appendChild(card);
                     added += 1;
@@ -1493,7 +1500,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 activateBackdropContainer(highlightSlide);
 
-                wrapItems.forEach(item => {
+                wrapItems.forEach((item, slideIndex) => {
                     const slideEl = document.createElement('article');
                     slideEl.classList.add('backdropContainer');
                     slideEl.addEventListener('click', () => activateBackdropContainer(slideEl));
@@ -1501,6 +1508,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     const itemMediaType = item.media_type === 'tv' ? 'tv' : 'movie';
                     const { imgUrl, trailerUrl, detailsUrl, backdropUrl, creditsUrl, movieLogoUrl, providerUrl } = defineMovieConstants(item, itemMediaType, apiKey);
                     const mediaTypeTxt = itemMediaType === 'tv' ? 'S\u00e9rie' : 'Filme';
+
+                    // Otimização: primeiros 3 slides têm prioridade alta, o resto lazy loading
+                    const isHighPriority = slideIndex < 3;
+                    const imgLoadingAttr = isHighPriority ? 'eager' : 'lazy';
+                    const imgFetchPriority = isHighPriority ? ' fetchpriority="high"' : '';
+                    const imgDecoding = isHighPriority ? '' : ' decoding="async"';
 
                     fetchJson(detailsUrl)
                         .then(data => {
@@ -1653,12 +1666,12 @@ document.addEventListener('DOMContentLoaded', function() {
                             const detailsHref = `filme.php?${params.toString()}`;
 
                             slideEl.innerHTML = `
-                                <img src="${backdropUrl}" alt="Backdrop de ${titleSource}" class="hero-card__backdrop">                                                                    <div class="hero-card__layout">
+                                <img src="${backdropUrl}" alt="Backdrop de ${titleSource}" class="hero-card__backdrop" loading="${imgLoadingAttr}"${imgFetchPriority}${imgDecoding}>                                                                    <div class="hero-card__layout">
                                     <div class="hero-card__content">
                                         <div class="hero-card__top">
                                             ${primaryCompanyName ? `<span class="hero-card__eyebrow">${primaryCompanyName}</span>` : `<span class="hero-card__eyebrow">Bombando agora</span>`}
                                             <div class="hero-card__title-block">
-                                                ${titleLogoUrl ? `<img src="${titleLogoUrl}" alt="${titleSource}" class="hero-card__title-logo">` : ''}
+                                                ${titleLogoUrl ? `<img src="${titleLogoUrl}" alt="${titleSource}" class="hero-card__title-logo" loading="${imgLoadingAttr}"${imgFetchPriority}${imgDecoding}>` : ''}
                                                 ${showTextTitle ? `<h2 class="hero-card__title">${titleSource}</h2>` : ''}
                                                 ${showOriginalSubtitle ? `<p class="hero-card__subtitle">${originalTitle}</p>` : ''}
                                             </div>
@@ -1666,7 +1679,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                                 <span class="hero-card__badge">${mediaTypeTxt}</span>
                                                 ${releaseYear ? `<span class="hero-card__meta-item">${releaseYear}</span>` : ''}
                                                 ${runtime ? `<span class="hero-card__meta-item">${runtime}</span>` : ''}
-                                                ${voteAverage ? `<span class="hero-card__meta-item hero-card__meta-item--rating"><img src="imagens/star-emoji.png" alt="" aria-hidden="true">${voteAverage}</span>` : ''}
+                                                ${voteAverage ? `<span class="hero-card__meta-item hero-card__meta-item--rating"><img src="imagens/star-emoji.png" alt="" aria-hidden="true" loading="lazy" decoding="async">${voteAverage}</span>` : ''}
                                             </div>
                                             ${''}
                                             ${genresNames ? `<p class="hero-card__genres">${genresNames}</p>` : ''}
@@ -1692,11 +1705,11 @@ document.addEventListener('DOMContentLoaded', function() {
                                         </div>
                                     </div>
                                     <aside class="hero-card__poster">
-                                        <img src="${imgUrl}" alt="Poster de ${titleSource}" class="hero-card__poster-img">
+                                        <img src="${imgUrl}" alt="Poster de ${titleSource}" class="hero-card__poster-img" loading="${imgLoadingAttr}"${imgFetchPriority}${imgDecoding}>
                                         ${primaryProvider ? `
                                             <span class="hero-card__streaming-badge${primaryProviderLogoUrl ? '' : ' hero-card__streaming-badge--text'}" title="${primaryProviderBadgeTitle}" aria-label="${primaryProviderBadgeTitle}">
                                                 ${primaryProviderLogoUrl
-                                                    ? `<img class="hero-card__streaming-logo" src="${primaryProviderLogoUrl}" alt="">`
+                                                    ? `<img class="hero-card__streaming-logo" src="${primaryProviderLogoUrl}" alt="" loading="lazy" decoding="async">`
                                                     : `<span class="hero-card__streaming-text">${primaryProviderName}</span>`}
                                             </span>
                                         ` : ''}
@@ -1823,6 +1836,44 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     window.addEventListener('hashchange', () => handleHashNavigation({ force: true }));
+
+    // Otimização: Intersection Observer para pré-carregar imagens de seções próximas ao viewport
+    // Isso melhora a experiência de scroll em listas longas
+    function setupLazyLoadOptimization() {
+        if (!('IntersectionObserver' in window)) {
+            return;
+        }
+
+        // rootMargin de 400px significa que começamos a carregar quando a seção
+        // está a 400px de entrar na viewport - isso cria um efeito de pré-carregamento suave
+        const sectionObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const section = entry.target;
+                    // Força o carregamento das imagens lazy nesta seção
+                    const lazyImages = section.querySelectorAll('img[loading="lazy"]');
+                    lazyImages.forEach(img => {
+                        if (img.dataset.src) {
+                            img.src = img.dataset.src;
+                            delete img.dataset.src;
+                        }
+                    });
+                    // Depois de processar, para de observar esta seção
+                    sectionObserver.unobserve(section);
+                }
+            });
+        }, {
+            rootMargin: '400px 0px', // Começa a carregar 400px antes
+            threshold: 0.01
+        });
+
+        // Observa todas as seções de mídia
+        const mediaSections = document.querySelectorAll('.media-section');
+        mediaSections.forEach(section => sectionObserver.observe(section));
+    }
+
+    // Configura a otimização após o carregamento inicial
+    setTimeout(setupLazyLoadOptimization, 1000);
 
     loadContent();        // Carregar conteudo de filmes
 
