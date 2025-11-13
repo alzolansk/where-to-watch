@@ -746,10 +746,13 @@
   function renderWatchLaterMovies(movies, container) {
     container.innerHTML = '';
 
-    movies.forEach(movie => {
+    movies.forEach((movie, movieIndex) => {
       const posterUrl = movie.movie_poster || movie.movie_backdrop || '';
       const title = movie.movie_title || '';
       const movieId = movie.movie_id;
+
+      // Otimização: primeiros 8 cards carregam com prioridade alta
+      const isHighPriority = movieIndex < 8;
 
       const card = document.createElement('article');
       card.className = 'favorite-poster-card favorite-poster-card--selected';
@@ -764,7 +767,12 @@
         const img = document.createElement('img');
         img.src = posterUrl;
         img.alt = title;
-        img.loading = 'lazy';
+        img.loading = isHighPriority ? 'eager' : 'lazy';
+        if (isHighPriority) {
+          img.fetchPriority = 'high';
+        } else {
+          img.decoding = 'async';
+        }
         figure.appendChild(img);
       } else {
         const fallback = document.createElement('span');

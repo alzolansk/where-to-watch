@@ -99,7 +99,8 @@ document.addEventListener('DOMContentLoaded', () => {
         img.addEventListener('error', check, { once: true });
       }
     });
-    setTimeout(resolve, 4000);
+    // Otimização: reduzido de 4000ms para 2000ms para melhor performance
+    setTimeout(resolve, 2000);
   });
 
   const dom = {

@@ -897,7 +897,7 @@ const updateResultsCaption = (count) => {
 
         const fragment = document.createDocumentFragment();
 
-        items.forEach((item) => {
+        items.forEach((item, itemIndex) => {
             const posterUrl = item.poster_path ? buildImageUrl(item.poster_path, POSTER_SIZE) : 'imagens/icon-cast.png';
             const title = item.title || item.name || 'Titulo indisponivel';
             const year = (item.release_date || item.first_air_date || '').slice(0, 4) || '-';
@@ -909,6 +909,12 @@ const updateResultsCaption = (count) => {
 
             const availabilityKey = `${item.media_type}-${item.id}`;
 
+            // Otimização: primeiros 8 cards carregam com prioridade alta
+            const isHighPriority = itemIndex < 8;
+            const loadingAttr = isHighPriority ? 'eager' : 'lazy';
+            const fetchPriorityAttr = isHighPriority ? ' fetchpriority="high"' : '';
+            const decodingAttr = isHighPriority ? '' : ' decoding="async"';
+
             const card = document.createElement('article');
             card.className = 'media-card';
             card.dataset.mediaType = item.media_type;
@@ -917,7 +923,7 @@ const updateResultsCaption = (count) => {
             card.setAttribute('tabindex', '0');
             card.innerHTML = `
                 <figure class="media-card__poster">
-                    <img src="${escapeHtml(posterUrl)}" alt="${escapeHtml(`Poster de ${title}`)}" loading="lazy" decoding="async">
+                    <img src="${escapeHtml(posterUrl)}" alt="${escapeHtml(`Poster de ${title}`)}" loading="${loadingAttr}"${fetchPriorityAttr}${decodingAttr}>
                     <figcaption class="media-card__overlay">
                         <span class="media-card__badge">${escapeHtml(typeLabel)}</span>
                         <h3 class="media-card__title">${escapeHtml(title)}</h3>

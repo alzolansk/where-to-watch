@@ -27,7 +27,8 @@ const waitForImages = (container) => new Promise(resolve => {
         }
     });
 
-    setTimeout(resolve, 4000);
+    // Otimização: reduzido de 4000ms para 2000ms para melhor performance
+    setTimeout(resolve, 2000);
 });
 
 let currentProviderQuery = '';
