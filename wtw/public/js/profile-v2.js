@@ -747,7 +747,14 @@
     container.innerHTML = '';
 
     movies.forEach((movie, movieIndex) => {
-      const posterUrl = movie.movie_poster || movie.movie_backdrop || '';
+      let posterUrl = movie.movie_poster || movie.movie_backdrop || '';
+      if (posterUrl && !/^https?:\/\//i.test(posterUrl)) {
+        if (posterUrl.startsWith('/t/p/')) {
+          posterUrl = `https://image.tmdb.org${posterUrl}`;
+        } else if (posterUrl.startsWith('/')) {
+          posterUrl = `https://image.tmdb.org/t/p/w342${posterUrl}`;
+        }
+      }
       const title = movie.movie_title || '';
       const movieId = movie.movie_id;
 

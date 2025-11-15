@@ -1,24 +1,13 @@
 <?php
-declare(strict_types=1);
 
 if (function_exists('wyw_env')) {
     return;
 }
 
-/**
- * Loads environment variables from a .env file if available.
- *
- * The lookup checks the provided hint directory (if any), the application root
- * (../) and the repository root (../../). The first readable .env file found
- * is parsed and merged into the current process environment without
- * overwriting existing values.
- */
-function wyw_load_env(?string $hintDir = null): void
-{
+// carrega variaveis do .env
+function wyw_load_env($hintDir = null) {
     static $loaded = false;
-    if ($loaded) {
-        return;
-    }
+    if ($loaded) return;
 
     $loaded = true;
 
@@ -43,42 +32,29 @@ function wyw_load_env(?string $hintDir = null): void
 
     $envFile = null;
     foreach ($candidates as $candidate) {
-        if (!is_string($candidate)) {
-            continue;
-        }
+        if (!is_string($candidate)) continue;
         if (is_readable($candidate)) {
             $envFile = realpath($candidate) ?: $candidate;
             break;
         }
     }
 
-    if ($envFile === null) {
-        return;
-    }
+    if ($envFile === null) return;
 
     $vars = wyw_parse_env_file($envFile);
-    if (empty($vars)) {
-        return;
-    }
+    if (empty($vars)) return;
 
     foreach ($vars as $key => $value) {
-        if ($key === '') {
-            continue;
-        }
-        if (getenv($key) !== false) {
-            continue;
-        }
+        if ($key === '') continue;
+        if (getenv($key) !== false) continue;
         putenv($key . '=' . $value);
         $_ENV[$key] = $value;
         $_SERVER[$key] = $value;
     }
 }
 
-/**
- * Returns an environment variable with optional default fallback.
- */
-function wyw_env(string $key, mixed $default = null): mixed
-{
+// pega variavel de ambiente com fallback
+function wyw_env($key, $default = null) {
     if (array_key_exists($key, $_ENV)) {
         return $_ENV[$key];
     }
@@ -89,14 +65,8 @@ function wyw_env(string $key, mixed $default = null): mixed
     return $value === false ? $default : $value;
 }
 
-/**
- * Parses a dotenv file into an associative array.
- *
- * The parser supports simple KEY=VALUE lines with optional quotes. Lines
- * starting with `#` or `;` are ignored.
- */
-function wyw_parse_env_file(string $path): array
-{
+// faz parse do arquivo .env
+function wyw_parse_env_file($path) {
     $vars = [];
     $lines = @file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) ?: [];
 
@@ -111,19 +81,16 @@ function wyw_parse_env_file(string $path): array
         }
 
         $separatorPos = strpos($trimmed, '=');
-        if ($separatorPos === false) {
-            continue;
-        }
+        if ($separatorPos === false) continue;
 
         $name = rtrim(substr($trimmed, 0, $separatorPos));
         $value = substr($trimmed, $separatorPos + 1);
 
-        if ($name === '') {
-            continue;
-        }
+        if ($name === '') continue;
 
         $value = trim($value);
 
+        // remove aspas se tiver
         if ($value !== '') {
             $first = $value[0];
             $last = $value[strlen($value) - 1];

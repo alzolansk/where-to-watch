@@ -1,8 +1,6 @@
 <?php
-/**
- * Definição de caminhos do projeto
- * Usado para facilitar a transição para estrutura public/
- */
+// paths do projeto
+// TODO: ver se da pra simplificar isso aqui
 
 define('ROOT_PATH', dirname(__DIR__));
 define('PUBLIC_PATH', ROOT_PATH . '/public');
@@ -12,20 +10,15 @@ define('STORAGE_PATH', ROOT_PATH . '/storage');
 define('LOGS_PATH', STORAGE_PATH . '/logs');
 define('CACHE_PATH', STORAGE_PATH . '/cache');
 
-// Detecta se estamos executando de dentro da pasta public/ ou diretamente da raiz
-// Em desenvolvimento local: arquivos estão em /wtw/public/
-// Em produção: arquivos estão em /wtw/ (sem public)
+// detecta se ta dentro do public/ ou nao
 $scriptPath = $_SERVER['SCRIPT_FILENAME'] ?? '';
 $isInsidePublic = strpos($scriptPath, DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR) !== false;
 define('IS_PUBLIC_FOLDER', $isInsidePublic);
 
-// Define o caminho base para URLs de assets (CSS, JS, imagens)
-// Se estamos em public/, o base é vazio
-// Se não estamos em public/, os assets estão no mesmo nível
 define('ASSETS_BASE_PATH', IS_PUBLIC_FOLDER ? '' : '');
 
-// Helper para incluir arquivos de forma segura
-function require_project_file(string $relativePath): void {
+// helper pra incluir arquivos
+function require_project_file($relativePath) {
     $fullPath = ROOT_PATH . '/' . ltrim($relativePath, '/');
     if (!file_exists($fullPath)) {
         throw new RuntimeException("File not found: {$fullPath}");
@@ -33,39 +26,21 @@ function require_project_file(string $relativePath): void {
     require_once $fullPath;
 }
 
-/**
- * Gera URL para assets (CSS, JS, imagens) de forma compatível com ambos ambientes
- * 
- * @param string $path Caminho relativo ao diretório público (ex: 'css/style.css')
- * @return string URL completa do asset
- */
-function asset_url(string $path): string {
+// gera url pros assets (css, js, img)
+function asset_url($path) {
     $path = ltrim($path, '/');
-    
-    // Se estamos dentro de public/, retorna o caminho direto
-    if (IS_PUBLIC_FOLDER) {
-        return $path;
-    }
-    
-    // Se não estamos em public/ (produção sem pasta public),
-    // os arquivos estão no mesmo nível, então retorna o caminho direto também
-    return $path;
+    return $path; // por enquanto sempre retorna direto
 }
 
-/**
- * Gera URL base da aplicação
- * Detecta automaticamente baseado na requisição atual
- * 
- * @return string URL base (ex: '/wtw/public' ou '/wtw')
- */
-function base_url(): string {
+// pega a url base da aplicação
+function base_url() {
     static $baseUrl = null;
     
     if ($baseUrl !== null) {
         return $baseUrl;
     }
     
-    // Tenta pegar do .env primeiro
+    // tenta pegar do .env primeiro
     if (function_exists('wyw_env')) {
         $envUrl = wyw_env('APP_URL', '');
         if ($envUrl !== '') {
@@ -75,11 +50,11 @@ function base_url(): string {
         }
     }
     
-    // Detecta automaticamente baseado no script atual
+    // detecta automaticamente
     $scriptName = $_SERVER['SCRIPT_NAME'] ?? '';
     $scriptDir = dirname($scriptName);
     
-    // Remove /public do final se existir e não estivermos em produção
+    // FIXME: essa lógica ta meio confusa, funciona mas podia ser melhor
     if (IS_PUBLIC_FOLDER && substr($scriptDir, -7) === '/public') {
         $baseUrl = substr($scriptDir, 0, -7);
     } else {
@@ -89,13 +64,8 @@ function base_url(): string {
     return $baseUrl === '/' ? '' : $baseUrl;
 }
 
-/**
- * Gera URL completa para uma rota da aplicação
- * 
- * @param string $path Caminho relativo (ex: 'index.php', 'css/style.css')
- * @return string URL completa
- */
-function app_url(string $path = ''): string {
+// url completa pra rota da app
+function app_url($path = '') {
     $base = base_url();
     $path = ltrim($path, '/');
     

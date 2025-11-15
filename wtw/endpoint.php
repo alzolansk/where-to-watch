@@ -1,22 +1,11 @@
 <?php
-declare(strict_types=1);
 
 header('Content-Type: application/json; charset=utf-8');
 
 require_once __DIR__ . '/../config/bootstrap.php';
 require_once __DIR__ . '/includes/db.php';
 
-try {
-    $pdo = get_pdo();
-} catch (Throwable $exception) {
-    http_response_code(500);
-    echo json_encode([
-        'success' => false,
-        'error' => 'database_unavailable',
-        'message' => $exception->getMessage(),
-    ]);
-    exit;
-}
+$pdo = get_pdo();
 
 $payload = json_decode(file_get_contents('php://input') ?: 'null', true);
 
@@ -26,10 +15,10 @@ if (!is_array($payload)) {
     exit;
 }
 
-$title = trim((string) ($payload['title'] ?? ''));
+$title = trim($payload['title'] ?? '');
 $idTmdb = (int) ($payload['idTmdb'] ?? 0);
-$genre = trim((string) ($payload['genre'] ?? ''));
-$poster = trim((string) ($payload['poster'] ?? ''));
+$genre = trim($payload['genre'] ?? '');
+$poster = trim($payload['poster'] ?? '');
 $mediaType = (int) ($payload['media_type'] ?? 0);
 
 if ($title === '' || $idTmdb <= 0 || $mediaType <= 0) {
@@ -48,14 +37,5 @@ $stmt->bindValue(':genre', $genre !== '' ? $genre : null, $genre !== '' ? PDO::P
 $stmt->bindValue(':poster', $poster !== '' ? $poster : null, $poster !== '' ? PDO::PARAM_STR : PDO::PARAM_NULL);
 $stmt->bindValue(':mediaType', $mediaType, PDO::PARAM_INT);
 
-try {
-    $stmt->execute();
-    echo json_encode(['success' => true]);
-} catch (PDOException $exception) {
-    http_response_code(500);
-    echo json_encode([
-        'success' => false,
-        'error' => 'insert_failed',
-        'message' => $exception->getMessage(),
-    ]);
-}
+$stmt->execute();
+echo json_encode(['success' => true]);

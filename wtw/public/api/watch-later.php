@@ -34,7 +34,10 @@ if (!$user_id) {
 $method = $_SERVER['REQUEST_METHOD'];
 
 try {
-    $pdo = getDbConnection();
+    // Ajuste: usar função correta de conexão PDO
+    $pdo = function_exists('get_pdo') ? get_pdo() : (function(){
+        throw new RuntimeException('Função get_pdo() indisponível');
+    })();
 
     if ($method === 'GET') {
         // Listar todos os filmes marcados como "Assistir mais tarde"

@@ -20,22 +20,15 @@
 <body>    
 
     <?php
-        // ========== CARREGA BOOTSTRAP DA APLICAÇÃO ==========
-        // Detecta dinamicamente a raiz do projeto para suportar ambientes com/sem pasta public
+        // carrega bootstrap
         $__candidateRoot = is_file(__DIR__ . '/../config/bootstrap.php') ? dirname(__DIR__) : __DIR__;
         require_once $__candidateRoot . '/config/bootstrap.php';
-        
-        // ========== PÁGINA PRINCIPAL - INDEX ==========
-        // Esta é a página inicial do sistema WhereToWatch
-        // Inclui dashboard de navegação, configurações e sistema de onboarding
         
         include_once(__DIR__ . '/dashboard.php');
         require_once $__candidateRoot . '/config/config.php';
         require_once $__candidateRoot . '/includes/personalization-cache.php';
         
-        // ========== CONEXÃO COM BANCO DE DADOS ==========
-        // Garante que a variável $conexao (mysqli) existe para código legado
-        
+        // conexao mysqli pra codigo legado
         if (!isset($conexao)) {
             $host = wyw_env('DB_HOST', 'localhost');
             $database = wyw_env('DB_NAME', 'db_login');
@@ -45,17 +38,14 @@
             $conexao = new mysqli($host, $user, $password, $database);
             
             if ($conexao->connect_error) {
-                error_log("Erro ao conectar mysqli: " . $conexao->connect_error);
+                error_log("Erro mysqli: " . $conexao->connect_error);
                 die("Erro de conexão com banco de dados");
             }
             
             $conexao->set_charset('utf8mb4');
         }
 
-        // ========== CONFIGURAÇÕES DE PERSONALIZAÇÃO ==========
-        // Configurações para verificar se usuário tem preferências salvas
-        // e habilitar conteúdo personalizado na homepage
-        
+        // personalizacao
         $personalizedRowEnabled = false;
         $personalizedPreferenceCount = 0;
         $personalizationCacheToken = null;
@@ -69,30 +59,19 @@
 
         $sessionUserId = (int)($_SESSION['id'] ?? 0);
 
-        // ========== VERIFICAÇÃO DE PREFERÊNCIAS DO USUÁRIO ==========
-        // Verifica quantas preferências o usuário tem salvas para habilitar personalização
-        
-        if ($sessionUserId > 0 && isset($conexao) && $conexao instanceof mysqli) {
+        // verifica preferencias do usuario
+        if ($sessionUserId > 0 && isset($conexao)) {
             foreach ($personalizationTables as $sql) {
-                $stmt = null;
-                try {
-                    $stmt = $conexao->prepare($sql);
-                    if (!$stmt) {
-                        continue;
-                    }
-                    $stmt->bind_param('i', $sessionUserId);
-                    $stmt->execute();
-                    $stmt->bind_result($rowCount);
-                    if ($stmt->fetch()) {
-                        $personalizedPreferenceCount += (int) $rowCount;
-                    }
-                } catch (mysqli_sql_exception $exception) {
-                    continue;
-                } finally {
-                    if ($stmt instanceof mysqli_stmt) {
-                        $stmt->close();
-                    }
+                $stmt = $conexao->prepare($sql);
+                if (!$stmt) continue;
+                
+                $stmt->bind_param('i', $sessionUserId);
+                $stmt->execute();
+                $stmt->bind_result($rowCount);
+                if ($stmt->fetch()) {
+                    $personalizedPreferenceCount += (int) $rowCount;
                 }
+                $stmt->close();
             }
 
             $personalizedRowEnabled = $personalizedPreferenceCount > 0;

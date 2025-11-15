@@ -1,33 +1,24 @@
 <?php
-declare(strict_types=1);
-
-// Suporte a ambientes com/sem pasta public
+// suporte a public/
 $__candidateRoot = is_file(__DIR__ . '/../config/bootstrap.php') ? dirname(__DIR__) : __DIR__;
 require_once $__candidateRoot . '/config/bootstrap.php';
 
-$dbConnected = true;
+$pdo = get_pdo(); // se der erro, deixa quebrar mesmo
 
-try {
-    $pdo = get_pdo();
-} catch (Throwable $exception) {
-    $dbConnected = false;
-    $pdo = null;
-}
-
-$scriptName = (string) ($_SERVER['SCRIPT_NAME'] ?? '');
-$scriptDir = str_replace('\\', '/', (string) dirname($scriptName));
-if ($scriptDir === '.' || $scriptDir === '') {
-    $scriptDir = '/';
-}
+$scriptName = $_SERVER['SCRIPT_NAME'] ?? '';
+$scriptDir = str_replace('\\', '/', dirname($scriptName));
+$scriptDir = ($scriptDir === '.' || $scriptDir === '') ? '/' : $scriptDir;
 $appBasePath = $scriptDir === '/' ? '/' : '/' . ltrim($scriptDir, '/');
 
-$apiBaseEnv = trim((string) wyw_env('APP_API_BASE_URL', ''));
+// monta api base url
+$apiBaseEnv = trim(wyw_env('APP_API_BASE_URL', ''));
 if ($apiBaseEnv === '') {
     $apiBaseUrl = $appBasePath === '/' ? '/api' : $appBasePath . '/api';
 } else {
     $apiBaseUrl = $apiBaseEnv;
 }
 
+// normaliza a url se nao for http
 if (!preg_match('#^https?://#i', $apiBaseUrl)) {
     $apiBaseUrl = str_replace('\\', '/', $apiBaseUrl);
 
@@ -35,6 +26,7 @@ if (!preg_match('#^https?://#i', $apiBaseUrl)) {
         $apiBaseUrl = $appBasePath;
     }
 
+    // adiciona prefix se necessario
     if ($apiBaseUrl !== '' && $apiBaseUrl[0] !== '/') {
         $prefix = $appBasePath === '/' ? '/' : $appBasePath . '/';
         $apiBaseUrl = $prefix . ltrim($apiBaseUrl, '/');
@@ -42,11 +34,10 @@ if (!preg_match('#^https?://#i', $apiBaseUrl)) {
         $apiBaseUrl = rtrim($appBasePath, '/') . $apiBaseUrl;
     }
 
-    $normalized = preg_replace('#/{2,}#', '/', $apiBaseUrl);
-    if (is_string($normalized) && $normalized !== '') {
-        $apiBaseUrl = $normalized;
-    }
+    // remove barras duplas
+    $apiBaseUrl = preg_replace('#/{2,}#', '/', $apiBaseUrl);
 }
+
 
 $apiBaseUrl = rtrim($apiBaseUrl, '/');
 

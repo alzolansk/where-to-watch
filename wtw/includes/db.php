@@ -1,24 +1,17 @@
 <?php
-// ========== GERENCIADOR DE CONEXÕES DE BANCO DE DADOS ==========
-// Fornece conexões PDO e MySQLi configuradas para a aplicação
-
-declare(strict_types=1);
+// gerencia conexoes PDO e mysqli
 
 require_once __DIR__ . '/env.php';
 
 wyw_load_env(__DIR__);
 
-/**
- * ========== CONFIGURAÇÃO COMPARTILHADA DO BANCO ==========
- * Shared database configuration helper.
- */
-function wyw_database_config(): array
-{
-    $host = (string) wyw_env('DB_HOST', '127.0.0.1');
+// config do banco
+function wyw_database_config() {
+    $host = wyw_env('DB_HOST', '127.0.0.1');
     $port = (int) wyw_env('DB_PORT', '3306');
-    $database = (string) wyw_env('DB_NAME', 'db_login');
-    $user = (string) wyw_env('DB_USER', 'root');
-    $password = (string) wyw_env('DB_PASS', '');
+    $database = wyw_env('DB_NAME', 'db_login');
+    $user = wyw_env('DB_USER', 'root');
+    $password = wyw_env('DB_PASS', '');
 
     return [
         'host' => $host,
@@ -29,12 +22,8 @@ function wyw_database_config(): array
     ];
 }
 
-/**
- * ========== CONEXÃO PDO SINGLETON ==========
- * Returns a singleton PDO connection configured for the application.
- */
-function get_pdo(): PDO
-{
+// pdo connection (singleton)
+function get_pdo() {
     static $pdo = null;
 
     if ($pdo instanceof PDO) {
@@ -58,19 +47,13 @@ function get_pdo(): PDO
     return $pdo;
 }
 
-/**
- * ========== CONEXÃO MYSQLI SINGLETON ==========
- * Returns a singleton mysqli connection configured for the application.
- */
-function get_mysqli(): mysqli
-{
+// mysqli connection (singleton)
+function get_mysqli() {
     static $mysqli = null;
 
     if ($mysqli instanceof mysqli) {
         return $mysqli;
     }
-
-    mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
     $config = wyw_database_config();
 
@@ -87,7 +70,5 @@ function get_mysqli(): mysqli
     return $mysqli;
 }
 
-// ========== COMPATIBILIDADE RETROATIVA ==========
-// Backwards compatibility: expose $pdo when this file is included.
-
+// compatibilidade: expoe $pdo quando incluir esse arquivo
 $pdo = get_pdo();

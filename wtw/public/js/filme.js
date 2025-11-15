@@ -270,7 +270,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         seasonDialogClose: document.getElementById('closeSeasonDialog'),
         castList: document.getElementById('cast-list'),
         gallerySection: document.getElementById('gallerySection'),
-        galleryTrack: document.getElementById('gallery-track')
+        galleryTrack: document.getElementById('gallery-track'),
+        watchLaterBtn: document.getElementById('watchLaterBtn'),
+        favoriteBtn: document.getElementById('favoriteBtn')
     };
 
     try {
@@ -302,9 +304,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         await waitForImages(document);
         setMovieLoadingState(false);
         window.history.replaceState({}, '', `filme.php?id=${movieId}&type=${mediaType}`);
-        
-        // Inicializar botão de assistir mais tarde após carregamento completo
-        await initWatchLaterButton();
+        // Inicializar botões dependentes de autenticação
+        initAuthDependentButtons(mediaType);
     }
 });
 
@@ -1333,11 +1334,17 @@ async function initWatchLaterButton() {
     const movieId = urlParams.get('id');
     
     if (!movieId) return;
-    
+    const auth = (window.__WY_USER__ || {});
     const btn = document.getElementById('watchLaterBtn');
     if (!btn) {
         console.warn('Botão watchLaterBtn não encontrado');
         return;
+    }
+    if (!auth.loggedIn) {
+        btn.classList.add('is-hidden');
+        return;
+    } else {
+        btn.classList.remove('is-hidden');
     }
     
     // Verificar status inicial
@@ -1347,7 +1354,7 @@ async function initWatchLaterButton() {
         btn.classList.add('is-active');
         const icon = btn.querySelector('.watch-later-icon');
         const text = btn.querySelector('.watch-later-text');
-        if (icon) icon.textContent = '✓';
+        if (icon) icon.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21a9 9 0 1 1 0-18 9 9 0 0 1 0 18Z"/><path d="m9 12 2 2 4-4"/></svg>';
         if (text) text.textContent = 'Na lista';
     }
     
@@ -1360,27 +1367,106 @@ async function initWatchLaterButton() {
             const posterImg = document.getElementById('itemPoster');
             const backdropImg = document.getElementById('backdropImage');
             
-            // Pegar apenas o path, não a URL completa com domínio
-            let posterPath = null;
-            let backdropPath = null;
+            // Armazena URL completa para funcionar no profile
+            const posterUrl = posterImg?.src || null;
+            const backdropUrl = backdropImg?.src || null;
             
-            if (posterImg && posterImg.src) {
-                const posterUrl = new URL(posterImg.src);
-                posterPath = posterUrl.pathname + posterUrl.search;
-            }
-            
-            if (backdropImg && backdropImg.src) {
-                const backdropUrl = new URL(backdropImg.src);
-                backdropPath = backdropUrl.pathname + backdropUrl.search;
-            }
-            
-            await toggleWatchLater(movieId, movieTitle, posterPath, backdropPath);
+            await toggleWatchLater(movieId, movieTitle, posterUrl, backdropUrl);
         });
         
         btn.dataset.listenerAdded = 'true';
     }
     
-    console.log('✅ Botão Assistir Mais Tarde inicializado');
+        console.log('✅ Botão Assistir Mais Tarde inicializado');
+}
+
+// ===== FAVORITOS =====
+let isFavorite = false;
+
+async function checkFavoriteStatus(movieId) {
+    try {
+        const resp = await fetch('api/favorites.php');
+        if (!resp.ok) return false;
+        const data = await resp.json();
+        if (!data.success || !Array.isArray(data.favorites)) return false;
+        return data.favorites.some(f => parseInt(f.tmdb_id) === parseInt(movieId));
+    } catch (e) {
+        console.warn('Falha ao verificar favorito:', e);
+        return false;
+    }
+}
+
+async function toggleFavorite(movieId, mediaType, title) {
+    const btn = document.getElementById('favoriteBtn');
+    if (!btn) return;
+    const iconWrap = btn.querySelector('.favorite-icon');
+    const labelSpan = btn.querySelector('.favorite-text');
+    try {
+        if (isFavorite) {
+            const resp = await fetch('api/favorites.php', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tmdb_id: parseInt(movieId) })
+            });
+            const data = await resp.json();
+            if (data.success) {
+                isFavorite = false;
+                btn.classList.remove('is-active');
+                if (iconWrap) iconWrap.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6c-1.6-2-4.6-2.2-6.4-.4l-.9.9-.9-.9C10.8 2.4 7.8 2.6 6.2 4.6c-1.8 2.2-1.4 5.4.8 7.2l6.5 6 6.5-6c2.2-1.8 2.6-5 .8-7.2Z" /></svg>';
+                if (labelSpan) labelSpan.textContent = 'Favoritar';
+            }
+        } else {
+            const resp = await fetch('api/favorites.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tmdb_id: parseInt(movieId), media_type: mediaType, title })
+            });
+            const data = await resp.json();
+            if (data.success) {
+                isFavorite = true;
+                btn.classList.add('is-active');
+                if (iconWrap) iconWrap.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6c-1.6-2-4.6-2.2-6.4-.4l-.9.9-.9-.9C10.8 2.4 7.8 2.6 6.2 4.6c-1.8 2.2-1.4 5.4.8 7.2l6.5 6 6.5-6c2.2-1.8 2.6-5 .8-7.2Z" /></svg>';
+                if (labelSpan) labelSpan.textContent = 'Favorito';
+            }
+        }
+    } catch (e) {
+        console.error('Erro ao alternar favorito:', e);
+    }
+}
+
+async function initFavoriteButton(mediaType) {
+    const auth = (window.__WY_USER__ || {});
+    const btn = document.getElementById('favoriteBtn');
+    if (!btn) return;
+    if (!auth.loggedIn) {
+        btn.classList.add('is-hidden');
+        return;
+    } else {
+        btn.classList.remove('is-hidden');
+    }
+    const movieId = new URLSearchParams(window.location.search).get('id');
+    if (!movieId) return;
+    isFavorite = await checkFavoriteStatus(movieId);
+    if (isFavorite) {
+        btn.classList.add('is-active');
+        const iconWrap = btn.querySelector('.favorite-icon');
+        const labelSpan = btn.querySelector('.favorite-text');
+        if (iconWrap) iconWrap.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6c-1.6-2-4.6-2.2-6.4-.4l-.9.9-.9-.9C10.8 2.4 7.8 2.6 6.2 4.6c-1.8 2.2-1.4 5.4.8 7.2l6.5 6 6.5-6c2.2-1.8 2.6-5 .8-7.2Z" /></svg>';
+        if (labelSpan) labelSpan.textContent = 'Favorito';
+    }
+    if (!btn.dataset.listenerAdded) {
+        btn.addEventListener('click', () => {
+            const title = document.getElementById('itemName')?.textContent || '';
+            toggleFavorite(movieId, mediaType, title);
+        });
+        btn.dataset.listenerAdded = 'true';
+    }
+    console.log('✅ Botão Favorito inicializado');
+}
+
+function initAuthDependentButtons(mediaType) {
+    initWatchLaterButton();
+    initFavoriteButton(mediaType);
 }
 
 

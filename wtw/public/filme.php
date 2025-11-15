@@ -1,13 +1,12 @@
 <?php
-// Suporte a ambientes com/sem pasta public
+// suporte a public/
 $__candidateRoot = is_file(__DIR__ . '/../config/bootstrap.php') ? dirname(__DIR__) : __DIR__;
 require_once $__candidateRoot . '/config/bootstrap.php';
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <!-- ========== PÁGINA DE DETALHES DE FILME/SÉRIE ========== -->
-    <!-- Página que exibe informações detalhadas de um título específico -->
+    <!-- pagina de detalhes filme/serie -->
     
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -25,8 +24,7 @@ require_once $__candidateRoot . '/config/bootstrap.php';
 
     <main class="interface-section movie-page">
         <div class="page-shell is-loading">
-            <!-- ========== SKELETON DE CARREGAMENTO ========== -->
-            <!-- Estrutura de placeholder enquanto o conteúdo carrega -->
+            <!-- skeleton de loading -->
             
             <div id="movieSkeleton" class="movie-skeleton" aria-hidden="true">
                 <section class="movie-skeleton__hero">
@@ -227,14 +225,27 @@ require_once $__candidateRoot . '/config/bootstrap.php';
                         </div>
                         <p id="movieOverview" class="hero-overview"></p>
                         <div id="tagList" class="tag-list"></div>
-                        <div class="hero-actions">
-                            <a id="trailerLink" class="action-btn action-btn--primary" href="#">▶ Ver trailer</a>
-                            <a id="providersCta" class="action-btn action-btn--glass" href="#providersSection">🍿 Onde assistir</a>
-                            <button id="watchLaterBtn" class="action-btn action-btn--secondary" data-movie-id="" aria-label="Adicionar à lista de assistir mais tarde">
-                                <span class="watch-later-icon">🕒</span>
-                                <span class="watch-later-text">Assistir mais tarde</span>
-                            </button>
-                        </div>
+                                                <div class="hero-actions">
+                                                        <a id="trailerLink" class="action-btn action-btn--primary" href="#">▶ Ver trailer</a>
+                                                        <a id="providersCta" class="action-btn action-btn--glass" href="#providersSection">🍿 Onde assistir</a>
+                                                        <button id="favoriteBtn" class="action-btn action-btn--secondary is-hidden" data-movie-id="" aria-label="Adicionar aos favoritos">
+                                                                <span class="favorite-icon" aria-hidden="true">
+                                                                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                                        <path d="M20.8 4.6c-1.6-2-4.6-2.2-6.4-.4l-.9.9-.9-.9C10.8 2.4 7.8 2.6 6.2 4.6c-1.8 2.2-1.4 5.4.8 7.2l6.5 6 6.5-6c2.2-1.8 2.6-5 .8-7.2Z" />
+                                                                    </svg>
+                                                                </span>
+                                                                <span class="favorite-text">Favoritar</span>
+                                                        </button>
+                                                        <button id="watchLaterBtn" class="action-btn action-btn--secondary is-hidden" data-movie-id="" aria-label="Adicionar à lista de assistir mais tarde">
+                                                                <span class="watch-later-icon" aria-hidden="true">
+                                                                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                                        <circle cx="12" cy="12" r="9" />
+                                                                        <polyline points="12 7 12 12 16 14" />
+                                                                    </svg>
+                                                                </span>
+                                                                <span class="watch-later-text">Assistir mais tarde</span>
+                                                        </button>
+                                                </div>
                         <div class="hero-highlights">
                             <div class="highlight-card">
                                 <span class="highlight-label">Pontuação TMDB</span>
@@ -368,7 +379,14 @@ require_once $__candidateRoot . '/config/bootstrap.php';
     <!-- ========== SCRIPTS JAVASCRIPT ========== -->
     <!-- Scripts para funcionalidade da página de filme -->
 
-    <script type="module" src="js/filme.js"></script>
+        <?php $__isLoggedIn = isset($_SESSION['id']) || isset($_SESSION['user_id']) || isset($_SESSION['id_user']); ?>
+        <script>
+            window.__WY_USER__ = Object.assign({}, window.__WY_USER__ || {}, {
+                loggedIn: <?php echo $__isLoggedIn ? 'true' : 'false'; ?>,
+                userId: <?php echo isset($_SESSION['id']) ? (int)$_SESSION['id'] : (isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : (isset($_SESSION['id_user']) ? (int)$_SESSION['id_user'] : 'null')); ?>
+            });
+        </script>
+        <script type="module" src="js/filme.js"></script>
     <script src="js/script.js"></script>
     <script type="module" src="js/search.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.2/color-thief.umd.js"></script>

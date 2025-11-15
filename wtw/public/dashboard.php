@@ -1,31 +1,24 @@
 <?php
-// ========== DASHBOARD DE NAVEGAÇÃO ==========
-// Barra de navegação principal do site
-// Inclui menu, busca, autenticação de usuário e configurações
+// barra de navegação principal
 
-// Sessão já foi iniciada pelo bootstrap, mas verifica por segurança
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Bootstrap já carregou env.php, mas mantém para compatibilidade se chamado diretamente
+// compatibilidade se chamar direto
 if (!function_exists('wyw_env')) {
     require_once __DIR__ . '/../includes/env.php';
     wyw_load_env(__DIR__ . '/..');
 }
 
-// ========== CONFIGURAÇÕES DO CLIENTE ==========
-// Configurações que serão enviadas para o frontend
-
+// config pro frontend
 $clientConfig = [
-    'tmdbApiKey' => (string) wyw_env('TMDB_API_KEY', ''),
-    'tmdbBaseUrl' => rtrim((string) wyw_env('TMDB_API_BASE', 'https://api.themoviedb.org/3'), '/'),
-    'apiBaseUrl' => (string) wyw_env('APP_API_BASE_URL', '/api'),
+    'tmdbApiKey' => wyw_env('TMDB_API_KEY', ''),
+    'tmdbBaseUrl' => rtrim(wyw_env('TMDB_API_BASE', 'https://api.themoviedb.org/3'), '/'),
+    'apiBaseUrl' => wyw_env('APP_API_BASE_URL', '/api'),
 ];
 
-// ========== ESTADOS DE NAVEGAÇÃO ==========
-// Determina qual página está ativa para destacar no menu
-
+// detecta pagina ativa pro menu
 $currentScript = basename($_SERVER['SCRIPT_NAME'] ?? 'index.php');
 $navStates = [
     'home' => $currentScript === 'index.php',
@@ -42,19 +35,18 @@ $navStates = [
   );
 </script>
 
-<!-- ========== MENU PRINCIPAL DE NAVEGAÇÃO ========== -->
-<!-- Barra de navegação fixa com logo, menu e busca -->
+<!-- menu principal -->
 
 <nav id="menu">
     <filter id="glass-distortion" x="0%" y="0%" width="100%" height="100%">
     <div class="faixa">
-        <!-- ========== BOTÃO DE MENU MOBILE ========== -->
+        <!-- botao mobile -->
         
         <button class="menu-trigger" type="button" aria-label="Abrir menu" aria-expanded="false" aria-controls="menu-buttons">
             <img src="imagens/menu-icon.png" alt="Menu" id="menuIcon" width="30px">
         </button>
 
-        <!-- ========== LOGO/MARCA PRINCIPAL ========== -->
+        <!-- logo -->
 
         <a href="index.php" class="wyw-brand wyw-brand--menu dashboard-logo home-header" aria-label="Ir para a pagina inicial">
             <span class="wyw-brand__where">where</span>
@@ -64,8 +56,7 @@ $navStates = [
             <span class="wyw-brand__watch">WATCH</span>
         </a>
 
-        <!-- ========== PAINEL DE NAVEGAÇÃO ========== -->
-        <!-- Menu principal com links e busca -->
+        <!-- painel de navegacao -->
 
         <nav id="menu-buttons" class="menu-panel hidden-menu" aria-hidden="true">
             <ul id="ulBotoes">
@@ -133,8 +124,7 @@ $navStates = [
                 </li>
             </ul>
             <div id="search-div" class="menu-panel__search">
-                <!-- ========== PAINEL DE BUSCA ========== -->
-                <!-- Campo de busca para filmes e séries -->
+                <!-- busca -->
                 
                 <div class="search-panel">
                     <div class="search-input-wrapper" id="searchInputWrapper">
@@ -159,10 +149,10 @@ $navStates = [
         </nav>
 
         <?php
-        // ========== MENU DE USUÁRIO ==========
-        // Exibe diferentes opções baseado no status de login do usuário
+        // menu usuario
         
         if (!isset($_SESSION['nome']) || !isset($_SESSION['id'])) {
+            // nao logado
             echo '<div class="user-menu">';
             echo '<a href="login.php" class="user-menu__link" aria-label="Fazer login">';
             echo '<svg class="user-menu__icon" viewBox="0 0 24 24" aria-hidden="true">';
@@ -172,15 +162,14 @@ $navStates = [
             echo '</a>';
             echo '</div>';
         } else if (isset($_SESSION['nome'])) {
-            // ========== DROPDOWN DE USUÁRIO LOGADO ==========
-            // Menu dropdown para usuários autenticados
+            // dropdown usuario logado
             
             $userName = htmlspecialchars($_SESSION['nome'], ENT_QUOTES, 'UTF-8');
-            // Extrai apenas a primeira palavra do nome
+            // pega so o primeiro nome
             $firstName = preg_split('/\s+/', $userName)[0] ?? $userName;
-            // Limita a 12 caracteres para evitar nomes longos (ex: "Supercalifragilistic")
+            // limita a 12 chars pra nao ficar gigante
             $displayName = mb_substr($firstName, 0, 12, 'UTF-8');
-            echo '<div class="user-account" data-user-menu>';
+            echo '<div class="user-account" data-user-menu">';
             echo '    <button type="button" class="user-account__trigger" aria-haspopup="true" aria-expanded="false">';
             echo '        <span class="user-account__avatar" aria-hidden="true">';
             echo '            <svg viewBox="0 0 24 24" aria-hidden="true">';
@@ -211,12 +200,9 @@ $navStates = [
     </div>
 </nav>
 
-<!-- ========== CONTAINER DE RESULTADOS DE BUSCA ========== -->
-
 <div id="searchResults" style="display: none;"></div>
 
-<!-- ========== ESTILOS CSS DO DASHBOARD ========== -->
-<!-- Estilos principais para navegação, menu e busca -->
+<!-- estilos css -->
 
 <style>
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap');
