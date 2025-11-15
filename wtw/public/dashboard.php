@@ -169,7 +169,7 @@ $navStates = [
             $firstName = preg_split('/\s+/', $userName)[0] ?? $userName;
             // limita a 12 chars pra nao ficar gigante
             $displayName = mb_substr($firstName, 0, 12, 'UTF-8');
-            echo '<div class="user-account" data-user-menu">';
+            echo '<div class="user-account" data-user-menu>';
             echo '    <button type="button" class="user-account__trigger" aria-haspopup="true" aria-expanded="false">';
             echo '        <span class="user-account__avatar" aria-hidden="true">';
             echo '            <svg viewBox="0 0 24 24" aria-hidden="true">';
