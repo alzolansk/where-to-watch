@@ -3,7 +3,16 @@
 $__candidateRoot = is_file(__DIR__ . '/../config/bootstrap.php') ? dirname(__DIR__) : __DIR__;
 require_once $__candidateRoot . '/config/bootstrap.php';
 
-$pdo = get_pdo(); // se der erro, deixa quebrar mesmo
+// testa conexao com o banco
+$dbConnected = false;
+try {
+    $pdo = get_pdo();
+    $dbConnected = true;
+} catch (Exception $e) {
+    error_log("Erro ao conectar com o banco de dados: " . $e->getMessage());
+    // pdo fica null se falhar
+    $pdo = null;
+}
 
 $scriptName = $_SERVER['SCRIPT_NAME'] ?? '';
 $scriptDir = str_replace('\\', '/', dirname($scriptName));

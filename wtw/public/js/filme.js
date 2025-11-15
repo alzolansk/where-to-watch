@@ -1237,7 +1237,6 @@ let isMovieInWatchLater = false;
 async function checkWatchLaterStatus(movieId) {
     try {
         const response = await fetch('api/watch-later.php');
-        console.log('Check status response:', response.status);
         
         if (!response.ok) {
             console.warn('API não OK:', response.status);
@@ -1245,7 +1244,6 @@ async function checkWatchLaterStatus(movieId) {
         }
         
         const data = await response.json();
-        console.log('Watch later data:', data);
         
         if (data.success && Array.isArray(data.movies)) {
             return data.movies.some(movie => movie.movie_id === parseInt(movieId));
@@ -1264,7 +1262,6 @@ async function toggleWatchLater(movieId, movieTitle, posterPath, backdropPath) {
         return;
     }
 
-    console.log('Toggle watch later:', { movieId, movieTitle, isInList: isMovieInWatchLater });
 
     const icon = btn.querySelector('.watch-later-icon');
     const text = btn.querySelector('.watch-later-text');
@@ -1272,7 +1269,6 @@ async function toggleWatchLater(movieId, movieTitle, posterPath, backdropPath) {
     try {
         if (isMovieInWatchLater) {
             // Remover da lista
-            console.log('Removendo filme da lista...');
             const response = await fetch('api/watch-later.php', {
                 method: 'DELETE',
                 headers: { 'Content-Type': 'application/json' },
@@ -1280,18 +1276,15 @@ async function toggleWatchLater(movieId, movieTitle, posterPath, backdropPath) {
             });
 
             const data = await response.json();
-            console.log('Delete response:', data);
             
             if (data.success) {
                 isMovieInWatchLater = false;
                 btn.classList.remove('is-active');
                 if (icon) icon.textContent = '🕒';
                 if (text) text.textContent = 'Assistir mais tarde';
-                console.log('✅ Filme removido com sucesso');
             }
         } else {
             // Adicionar à lista
-            console.log('Adicionando filme à lista...');
             
             // Limpar e validar URLs
             const cleanPoster = posterPath ? String(posterPath).trim() : '';
@@ -1304,7 +1297,6 @@ async function toggleWatchLater(movieId, movieTitle, posterPath, backdropPath) {
                 movie_backdrop: cleanBackdrop
             };
             
-            console.log('Payload:', payload);
             
             const response = await fetch('api/watch-later.php', {
                 method: 'POST',
@@ -1313,14 +1305,11 @@ async function toggleWatchLater(movieId, movieTitle, posterPath, backdropPath) {
             });
 
             const data = await response.json();
-            console.log('Post response:', data);
-            
             if (data.success) {
                 isMovieInWatchLater = true;
                 btn.classList.add('is-active');
                 if (icon) icon.textContent = '✓';
                 if (text) text.textContent = 'Na lista';
-                console.log('✅ Filme adicionado com sucesso');
             }
         }
     } catch (error) {
@@ -1377,7 +1366,6 @@ async function initWatchLaterButton() {
         btn.dataset.listenerAdded = 'true';
     }
     
-        console.log('✅ Botão Assistir Mais Tarde inicializado');
 }
 
 // ===== FAVORITOS =====
@@ -1461,7 +1449,6 @@ async function initFavoriteButton(mediaType) {
         });
         btn.dataset.listenerAdded = 'true';
     }
-    console.log('✅ Botão Favorito inicializado');
 }
 
 function initAuthDependentButtons(mediaType) {

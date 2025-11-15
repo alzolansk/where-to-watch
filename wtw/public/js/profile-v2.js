@@ -365,7 +365,6 @@
     if (removeBtn) {
       removeBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        console.log('Removendo favorito:', favorite.title);
         removeFavorite(favorite.tmdb_id, favorite.media_type);
       });
     }
@@ -405,7 +404,6 @@
       return;
     }
     
-    console.log('Removendo favorito:', favorite.title);
     state.favorites = state.favorites.filter(f => favoriteKey(f.tmdb_id, f.media_type) !== key);
     renderFavorites();
     showFeedback(`"${favorite.title}" removido dos favoritos`, 'success');
@@ -677,7 +675,6 @@
     // Carregar lista de assistir mais tarde
     loadWatchLaterMovies();
     
-    console.log('✨ Profile 2.0 inicializado');
   }
 
   // ================================

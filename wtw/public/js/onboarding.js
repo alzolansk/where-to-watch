@@ -902,10 +902,7 @@
       
       // Se não há query de busca E ainda não carregamos recomendações, mescla com títulos gerais
       if (!query && !state.recommendationsLoaded) {
-        console.log('🎬 Carregando títulos gerais para mesclar...');
         const generalTitles = await loadGeneralTitlesQuietly();
-        console.log('🎬 Títulos gerais recebidos:', generalTitles.length);
-        console.log('🎬 Títulos filtrados por preferências:', results.length);
         
         if (generalTitles && generalTitles.length > 0) {
           // Mescla títulos filtrados (baseados em preferências) com títulos gerais
@@ -918,7 +915,6 @@
             return !filteredKeys.has(key);
           });
           
-          console.log('🎬 Títulos gerais únicos:', uniqueGeneralTitles.length);
           
           // Mescla intercalando: 2 filtrados, 1 geral, 2 filtrados, 1 geral...
           const merged = [];
@@ -941,7 +937,6 @@
           }
           
           results = merged;
-          console.log('🎬 Total de resultados após mesclagem:', results.length);
         }
         state.recommendationsLoaded = true;
       }
@@ -970,7 +965,6 @@
       config.apiUrl ? `${config.apiUrl}${config.apiUrl.includes('?') ? '&' : '?'}resource=titles` : null
     );
     
-    console.log('🔍 Endpoint de títulos gerais:', endpoint);
     
     if (!endpoint) {
       console.warn('⚠️ Endpoint de títulos não configurado');
@@ -978,13 +972,11 @@
     }
 
     try {
-      console.log('🌐 Fazendo requisição para títulos gerais (sem filtros)...');
       const response = await fetchWithRetry(endpoint, {
         method: 'GET',
         credentials: 'same-origin',
       }, 1);
 
-      console.log('📡 Resposta recebida:', response.ok, response.status);
       
       if (!response.ok) {
         console.warn('⚠️ Resposta não OK:', response.status);
@@ -992,7 +984,6 @@
       }
       
       const data = await response.json();
-      console.log('📦 Dados recebidos (títulos gerais)');
       
       if (!data || data.ok !== true) {
         console.warn('⚠️ Dados inválidos ou ok !== true');
@@ -1000,7 +991,6 @@
       }
       
       const results = Array.isArray(data.results) ? data.results : [];
-      console.log('✅ Títulos gerais processados:', results.length);
       return results;
     } catch (error) {
       console.error('❌ Erro ao carregar títulos gerais:', error.message);

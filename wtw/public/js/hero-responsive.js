@@ -282,7 +282,6 @@
             }
         };
 
-        console.log('[Hero Responsive] Sistema de responsividade inicializado');
     }
 
     // Inicia automaticamente
