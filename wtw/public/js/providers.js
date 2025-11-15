@@ -218,6 +218,38 @@ import { escapeHtml, normalizeText } from './utils.js';
         }
     });
 
+    // Mapeamento de paginas de busca por provedor (replicado da logica de filme.js)
+    const providerSearchMap = {
+        'netflix': 'https://www.netflix.com/search?q=${query}',
+        'prime video': 'https://www.primevideo.com/search?phrase=${query}',
+        'amazon prime video': 'https://www.primevideo.com/search?phrase=${query}',
+        'amazon video': 'https://www.primevideo.com/-/pt/search/ref=atv_nb_sug?ie=UTF8&phrase=${query}',
+        'hbo max': 'https://play.hbomax.com/search/result?q=${query}',
+        'max': 'https://play.hbomax.com/search?q=${query}',
+        'paramount+': 'https://www.paramountplus.com/br/search/?keyword=${query}',
+        'paramount plus': 'https://www.paramountplus.com/br/search/?keyword=${query}',
+        'disney+': 'https://www.disneyplus.com/pt-br/browse/search?q=${query}',
+        'disney plus': 'https://www.disneyplus.com/pt-br/browse/search?q=${query}',
+        'star+': 'https://www.starplus.com/pt-br/search?q=${query}',
+        'star plus': 'https://www.starplus.com/pt-br/search?q=${query}',
+        'globoplay': 'https://globoplay.globo.com/busca/?q=${query}',
+        'telecine': 'https://globoplay.globo.com/busca/tudo/${query}/',
+        'claro tv': 'https://www.clarotvmais.com.br/busca?q=${query}',
+        'claro video': 'https://www.clarovideo.com/brasil/busca?keyword=${query}',
+        'oldflix': 'https://oldflix.com.br/home/catalogo?search=${query}',
+        'apple tv+': 'https://tv.apple.com/search?term=${query}',
+        'apple tv': 'https://tv.apple.com/search?term=${query}',
+        'google play movies': 'https://play.google.com/store/search?q=${query}&c=movies',
+        'google play': 'https://play.google.com/store/search?q=${query}&c=movies',
+        'looke': 'https://www.looke.com.br/busca?q=${query}',
+        'now': 'https://www.nowonline.com.br/busca?q=${query}',
+        'crunchyroll': 'https://www.crunchyroll.com/pt-br/search?q=${query}',
+        'youtube premium': 'https://www.youtube.com/results?search_query=${query}&sp=EgIQAg%253D%253D',
+        'youtube': 'https://www.youtube.com/results?search_query=${query}',
+        'google': 'https://www.youtube.com/results?search_query=${query}&sp=EgIQBA%253D%253D'
+    };
+
+    // Alguns IDs ainda podem ser usados para fallback direto caso não haja título
     const providerDirectUrls = new Map([
         [8, 'https://www.netflix.com/'],
         [9, 'https://www.primevideo.com/'],
@@ -227,9 +259,7 @@ import { escapeHtml, normalizeText } from './utils.js';
         [531, 'https://www.paramountplus.com/'],
         [746, 'https://www.starplus.com/'],
         [10, 'https://play.google.com/store/movies'],
-        [68, 'https://www.clarovideo.com/'],
-        [384, 'https://play.max.com/'],
-        [53, 'https://www.justwatch.com/'] // fallback example
+        [68, 'https://www.clarovideo.com/']
     ]);
 
     const DEFAULT_SORT = 'popularity.desc';
@@ -314,15 +344,30 @@ const updateProviderRailNav = () => {
 
     
 
-    const resolveProviderWatchUrl = (provider) => {
+    const resolveProviderWatchUrl = (provider, title) => {
         if (!provider) {
             return '';
         }
-        if (providerDirectUrls.has(provider.id)) {
+        const rawName = provider.name || 'streaming';
+        const normalizedName = normalizeText(rawName);
+        const query = encodeURIComponent((title || rawName || 'streaming').trim());
+
+        // Tenta casar com template de busca
+        for (const [key, template] of Object.entries(providerSearchMap)) {
+            const normKey = normalizeText(key);
+            if (normalizedName.includes(normKey)) {
+                return template.replace(/\$\{query}/g, query);
+            }
+        }
+
+        // Fallback: se tem URL direta mas sem template retornamos homepage
+        if (!title && providerDirectUrls.has(provider.id)) {
             return providerDirectUrls.get(provider.id);
         }
-        const name = provider.name || 'streaming';
-        return `https://www.google.com/search?q=${encodeURIComponent(name)}`;
+
+        // Fallback final: busca Google pelo título + nome do provedor
+        const fallback = `${title ? title + ' ' : ''}${rawName} streaming`.trim();
+        return `https://www.google.com/search?q=${encodeURIComponent(fallback)}`;
     };
 
     const formatList = (items) => {
@@ -740,6 +785,10 @@ const updateResultsCaption = (count) => {
         if (!watchButton) {
             return;
         }
+        // Se for um link (<a>) deixamos o comportamento padrão (target _blank ou mesma aba)
+        if (watchButton.tagName === 'A') {
+            return;
+        }
         event.preventDefault();
         event.stopPropagation();
         const targetUrl = watchButton.dataset.watchUrl || '';
@@ -807,20 +856,18 @@ const updateResultsCaption = (count) => {
         updateProviderRailNav();
     };
 
-    const renderWatchCtaMarkup = (provider) => {
+    const renderWatchCtaMarkup = (provider, title) => {
         if (!provider) {
             return '';
         }
-
         const providerLogo = provider.logo || '';
         const providerName = provider.name || 'provedor selecionado';
-        const providerWatchUrl = resolveProviderWatchUrl(provider);
-
+        const providerWatchUrl = resolveProviderWatchUrl(provider, title);
         return `
-            <button type="button" class="media-card__watch-link" data-watch-url="${escapeHtml(providerWatchUrl)}" data-provider-name="${escapeHtml(providerName)}">
+            <a class="media-card__watch-link" href="${escapeHtml(providerWatchUrl)}" target="_blank" rel="noopener" data-watch-url="${escapeHtml(providerWatchUrl)}" data-provider-name="${escapeHtml(providerName)}">
                 <span>Assistir em</span>
                 ${providerLogo ? `<img src="${escapeHtml(providerLogo)}" alt="${escapeHtml(providerName)}" loading="lazy" decoding="async">` : `<strong>${escapeHtml(providerName)}</strong>`}
-            </button>
+            </a>
         `;
     };
 
@@ -856,7 +903,8 @@ const updateResultsCaption = (count) => {
 
         const providerForCta = selectProviderForAvailability(availabilityMap, availabilityKey);
         if (providerForCta) {
-            watchSlot.innerHTML = renderWatchCtaMarkup(providerForCta);
+            const title = card.dataset.title || card.querySelector('.media-card__title')?.textContent || '';
+            watchSlot.innerHTML = renderWatchCtaMarkup(providerForCta, title);
             watchSlot.hidden = false;
         } else {
             watchSlot.innerHTML = '';
@@ -902,7 +950,9 @@ const updateResultsCaption = (count) => {
             const title = item.title || item.name || 'Titulo indisponivel';
             const year = (item.release_date || item.first_air_date || '').slice(0, 4) || '-';
             const typeLabel = item.media_type === 'tv' ? 'Serie' : 'Filme';
-            const detailUrl = new URL('WhereToWatch/wtw/public/filme.php', window.location.origin);
+            // Constrói URL de detalhes relativa à página atual (funciona com/sem pasta public)
+            const baseHref = document.querySelector('base')?.href || window.location.href;
+            const detailUrl = new URL('filme.php', baseHref);
             detailUrl.searchParams.set('id', item.id);
             detailUrl.searchParams.set('type', item.media_type === 'tv' ? 'tv' : 'movie');
             const detailHref = detailUrl.pathname + detailUrl.search;
@@ -920,6 +970,7 @@ const updateResultsCaption = (count) => {
             card.dataset.mediaType = item.media_type;
             card.dataset.detailUrl = detailHref;
             card.dataset.availabilityKey = availabilityKey;
+            card.dataset.title = title;
             card.setAttribute('tabindex', '0');
             card.innerHTML = `
                 <figure class="media-card__poster">

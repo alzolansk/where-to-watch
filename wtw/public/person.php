@@ -1,4 +1,8 @@
 <?php
+// Suporte a ambientes com/sem pasta public
+$__candidateRoot = is_file(__DIR__ . '/../config/bootstrap.php') ? dirname(__DIR__) : __DIR__;
+require_once $__candidateRoot . '/config/bootstrap.php';
+
 include_once("dashboard.php")
 ?>
 <!doctype html>
@@ -193,24 +197,7 @@ include_once("dashboard.php")
       <div class="people-grid" id="coworkersGrid"></div>
     </section>
 
-    <!-- ========== INFORMACOES / PREMIOS ========== -->
-    <section class="card-section glass-panel" data-person-content>
-      <div class="section-heading">
-        <h2>Informacoes</h2>
-        <p class="section-subtitle">Dados basicos e curiosidades.</p>
-      </div>
 
-      <div class="info-grid glass-panel" id="infoGrid">
-      </div>
-
-      <div class="awards-wrap">
-        <h3 class="section-miniheading">Premios / Indicacoes</h3>
-        <p class="section-subtitle" id="awardsNote">
-          O TMDB nao fornece premiacoes oficialmente. Podemos integrar uma fonte externa (IMDb/Awards API) depois.
-        </p>
-        <ul class="awards-list" id="awardsList"><!-- placeholder --></ul>
-      </div>
-    </section>
   </main>
 
   <button type="button" class="back-to-top" id="backToTopButton" aria-label="Voltar ao topo">

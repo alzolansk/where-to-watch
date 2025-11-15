@@ -112,7 +112,6 @@ document.addEventListener('DOMContentLoaded', () => {
     photo: document.getElementById('person-img'),
     metaChips: document.getElementById('personMetaChips'),
     external: document.getElementById('externalLinks'),
-    infoGrid: document.getElementById('infoGrid'),
     timelineShell: document.querySelector('.timeline-shell'),
     timelineContent: document.getElementById('timeline-container'),
     timelineYearNav: document.getElementById('timelineYearNav'),
@@ -824,30 +823,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   };
 
-  const renderInfo = (person) => {
-    if (!person) return;
-    const rows = [
-      { label: 'Popularidade', value: (person.popularity || 0).toFixed(0) },
-      { label: 'Departamento', value: person.known_for_department || '-' },
-      { label: 'Também conhecido(a) como', value: (person.also_known_as || []).slice(0, 3).join(', ') || '-' }
-    ];
-    if (person.birthday) {
-      rows.unshift({ label: 'Nascimento', value: new Date(person.birthday).toLocaleDateString('pt-BR') });
-    }
-    if (person.deathday) {
-      rows.push({ label: 'Falecimento', value: new Date(person.deathday).toLocaleDateString('pt-BR') });
-    }
-    if (person.place_of_birth) {
-      rows.push({ label: 'Local de nascimento', value: person.place_of_birth });
-    }
-    dom.infoGrid.innerHTML = '';
-    rows.forEach((row) => {
-      const card = document.createElement('div');
-      card.className = 'info-card';
-      card.innerHTML = `<div class="label">${row.label}</div><div class="value">${row.value}</div>`;
-      dom.infoGrid.appendChild(card);
-    });
-  };
+
 
   const renderExternal = (external = {}, homepage) => {
     const links = [
@@ -1779,7 +1755,6 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const { person, credits } = await loadPersonBundle();
       renderHero(person);
-      renderInfo(person);
       renderExternal(person.external_ids, person.homepage);
       const aggregated = aggregateCredits(credits);
       filmographyState.allEntries = aggregated;

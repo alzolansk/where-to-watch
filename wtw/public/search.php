@@ -1,7 +1,7 @@
 ﻿<?php
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+// Suporte a ambientes com/sem pasta public
+$__candidateRoot = is_file(__DIR__ . '/../config/bootstrap.php') ? dirname(__DIR__) : __DIR__;
+require_once $__candidateRoot . '/config/bootstrap.php';
 
 $query = trim($_GET['q'] ?? '');
 

@@ -3,7 +3,9 @@ declare(strict_types=1);
 
 header('Content-Type: application/json; charset=utf-8');
 
-require_once __DIR__ . '/../../config/bootstrap.php';
+// Suporte a ambientes com/sem pasta public
+$__candidateRoot = is_file(__DIR__ . '/../../config/bootstrap.php') ? dirname(dirname(__DIR__)) : dirname(__DIR__);
+require_once $__candidateRoot . '/config/bootstrap.php';
 
 if (!isset($_SESSION['id'])) {
     http_response_code(401);

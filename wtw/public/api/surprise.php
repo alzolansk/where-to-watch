@@ -7,12 +7,14 @@ ini_set('max_execution_time', '30');
 
 header('Content-Type: application/json; charset=utf-8');
 
-require_once __DIR__ . '/../../config/bootstrap.php';
+// Suporte a ambientes com/sem pasta public
+$__candidateRoot = is_file(__DIR__ . '/../../config/bootstrap.php') ? dirname(dirname(__DIR__)) : dirname(__DIR__);
+require_once $__candidateRoot . '/config/bootstrap.php';
 
 // Força recarregamento do .env e definição da TMDB_KEY
 if (!defined('TMDB_KEY') || TMDB_KEY === '') {
     // Tenta carregar novamente do ambiente
-    $envPath = __DIR__ . '/../../.env';
+    $envPath = $__candidateRoot . '/.env';
     if (file_exists($envPath) && function_exists('wyw_load_env')) {
         wyw_load_env(dirname($envPath));
     }

@@ -1,6 +1,8 @@
 <?php
 session_start();
-require_once '../../includes/db.php';
+// Suporte a ambientes com/sem pasta public
+$__candidateRoot = is_file(__DIR__ . '/../../includes/db.php') ? dirname(dirname(__DIR__)) : dirname(__DIR__);
+require_once $__candidateRoot . '/includes/db.php';
 
 header('Content-Type: application/json');
 

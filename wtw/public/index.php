@@ -21,16 +21,17 @@
 
     <?php
         // ========== CARREGA BOOTSTRAP DA APLICAÇÃO ==========
-        // Bootstrap carrega: env.php, db.php, tmdb.php e inicia sessão
-        require_once __DIR__ . '/../config/bootstrap.php';
+        // Detecta dinamicamente a raiz do projeto para suportar ambientes com/sem pasta public
+        $__candidateRoot = is_file(__DIR__ . '/../config/bootstrap.php') ? dirname(__DIR__) : __DIR__;
+        require_once $__candidateRoot . '/config/bootstrap.php';
         
         // ========== PÁGINA PRINCIPAL - INDEX ==========
         // Esta é a página inicial do sistema WhereToWatch
         // Inclui dashboard de navegação, configurações e sistema de onboarding
         
         include_once(__DIR__ . '/dashboard.php');
-        require_once __DIR__ . '/../config/config.php';
-        require_once __DIR__ . '/../includes/personalization-cache.php';
+        require_once $__candidateRoot . '/config/config.php';
+        require_once $__candidateRoot . '/includes/personalization-cache.php';
         
         // ========== CONEXÃO COM BANCO DE DADOS ==========
         // Garante que a variável $conexao (mysqli) existe para código legado
@@ -156,6 +157,14 @@
         // Verifica se usuário precisa completar processo de onboarding
         
         $onboardingRequired = !empty($_SESSION['onboarding_pending']);
+        
+        // ========== GERAÇÃO DE URLs PARA APIs ==========
+        // Determina o caminho base correto para as APIs
+        $scriptDir = dirname($_SERVER['SCRIPT_NAME'] ?? '/index.php');
+        $apiBasePath = ($scriptDir === '/' || $scriptDir === '.' || $scriptDir === '') ? '' : rtrim($scriptDir, '/');
+        $onboardingApiUrl = $apiBasePath . '/api/onboarding.php';
+        $onboardingTitlesUrl = $apiBasePath . '/api/onboarding.php?resource=titles';
+        $personalizedApiUrl = $apiBasePath . '/api/home-personalized.php';
     ?>
 
     <!-- ========== MODAL DE ONBOARDING ========== -->
@@ -343,7 +352,7 @@
         window.wtwPersonalization = <?php echo json_encode([
             'enabled' => $personalizedRowEnabled,
             'mediaTypes' => ['movie', 'tv'],
-            'endpoint' => 'api/home-personalized.php',
+            'endpoint' => $personalizedApiUrl,
             'preferenceCount' => $personalizedPreferenceCount,
             'cacheToken' => $personalizationCacheToken,
         ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
@@ -351,8 +360,8 @@
     <script>
         window.wtwOnboarding = <?php echo json_encode([
             'required' => $onboardingRequired,
-            'apiUrl' => 'api/onboarding.php',
-            'titlesEndpoint' => 'api/onboarding.php?resource=titles',
+            'apiUrl' => $onboardingApiUrl,
+            'titlesEndpoint' => $onboardingTitlesUrl,
             'tmdbImageBase' => 'https://image.tmdb.org/t/p',
             'options' => [
                 'genres' => $genreOptions,

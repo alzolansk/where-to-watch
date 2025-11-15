@@ -89,7 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const defaultMetrics = [
         { value: '50+', label: 'Plataformas integradas' },
         { value: '2M+', label: 'Títulos catalogados' },
-        { value: '30s', label: 'Para encontrar onde assistir' }
+        { value: '30s', label: 'Para encontrar onde assistir' },
     ];
     const metrics = Array.isArray(window.__WTW_LANDING_METRICS) && window.__WTW_LANDING_METRICS.length
         ? window.__WTW_LANDING_METRICS

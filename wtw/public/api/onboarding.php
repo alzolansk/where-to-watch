@@ -7,7 +7,9 @@ declare(strict_types=1);
 
 header('Content-Type: application/json; charset=utf-8');
 
-require_once __DIR__ . '/../../config/bootstrap.php';
+// Suporte a ambientes com/sem pasta public
+$__candidateRoot = is_file(__DIR__ . '/../../config/bootstrap.php') ? dirname(dirname(__DIR__)) : dirname(__DIR__);
+require_once $__candidateRoot . '/config/bootstrap.php';
 
 // ========== VALIDAÇÃO DE USUÁRIO ==========
 
@@ -153,7 +155,7 @@ function wyw_bootstrap_pdo(): PDO
 
     // Tenta carregar db.php manualmente
     $pdoPaths = [
-        __DIR__ . '/../../includes/db.php',
+        $__candidateRoot . '/includes/db.php',
         __DIR__ . '/../includes/db.php',
     ];
 
@@ -174,6 +176,7 @@ function wyw_bootstrap_pdo(): PDO
 
     // Tenta criar PDO a partir de config.php
     $configPaths = [
+        $__candidateRoot . '/config/config.php',
         __DIR__ . '/../../config/config.php',
         __DIR__ . '/../config/config.php',
     ];
@@ -966,7 +969,11 @@ function load_favorite_details(string $mediaType, int $tmdbId): array
         return $cache[$cacheKey];
     }
 
-    require_once __DIR__ . '/../../includes/tmdb.php';
+    // Bootstrap já incluiu tmdb.php
+    if (!function_exists('tmdb_get')) {
+        $cache[$cacheKey] = [];
+        return [];
+    }
 
     try {
         $response = tmdb_get(sprintf('/%s/%d', $mediaType, $tmdbId), [
@@ -998,7 +1005,10 @@ function prefetch_favorite_details_bulk(string $mediaType, array $ids): array
         return [];
     }
 
-    require_once __DIR__ . '/../../includes/tmdb.php';
+    // Bootstrap já incluiu tmdb.php
+    if (!function_exists('tmdb_get_bulk')) {
+        return [];
+    }
 
     $requests = [];
     foreach ($uniqueIds as $id) {
@@ -1379,7 +1389,10 @@ function load_keyword_label_suggestions(array $labels, array $genres = []): arra
 
 function onboardingTitleSuggestions(array $queryParams): array
 {
-    require_once __DIR__ . '/../../includes/tmdb.php';
+    // Bootstrap já incluiu tmdb.php, não precisa incluir novamente
+    if (!function_exists('tmdb_get')) {
+        throw new RuntimeException('tmdb_get function not available');
+    }
 
     $query = normalise_label((string)($queryParams['q'] ?? $queryParams['query'] ?? ''));
     $results = [];
@@ -1532,7 +1545,10 @@ function onboardingTitleSuggestions(array $queryParams): array
 
 function onboardingFavoritesRecommendations(array $favorites, array $options = []): array
 {
-    require_once __DIR__ . '/../../includes/tmdb.php';
+    // Bootstrap já incluiu tmdb.php
+    if (!function_exists('tmdb_get')) {
+        return ['ok' => false, 'error' => 'tmdb_unavailable', 'results' => []];
+    }
 
     $anchorRaw = isset($options['anchor']) ? (string) $options['anchor'] : null;
     $levelRequested = isset($options['level']) ? (int) $options['level'] : null;

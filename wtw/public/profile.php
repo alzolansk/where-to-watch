@@ -1,7 +1,7 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+// Suporte a ambientes com/sem pasta public
+$__candidateRoot = is_file(__DIR__ . '/../config/bootstrap.php') ? dirname(__DIR__) : __DIR__;
+require_once $__candidateRoot . '/config/bootstrap.php';
 
 $isAuthenticated = isset($_SESSION['id']) || isset($_SESSION['id_user']);
 $rawUserName = isset($_SESSION['nome']) ? trim((string) $_SESSION['nome']) : '';
@@ -148,12 +148,7 @@ if (!function_exists('wyw_fetch_favorite_posters')) {
             return [];
         }
 
-        try {
-            require_once __DIR__ . '/includes/tmdb.php';
-        } catch (Throwable $e) {
-            return [];
-        }
-
+        // Bootstrap já incluiu tmdb.php, então não precisa incluir novamente
         if (!function_exists('tmdb_get_bulk')) {
             return [];
         }
@@ -232,67 +227,15 @@ $initialFeedbackMessage = null;
 $initialFeedbackTone = null;
 
 if ($isAuthenticated && $userId > 0) {
+    // Bootstrap já carregou db.php, então usa get_pdo() diretamente
     $pdo = null;
-    $pdoCandidates = [
-        __DIR__ . '/includes/db.php',
-        __DIR__ . '/../includes/db.php',
-    ];
-
-    foreach ($pdoCandidates as $candidate) {
-        if (!is_file($candidate)) {
-            continue;
+    
+    try {
+        if (function_exists('get_pdo')) {
+            $pdo = get_pdo();
         }
-        $pdoAttempt = (static function (string $file) {
-            $pdo = null;
-            require $file;
-            return $pdo instanceof PDO ? $pdo : null;
-        })($candidate);
-        if ($pdoAttempt instanceof PDO) {
-            $pdo = $pdoAttempt;
-            break;
-        }
-    }
-
-    if (!($pdo instanceof PDO)) {
-        $configCandidates = [
-            __DIR__ . '/config/config.php',
-            __DIR__ . '/../config/config.php',
-        ];
-        foreach ($configCandidates as $config) {
-            if (!is_file($config)) {
-                continue;
-            }
-            $credentials = (static function (string $file) {
-                $host = $database = $usuario = $senha = null;
-                require $file;
-                return [
-                    'host' => $host ?? ($GLOBALS['host'] ?? null),
-                    'database' => $database ?? ($GLOBALS['database'] ?? null),
-                    'usuario' => $usuario ?? ($GLOBALS['usuario'] ?? null),
-                    'senha' => $senha ?? ($GLOBALS['senha'] ?? null),
-                ];
-            })($config);
-
-            if (!empty($credentials['host']) && !empty($credentials['database']) && isset($credentials['usuario'])) {
-                try {
-                    $pdo = new PDO(
-                        sprintf('mysql:host=%s;dbname=%s;charset=utf8mb4', $credentials['host'], $credentials['database']),
-                        $credentials['usuario'],
-                        $credentials['senha'] ?? '',
-                        [
-                            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-                            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                        ]
-                    );
-                } catch (Throwable $e) {
-                    $pdo = null;
-                }
-            }
-
-            if ($pdo instanceof PDO) {
-                break;
-            }
-        }
+    } catch (Throwable $e) {
+        $pdo = null;
     }
 
     if ($pdo instanceof PDO) {

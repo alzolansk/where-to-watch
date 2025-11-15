@@ -1,5 +1,7 @@
 ﻿<?php
-require_once __DIR__ . '/../config/bootstrap.php';
+// Suporte a ambientes com/sem pasta public
+$__candidateRoot = is_file(__DIR__ . '/../config/bootstrap.php') ? dirname(__DIR__) : __DIR__;
+require_once $__candidateRoot . '/config/bootstrap.php';
 
 // Inicializar conexão mysqli para código legado
 if (!isset($conexao)) {

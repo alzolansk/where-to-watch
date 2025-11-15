@@ -6,8 +6,9 @@
 declare(strict_types=1);
 
 // ========== CARREGA BOOTSTRAP DA APLICAÇÃO ==========
-// Bootstrap já carrega: env.php, db.php, tmdb.php e inicia sessão
-require_once __DIR__ . '/../../config/bootstrap.php';
+// Suporte a estrutura com/sem pasta public
+$__candidateRoot = is_file(__DIR__ . '/../../config/bootstrap.php') ? dirname(dirname(__DIR__)) : dirname(__DIR__);
+require_once $__candidateRoot . '/config/bootstrap.php';
 
 // Define Content-Type para JSON
 header('Content-Type: application/json; charset=utf-8');
