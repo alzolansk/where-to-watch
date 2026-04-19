@@ -6,7 +6,7 @@
 
 **Play no que você ama, sem perder tempo**
 
-[🌐 whereuwatch.com](http://www.whereuwatch.com) • [📱 LinkedIn](https://www.linkedin.com/in/joaoalvesz)
+ [📱 LinkedIn](https://www.linkedin.com/in/joaoalvesz)
 
 [![PHP](https://img.shields.io/badge/PHP-8.0+-777BB4?logo=php&logoColor=white)](https://php.net)
 [![JavaScript](https://img.shields.io/badge/JavaScript-ES6+-F7DF1E?logo=javascript&logoColor=black)](https://javascript.com)
